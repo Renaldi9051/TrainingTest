@@ -17,7 +17,7 @@ Kalau permintaan bertentangan dengan PRD/DESIGN, berhenti dan tanyakan, jangan m
 ```
 BE/      Next.js API-only (Route Handlers), Prisma, PostgreSQL. Port 4000.
 FE/      Next.js App Router: halaman publik + panel admin (/admin). Port 3000.
-env/     be.env.example, fe.env.example (file asli be.env / fe.env di-gitignore)
+.env.example  contoh env BE & FE di root (di-commit; file asli .env di-gitignore)
 docker/  BELUM DIPAKAI. Jangan buat/ubah apa pun di sini sampai diminta.
 ```
 
@@ -34,7 +34,7 @@ Jangan menambah dependency baru tanpa menyebutkan alasannya di ringkasan perubah
 
 ## Perintah
 
-Jalankan dari folder masing-masing (`BE/` atau `FE/`). Env dimuat dari `../env/*.env` lewat `dotenv-cli` di script npm.
+Jalankan dari folder masing-masing (`BE/` atau `FE/`). Env dimuat dari `../.env` lewat `dotenv-cli` di script npm.
 
 ```bash
 # BE
@@ -68,24 +68,24 @@ Kalau script di atas belum ada, buat dengan nama yang sama persis.
 
 ## Env
 
-- File asli: `env/be.env`, `env/fe.env` (gitignored). Contoh: `env/*.env.example` (di-commit).
-- Setiap menambah variabel env: tambahkan juga ke file `.example` dengan nilai dummy + komentar singkat, dan validasi di `BE/src/lib/env.ts` / `FE/src/lib/env.ts` pakai Zod.
+- Satu file env untuk BE & FE di root: `.env` (gitignored). Contoh: `.env.example` (di-commit).
+- Setiap menambah variabel env: tambahkan juga ke `.env.example` di kelompok `# BE` atau `# FE` dengan nilai dummy + komentar singkat, dan validasi di `BE/src/lib/env.ts` / `FE/src/lib/env.ts` pakai Zod.
+- FE tidak boleh membaca variabel selain yang ada di `FE/src/lib/env.ts`. Saat deploy Docker, tiap container hanya diberi variabel miliknya.
 - Jangan pernah menulis secret asli ke kode, log, commit, atau pesan.
 
-Variabel minimal:
+Variabel minimal (`.env`):
 ```
-# be.env
+# BE
 DATABASE_URL=
 SESSION_SECRET=
 UPLOAD_DIR=
 PUBLIC_BASE_URL=
 FE_REVALIDATE_URL=
-REVALIDATE_SECRET=
+REVALIDATE_SECRET=         # dipakai juga oleh FE
 
-# fe.env
+# FE
 BE_INTERNAL_URL=http://localhost:4000
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-REVALIDATE_SECRET=
 ```
 
 ## Konvensi kode
@@ -131,7 +131,7 @@ REVALIDATE_SECRET=
 ## Git
 
 - Commit kecil dengan format Conventional Commits: `feat(be): ...`, `fix(fe): ...`, `chore: ...`, `docs: ...`.
-- Jangan commit `env/*.env`, folder `uploads/`, atau `node_modules`.
+- Jangan commit `.env`, folder `uploads/`, atau `node_modules`.
 - Jangan push atau force-push tanpa diminta.
 
 ## Hal yang dilarang tanpa izin

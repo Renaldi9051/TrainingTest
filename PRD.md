@@ -199,15 +199,16 @@ Alamat, telepon, email, peta embed, daftar marketing, form inquiry (nama, instan
 │       ├── app/admin/      panel admin
 │       ├── components/     ui/, public/, admin/
 │       └── lib/            api client, types, utils
-├── env/                file env (contoh di-commit, asli di-gitignore)
-│   ├── be.env.example
-│   └── fe.env.example
 ├── docker/             (nanti) Dockerfile, compose
+├── .env                env BE & FE (gitignored)
+├── .env.example        contoh env, dikelompokkan # BE dan # FE (di-commit)
 ├── AGENTS.md
 ├── CLAUDE.md
 ├── DESIGN.md
 └── PRD.md
 ```
+
+FE tidak boleh membaca variabel selain yang ada di `FE/src/lib/env.ts`. Saat deploy Docker, tiap container hanya diberi variabel miliknya.
 
 ### 7.3 Alur data
 
