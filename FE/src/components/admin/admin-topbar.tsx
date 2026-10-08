@@ -90,7 +90,9 @@ function UserMenu({ user }: { user: AuthUser }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1.5 text-small text-fg outline-none hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2">
+      <DropdownMenuTrigger
+        aria-label="Menu akun"
+        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-small text-fg outline-none hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2">
         <span className="flex size-7 items-center justify-center rounded-full bg-fg-strong font-mono text-[11px] font-medium uppercase text-inverse-fg">
           {user.name.slice(0, 1)}
         </span>

@@ -20,6 +20,13 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  // Gambar media memakai varian WebP buatan BE (sharp), bukan optimizer Next. Lihat src/lib/image-loader.ts.
+  images: {
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
+    deviceSizes: [320, 768, 1600],
+    imageSizes: [160],
+  },
   // Browser hanya bicara ke satu origin; /api dan /uploads diteruskan ke BE.
   async rewrites() {
     return [

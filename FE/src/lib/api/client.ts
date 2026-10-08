@@ -6,13 +6,14 @@ export class ApiError extends Error {
     readonly code: string,
     message: string,
     readonly fields?: ApiFieldErrors,
+    readonly details?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
   }
 }
 
-function isApiErrorBody(body: unknown): body is ApiErrorBody {
+export function isApiErrorBody(body: unknown): body is ApiErrorBody {
   if (typeof body !== "object" || body === null || !("error" in body)) return false;
   const { error } = body;
   return (
@@ -39,7 +40,13 @@ export async function apiFetch<TData, TMeta = undefined>(
 
   if (!response.ok) {
     if (isApiErrorBody(body)) {
-      throw new ApiError(response.status, body.error.code, body.error.message, body.error.fields);
+      throw new ApiError(
+        response.status,
+        body.error.code,
+        body.error.message,
+        body.error.fields,
+        body.error.details,
+      );
     }
     throw new ApiError(response.status, "UNKNOWN_ERROR", "Terjadi kesalahan. Coba lagi.");
   }
