@@ -2,6 +2,8 @@
 // Semua teks di sini ditulis sendiri, bukan salinan dari website referensi.
 import type { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
+import { parseSeedEnv } from "../src/lib/env";
+import { hashPassword } from "../src/lib/password";
 
 const db = getDb();
 
@@ -129,7 +131,21 @@ const trainings = [
 const SAMPLE_SCHEDULE_ID = "0199c3a0-0000-7000-8000-000000000001";
 const PUBLISHED_AT = new Date("2026-10-01T00:00:00.000Z");
 
+// Admin pertama dari ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME. Hanya dibuat kalau email belum ada;
+// password admin yang sudah ada tidak pernah ditimpa.
+async function seedAdmin(): Promise<"created" | "exists"> {
+  const admin = parseSeedEnv(process.env);
+  const email = admin.ADMIN_EMAIL.toLowerCase();
+  const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
+  if (existing) return "exists";
+  await db.user.create({
+    data: { email, name: admin.ADMIN_NAME, passwordHash: await hashPassword(admin.ADMIN_PASSWORD) },
+  });
+  return "created";
+}
+
 async function main() {
+  const adminResult = await seedAdmin();
   for (const setting of settings) {
     await db.siteSetting.upsert({
       where: { key: setting.key },
@@ -192,7 +208,7 @@ async function main() {
 
   console.info(
     `Seed selesai: ${settings.length} pengaturan, ${categories.length} kategori, ` +
-      `${trainings.length} pelatihan, 1 jadwal.`,
+      `${trainings.length} pelatihan, 1 jadwal, admin ${adminResult === "created" ? "dibuat" : "sudah ada"}.`,
   );
 }
 

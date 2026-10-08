@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseEnv } from "@/lib/env";
+import { parseEnv, parseSeedEnv } from "@/lib/env";
 
 const validEnv = {
   DATABASE_URL: "postgresql://user:pass@localhost:5433/training_dev",
@@ -8,11 +8,16 @@ const validEnv = {
   PUBLIC_BASE_URL: "http://localhost:3000",
   FE_REVALIDATE_URL: "http://localhost:3000/api/revalidate",
   REVALIDATE_SECRET: "y".repeat(16),
+  ALLOWED_ORIGINS: "http://localhost:3000",
 };
 
 describe("parseEnv", () => {
   it("menerima env yang lengkap", () => {
-    expect(parseEnv(validEnv)).toEqual(validEnv);
+    expect(parseEnv(validEnv)).toEqual({
+      ...validEnv,
+      ALLOWED_ORIGINS: ["http://localhost:3000"],
+      TRUST_PROXY_HOPS: 1,
+    });
   });
 
   it("mewajibkan DATABASE_URL, termasuk menolak nilai kosong", () => {
@@ -43,5 +48,35 @@ describe("parseEnv", () => {
     expect(() => parseEnv({ ...validEnv, REVALIDATE_SECRET: undefined })).toThrow(
       /REVALIDATE_SECRET/,
     );
+  });
+
+  it("memecah ALLOWED_ORIGINS per koma dan menolak nilai yang bukan URL", () => {
+    const env = parseEnv({
+      ...validEnv,
+      ALLOWED_ORIGINS: "http://localhost:3000, https://contoh.id",
+    });
+    expect(env.ALLOWED_ORIGINS).toEqual(["http://localhost:3000", "https://contoh.id"]);
+    expect(() => parseEnv({ ...validEnv, ALLOWED_ORIGINS: "localhost" })).toThrow(
+      /ALLOWED_ORIGINS/,
+    );
+    expect(() => parseEnv({ ...validEnv, ALLOWED_ORIGINS: undefined })).toThrow(/ALLOWED_ORIGINS/);
+  });
+
+  it("membaca TRUST_PROXY_HOPS sebagai angka", () => {
+    expect(parseEnv({ ...validEnv, TRUST_PROXY_HOPS: "2" }).TRUST_PROXY_HOPS).toBe(2);
+    expect(() => parseEnv({ ...validEnv, TRUST_PROXY_HOPS: "0" })).toThrow(/TRUST_PROXY_HOPS/);
+  });
+});
+
+describe("parseSeedEnv", () => {
+  const seedEnv = { ADMIN_EMAIL: "admin@example.com", ADMIN_PASSWORD: "p".repeat(12), ADMIN_NAME: "Admin" };
+
+  it("menerima env admin yang lengkap", () => {
+    expect(parseSeedEnv(seedEnv)).toEqual(seedEnv);
+  });
+
+  it("menolak password pendek dan email tidak valid", () => {
+    expect(() => parseSeedEnv({ ...seedEnv, ADMIN_PASSWORD: "pendek" })).toThrow(/ADMIN_PASSWORD/);
+    expect(() => parseSeedEnv({ ...seedEnv, ADMIN_EMAIL: "bukan-email" })).toThrow(/ADMIN_EMAIL/);
   });
 });
