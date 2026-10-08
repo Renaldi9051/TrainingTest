@@ -1,0 +1,92 @@
+# Jalankan semuanya dari root repo:  docker compose up --build
+# Lalu buka http://localhost:3000. Semua nilai dibaca dari .env (salin dari .env.example).
+# Hanya alamat antar-container yang ditimpa di sini (db:5432, be:4000, fe:3000).
+#
+# Untuk development dengan hot reload, cukup nyalakan database (`npm run db:up` dari BE/)
+# lalu jalankan `npm run dev` di host. Jangan jalankan bersamaan dengan container be/fe
+# karena port 3000/4000 akan bentrok.
+name: training-dev
+
+x-database-url: &database-url postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER wajib diisi di .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD wajib diisi di .env}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB wajib diisi di .env}
+    # Port host 5433 sama dengan port SSH tunnel ke VPS, jadi pindah ke VPS cukup ganti host di DATABASE_URL.
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Sekali jalan: prisma migrate deploy + seed (aman diulang), lalu berhenti.
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/be.Dockerfile
+      target: migrate
+    env_file: .env
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  be:
+    build:
+      context: .
+      dockerfile: docker/be.Dockerfile
+      target: runner
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: *database-url
+      FE_REVALIDATE_URL: http://fe:3000/api/revalidate
+    ports:
+      - "127.0.0.1:4000:4000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  fe:
+    build:
+      context: .
+      dockerfile: docker/fe.Dockerfile
+      target: runner
+      args:
+        BE_INTERNAL_URL: http://be:4000
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      BE_INTERNAL_URL: http://be:4000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      be:
+        condition: service_healthy
+
+volumes:
+  db-data:
