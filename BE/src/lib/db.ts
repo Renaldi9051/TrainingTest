@@ -3,7 +3,11 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { getEnv } from "@/lib/env";
 
 function createClient() {
-  const adapter = new PrismaPg({ connectionString: getEnv().DATABASE_URL });
+  const adapter = new PrismaPg({
+    connectionString: getEnv().DATABASE_URL,
+    // Gagal cepat kalau DB tidak menjawab, jangan menggantung request.
+    connectionTimeoutMillis: 5_000,
+  });
   return new PrismaClient({ adapter });
 }
 
