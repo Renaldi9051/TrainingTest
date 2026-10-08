@@ -53,7 +53,7 @@ cd BE
 npm install              # sekaligus generate Prisma Client
 npm run db:up            # start Postgres saja, tunggu sampai healthy
 npm run db:migrate       # terapkan migrasi
-npm run db:seed          # isi data placeholder (aman diulang)
+npm run db:seed          # data placeholder + admin pertama dari ADMIN_* di .env (aman diulang)
 npm run dev              # http://localhost:4000
 
 # 2. Terminal lain
@@ -70,6 +70,15 @@ curl http://localhost:3000/api/health
 # {"error":{"code":"DB_UNAVAILABLE",...}}  (HTTP 503 kalau database mati)
 ```
 
+## Panel admin
+
+Buka http://localhost:3000/admin/login dan masuk dengan `ADMIN_EMAIL` / `ADMIN_PASSWORD` dari `.env`. Seed hanya membuat admin kalau email tersebut belum ada; password admin yang sudah ada tidak ditimpa.
+
+- Login dibatasi 5 kali gagal per 15 menit per IP + email (in-memory, reset saat BE restart).
+- Request mutasi (POST/PATCH/PUT/DELETE) wajib membawa header `Origin` yang terdaftar di `ALLOWED_ORIGINS`. Browser mengirimnya otomatis; untuk curl tambahkan `-H "Origin: http://localhost:3000"`.
+- File upload disimpan di `UPLOAD_DIR` (dev: folder `uploads/` di root, gitignored) dan dilayani BE di `/uploads/*`. Di Docker, file ada di volume `uploads`.
+- Halaman pratinjau komponen: http://localhost:3000/admin/dev/ui (hanya saat `npm run dev`).
+
 ## Script
 
 Dijalankan dari `BE/` atau `FE/`:
@@ -85,6 +94,6 @@ Dijalankan dari `BE/` atau `FE/`:
 | `npm run db:down` | BE: hentikan semua container proyek (termasuk be/fe dari cara A). Data tidak dihapus |
 | `npm run db:generate` | BE: generate Prisma Client |
 | `npm run db:migrate` | BE: `prisma migrate dev`. Perubahan skema: `npm run db:migrate -- --name <nama>` |
-| `npm run db:seed` | BE: isi data placeholder |
+| `npm run db:seed` | BE: isi data placeholder + admin pertama |
 | `npm run db:studio` | BE: Prisma Studio |
-| `npm run test:e2e` | FE: belum diimplementasikan |
+| `npm run test:e2e` | FE: Playwright. Butuh database jalan + seed; memakai dev server BE/FE yang sudah jalan atau menyalakannya sendiri. Sekali saja: `npx playwright install chromium` |
