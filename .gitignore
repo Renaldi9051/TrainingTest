@@ -7,6 +7,9 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 
+# prisma client hasil generate (dibuat ulang lewat `npm run db:generate` / postinstall)
+BE/src/generated/
+
 # testing
 coverage/
 playwright-report/

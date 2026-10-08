@@ -1,0 +1,10 @@
+// Skema database BE. URL koneksi ada di prisma.config.ts (dari DATABASE_URL di .env root).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
