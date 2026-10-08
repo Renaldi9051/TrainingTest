@@ -116,6 +116,8 @@ model Session {
   id        String   @id @default(uuid(7)) @db.Uuid
   userId    String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // HMAC-SHA256(token, SESSION_SECRET). Token asli hanya ada di cookie.
+  tokenHash String   @unique
   expiresAt DateTime @db.Timestamptz(3)
   ip        String?
   userAgent String?
@@ -424,20 +426,22 @@ model MediaPartner {
 // ===== Media =====
 
 model Media {
-  id          String    @id @default(uuid(7)) @db.Uuid
-  path        String    @unique
-  mime        String
-  size        Int
-  width       Int?
-  height      Int?
-  alt         String?
-  folder      String?
-  variants    Json?
-  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
-  deletedAt   DateTime? @db.Timestamptz(3)
-  updatedById String?   @db.Uuid
-  updatedBy   User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  id           String    @id @default(uuid(7)) @db.Uuid
+  path         String    @unique
+  // Nama file asli saat diupload, untuk pencarian. File di disk memakai nama acak.
+  originalName String?
+  mime         String
+  size         Int
+  width        Int?
+  height       Int?
+  alt          String?
+  folder       String?
+  variants     Json?
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt    DateTime? @db.Timestamptz(3)
+  updatedById  String?   @db.Uuid
+  updatedBy    User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 
   trainingCovers    Training[]
   serviceImages     Service[]
