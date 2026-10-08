@@ -1,0 +1,22 @@
+# Context build = root repo. Jangan kirim dependency, hasil build, env, atau data lokal ke Docker.
+**/node_modules
+**/.next
+**/out
+**/coverage
+**/playwright-report
+**/test-results
+**/*.tsbuildinfo
+**/next-env.d.ts
+BE/src/generated
+
+# env & secret
+.env
+**/.env*
+!.env.example
+**/*.pem
+
+# data & dokumen lokal
+uploads
+.git
+.claude
+*.md
