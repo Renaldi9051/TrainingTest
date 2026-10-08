@@ -9,7 +9,7 @@ Website training provider + panel admin CMS. Dua app Next.js yang berdiri sendir
 
 FE me-rewrite `/api/*` dan `/uploads/*` ke BE, jadi browser cukup bicara ke `localhost:3000`.
 
-Detail produk ada di `PRD.md`, aturan desain di `DESIGN.md`, aturan kerja di `AGENTS.md`.
+Dokumen kerja (`PRD.md`, `DESIGN.md`, `AGENTS.md`, `CLAUDE.md`) hanya disimpan di lokal dan tidak ada di repo ini.
 
 ## Prasyarat
 
