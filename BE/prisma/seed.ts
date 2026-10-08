@@ -1,7 +1,9 @@
 // Seed data placeholder untuk development. Idempotent: aman dijalankan berulang (upsert).
 // Semua teks di sini ditulis sendiri, bukan salinan dari website referensi.
 import type { Prisma } from "../src/generated/prisma/client";
-import { db } from "../src/lib/db";
+import { getDb } from "../src/lib/db";
+
+const db = getDb();
 
 type RichText = Prisma.InputJsonValue;
 

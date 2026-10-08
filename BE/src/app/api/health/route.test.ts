@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const queryRaw = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/db", () => ({ db: { $queryRaw: queryRaw } }));
+vi.mock("@/lib/db", () => ({ getDb: () => ({ $queryRaw: queryRaw }) }));
 
 const { GET } = await import("./route");
 

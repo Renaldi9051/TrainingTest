@@ -15,6 +15,9 @@ function createClient() {
 // tidak membuat pool koneksi baru di setiap reload.
 const globalForPrisma = globalThis as typeof globalThis & { prisma?: PrismaClient };
 
-export const db = globalForPrisma.prisma ?? createClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+// Client dibuat saat pertama dipakai, bukan saat modul di-import, supaya `next build`
+// (mis. di Docker, tanpa .env) tidak butuh DATABASE_URL.
+export function getDb(): PrismaClient {
+  globalForPrisma.prisma ??= createClient();
+  return globalForPrisma.prisma;
+}
