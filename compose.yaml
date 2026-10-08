@@ -29,6 +29,7 @@ services:
       retries: 10
 
   # Sekali jalan: prisma migrate deploy + seed (aman diulang), lalu berhenti.
+  # Seed membuat admin pertama dari ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME di .env (lewat env_file).
   migrate:
     build:
       context: .
@@ -52,6 +53,9 @@ services:
     environment:
       DATABASE_URL: *database-url
       FE_REVALIDATE_URL: http://fe:3000/api/revalidate
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
     ports:
       - "127.0.0.1:4000:4000"
     depends_on:
@@ -90,3 +94,5 @@ services:
 
 volumes:
   db-data:
+  # File upload media (UPLOAD_DIR di container be). Tidak ikut terhapus saat container dibuat ulang.
+  uploads:
