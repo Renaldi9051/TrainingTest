@@ -1,0 +1,29 @@
+{
+  "name": "training-be",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "dotenv -e ../be.env -- next dev -p 4000",
+    "build": "dotenv -e ../be.env -- next build",
+    "start": "dotenv -e ../be.env -- next start -p 4000",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "db:migrate": "echo db:migrate belum diimplementasikan",
+    "db:seed": "echo db:seed belum diimplementasikan",
+    "db:studio": "echo db:studio belum diimplementasikan"
+  },
+  "dependencies": {
+    "next": "16.4.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
+  }
+}
