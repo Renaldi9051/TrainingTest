@@ -15,9 +15,20 @@ describe("parseEnv", () => {
     expect(parseEnv(validEnv)).toEqual(validEnv);
   });
 
-  it("menganggap DATABASE_URL opsional, termasuk nilai kosong", () => {
-    expect(parseEnv({ ...validEnv, DATABASE_URL: undefined }).DATABASE_URL).toBeUndefined();
-    expect(parseEnv({ ...validEnv, DATABASE_URL: "" }).DATABASE_URL).toBeUndefined();
+  it("mewajibkan DATABASE_URL, termasuk menolak nilai kosong", () => {
+    expect(() => parseEnv({ ...validEnv, DATABASE_URL: undefined })).toThrow(/DATABASE_URL/);
+    expect(() => parseEnv({ ...validEnv, DATABASE_URL: "" })).toThrow(/DATABASE_URL/);
+  });
+
+  it("menerima skema postgres:// maupun postgresql://", () => {
+    const url = "postgres://user:pass@localhost:5433/training_dev";
+    expect(parseEnv({ ...validEnv, DATABASE_URL: url }).DATABASE_URL).toBe(url);
+  });
+
+  it("menolak DATABASE_URL yang bukan PostgreSQL", () => {
+    expect(() =>
+      parseEnv({ ...validEnv, DATABASE_URL: "mysql://user:pass@localhost:3306/training_dev" }),
+    ).toThrow(/DATABASE_URL/);
   });
 
   it("menolak SESSION_SECRET yang terlalu pendek", () => {

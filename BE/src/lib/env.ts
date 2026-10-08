@@ -1,12 +1,7 @@
 import { z } from "zod";
 
-// Baris kosong di file env (mis. `DATABASE_URL=`) dianggap tidak diisi.
-const optionalString = <T extends z.ZodType>(schema: T) =>
-  z.preprocess((value) => (value === "" ? undefined : value), schema.optional());
-
 const envSchema = z.object({
-  // TODO(fase 0b): wajibkan saat Prisma masuk.
-  DATABASE_URL: optionalString(z.url()),
+  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   SESSION_SECRET: z.string().min(32),
   UPLOAD_DIR: z.string().min(1),
   PUBLIC_BASE_URL: z.url(),
