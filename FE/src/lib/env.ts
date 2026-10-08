@@ -36,3 +36,6 @@ export function getEnv(): Env {
 export function getConfigEnv(): ConfigEnv {
   return parseWith(configEnvSchema, process.env);
 }
+
+// NODE_ENV di-inline Next saat build; aman dipakai di server maupun client.
+export const isDevelopment = process.env.NODE_ENV === "development";
