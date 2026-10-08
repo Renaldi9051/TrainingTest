@@ -1,10 +1,540 @@
 // Skema database BE. URL koneksi ada di prisma.config.ts (dari DATABASE_URL di .env root).
+//
+// Konvensi:
+// - id: UUID v7 (urut waktu).
+// - Waktu: timestamptz. Tanggal tanpa jam (jadwal, portofolio): date.
+// - Tabel konten: createdAt, updatedAt, deletedAt (soft delete), updatedById.
+// - Slug / Redirect.from: unik hanya di antara baris yang belum dihapus (partial unique index),
+//   supaya slug item di Sampah tidak mengunci slug baru. Query publik wajib filter deletedAt: null.
+// - Rich text (Tiptap) disimpan sebagai Json.
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// ===== Enum =====
+
+enum NavLocation {
+  HEADER
+  FOOTER
+}
+
+enum HomeSectionType {
+  HERO
+  STATS
+  SERVICES
+  CATEGORIES
+  LATEST_TRAININGS
+  UPCOMING_SCHEDULES
+  CLIENTS
+  VISION_MISSION
+  TESTIMONIALS
+  CTA
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum TrainingMethod {
+  ONLINE
+  OFFLINE
+  HYBRID
+}
+
+enum TrainingType {
+  PUBLIC
+  IN_HOUSE
+}
+
+enum ScheduleStatus {
+  OPEN
+  FULL
+  COMPLETED
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+}
+
+enum EvaluationQuestionType {
+  RATING
+  TEXT
+}
+
+// PERMANENT = HTTP 301, TEMPORARY = HTTP 302.
+enum RedirectCode {
+  PERMANENT
+  TEMPORARY
+}
+
+// ===== Auth =====
+
+// Semua admin setara (tidak ada role).
+model User {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  name         String
+  email        String    @unique
+  passwordHash String
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime? @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+
+  sessions  Session[]
+  auditLogs AuditLog[]
+
+  updatedSiteSettings        SiteSetting[]
+  updatedNavItems            NavItem[]
+  updatedHomeSections        HomeSection[]
+  updatedPages               Page[]
+  updatedServices            Service[]
+  updatedCategories          Category[]
+  updatedTrainings           Training[]
+  updatedSchedules           Schedule[]
+  updatedClients             Client[]
+  updatedTestimonials        Testimonial[]
+  updatedPortfolioItems      PortfolioItem[]
+  updatedMarketingContacts   MarketingContact[]
+  updatedMediaPartners       MediaPartner[]
+  updatedMedia               Media[]
+  updatedInquiries           Inquiry[]
+  updatedEvaluationQuestions EvaluationQuestion[]
+  updatedRedirects           Redirect[]
+}
+
+model Session {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @db.Timestamptz(3)
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ===== Pengaturan & navigasi =====
+
+model SiteSetting {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  key         String   @unique
+  value       Json
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  updatedById String?  @db.Uuid
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+}
+
+model NavItem {
+  id          String      @id @default(uuid(7)) @db.Uuid
+  location    NavLocation
+  label       String
+  href        String
+  // Nested 1 level; batas kedalaman dicek di service.
+  parentId    String?     @db.Uuid
+  parent      NavItem?    @relation("NavItemChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children    NavItem[]   @relation("NavItemChildren")
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?   @db.Timestamptz(3)
+  updatedById String?     @db.Uuid
+  updatedBy   User?       @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([location, order])
+  @@index([parentId])
+  @@index([deletedAt])
+}
+
+// ===== Konten halaman =====
+
+model HomeSection {
+  id          String          @id @default(uuid(7)) @db.Uuid
+  type        HomeSectionType
+  title       String?
+  // Bentuk content divalidasi Zod per type di BE.
+  content     Json
+  order       Int             @default(0)
+  visible     Boolean         @default(true)
+  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime        @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?       @db.Timestamptz(3)
+  updatedById String?         @db.Uuid
+  updatedBy   User?           @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([order])
+  @@index([deletedAt])
+}
+
+model Page {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  slug        String
+  title       String
+  blocks      Json
+  status      ContentStatus @default(DRAFT)
+  seo         Json?
+  publishedAt DateTime?     @db.Timestamptz(3)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?     @db.Timestamptz(3)
+  updatedById String?       @db.Uuid
+  updatedBy   User?         @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@unique([slug], map: "Page_slug_active_key", where: raw("\"deletedAt\" IS NULL"))
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model Service {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  slug        String
+  title       String
+  icon        String?
+  summary     String?
+  body        Json?
+  imageId     String?       @db.Uuid
+  image       Media?        @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  order       Int           @default(0)
+  status      ContentStatus @default(DRAFT)
+  seo         Json?
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?     @db.Timestamptz(3)
+  updatedById String?       @db.Uuid
+  updatedBy   User?         @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@unique([slug], map: "Service_slug_active_key", where: raw("\"deletedAt\" IS NULL"))
+  @@index([status])
+  @@index([order])
+  @@index([deletedAt])
+}
+
+// ===== Katalog pelatihan =====
+
+model Category {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  slug        String
+  name        String
+  description String?
+  icon        String?
+  order       Int       @default(0)
+  featured    Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+  updatedById String?   @db.Uuid
+  updatedBy   User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  trainings TrainingCategory[]
+
+  @@unique([slug], map: "Category_slug_active_key", where: raw("\"deletedAt\" IS NULL"))
+  @@index([featured])
+  @@index([order])
+  @@index([deletedAt])
+}
+
+model Training {
+  id          String          @id @default(uuid(7)) @db.Uuid
+  slug        String
+  title       String
+  summary     String?
+  body        Json?
+  objectives  Json?
+  syllabus    Json?
+  audience    Json?
+  facilities  Json?
+  duration    String?
+  method      TrainingMethod?
+  types       TrainingType[]  @default([])
+  priceText   String?
+  showPrice   Boolean         @default(false)
+  coverId     String?         @db.Uuid
+  cover       Media?          @relation(fields: [coverId], references: [id], onDelete: SetNull)
+  status      ContentStatus   @default(DRAFT)
+  publishedAt DateTime?       @db.Timestamptz(3)
+  seo         Json?
+  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime        @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?       @db.Timestamptz(3)
+  updatedById String?         @db.Uuid
+  updatedBy   User?           @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  categories TrainingCategory[]
+  schedules  Schedule[]
+  inquiries  Inquiry[]
+
+  @@unique([slug], map: "Training_slug_active_key", where: raw("\"deletedAt\" IS NULL"))
+  @@index([status])
+  @@index([publishedAt])
+  @@index([deletedAt])
+}
+
+model TrainingCategory {
+  trainingId String   @db.Uuid
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  categoryId String   @db.Uuid
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([trainingId, categoryId])
+  @@index([categoryId])
+}
+
+model Schedule {
+  id          String         @id @default(uuid(7)) @db.Uuid
+  trainingId  String         @db.Uuid
+  training    Training       @relation(fields: [trainingId], references: [id], onDelete: Restrict)
+  startDate   DateTime       @db.Date
+  endDate     DateTime       @db.Date
+  city        String?
+  venue       String?
+  method      TrainingMethod
+  // Rupiah, tanpa desimal.
+  price       Int?
+  status      ScheduleStatus @default(OPEN)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime       @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?      @db.Timestamptz(3)
+  updatedById String?        @db.Uuid
+  updatedBy   User?          @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  evaluationResponses EvaluationResponse[]
+
+  @@index([trainingId])
+  @@index([startDate])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+// ===== Klien, testimoni, portofolio, kontak =====
+
+model Client {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  name        String
+  logoId      String?   @db.Uuid
+  logo        Media?    @relation(fields: [logoId], references: [id], onDelete: SetNull)
+  url         String?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+  updatedById String?   @db.Uuid
+  updatedBy   User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([order])
+  @@index([deletedAt])
+}
+
+model Testimonial {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  name        String
+  // Jabatan orang yang memberi testimoni (bukan role user admin).
+  role        String?
+  company     String?
+  quote       String
+  photoId     String?   @db.Uuid
+  photo       Media?    @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+  updatedById String?   @db.Uuid
+  updatedBy   User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([order])
+  @@index([deletedAt])
+}
+
+model PortfolioItem {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  title       String
+  date        DateTime? @db.Date
+  client      String?
+  description String?
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+  updatedById String?   @db.Uuid
+  updatedBy   User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  images PortfolioImage[]
+
+  @@index([date])
+  @@index([deletedAt])
+}
+
+// Galeri portofolio, diurutkan lewat `order`.
+model PortfolioImage {
+  portfolioItemId String        @db.Uuid
+  portfolioItem   PortfolioItem @relation(fields: [portfolioItemId], references: [id], onDelete: Cascade)
+  mediaId         String        @db.Uuid
+  media           Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  order           Int           @default(0)
+
+  @@id([portfolioItemId, mediaId])
+  @@index([portfolioItemId, order])
+  @@index([mediaId])
+}
+
+model MarketingContact {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  name           String
+  photoId        String?   @db.Uuid
+  photo          Media?    @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  phone          String
+  defaultMessage String?
+  order          Int       @default(0)
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt      DateTime? @db.Timestamptz(3)
+  updatedById    String?   @db.Uuid
+  updatedBy      User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([order])
+  @@index([deletedAt])
+}
+
+model MediaPartner {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  name        String
+  url         String?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+  updatedById String?   @db.Uuid
+  updatedBy   User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([order])
+  @@index([deletedAt])
+}
+
+// ===== Media =====
+
+model Media {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  path        String    @unique
+  mime        String
+  size        Int
+  width       Int?
+  height      Int?
+  alt         String?
+  folder      String?
+  variants    Json?
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+  updatedById String?   @db.Uuid
+  updatedBy   User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  trainingCovers    Training[]
+  serviceImages     Service[]
+  clientLogos       Client[]
+  testimonialPhotos Testimonial[]
+  marketingPhotos   MarketingContact[]
+  portfolioImages   PortfolioImage[]
+
+  @@index([folder])
+  @@index([deletedAt])
+}
+
+// ===== Inquiry & evaluasi =====
+
+model Inquiry {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  name        String
+  company     String?
+  email       String
+  phone       String?
+  trainingId  String?       @db.Uuid
+  training    Training?     @relation(fields: [trainingId], references: [id], onDelete: SetNull)
+  message     String?
+  status      InquiryStatus @default(NEW)
+  note        String?
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?     @db.Timestamptz(3)
+  updatedById String?       @db.Uuid
+  updatedBy   User?         @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([trainingId])
+  @@index([deletedAt])
+}
+
+model EvaluationQuestion {
+  id          String                 @id @default(uuid(7)) @db.Uuid
+  label       String
+  type        EvaluationQuestionType
+  order       Int                    @default(0)
+  active      Boolean                @default(true)
+  createdAt   DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime               @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?              @db.Timestamptz(3)
+  updatedById String?                @db.Uuid
+  updatedBy   User?                  @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([order])
+  @@index([deletedAt])
+}
+
+model EvaluationResponse {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  scheduleId String    @db.Uuid
+  schedule   Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
+  name       String
+  company    String?
+  email      String?
+  // Jawaban per pertanyaan, divalidasi Zod di BE.
+  answers    Json
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  deletedAt  DateTime? @db.Timestamptz(3)
+
+  @@index([scheduleId])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+// ===== SEO & audit =====
+
+model Redirect {
+  id          String       @id @default(uuid(7)) @db.Uuid
+  from        String
+  to          String
+  code        RedirectCode @default(PERMANENT)
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?    @db.Timestamptz(3)
+  updatedById String?      @db.Uuid
+  updatedBy   User?        @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@unique([from], map: "Redirect_from_active_key", where: raw("\"deletedAt\" IS NULL"))
+  @@index([deletedAt])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String?  @db.Uuid
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  diff      Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
 }
