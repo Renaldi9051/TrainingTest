@@ -6,7 +6,8 @@ Website training provider + panel admin CMS. Dua app Next.js yang berdiri sendir
 |---|---|---|
 | `BE/` | API (Route Handlers), satu-satunya yang akses DB & uploads | 4000 |
 | `FE/` | Halaman publik + panel admin (`/admin`) | 3000 |
-| `docker/` | Postgres 16 untuk development lokal (`compose.dev.yml`) | 5433 |
+| `docker/` | Dockerfile BE & FE (dipakai `compose.yaml` di root) | |
+| `compose.yaml` | Postgres 16 + migrasi/seed + BE + FE | 5433 |
 
 FE me-rewrite `/api/*` dan `/uploads/*` ke BE, jadi browser cukup bicara ke `localhost:3000`.
 
@@ -14,9 +15,8 @@ Dokumen kerja (`PRD.md`, `DESIGN.md`, `AGENTS.md`, `CLAUDE.md`) hanya disimpan d
 
 ## Prasyarat
 
-- Node.js 24 (lihat `.nvmrc`)
-- npm
-- Docker Desktop (untuk Postgres dev)
+- Docker Desktop
+- Node.js 24 + npm hanya perlu untuk development di host (cara B)
 
 ## Setup env
 
@@ -28,13 +28,30 @@ cp .env.example .env
 
 `.env` tidak di-commit. Script npm di kedua app memuatnya lewat `dotenv-cli`, Prisma memuatnya lewat `BE/prisma.config.ts`, dan masing-masing app hanya memvalidasi variabel miliknya. User, password, dan nama DB di `DATABASE_URL` harus sama dengan `POSTGRES_*`.
 
-## Menjalankan dari nol
+## Menjalankan
+
+### Cara A: semua di Docker (paling mudah)
+
+Dari root repo:
+
+```bash
+docker compose up --build
+```
+
+Buka http://localhost:3000. Urutannya otomatis: Postgres siap → `migrate` menerapkan migrasi + seed (aman diulang) → BE → FE. Container berjalan dalam mode produksi (`next build` + `next start`), jadi setelah kode berubah jalankan ulang `docker compose up --build`.
+
+- Berhenti: `Ctrl+C`, atau `docker compose down` kalau berjalan di background (`-d`). Data database tetap tersimpan di volume.
+- Log: `docker compose logs -f be fe`.
+
+### Cara B: development di host (hot reload)
+
+Hanya database yang di Docker. Jangan jalankan bersamaan dengan cara A (port 3000/4000 bentrok); hentikan dulu dengan `docker compose down`.
 
 ```bash
 # 1. Database + skema + data contoh (dari BE/)
 cd BE
 npm install              # sekaligus generate Prisma Client
-npm run db:up            # start Postgres di Docker, tunggu sampai healthy
+npm run db:up            # start Postgres saja, tunggu sampai healthy
 npm run db:migrate       # terapkan migrasi
 npm run db:seed          # isi data placeholder (aman diulang)
 npm run dev              # http://localhost:4000
@@ -64,7 +81,8 @@ Dijalankan dari `BE/` atau `FE/`:
 | `npm run lint` | ESLint |
 | `npm run typecheck` | Cek tipe TypeScript |
 | `npm run test` | Vitest |
-| `npm run db:up` / `db:down` / `db:logs` | BE: start, stop, dan log container Postgres. `db:down` tidak menghapus data |
+| `npm run db:up` / `db:logs` | BE: start dan lihat log container Postgres |
+| `npm run db:down` | BE: hentikan semua container proyek (termasuk be/fe dari cara A). Data tidak dihapus |
 | `npm run db:generate` | BE: generate Prisma Client |
 | `npm run db:migrate` | BE: `prisma migrate dev`. Perubahan skema: `npm run db:migrate -- --name <nama>` |
 | `npm run db:seed` | BE: isi data placeholder |
