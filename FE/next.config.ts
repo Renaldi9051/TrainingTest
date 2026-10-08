@@ -1,9 +1,12 @@
 import type { NextConfig } from "next";
-import { getEnv } from "./src/lib/env";
+import { getConfigEnv } from "./src/lib/env";
 
-const { BE_INTERNAL_URL } = getEnv();
+// Tujuan rewrite ikut "dibakar" saat build, jadi BE_INTERNAL_URL wajib ada saat `next build`.
+const { BE_INTERNAL_URL } = getConfigEnv();
 
 const nextConfig: NextConfig = {
+  // Server mandiri yang ramping untuk image Docker (docker/fe.Dockerfile).
+  output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
