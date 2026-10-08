@@ -9,6 +9,9 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
+    "db:up": "docker compose -f ../docker/compose.dev.yml --env-file ../.env up -d --wait",
+    "db:down": "docker compose -f ../docker/compose.dev.yml --env-file ../.env down",
+    "db:logs": "docker compose -f ../docker/compose.dev.yml --env-file ../.env logs -f db",
     "db:migrate": "echo db:migrate belum diimplementasikan",
     "db:seed": "echo db:seed belum diimplementasikan",
     "db:studio": "echo db:studio belum diimplementasikan"

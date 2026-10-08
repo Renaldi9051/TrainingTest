@@ -1,0 +1,25 @@
+# Postgres untuk development lokal saja. BE/FE tetap jalan di host lewat `npm run dev`.
+# Dijalankan dari BE/: npm run db:up / db:down / db:logs (memuat ../.env).
+name: training-dev
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER wajib diisi di .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD wajib diisi di .env}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB wajib diisi di .env}
+    # Port host 5433 sama dengan port SSH tunnel ke VPS, jadi pindah ke VPS cukup ganti host di DATABASE_URL.
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db-data:
