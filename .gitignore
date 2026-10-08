@@ -21,7 +21,9 @@ test-results/
 !.env.example
 
 # uploads
-uploads/
+# hanya folder data upload, bukan route src/app/uploads
+/uploads/
+/BE/uploads/
 
 # dokumen kerja lokal (tidak di-push ke GitHub)
 AGENTS.md
