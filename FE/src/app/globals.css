@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* Design tokens: DESIGN.md bagian 2. Komponen memakai token ini, bukan hex langsung. */
 :root {
@@ -11,8 +12,44 @@
   --fg-muted: #737373;
   --fg: #171717;
   --fg-strong: #0a0a0a;
+  --fg-strong-hover: #262626;
   --inverse-bg: #0a0a0a;
   --inverse-fg: #fafafa;
+
+  /* Warna status: HANYA untuk admin (DESIGN.md 2), kecil (teks/ikon/titik), bukan latar besar. */
+  --status-error: #b91c1c;
+  --status-success: #15803d;
+  --status-warning: #a16207;
+
+  /* Token shadcn/ui (admin), dipetakan ke token di atas. Tidak ada nilai warna baru di sini. */
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--bg);
+  --card-foreground: var(--fg);
+  --popover: var(--bg);
+  --popover-foreground: var(--fg);
+  --primary: var(--fg-strong);
+  --primary-foreground: var(--inverse-fg);
+  --secondary: var(--bg-subtle);
+  --secondary-foreground: var(--fg);
+  --muted: var(--bg-subtle);
+  --muted-foreground: var(--fg-muted);
+  --accent: var(--bg-subtle);
+  --accent-foreground: var(--fg);
+  --destructive: var(--status-error);
+  --destructive-foreground: var(--inverse-fg);
+  --input: var(--border-strong);
+  --ring: var(--fg-strong);
+  --radius: 6px;
+
+  --sidebar: var(--bg-subtle);
+  --sidebar-foreground: var(--fg);
+  --sidebar-primary: var(--fg-strong);
+  --sidebar-primary-foreground: var(--inverse-fg);
+  --sidebar-accent: var(--bg-muted);
+  --sidebar-accent-foreground: var(--fg-strong);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--fg-strong);
 }
 
 @theme inline {
@@ -28,15 +65,92 @@
   --color-fg-muted: var(--fg-muted);
   --color-fg: var(--fg);
   --color-fg-strong: var(--fg-strong);
+  --color-fg-strong-hover: var(--fg-strong-hover);
   --color-inverse-bg: var(--inverse-bg);
   --color-inverse-fg: var(--inverse-fg);
+  --color-white: var(--bg);
+  --color-black: var(--fg-strong);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-status-error: var(--status-error);
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radius DESIGN.md 5: 6px untuk tombol/input/kartu kecil, full untuk chip & avatar. */
+  --radius-xs: var(--radius);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+
+  /* Bayangan: hanya shadow-sm (popover/dropdown/dialog admin). Kelas shadow lain sengaja tidak ada. */
+  --shadow-*: initial;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.06), 0 4px 12px -2px rgb(0 0 0 / 0.08);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Skala tipografi DESIGN.md 3 (mobile; desktop lewat breakpoint di komponen). */
+  --text-label: 12px;
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.08em;
+  --text-small: 14px;
+  --text-small--line-height: 1.5;
+  --text-body: 16px;
+  --text-body--line-height: 1.6;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.6;
+
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--font-sans);
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
