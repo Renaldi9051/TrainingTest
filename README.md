@@ -18,14 +18,13 @@ Detail produk ada di `PRD.md`, aturan desain di `DESIGN.md`, aturan kerja di `AG
 
 ## Setup env
 
-File env ada di root repo. Salin dari contoh lalu isi nilainya:
+BE dan FE memakai satu file `.env` di root repo. Salin dari contoh lalu isi nilainya:
 
 ```bash
-cp be.env.example be.env
-cp fe.env.example fe.env
+cp .env.example .env
 ```
 
-`be.env` dan `fe.env` tidak di-commit. `REVALIDATE_SECRET` harus sama di kedua file. Script npm memuat env otomatis lewat `dotenv-cli`.
+`.env` tidak di-commit. Script npm di kedua app memuatnya lewat `dotenv-cli`, dan masing-masing app hanya memvalidasi variabel miliknya.
 
 ## Menjalankan
 

@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e ../be.env -- next dev -p 4000",
-    "build": "dotenv -e ../be.env -- next build",
-    "start": "dotenv -e ../be.env -- next start -p 4000",
+    "dev": "dotenv -e ../.env -- next dev -p 4000",
+    "build": "dotenv -e ../.env -- next build",
+    "start": "dotenv -e ../.env -- next start -p 4000",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",

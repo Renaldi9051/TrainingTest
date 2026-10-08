@@ -12,10 +12,10 @@ coverage/
 playwright-report/
 test-results/
 
-# env (file asli tidak di-commit, contoh *.env.example tetap di-commit)
+# env (file asli tidak di-commit, .env.example tetap di-commit)
 *.env
 .env*
-!*.env.example
+!.env.example
 
 # uploads
 uploads/
