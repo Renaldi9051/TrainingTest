@@ -197,7 +197,13 @@ export async function listTrainings(
     db.training.findMany({
       where,
       include: adminInclude,
-      orderBy: [{ [query.sort.field]: { sort: query.sort.direction, nulls: "last" } }, { id: "asc" }],
+      orderBy: [
+        // publishedAt bisa null (draf): taruh di akhir. Kolom lain tidak nullable.
+        query.sort.field === "publishedAt"
+          ? { publishedAt: { sort: query.sort.direction, nulls: "last" } }
+          : { [query.sort.field]: query.sort.direction },
+        { id: "asc" },
+      ],
       ...pagination(query.page, query.pageSize),
     }),
     db.training.count({ where }),
