@@ -39,13 +39,23 @@ export async function firstCategory(request: APIRequestContext): Promise<{ id: s
   return data[0];
 }
 
+export const DEFAULT_OUTCOMES = [
+  "Memahami konsep dasar materi",
+  "Menerapkan langkah kerja utama",
+  "Mengevaluasi hasil penerapan",
+  "Menyusun rencana tindak lanjut",
+];
+
 export type CreatedTraining = { id: string; slug: string; title: string };
 
 export async function createTraining(
   request: APIRequestContext,
   body: Record<string, unknown>,
 ): Promise<CreatedTraining> {
-  const response = await request.post("/api/admin/trainings", { data: body, headers: MUTATION_HEADERS });
+  // Status Tayang wajib 4-8 hasil belajar; isi otomatis kalau test tidak menentukan.
+  const payload =
+    body.status === "PUBLISHED" && !("outcomes" in body) ? { ...body, outcomes: DEFAULT_OUTCOMES } : body;
+  const response = await request.post("/api/admin/trainings", { data: payload, headers: MUTATION_HEADERS });
   expect(response.status(), await response.text()).toBe(201);
   const { data } = (await response.json()) as ApiBody<CreatedTraining>;
   return data;

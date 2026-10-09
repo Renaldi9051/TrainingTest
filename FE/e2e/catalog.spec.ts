@@ -29,6 +29,11 @@ test.describe("katalog & detail pelatihan", () => {
     await page.locator("#training-summary").fill(`Ringkasan pelatihan uji ${id}.`);
     await page.getByPlaceholder("Cari kategori").fill(category.name);
     await page.getByRole("checkbox", { name: category.name, exact: true }).click();
+    // Status Tayang wajib 4 hasil belajar.
+    for (let index = 1; index <= 4; index += 1) {
+      await page.getByRole("button", { name: "Tambah hasil belajar" }).click();
+      await page.getByLabel(`Hasil belajar ${index}`, { exact: true }).fill(`Hasil belajar uji ${index}`);
+    }
     await page.getByRole("radio", { name: /Tayang/ }).check();
     await page.getByRole("button", { name: "Simpan", exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/trainings\/[0-9a-f-]{36}$/);
