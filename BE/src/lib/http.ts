@@ -83,3 +83,14 @@ export async function readJson(request: Request): Promise<unknown> {
     throw new HttpError(400, "INVALID_JSON", "Body request harus JSON yang valid.");
   }
 }
+
+// Body JSON opsional: body kosong = undefined (mis. POST /:id/restore tanpa slug baru).
+export async function readOptionalJson(request: Request): Promise<unknown> {
+  const text = await request.text();
+  if (text.trim() === "") return undefined;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new HttpError(400, "INVALID_JSON", "Body request harus JSON yang valid.");
+  }
+}
