@@ -26,3 +26,36 @@ export async function loginViaUi(page: Page, email: string, password: string) {
   await page.getByLabel("Kata sandi").fill(password);
   await page.getByRole("button", { name: "Masuk" }).click();
 }
+
+const MUTATION_HEADERS = { Origin: ORIGIN };
+
+type ApiBody<T> = { data: T };
+
+export async function firstCategory(request: APIRequestContext): Promise<{ id: string; slug: string; name: string }> {
+  const response = await request.get("/api/admin/categories/options");
+  expect(response.status(), await response.text()).toBe(200);
+  const { data } = (await response.json()) as ApiBody<{ id: string; slug: string; name: string }[]>;
+  if (!data[0]) throw new Error("Butuh minimal satu kategori (jalankan seed).");
+  return data[0];
+}
+
+export type CreatedTraining = { id: string; slug: string; title: string };
+
+export async function createTraining(
+  request: APIRequestContext,
+  body: Record<string, unknown>,
+): Promise<CreatedTraining> {
+  const response = await request.post("/api/admin/trainings", { data: body, headers: MUTATION_HEADERS });
+  expect(response.status(), await response.text()).toBe(201);
+  const { data } = (await response.json()) as ApiBody<CreatedTraining>;
+  return data;
+}
+
+export async function deleteTraining(request: APIRequestContext, id: string) {
+  await request.delete(`/api/admin/trainings/${id}`, { headers: MUTATION_HEADERS });
+}
+
+// Penanda unik per run supaya test bisa diulang tanpa bentrok slug/judul.
+export function runId(): string {
+  return `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
+}

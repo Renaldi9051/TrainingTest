@@ -140,8 +140,10 @@ function SearchForm({ state }: { state: CatalogState }) {
 
 function FilterRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-6">
-      <p className="w-24 shrink-0 pt-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{label}</p>
+    <div role="group" aria-label={label} className="flex flex-col gap-3 md:flex-row md:items-start md:gap-6">
+      <p aria-hidden className="w-24 shrink-0 pt-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
+        {label}
+      </p>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
