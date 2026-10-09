@@ -42,8 +42,8 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: "Situs",
     modules: [
-      { slug: "settings", label: "Pengaturan situs", icon: Settings2Icon, available: false },
-      { slug: "navigation", label: "Navigasi", icon: MenuIcon, available: false },
+      { slug: "settings", label: "Pengaturan situs", icon: Settings2Icon, available: true },
+      { slug: "navigation", label: "Navigasi", icon: MenuIcon, available: true },
       { slug: "home", label: "Beranda", icon: HouseIcon, available: false },
       { slug: "pages", label: "Halaman", icon: FileTextIcon, available: false },
       { slug: "services", label: "Layanan", icon: LayoutListIcon, available: false },
@@ -52,7 +52,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: "Katalog",
     modules: [
-      { slug: "categories", label: "Kategori", icon: FolderTreeIcon, available: false },
+      { slug: "categories", label: "Kategori", icon: FolderTreeIcon, available: true },
       { slug: "trainings", label: "Pelatihan", icon: BookOpenIcon, available: false },
       { slug: "schedules", label: "Jadwal", icon: CalendarDaysIcon, available: false },
     ],
