@@ -1,6 +1,6 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
-import { getEnv } from "@/lib/env";
+import { getPublicEnv } from "@/lib/env";
 import type {
   ApiSuccess,
   PaginationMeta,
@@ -39,7 +39,7 @@ class PublicApiError extends Error {
 
 // null = 404 (konten tidak ada). Error lain dilempar supaya tampil sebagai halaman error.
 async function getJson<T, M = undefined>(path: string): Promise<ApiSuccess<T, M> | null> {
-  const response = await fetch(`${getEnv().BE_INTERNAL_URL}/api/public${path}`, {
+  const response = await fetch(`${getPublicEnv().BE_INTERNAL_URL}/api/public${path}`, {
     headers: { Accept: "application/json" },
   });
   if (response.status === 404) return null;

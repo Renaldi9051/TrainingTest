@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { getSettings } from "@/lib/api/public";
-import { getEnv } from "@/lib/env";
+import { getPublicEnv } from "@/lib/env";
 
 // Metadata dasar seluruh halaman publik dari pengaturan SEO default (bisa diubah admin).
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const { seo, identity } = settings;
   return {
-    metadataBase: new URL(getEnv().NEXT_PUBLIC_SITE_URL),
+    metadataBase: new URL(getPublicEnv().NEXT_PUBLIC_SITE_URL),
     title: { template: seo.titleTemplate, default: seo.defaultTitle },
     description: seo.description || undefined,
     openGraph: {

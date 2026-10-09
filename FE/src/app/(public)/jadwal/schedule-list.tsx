@@ -6,7 +6,7 @@ import { Pagination } from "@/components/public/pagination";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { buttonVariants } from "@/components/ui/button";
 import { getCategories, getSchedules, getSettings, type ScheduleParams } from "@/lib/api/public";
-import { getEnv } from "@/lib/env";
+import { getPublicEnv } from "@/lib/env";
 import { APP_TIME_ZONE, formatNumber } from "@/lib/format";
 import { scheduleEventJsonLd } from "@/lib/structured-data";
 
@@ -70,7 +70,7 @@ export async function ScheduleList({ searchParams }: { searchParams: PageProps<"
   // Kota terpilih tetap muncul di pilihan walau tidak ada di daftar kota saat ini.
   const cities = state.kota && !meta.cities.includes(state.kota) ? [state.kota, ...meta.cities] : meta.cities;
   const filtered = Boolean(state.bulan || state.kota || state.kategori);
-  const siteUrl = getEnv().NEXT_PUBLIC_SITE_URL;
+  const siteUrl = getPublicEnv().NEXT_PUBLIC_SITE_URL;
 
   return (
     <>

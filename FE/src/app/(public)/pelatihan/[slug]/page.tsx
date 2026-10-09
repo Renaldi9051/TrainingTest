@@ -15,7 +15,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { getSettings, getTraining, getTrainingSlugs } from "@/lib/api/public";
 import { getTrainingPreview } from "@/lib/api/preview";
 import type { PublicTrainingDetail } from "@/lib/api/types";
-import { getEnv } from "@/lib/env";
+import { getPublicEnv } from "@/lib/env";
 import { METHOD_LABELS, TYPE_LABELS } from "@/lib/labels";
 import { PREVIEW_EXIT } from "@/lib/session";
 import { courseJsonLd, scheduleEventJsonLd, whatsappTrainingUrl } from "@/lib/structured-data";
@@ -79,7 +79,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
   const [loaded, settings] = await Promise.all([loadTraining(slug), getSettings()]);
   if (!loaded) notFound();
   const { training, preview } = loaded;
-  const siteUrl = getEnv().NEXT_PUBLIC_SITE_URL;
+  const siteUrl = getPublicEnv().NEXT_PUBLIC_SITE_URL;
   const whatsapp = settings.contact.whatsapp ? whatsappTrainingUrl(settings.contact.whatsapp, training.title) : null;
 
   const sections = [

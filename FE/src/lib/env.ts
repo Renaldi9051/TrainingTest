@@ -10,6 +10,11 @@ const envSchema = z.object({
 // memvalidasi variabel yang benar-benar dipakai config.
 const configEnvSchema = envSchema.pick({ BE_INTERNAL_URL: true });
 
+// Fetch data publik & URL absolut (metadata, JSON-LD) juga berjalan saat prerender build,
+// jadi tidak boleh mewajibkan secret.
+const publicEnvSchema = envSchema.pick({ BE_INTERNAL_URL: true, NEXT_PUBLIC_SITE_URL: true });
+export type PublicEnv = z.infer<typeof publicEnvSchema>;
+
 export type Env = z.infer<typeof envSchema>;
 export type ConfigEnv = z.infer<typeof configEnvSchema>;
 
@@ -31,6 +36,13 @@ let cached: Env | undefined;
 export function getEnv(): Env {
   cached ??= parseEnv(process.env);
   return cached;
+}
+
+let cachedPublic: PublicEnv | undefined;
+
+export function getPublicEnv(): PublicEnv {
+  cachedPublic ??= parseWith(publicEnvSchema, process.env);
+  return cachedPublic;
 }
 
 export function getConfigEnv(): ConfigEnv {
