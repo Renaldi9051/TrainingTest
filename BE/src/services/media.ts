@@ -8,6 +8,13 @@ import { revalidateTags, RevalidateTag } from "@/lib/revalidate";
 import { monthFolder, saveUpload, uploadUrl } from "@/lib/storage";
 import { sanitizeSvg } from "@/lib/svg";
 import type { MediaListQuery, MediaUpdateInput } from "@/lib/validators/media";
+import {
+  SETTING_KEYS,
+  SETTING_LABELS,
+  SETTING_MEDIA_FIELDS,
+  settingMediaIds,
+  type SettingKey,
+} from "@/lib/validators/settings";
 import { AuditAction, writeAudit } from "@/services/audit";
 
 // ===== DTO =====
@@ -57,6 +64,21 @@ export function toMediaDto(media: Media): MediaDto {
     variants,
     createdAt: media.createdAt,
     updatedAt: media.updatedAt,
+  };
+}
+
+// Gambar di respons publik: tanpa metadata admin (nama file asli, folder, ukuran file).
+export type PublicImage = Pick<MediaDto, "url" | "alt" | "width" | "height" | "mime" | "variants">;
+
+export function toPublicImage(media: MediaDto | null | undefined): PublicImage | null {
+  if (!media) return null;
+  return {
+    url: media.url,
+    alt: media.alt,
+    width: media.width,
+    height: media.height,
+    mime: media.mime,
+    variants: media.variants,
   };
 }
 
@@ -229,6 +251,43 @@ export async function listMediaFolders(): Promise<string[]> {
   return rows.flatMap((row) => (row.folder ? [row.folder] : []));
 }
 
+// ===== Referensi dari konten =====
+
+type MediaReader = Pick<Prisma.TransactionClient, "media">;
+
+// Semua referensi gambar di konten disimpan sebagai mediaId. Saat simpan, pastikan media itu
+// ada, belum dihapus, dan berupa gambar. Error dikembalikan per field form.
+export async function assertImageMedia(
+  refs: Record<string, string | null | undefined>,
+  db: MediaReader = getDb(),
+): Promise<void> {
+  const ids = [...new Set(Object.values(refs).filter((id): id is string => Boolean(id)))];
+  if (ids.length === 0) return;
+  const found = await db.media.findMany({
+    where: { id: { in: ids }, deletedAt: null, mime: { startsWith: "image/" } },
+    select: { id: true },
+  });
+  const valid = new Set(found.map((row) => row.id));
+  const fields: Record<string, string[]> = {};
+  for (const [field, id] of Object.entries(refs)) {
+    if (id && !valid.has(id)) fields[field] = ["Gambar tidak ditemukan atau sudah dihapus."];
+  }
+  if (Object.keys(fields).length > 0) {
+    throw new HttpError(422, "VALIDATION_ERROR", "Data tidak valid.", fields);
+  }
+}
+
+// Media aktif berdasarkan id, untuk melengkapi respons (logo, cover, OG). Id yang hilang dilewati.
+export async function getMediaMap(
+  ids: (string | null | undefined)[],
+  db: MediaReader = getDb(),
+): Promise<Map<string, MediaDto>> {
+  const unique = [...new Set(ids.filter((id): id is string => Boolean(id)))];
+  if (unique.length === 0) return new Map();
+  const rows = await db.media.findMany({ where: { id: { in: unique }, deletedAt: null } });
+  return new Map(rows.map((row) => [row.id, toMediaDto(row)]));
+}
+
 async function findActiveMedia(id: string): Promise<Media> {
   const media = await getDb().media.findFirst({ where: { id, deletedAt: null } });
   if (!media) throw new HttpError(404, "NOT_FOUND", "Media tidak ditemukan.");
@@ -270,7 +329,14 @@ export async function updateMedia(
 // ===== Pemakaian & hapus =====
 
 export type MediaUsage = {
-  entity: "Training" | "Service" | "Client" | "Testimonial" | "MarketingContact" | "PortfolioItem";
+  entity:
+    | "Training"
+    | "Service"
+    | "Client"
+    | "Testimonial"
+    | "MarketingContact"
+    | "PortfolioItem"
+    | "SiteSetting";
   entityLabel: string;
   id: string;
   label: string;
@@ -279,12 +345,26 @@ export type MediaUsage = {
   inTrash: boolean;
 };
 
-// Semua relasi ke Media di skema (cover, image, logo, photo, galeri), termasuk item di Sampah.
+// Semua referensi ke Media: relasi di skema (cover, image, logo, photo, galeri), mediaId di JSON
+// (SEO pelatihan, pengaturan situs), termasuk item di Sampah.
 export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
   const db = getDb();
-  const [trainings, services, clients, testimonials, marketing, portfolio] = await Promise.all([
+  const [
+    trainings,
+    trainingSeo,
+    services,
+    clients,
+    testimonials,
+    marketing,
+    portfolio,
+    settings,
+  ] = await Promise.all([
     db.training.findMany({
       where: { coverId: mediaId },
+      select: { id: true, title: true, deletedAt: true },
+    }),
+    db.training.findMany({
+      where: { seo: { path: ["ogImageId"], equals: mediaId } },
       select: { id: true, title: true, deletedAt: true },
     }),
     db.service.findMany({
@@ -307,7 +387,26 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
       where: { mediaId },
       select: { portfolioItem: { select: { id: true, title: true, deletedAt: true } } },
     }),
+    db.siteSetting.findMany({
+      where: { key: { in: SETTING_KEYS.filter((key) => SETTING_MEDIA_FIELDS[key]) } },
+      select: { id: true, key: true, value: true },
+    }),
   ]);
+
+  const settingUsages: MediaUsage[] = settings.flatMap((row) => {
+    const key = row.key as SettingKey;
+    const labels = SETTING_MEDIA_FIELDS[key] ?? {};
+    return Object.entries(settingMediaIds(key, row.value))
+      .filter(([, id]) => id === mediaId)
+      .map(([field]) => ({
+        entity: "SiteSetting" as const,
+        entityLabel: "Pengaturan situs",
+        id: row.key,
+        label: SETTING_LABELS[key],
+        field: labels[field] ?? field,
+        inTrash: false,
+      }));
+  });
 
   return [
     ...trainings.map((row) => ({
@@ -316,6 +415,14 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
       id: row.id,
       label: row.title,
       field: "Sampul",
+      inTrash: row.deletedAt !== null,
+    })),
+    ...trainingSeo.map((row) => ({
+      entity: "Training" as const,
+      entityLabel: "Pelatihan",
+      id: row.id,
+      label: row.title,
+      field: "Gambar OG",
       inTrash: row.deletedAt !== null,
     })),
     ...services.map((row) => ({
@@ -358,6 +465,7 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
       field: "Galeri",
       inTrash: row.deletedAt !== null,
     })),
+    ...settingUsages,
   ];
 }
 

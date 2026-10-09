@@ -44,6 +44,7 @@ function noUsages() {
     mock.testimonial,
     mock.marketingContact,
     mock.portfolioImage,
+    mock.siteSetting,
   ]) {
     model.findMany.mockResolvedValue([]);
   }
@@ -68,7 +69,8 @@ describe("deleteMedia", () => {
   it("409 MEDIA_IN_USE dengan daftar pemakai kalau masih dipakai", async () => {
     mock.media.findFirst.mockResolvedValue(media);
     noUsages();
-    mock.training.findMany.mockResolvedValue([
+    // Panggilan pertama: cover; kedua: SEO (gambar OG).
+    mock.training.findMany.mockResolvedValueOnce([
       { id: "t1", title: "Analisis Laporan Keuangan", deletedAt: null },
     ]);
     mock.portfolioImage.findMany.mockResolvedValue([
@@ -86,6 +88,29 @@ describe("deleteMedia", () => {
       },
     });
     expect(mock.media.update).not.toHaveBeenCalled();
+  });
+
+  it("ikut menghitung mediaId di pengaturan situs dan SEO pelatihan", async () => {
+    mock.media.findFirst.mockResolvedValue(media);
+    noUsages();
+    mock.training.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: "t2", title: "KPI", deletedAt: null }]);
+    mock.siteSetting.findMany.mockResolvedValue([
+      { id: "s1", key: "site.identity", value: { name: "X", logoLightId: media.id, faviconId: media.id } },
+      { id: "s2", key: "seo.default", value: { ogImageId: "lain" } },
+    ]);
+
+    await expect(deleteMedia(media.id, "u1")).rejects.toMatchObject({
+      status: 409,
+      details: {
+        usages: [
+          expect.objectContaining({ entity: "Training", id: "t2", field: "Gambar OG" }),
+          expect.objectContaining({ entity: "SiteSetting", label: "Identitas situs", field: "Logo terang" }),
+          expect.objectContaining({ entity: "SiteSetting", label: "Identitas situs", field: "Favicon" }),
+        ],
+      },
+    });
   });
 
   it("soft delete + audit kalau tidak dipakai", async () => {
