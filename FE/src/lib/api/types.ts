@@ -221,3 +221,158 @@ export type RichTextNode = {
 };
 
 export type RichTextDoc = { type: "doc"; content: RichTextNode[] };
+
+// ===== Pelatihan =====
+
+export type TrainingMethod = "ONLINE" | "OFFLINE" | "HYBRID";
+export type TrainingType = "PUBLIC" | "IN_HOUSE";
+export type ContentStatus = "DRAFT" | "PUBLISHED";
+// SCHEDULED = PUBLISHED dengan waktu publish di masa depan.
+export type TrainingPublicState = "DRAFT" | "SCHEDULED" | "PUBLISHED";
+
+export type TrainingCategoryRef = { id: string; slug: string; name: string };
+
+export type TrainingSeo = { title: string; description: string; ogImageId: string | null };
+
+export type TrainingListItem = {
+  id: string;
+  slug: string;
+  title: string;
+  status: ContentStatus;
+  publicState: TrainingPublicState;
+  publishedAt: string | null;
+  method: TrainingMethod | null;
+  types: TrainingType[];
+  categories: TrainingCategoryRef[];
+  cover: Media | null;
+  scheduleCount: number;
+  updatedAt: string;
+};
+
+export type Training = TrainingListItem & {
+  summary: string | null;
+  body: RichTextDoc | null;
+  objectives: RichTextDoc | null;
+  syllabus: RichTextDoc | null;
+  audience: RichTextDoc | null;
+  facilities: RichTextDoc | null;
+  duration: string | null;
+  priceText: string | null;
+  showPrice: boolean;
+  coverId: string | null;
+  seo: TrainingSeo;
+  ogImage: Media | null;
+  createdAt: string;
+};
+
+export type TrainingBulkAction =
+  | { action: "publish" | "unpublish" | "delete"; ids: string[] }
+  | { action: "set-category"; ids: string[]; categoryId: string };
+
+export type PublicCategoryRef = { slug: string; name: string };
+
+export type PublicTrainingCard = {
+  slug: string;
+  title: string;
+  summary: string | null;
+  duration: string | null;
+  method: TrainingMethod | null;
+  types: TrainingType[];
+  cover: PublicImage | null;
+  categories: PublicCategoryRef[];
+  publishedAt: string;
+};
+
+export type ScheduleStatus = "OPEN" | "FULL" | "COMPLETED";
+
+export type PublicTrainingSchedule = {
+  id: string;
+  startDate: string;
+  endDate: string;
+  city: string | null;
+  venue: string | null;
+  method: TrainingMethod;
+  // null = harga disembunyikan (showPrice false) atau belum diisi.
+  price: number | null;
+  status: ScheduleStatus;
+};
+
+export type PublicTrainingDetail = PublicTrainingCard & {
+  bodyHtml: string | null;
+  objectivesHtml: string | null;
+  syllabusHtml: string | null;
+  audienceHtml: string | null;
+  facilitiesHtml: string | null;
+  showPrice: boolean;
+  priceText: string | null;
+  seo: { title: string; description: string; ogImage: PublicImage | null };
+  schedules: PublicTrainingSchedule[];
+  related: PublicTrainingCard[];
+  updatedAt: string;
+};
+
+export type PublicCatalogMeta = PaginationMeta & { q: string | null };
+
+// ===== Jadwal =====
+
+export type Schedule = {
+  id: string;
+  training: { id: string; slug: string; title: string };
+  startDate: string;
+  endDate: string;
+  city: string | null;
+  venue: string | null;
+  method: TrainingMethod;
+  price: number | null;
+  status: ScheduleStatus;
+  // Status yang tampil di publik (SELESAI otomatis kalau tanggal selesai sudah lewat).
+  displayStatus: ScheduleStatus;
+  updatedAt: string;
+};
+
+export type ScheduleImportRow = {
+  line: number;
+  values: Record<
+    "training_slug" | "start_date" | "end_date" | "city" | "venue" | "method" | "price" | "status",
+    string
+  >;
+  errors: string[];
+  data: {
+    trainingId: string;
+    trainingTitle: string;
+    startDate: string;
+    endDate: string;
+    city: string | null;
+    venue: string | null;
+    method: TrainingMethod;
+    price: number | null;
+    status: ScheduleStatus;
+  } | null;
+};
+
+export type ScheduleImportResult = {
+  rows: ScheduleImportRow[];
+  validCount: number;
+  invalidCount: number;
+  created: number;
+};
+
+export type PublicSchedule = {
+  id: string;
+  training: { slug: string; title: string; categories: PublicCategoryRef[] };
+  startDate: string;
+  endDate: string;
+  city: string | null;
+  venue: string | null;
+  method: TrainingMethod;
+  // null kalau showPrice false: tampil "Hubungi marketing".
+  price: number | null;
+  showPrice: boolean;
+  status: ScheduleStatus;
+};
+
+export type PublicScheduleMeta = PaginationMeta & {
+  cities: string[];
+  month: string | null;
+  upcomingOnly: boolean;
+};

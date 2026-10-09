@@ -116,6 +116,8 @@ export function SlugField({
           </span>
         ) : result && !result.valid ? (
           <span className="text-status-error">{result.message}</span>
+        ) : result && !result.available && auto && !excludeId ? (
+          <span>Slug ini sudah dipakai; saat disimpan otomatis menjadi {result.suggestion}.</span>
         ) : result && !result.available ? (
           <span className="text-status-error">
             {result.message}{" "}

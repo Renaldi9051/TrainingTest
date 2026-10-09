@@ -53,8 +53,8 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     label: "Katalog",
     modules: [
       { slug: "categories", label: "Kategori", icon: FolderTreeIcon, available: true },
-      { slug: "trainings", label: "Pelatihan", icon: BookOpenIcon, available: false },
-      { slug: "schedules", label: "Jadwal", icon: CalendarDaysIcon, available: false },
+      { slug: "trainings", label: "Pelatihan", icon: BookOpenIcon, available: true },
+      { slug: "schedules", label: "Jadwal", icon: CalendarDaysIcon, available: true },
     ],
   },
   {

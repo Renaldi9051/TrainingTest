@@ -5,6 +5,7 @@ export const SESSION_PEEK_HEADER = "x-session-peek";
 
 export const ADMIN_HOME = "/admin";
 export const ADMIN_LOGIN = "/admin/login";
+export const PREVIEW_EXIT = "/admin/preview/exit";
 
 // Hanya izinkan redirect balik ke halaman admin (cegah open redirect lewat ?next=).
 export function safeAdminPath(next: string | null | undefined): string {

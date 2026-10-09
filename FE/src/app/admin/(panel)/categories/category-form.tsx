@@ -64,7 +64,9 @@ export function CategoryForm({ category }: { category: Category | null }) {
 
   const save = useMutation({
     mutationFn: async (values: FormValues) => {
-      const body = { ...values, description: values.description || null, slug: values.slug || undefined };
+      // Slug otomatis (belum diedit manual) tidak dikirim: BE membuat slug unik sendiri.
+      const slug = autoSlug && !category ? undefined : values.slug || undefined;
+      const body = { ...values, description: values.description || null, slug };
       return category
         ? (await apiSend<Category>(`/admin/categories/${category.id}`, "PATCH", body)).data
         : (await apiSend<Category>("/admin/categories", "POST", body)).data;
