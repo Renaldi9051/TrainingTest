@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
   // Server mandiri yang ramping untuk image Docker (docker/fe.Dockerfile).
   output: "standalone",
   cacheComponents: true,
+  // Cache data publik: kesegaran dijaga revalidateTag dari BE (< 5 detik setelah mutasi).
+  // Waktu di bawah hanya jaring pengaman; stale >= 30 s & expire >= 5 menit memenuhi ensureStatic.
+  cacheLife: {
+    content: { stale: 300, revalidate: 3600, expire: 7 * 24 * 3600 },
+  },
   partialPrefetching: true,
   poweredByHeader: false,
   // Aturan agent ada di AGENTS.md root; jangan biarkan `next dev` membuat AGENTS.md per app.
