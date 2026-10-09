@@ -248,30 +248,38 @@ model Category {
 }
 
 model Training {
-  id          String          @id @default(uuid(7)) @db.Uuid
-  slug        String
-  title       String
-  summary     String?
-  body        Json?
-  objectives  Json?
-  syllabus    Json?
-  audience    Json?
-  facilities  Json?
-  duration    String?
-  method      TrainingMethod?
-  types       TrainingType[]  @default([])
-  priceText   String?
-  showPrice   Boolean         @default(false)
-  coverId     String?         @db.Uuid
-  cover       Media?          @relation(fields: [coverId], references: [id], onDelete: SetNull)
-  status      ContentStatus   @default(DRAFT)
-  publishedAt DateTime?       @db.Timestamptz(3)
-  seo         Json?
-  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime        @updatedAt @db.Timestamptz(3)
-  deletedAt   DateTime?       @db.Timestamptz(3)
-  updatedById String?         @db.Uuid
-  updatedBy   User?           @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  id                   String                   @id @default(uuid(7)) @db.Uuid
+  slug                 String
+  title                String
+  summary              String?
+  body                 Json?
+  objectives           Json?
+  syllabus             Json?
+  audience             Json?
+  facilities           Json?
+  duration             String?
+  method               TrainingMethod?
+  types                TrainingType[]           @default([])
+  priceText            String?
+  showPrice            Boolean                  @default(false)
+  coverId              String?                  @db.Uuid
+  cover                Media?                   @relation(fields: [coverId], references: [id], onDelete: SetNull)
+  status               ContentStatus            @default(DRAFT)
+  publishedAt          DateTime?                @db.Timestamptz(3)
+  // Kapan FE terakhir di-revalidate untuk publish ini. Scheduler BE me-revalidate pelatihan yang
+  // waktu publish-nya sudah lewat tapi belum di-revalidate (publishRevalidatedAt < publishedAt).
+  publishRevalidatedAt DateTime?                @db.Timestamptz(3)
+  seo                  Json?
+  // Kolom pencarian, diisi trigger DB (lihat migrasi phase2_catalog_search), bukan oleh aplikasi:
+  // - searchVector: tsvector config simple_unaccent; bobot A judul, B nama kategori, C ringkasan.
+  // - searchTitle : judul lower + unaccent, untuk pencocokan sebagian/typo (pg_trgm).
+  searchVector         Unsupported("tsvector")?
+  searchTitle          String                   @default("")
+  createdAt            DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime                 @updatedAt @db.Timestamptz(3)
+  deletedAt            DateTime?                @db.Timestamptz(3)
+  updatedById          String?                  @db.Uuid
+  updatedBy            User?                    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 
   categories TrainingCategory[]
   schedules  Schedule[]
@@ -280,7 +288,10 @@ model Training {
   @@unique([slug], map: "Training_slug_active_key", where: raw("\"deletedAt\" IS NULL"))
   @@index([status])
   @@index([publishedAt])
+  @@index([status, publishedAt])
   @@index([deletedAt])
+  @@index([searchVector], type: Gin)
+  @@index([searchTitle(ops: raw("gin_trgm_ops"))], type: Gin)
 }
 
 model TrainingCategory {
@@ -316,6 +327,7 @@ model Schedule {
   @@index([trainingId])
   @@index([startDate])
   @@index([status])
+  @@index([city])
   @@index([deletedAt])
 }
 
