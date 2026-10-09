@@ -1,4 +1,6 @@
-// Seed data placeholder untuk development. Idempotent: aman dijalankan berulang (upsert).
+// Seed data placeholder untuk development. Idempotent: aman dijalankan berulang.
+// Hanya MEMBUAT data yang belum ada; data yang sudah diubah admin tidak pernah ditimpa
+// (service `migrate` di compose menjalankan seed setiap `docker compose up`).
 // Semua teks di sini ditulis sendiri, bukan salinan dari website referensi.
 import type { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
@@ -23,28 +25,54 @@ const settings: { key: string; value: Prisma.InputJsonValue }[] = [
     value: {
       name: "Lembaga Pelatihan Contoh",
       tagline: "Pelatihan praktis untuk tim yang terus bertumbuh",
+      logoLightId: null,
+      logoDarkId: null,
+      faviconId: null,
     },
   },
+  { key: "site.header", value: { ctaLabel: "Lihat jadwal", ctaHref: "/jadwal" } },
   {
     key: "site.contact",
     value: {
       phone: "+62 21 0000 0000",
-      whatsapp: "+62 812 0000 0000",
+      whatsapp: "6281200000000",
       email: "halo@example.com",
       address: "Jl. Contoh Raya No. 1, Jakarta",
+      mapEmbedUrl: "",
+    },
+  },
+  {
+    key: "site.social",
+    value: {
+      links: [
+        { platform: "instagram", label: "", url: "https://instagram.com/example" },
+        { platform: "linkedin", label: "", url: "https://www.linkedin.com/company/example" },
+      ],
     },
   },
   {
     key: "site.footer",
-    value: { text: "Pelatihan in-house dan public untuk perusahaan dan instansi." },
+    value: {
+      description: "Pelatihan in-house dan public untuk perusahaan dan instansi.",
+      copyright: "Lembaga Pelatihan Contoh",
+    },
   },
   {
     key: "seo.default",
     value: {
-      title: "Lembaga Pelatihan Contoh",
+      titleTemplate: "%s | Lembaga Pelatihan Contoh",
+      defaultTitle: "Lembaga Pelatihan Contoh",
       description: "Katalog pelatihan, jadwal public training, dan layanan in-house.",
+      ogImageId: null,
     },
   },
+];
+
+const navItems: { location: "HEADER" | "FOOTER"; label: string; href: string }[] = [
+  { location: "HEADER", label: "Pelatihan", href: "/pelatihan" },
+  { location: "HEADER", label: "Jadwal", href: "/jadwal" },
+  { location: "FOOTER", label: "Katalog pelatihan", href: "/pelatihan" },
+  { location: "FOOTER", label: "Jadwal training", href: "/jadwal" },
 ];
 
 const categories = [
@@ -147,18 +175,22 @@ async function seedAdmin(): Promise<"created" | "exists"> {
 async function main() {
   const adminResult = await seedAdmin();
   for (const setting of settings) {
-    await db.siteSetting.upsert({
-      where: { key: setting.key },
-      update: { value: setting.value },
-      create: setting,
-    });
+    await db.siteSetting.upsert({ where: { key: setting.key }, update: {}, create: setting });
+  }
+
+  // Menu contoh hanya kalau belum ada menu sama sekali (termasuk yang di Sampah).
+  if ((await db.navItem.count()) === 0) {
+    for (const [index, item] of navItems.entries()) {
+      const order = navItems.slice(0, index).filter((other) => other.location === item.location).length;
+      await db.navItem.create({ data: { ...item, order } });
+    }
   }
 
   const categoryIds = new Map<string, string>();
   for (const category of categories) {
     const saved = await db.category.upsert({
       where: { slug: category.slug, deletedAt: null },
-      update: category,
+      update: {},
       create: category,
     });
     categoryIds.set(category.slug, saved.id);
@@ -174,7 +206,7 @@ async function main() {
     };
     const saved = await db.training.upsert({
       where: { slug: training.slug, deletedAt: null },
-      update: data,
+      update: {},
       create: data,
     });
     trainingIds.set(training.slug, saved.id);
@@ -202,12 +234,12 @@ async function main() {
   };
   await db.schedule.upsert({
     where: { id: SAMPLE_SCHEDULE_ID },
-    update: schedule,
+    update: {},
     create: { id: SAMPLE_SCHEDULE_ID, ...schedule },
   });
 
   console.info(
-    `Seed selesai: ${settings.length} pengaturan, ${categories.length} kategori, ` +
+    `Seed selesai: ${settings.length} pengaturan, ${navItems.length} menu, ${categories.length} kategori, ` +
       `${trainings.length} pelatihan, 1 jadwal, admin ${adminResult === "created" ? "dibuat" : "sudah ada"}.`,
   );
 }
