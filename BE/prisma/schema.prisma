@@ -251,12 +251,21 @@ model Training {
   id                   String                   @id @default(uuid(7)) @db.Uuid
   slug                 String
   title                String
+  // Satu kalimat, maks 200 karakter (divalidasi Zod di BE).
   summary              String?
-  body                 Json?
-  objectives           Json?
-  syllabus             Json?
-  audience             Json?
+  // Rich text Tiptap (dulu `body`); admin diberi hint maks 2 paragraf.
+  description          Json?
+  // Hasil belajar: 4-8 item (wajib saat Tayang), tiap item maks 160 karakter.
+  outcomes             String[]                 @default([])
+  // Materi: { title, points: string[], durationMinutes? }[]
+  modules              Json                     @default("[]")
+  // Target peserta: { role, note? }[]
+  audience             Json                     @default("[]")
+  prerequisites        String?
+  // string[]; null = pakai SiteSetting training.defaults.facilities
   facilities           Json?
+  // FAQ khusus pelatihan { q, a }[]; tampil sebelum FAQ global (training.defaults.faq)
+  faq                  Json                     @default("[]")
   duration             String?
   method               TrainingMethod?
   types                TrainingType[]           @default([])
@@ -271,7 +280,8 @@ model Training {
   publishRevalidatedAt DateTime?                @db.Timestamptz(3)
   seo                  Json?
   // Kolom pencarian, diisi trigger DB (lihat migrasi phase2_catalog_search), bukan oleh aplikasi:
-  // - searchVector: tsvector config simple_unaccent; bobot A judul, B nama kategori, C ringkasan.
+  // - searchVector: tsvector config simple_unaccent; bobot A judul, B nama kategori, C ringkasan,
+  //   D judul modul materi.
   // - searchTitle : judul lower + unaccent, untuk pencocokan sebagian/typo (pg_trgm).
   searchVector         Unsupported("tsvector")?
   searchTitle          String                   @default("")
