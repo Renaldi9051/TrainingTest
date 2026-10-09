@@ -9,8 +9,13 @@ export function createMockDb() {
     count: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
+    upsert: vi.fn(),
     delete: vi.fn(),
     deleteMany: vi.fn(),
+    createMany: vi.fn(),
+    aggregate: vi.fn(),
+    groupBy: vi.fn(),
   });
   return {
     user: model(),
@@ -25,8 +30,23 @@ export function createMockDb() {
     testimonial: model(),
     marketingContact: model(),
     portfolioImage: model(),
+    siteSetting: model(),
+    navItem: model(),
+    redirect: model(),
+    trainingCategory: model(),
     $transaction: vi.fn(),
+    $queryRaw: vi.fn(),
+    $executeRaw: vi.fn(),
   };
+}
+
+// $transaction(callback) memakai mock yang sama sebagai client transaksi;
+// $transaction([...]) menjalankan semua promise.
+export function passThroughTransactions(mock: ReturnType<typeof createMockDb>) {
+  mock.$transaction.mockImplementation(async (arg: unknown) => {
+    if (typeof arg === "function") return (arg as (tx: unknown) => Promise<unknown>)(mock);
+    return Promise.all(arg as Promise<unknown>[]);
+  });
 }
 
 export type MockDb = ReturnType<typeof createMockDb>;
