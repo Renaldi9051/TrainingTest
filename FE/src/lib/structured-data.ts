@@ -77,6 +77,18 @@ export function courseJsonLd(training: PublicTrainingDetail, siteUrl: string, pr
     provider: { "@type": "Organization", name: provider, sameAs: siteUrl },
     ...(training.cover ? { image: absolute(siteUrl, training.cover.url) } : {}),
     ...(training.categories.length > 0 ? { about: training.categories.map((category) => category.name) } : {}),
+    ...(training.outcomes.length > 0 ? { teaches: training.outcomes } : {}),
+    ...(training.modules.length > 0
+      ? {
+          syllabusSections: training.modules.map((module) => ({
+            "@type": "Syllabus",
+            name: module.title,
+            ...(module.points.length > 0 ? { description: module.points.join("; ") } : {}),
+            ...(module.durationMinutes ? { timeRequired: `PT${module.durationMinutes}M` } : {}),
+          })),
+        }
+      : {}),
+    ...(training.prerequisites ? { coursePrerequisites: training.prerequisites } : {}),
     ...(training.schedules.length > 0
       ? {
           hasCourseInstance: training.schedules
@@ -96,5 +108,11 @@ export function courseJsonLd(training: PublicTrainingDetail, siteUrl: string, pr
 // Pesan otomatis tombol WhatsApp di detail pelatihan.
 export function whatsappTrainingUrl(number: string, title: string): string {
   const message = `Halo, saya tertarik dengan pelatihan "${title}". Mohon info jadwal dan investasinya.`;
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+}
+
+// Sementara (sampai form inquiry Fase 4): permintaan penawaran in-house lewat WhatsApp.
+export function whatsappInHouseUrl(number: string, title: string): string {
+  const message = `Halo, kami ingin meminta penawaran pelatihan in-house "${title}" untuk tim kami. Mohon info selanjutnya.`;
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }

@@ -122,8 +122,9 @@ export function getCatalog(params: CatalogParams): Promise<Catalog> {
 export async function getTraining(slug: string): Promise<PublicTrainingDetail | null> {
   "use cache";
   cacheLife("content");
-  // Detail juga memuat nama kategori, jadwal, dan pelatihan terkait, jadi ikut tag-tag itu.
-  cacheTag(Tag.training(slug), Tag.TRAININGS, Tag.CATEGORIES, Tag.SCHEDULES, Tag.MEDIA);
+  // Detail juga memuat nama kategori, jadwal, pelatihan terkait, dan default global
+  // (fasilitas, FAQ umum, catatan in-house dari Pengaturan), jadi ikut tag-tag itu.
+  cacheTag(Tag.training(slug), Tag.TRAININGS, Tag.CATEGORIES, Tag.SCHEDULES, Tag.SETTINGS, Tag.MEDIA);
   return (await getJson<PublicTrainingDetail>(`/trainings/${encodeURIComponent(slug)}`))?.data ?? null;
 }
 

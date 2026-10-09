@@ -125,6 +125,12 @@ export type SettingValues = {
   };
   "site.social": { links: { platform: SocialPlatform; label: string; url: string }[] };
   "site.footer": { description: string; copyright: string };
+  "training.defaults": {
+    facilities: string[];
+    faq: FaqItem[];
+    inHouseNote: string;
+    disclaimer: string;
+  };
   "seo.default": {
     titleTemplate: string;
     defaultTitle: string;
@@ -249,13 +255,20 @@ export type TrainingListItem = {
   updatedAt: string;
 };
 
+export type TrainingModule = { title: string; points: string[]; durationMinutes: number | null };
+export type AudienceItem = { role: string; note: string | null };
+export type FaqItem = { q: string; a: string };
+
 export type Training = TrainingListItem & {
   summary: string | null;
-  body: RichTextDoc | null;
-  objectives: RichTextDoc | null;
-  syllabus: RichTextDoc | null;
-  audience: RichTextDoc | null;
-  facilities: RichTextDoc | null;
+  description: RichTextDoc | null;
+  outcomes: string[];
+  modules: TrainingModule[];
+  audience: AudienceItem[];
+  prerequisites: string | null;
+  // null = pakai fasilitas default global (Pengaturan > Pelatihan).
+  facilities: string[] | null;
+  faq: FaqItem[];
   duration: string | null;
   priceText: string | null;
   showPrice: boolean;
@@ -263,6 +276,12 @@ export type Training = TrainingListItem & {
   seo: TrainingSeo;
   ogImage: Media | null;
   createdAt: string;
+};
+
+export type TrainingBulkResult = {
+  affected: number;
+  // Publish massal: pelatihan yang kontennya belum lengkap dilewati.
+  skipped: { id: string; title: string; reason: string }[];
 };
 
 export type TrainingBulkAction =
@@ -297,14 +316,26 @@ export type PublicTrainingSchedule = {
   status: ScheduleStatus;
 };
 
+// null = "Hubungi marketing".
+export type PublicInvestment = { type: "from"; amount: number } | { type: "text"; text: string } | null;
+
 export type PublicTrainingDetail = PublicTrainingCard & {
-  bodyHtml: string | null;
-  objectivesHtml: string | null;
-  syllabusHtml: string | null;
-  audienceHtml: string | null;
-  facilitiesHtml: string | null;
+  descriptionHtml: string | null;
+  outcomes: string[];
+  modules: TrainingModule[];
+  audience: AudienceItem[];
+  prerequisites: string | null;
+  // Sudah di-resolve BE (fasilitas pelatihan atau default global).
+  facilities: string[];
+  // FAQ pelatihan lalu FAQ global.
+  faq: FaqItem[];
+  inHouseNote: string | null;
+  disclaimer: string | null;
   showPrice: boolean;
   priceText: string | null;
+  investment: PublicInvestment;
+  // null = "Jadwal menyesuaikan".
+  nextSchedule: Pick<PublicTrainingSchedule, "startDate" | "endDate" | "city" | "method"> | null;
   seo: { title: string; description: string; ogImage: PublicImage | null };
   schedules: PublicTrainingSchedule[];
   related: PublicTrainingCard[];

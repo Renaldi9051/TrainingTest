@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PublicTrainingDetail } from "@/lib/api/types";
-import { courseJsonLd, scheduleEventJsonLd, whatsappTrainingUrl } from "@/lib/structured-data";
+import { courseJsonLd, scheduleEventJsonLd, whatsappInHouseUrl, whatsappTrainingUrl } from "@/lib/structured-data";
 
 const SITE = "https://contoh.id";
 
@@ -14,13 +14,22 @@ const training: PublicTrainingDetail = {
   cover: { url: "/uploads/a.webp", alt: "x", width: 10, height: 10, mime: "image/webp", variants: null },
   categories: [{ slug: "sdm", name: "SDM" }],
   publishedAt: "2026-10-01T00:00:00.000Z",
-  bodyHtml: null,
-  objectivesHtml: null,
-  syllabusHtml: null,
-  audienceHtml: null,
-  facilitiesHtml: null,
+  descriptionHtml: null,
+  outcomes: ["Menurunkan sasaran jadi KPI", "Menetapkan baseline"],
+  modules: [
+    { title: "Dari sasaran ke indikator", points: ["Peta sasaran", "SMART"], durationMinutes: 90 },
+    { title: "Studi kasus", points: [], durationMinutes: null },
+  ],
+  audience: [{ role: "Supervisor", note: null }],
+  prerequisites: "Pernah mengelola target tim.",
+  facilities: [],
+  faq: [],
+  inHouseNote: null,
+  disclaimer: null,
   showPrice: false,
   priceText: null,
+  investment: null,
+  nextSchedule: null,
   seo: { title: "", description: "", ogImage: null },
   schedules: [
     { id: "s1", startDate: "2026-11-17", endDate: "2026-11-18", city: "Jakarta", venue: null, method: "OFFLINE", price: null, status: "OPEN" },
@@ -41,6 +50,12 @@ describe("courseJsonLd", () => {
       image: "https://contoh.id/uploads/a.webp",
       provider: { name: "Lembaga" },
     });
+    expect(json.teaches).toEqual(training.outcomes);
+    expect(json.coursePrerequisites).toBe("Pernah mengelola target tim.");
+    expect(json.syllabusSections).toEqual([
+      { "@type": "Syllabus", name: "Dari sasaran ke indikator", description: "Peta sasaran; SMART", timeRequired: "PT90M" },
+      { "@type": "Syllabus", name: "Studi kasus" },
+    ]);
     expect(json.hasCourseInstance).toEqual([
       { "@type": "CourseInstance", courseMode: "Onsite", startDate: "2026-11-17", endDate: "2026-11-18", location: "Jakarta" },
     ]);
@@ -83,5 +98,10 @@ describe("whatsappTrainingUrl", () => {
     const url = new URL(whatsappTrainingUrl("6281200000000", "KPI & OKR"));
     expect(url.origin + url.pathname).toBe("https://wa.me/6281200000000");
     expect(url.searchParams.get("text")).toContain('"KPI & OKR"');
+  });
+
+  it("permintaan in-house berisi judul dan kata in-house", () => {
+    const text = new URL(whatsappInHouseUrl("6281200000000", "KPI")).searchParams.get("text") ?? "";
+    expect(text).toContain('in-house "KPI"');
   });
 });
