@@ -17,6 +17,12 @@ import { SEO_DESCRIPTION_MAX, SEO_TITLE_MAX, SeoPanel } from "@/components/admin
 import { SlugField } from "@/components/admin/slug-field";
 import { PublicStateLabel } from "@/components/admin/status-dot";
 import { StickySaveBar } from "@/components/admin/sticky-save-bar";
+import {
+  AudienceEditor,
+  FaqEditor,
+  ModulesEditor,
+  StringListEditor,
+} from "@/components/admin/training-editors";
 import { Button } from "@/components/admin/ui/button";
 import { Checkbox } from "@/components/admin/ui/checkbox";
 import { Input } from "@/components/admin/ui/input";
@@ -36,6 +42,22 @@ import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
 import type { CategoryOption, RichTextDoc, Training, TrainingMethod, TrainingType } from "@/lib/api/types";
 import { fromWibInputValue, toWibInputValue } from "@/lib/format";
 import { applyFieldErrors } from "@/lib/form-errors";
+import {
+  AUDIENCE_NOTE_MAX,
+  AUDIENCE_ROLE_MAX,
+  FACILITIES_MAX,
+  FACILITY_MAX,
+  FAQ_A_MAX,
+  FAQ_Q_MAX,
+  MODULE_POINT_MAX,
+  MODULE_POINTS_MAX,
+  MODULE_TITLE_MAX,
+  OUTCOME_MAX,
+  OUTCOMES_MAX,
+  OUTCOMES_MIN,
+  PREREQUISITES_MAX,
+  SUMMARY_MAX,
+} from "@/lib/training-content";
 import { METHOD_LABELS, TYPE_LABELS } from "@/lib/labels";
 import { categoryKeys } from "../categories/category-form";
 import { trainingKeys } from "./training-keys";
@@ -46,16 +68,44 @@ const NO_METHOD = "none";
 
 const richText = z.custom<RichTextDoc | null>((value) => value === null || typeof value === "object");
 
+const requiredItem = (label: string, max: number) =>
+  z
+    .string()
+    .trim()
+    .min(1, { error: `${label} tidak boleh kosong.` })
+    .max(max, { error: `${label} maksimal ${max} karakter.` });
+
 const schema = z
   .object({
     title: z.string().trim().min(1, { error: "Judul wajib diisi." }).max(200, { error: "Judul maksimal 200 karakter." }),
     slug: z.string().trim().max(120, { error: "Slug maksimal 120 karakter." }),
-    summary: z.string().trim().max(500, { error: "Ringkasan maksimal 500 karakter." }),
-    body: richText,
-    objectives: richText,
-    syllabus: richText,
-    audience: richText,
-    facilities: richText,
+    summary: z.string().trim().max(SUMMARY_MAX, { error: `Ringkasan maksimal ${SUMMARY_MAX} karakter.` }),
+    description: richText,
+    outcomes: z.array(requiredItem("Hasil belajar", OUTCOME_MAX)).max(OUTCOMES_MAX, {
+      error: `Hasil belajar maksimal ${OUTCOMES_MAX} item.`,
+    }),
+    modules: z.array(
+      z.object({
+        title: requiredItem("Judul modul", MODULE_TITLE_MAX),
+        points: z.array(requiredItem("Poin materi", MODULE_POINT_MAX)).max(MODULE_POINTS_MAX),
+        durationMinutes: z
+          .number()
+          .int()
+          .min(1, { error: "Durasi minimal 1 menit." })
+          .max(600, { error: "Durasi maksimal 600 menit." })
+          .nullable(),
+      }),
+    ),
+    audience: z.array(
+      z.object({
+        role: requiredItem("Peran", AUDIENCE_ROLE_MAX),
+        note: z.string().trim().max(AUDIENCE_NOTE_MAX, { error: `Catatan maksimal ${AUDIENCE_NOTE_MAX} karakter.` }).nullable(),
+      }),
+    ),
+    prerequisites: z.string().trim().max(PREREQUISITES_MAX, { error: `Prasyarat maksimal ${PREREQUISITES_MAX} karakter.` }),
+    useDefaultFacilities: z.boolean(),
+    facilities: z.array(requiredItem("Fasilitas", FACILITY_MAX)).max(FACILITIES_MAX),
+    faq: z.array(z.object({ q: requiredItem("Pertanyaan", FAQ_Q_MAX), a: requiredItem("Jawaban", FAQ_A_MAX) })),
     duration: z.string().trim().max(100, { error: "Durasi maksimal 100 karakter." }),
     method: z.string(),
     types: z.array(z.enum(["PUBLIC", "IN_HOUSE"])),
@@ -74,10 +124,16 @@ const schema = z
       ogImageId: z.string().nullable(),
     }),
   })
-  .refine((value) => !value.showPrice || value.priceText !== "", {
-    error: "Isi teks investasi atau matikan opsi tampilkan harga.",
-    path: ["priceText"],
-  });
+  // Sama dengan aturan BE: hasil belajar lengkap hanya wajib saat Tayang (termasuk terjadwal).
+  .refine(
+    (value) =>
+      value.status !== "PUBLISHED" ||
+      (value.outcomes.length >= OUTCOMES_MIN && value.outcomes.length <= OUTCOMES_MAX),
+    {
+      error: `Isi ${OUTCOMES_MIN}-${OUTCOMES_MAX} hasil belajar sebelum menayangkan.`,
+      path: ["outcomes"],
+    },
+  );
 type FormValues = z.infer<typeof schema>;
 
 const FIELD_NAMES = Object.keys(schema.shape) as (keyof FormValues)[];
@@ -87,11 +143,14 @@ function toFormValues(training: Training | null): FormValues {
     title: training?.title ?? "",
     slug: training?.slug ?? "",
     summary: training?.summary ?? "",
-    body: training?.body ?? null,
-    objectives: training?.objectives ?? null,
-    syllabus: training?.syllabus ?? null,
-    audience: training?.audience ?? null,
-    facilities: training?.facilities ?? null,
+    description: training?.description ?? null,
+    outcomes: training?.outcomes ?? [],
+    modules: training?.modules ?? [],
+    audience: training?.audience ?? [],
+    prerequisites: training?.prerequisites ?? "",
+    useDefaultFacilities: training ? training.facilities === null : true,
+    facilities: training?.facilities ?? [],
+    faq: training?.faq ?? [],
     duration: training?.duration ?? "",
     method: training?.method ?? NO_METHOD,
     types: training?.types ?? [],
@@ -112,11 +171,14 @@ function toBody(values: FormValues, autoSlug: boolean) {
     title: values.title,
     slug: autoSlug ? undefined : values.slug || undefined,
     summary: values.summary || null,
-    body: values.body,
-    objectives: values.objectives,
-    syllabus: values.syllabus,
-    audience: values.audience,
-    facilities: values.facilities,
+    description: values.description,
+    outcomes: values.outcomes,
+    modules: values.modules,
+    audience: values.audience.map((item) => ({ role: item.role, note: item.note || null })),
+    prerequisites: values.prerequisites || null,
+    // Toggle "Pakai fasilitas default" = null (BE memakai daftar global).
+    facilities: values.useDefaultFacilities ? null : values.facilities,
+    faq: values.faq,
     duration: values.duration || null,
     method: values.method === NO_METHOD ? null : (values.method as TrainingMethod),
     types: values.types,
@@ -128,6 +190,10 @@ function toBody(values: FormValues, autoSlug: boolean) {
     publishedAt: fromWibInputValue(values.publishedAt),
     seo: values.seo,
   };
+}
+
+function paragraphCount(doc: RichTextDoc | null): number {
+  return doc?.content.filter((node) => node.type === "paragraph" && (node.content?.length ?? 0) > 0).length ?? 0;
 }
 
 export function TrainingForm({ training }: { training: Training | null }) {
@@ -200,17 +266,13 @@ export function TrainingForm({ training }: { training: Training | null }) {
     },
   });
 
-  const richField = (name: "body" | "objectives" | "syllabus" | "audience" | "facilities", label: string, description?: string) => (
-    <Controller
-      control={form.control}
-      name={name}
-      render={({ field, fieldState }) => (
-        <FormField id={`training-${name}`} label={label} description={description} error={fieldState.error?.message}>
-          <RichTextEditor value={field.value} onChange={field.onChange} onBlur={field.onBlur} aria-label={label} />
-        </FormField>
-      )}
-    />
-  );
+  const description = useWatch({ control: form.control, name: "description" });
+  const outcomes = useWatch({ control: form.control, name: "outcomes" });
+  const useDefaultFacilities = useWatch({ control: form.control, name: "useDefaultFacilities" });
+  const status = useWatch({ control: form.control, name: "status" });
+  const paragraphs = paragraphCount(description);
+  // Pesan error array: dari refine (root) atau dari skema array.
+  const outcomesError = errors.outcomes?.message ?? errors.outcomes?.root?.message;
 
   return (
     <>
@@ -246,16 +308,135 @@ export function TrainingForm({ training }: { training: Training | null }) {
           <FormField
             id="training-summary"
             label="Ringkasan"
-            description={`Tampil di kartu katalog dan hasil pencarian. ${summary.length}/500 karakter.`}
+            description={`Satu kalimat. Tampil di bawah judul, kartu katalog, dan hasil pencarian. ${summary.length}/${SUMMARY_MAX} karakter.`}
             error={errors.summary?.message}
           >
-            <Textarea rows={3} {...form.register("summary")} />
+            <Textarea rows={2} {...form.register("summary")} />
           </FormField>
-          {richField("body", "Deskripsi")}
-          {richField("objectives", "Tujuan pelatihan")}
-          {richField("syllabus", "Materi / silabus")}
-          {richField("audience", "Target peserta")}
-          {richField("facilities", "Fasilitas")}
+
+          <Controller
+            control={form.control}
+            name="description"
+            render={({ field, fieldState }) => (
+              <FormField
+                id="training-description"
+                label="Deskripsi"
+                description={
+                  paragraphs > 2
+                    ? `Saat ini ${paragraphs} paragraf. Disarankan maksimal 2 paragraf; detail lain masuk ke hasil belajar & materi.`
+                    : "Maksimal 2 paragraf."
+                }
+                error={fieldState.error?.message}
+              >
+                <RichTextEditor value={field.value} onChange={field.onChange} onBlur={field.onBlur} aria-label="Deskripsi" />
+              </FormField>
+            )}
+          />
+
+          <ContentSection
+            title="Hasil belajar"
+            description={`${OUTCOMES_MIN}-${OUTCOMES_MAX} poin, maks ${OUTCOME_MAX} karakter. Wajib lengkap saat Tayang.`}
+            status={
+              outcomes.length >= OUTCOMES_MIN
+                ? null
+                : status === "PUBLISHED"
+                  ? `Perlu ${OUTCOMES_MIN - outcomes.length} poin lagi untuk tayang.`
+                  : `Draf boleh belum lengkap (${outcomes.length}/${OUTCOMES_MIN}).`
+            }
+            error={outcomesError}
+          >
+            <Controller
+              control={form.control}
+              name="outcomes"
+              render={({ field }) => (
+                <StringListEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  errors={errors.outcomes}
+                  max={OUTCOMES_MAX}
+                  itemMax={OUTCOME_MAX}
+                  itemName="Hasil belajar"
+                  addLabel="Tambah hasil belajar"
+                  placeholder="Mis. Menetapkan baseline dan target pengukuran"
+                  emptyText="Belum ada hasil belajar."
+                />
+              )}
+            />
+          </ContentSection>
+
+          <ContentSection title="Materi" description="Modul berurutan; tiap modul punya poin dan durasi opsional (menit).">
+            <Controller
+              control={form.control}
+              name="modules"
+              render={({ field }) => <ModulesEditor value={field.value} onChange={field.onChange} errors={errors.modules} />}
+            />
+          </ContentSection>
+
+          <ContentSection title="Target peserta" description="Peran yang cocok mengikuti, dengan catatan singkat bila perlu.">
+            <Controller
+              control={form.control}
+              name="audience"
+              render={({ field }) => <AudienceEditor value={field.value} onChange={field.onChange} errors={errors.audience} />}
+            />
+          </ContentSection>
+
+          <FormField
+            id="training-prerequisites"
+            label="Prasyarat"
+            description={`Opsional. Kosongkan kalau tidak ada. Maks ${PREREQUISITES_MAX} karakter.`}
+            error={errors.prerequisites?.message}
+          >
+            <Textarea rows={2} {...form.register("prerequisites")} />
+          </FormField>
+
+          <ContentSection title="Fasilitas">
+            <Controller
+              control={form.control}
+              name="useDefaultFacilities"
+              render={({ field }) => (
+                <div className="flex items-start gap-3">
+                  <Switch
+                    id="training-default-facilities"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    aria-describedby="training-default-facilities-help"
+                  />
+                  <div>
+                    <Label htmlFor="training-default-facilities">Pakai fasilitas default</Label>
+                    <p id="training-default-facilities-help" className="mt-1 text-small text-fg-muted">
+                      Daftar default diatur di Pengaturan situs, tab Pelatihan.
+                    </p>
+                  </div>
+                </div>
+              )}
+            />
+            {!useDefaultFacilities ? (
+              <Controller
+                control={form.control}
+                name="facilities"
+                render={({ field }) => (
+                  <StringListEditor
+                    value={field.value}
+                    onChange={field.onChange}
+                    errors={errors.facilities}
+                    max={FACILITIES_MAX}
+                    itemMax={FACILITY_MAX}
+                    itemName="Fasilitas"
+                    addLabel="Tambah fasilitas"
+                    emptyText="Belum ada fasilitas khusus."
+                  />
+                )}
+              />
+            ) : null}
+          </ContentSection>
+
+          <ContentSection title="FAQ pelatihan" description="Tampil sebelum FAQ umum dari Pengaturan.">
+            <Controller
+              control={form.control}
+              name="faq"
+              render={({ field }) => <FaqEditor value={field.value} onChange={field.onChange} errors={errors.faq} />}
+            />
+          </ContentSection>
 
           <div className="grid gap-6 sm:grid-cols-2">
             <FormField id="training-duration" label="Durasi" description="Mis. 2 hari, 16 jam pelajaran." error={errors.duration?.message}>
@@ -315,7 +496,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
             <FormField
               id="training-price"
               label="Investasi"
-              description="Teks bebas, mis. Rp4.500.000 per peserta."
+              description="Teks bebas, mis. Rp4.500.000 per peserta. Dipakai kalau belum ada sesi berharga."
               error={errors.priceText?.message}
             >
               <Input {...form.register("priceText")} />
@@ -335,7 +516,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
                     <Label htmlFor="training-show-price">Tampilkan harga di situs</Label>
                     <p id="training-show-price-help" className="mt-1 text-small text-fg-muted">
                       {showPrice
-                        ? "Investasi dan harga per sesi jadwal tampil di situs."
+                        ? "Situs menampilkan harga sesi termurah, lalu teks investasi, lalu Hubungi marketing."
                         : "Situs menampilkan \"Hubungi marketing\", termasuk di tabel jadwal."}
                     </p>
                   </div>
@@ -465,6 +646,37 @@ export function TrainingForm({ training }: { training: Training | null }) {
         onConfirm={() => remove.mutate()}
       />
     </>
+  );
+}
+
+function ContentSection({
+  title,
+  description,
+  status,
+  error,
+  children,
+}: {
+  title: string;
+  description?: string;
+  status?: string | null;
+  error?: string;
+  children: ReactNode;
+}) {
+  return (
+    <fieldset className="space-y-3 border-t border-border pt-6">
+      <legend className="sr-only">{title}</legend>
+      <div>
+        <h2 className="text-sm font-medium">{title}</h2>
+        {description ? <p className="mt-1 text-small text-fg-muted">{description}</p> : null}
+        {status ? <p className="mt-1 text-small text-status-warning">{status}</p> : null}
+        {error ? (
+          <p role="alert" className="mt-1 text-small text-status-error">
+            {error}
+          </p>
+        ) : null}
+      </div>
+      {children}
+    </fieldset>
   );
 }
 

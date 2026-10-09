@@ -31,10 +31,12 @@ import {
 import { Skeleton } from "@/components/admin/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/admin/ui/tabs";
 import { Textarea } from "@/components/admin/ui/textarea";
+import { FaqEditor, StringListEditor } from "@/components/admin/training-editors";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
 import type { AdminSettings, SettingKey, SettingValues, SocialPlatform } from "@/lib/api/types";
 import { applyFieldErrors } from "@/lib/form-errors";
+import { FACILITIES_MAX, FACILITY_MAX, FAQ_A_MAX, FAQ_Q_MAX } from "@/lib/training-content";
 
 export const settingsKey = ["admin", "settings"] as const;
 
@@ -44,6 +46,7 @@ const TABS: { key: SettingKey; label: string }[] = [
   { key: "site.contact", label: "Kontak" },
   { key: "site.social", label: "Sosial media" },
   { key: "site.footer", label: "Footer" },
+  { key: "training.defaults", label: "Pelatihan" },
   { key: "seo.default", label: "SEO default" },
 ];
 
@@ -115,6 +118,9 @@ export function SettingsForm() {
       </TabsContent>
       <TabsContent value="site.footer" forceMount className="data-[state=inactive]:hidden">
         <FooterSection value={values["site.footer"]} {...sectionProps} />
+      </TabsContent>
+      <TabsContent value="training.defaults" forceMount className="data-[state=inactive]:hidden">
+        <TrainingDefaultsSection value={values["training.defaults"]} {...sectionProps} />
       </TabsContent>
       <TabsContent value="seo.default" forceMount className="data-[state=inactive]:hidden">
         <SeoSection value={values["seo.default"]} {...sectionProps} />
@@ -469,6 +475,84 @@ function FooterSection({ value, onDirtyChange }: SectionProps<"site.footer">) {
         error={errors.copyright?.message}
       >
         <Input {...form.register("copyright")} />
+      </FormField>
+    </SectionForm>
+  );
+}
+
+// ===== Default pelatihan =====
+
+const requiredItem = (label: string, max: number) =>
+  z
+    .string()
+    .trim()
+    .min(1, { error: `${label} tidak boleh kosong.` })
+    .max(max, { error: `${label} maksimal ${max} karakter.` });
+
+const trainingDefaultsSchema = z.object({
+  facilities: z.array(requiredItem("Fasilitas", FACILITY_MAX)).max(FACILITIES_MAX),
+  faq: z.array(z.object({ q: requiredItem("Pertanyaan", FAQ_Q_MAX), a: requiredItem("Jawaban", FAQ_A_MAX) })),
+  inHouseNote: text("Catatan in-house", 500),
+  disclaimer: text("Disclaimer", 500),
+});
+
+function TrainingDefaultsSection({ value, onDirtyChange }: SectionProps<"training.defaults">) {
+  const { form, formId, onSubmit, saveBar } = useSettingForm(
+    "training.defaults",
+    trainingDefaultsSchema,
+    value,
+    onDirtyChange,
+  );
+  const errors = form.formState.errors;
+  return (
+    <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
+      <p className="text-small text-fg-muted">Dipakai di semua halaman detail pelatihan.</p>
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium">Fasilitas default</legend>
+        <p className="text-small text-fg-muted">Tampil untuk pelatihan yang memakai fasilitas default.</p>
+        <Controller
+          control={form.control}
+          name="facilities"
+          render={({ field }) => (
+            <StringListEditor
+              value={field.value}
+              onChange={field.onChange}
+              errors={errors.facilities}
+              max={FACILITIES_MAX}
+              itemMax={FACILITY_MAX}
+              itemName="Fasilitas"
+              addLabel="Tambah fasilitas"
+              emptyText="Belum ada fasilitas default."
+            />
+          )}
+        />
+      </fieldset>
+      <fieldset className="space-y-3 border-t border-border pt-6">
+        <legend className="text-sm font-medium">FAQ umum</legend>
+        <p className="text-small text-fg-muted">Tampil setelah FAQ khusus tiap pelatihan.</p>
+        <Controller
+          control={form.control}
+          name="faq"
+          render={({ field }) => (
+            <FaqEditor value={field.value} onChange={field.onChange} errors={errors.faq} emptyText="Belum ada FAQ umum." />
+          )}
+        />
+      </fieldset>
+      <FormField
+        id={`${formId}-inhouse`}
+        label="Catatan in-house"
+        description="Tampil di bagian Jadwal & investasi, termasuk saat belum ada jadwal."
+        error={errors.inHouseNote?.message}
+      >
+        <Textarea rows={3} {...form.register("inHouseNote")} />
+      </FormField>
+      <FormField
+        id={`${formId}-disclaimer`}
+        label="Disclaimer"
+        description="Teks kecil di akhir halaman detail pelatihan."
+        error={errors.disclaimer?.message}
+      >
+        <Textarea rows={3} {...form.register("disclaimer")} />
       </FormField>
     </SectionForm>
   );

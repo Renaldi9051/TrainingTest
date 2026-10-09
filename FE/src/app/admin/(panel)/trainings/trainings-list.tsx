@@ -30,6 +30,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/admin/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/admin/ui/dialog";
 import { Label } from "@/components/admin/ui/label";
 import {
   Select,
@@ -44,6 +52,7 @@ import type {
   PaginationMeta,
   Training,
   TrainingBulkAction,
+  TrainingBulkResult,
   TrainingListItem,
 } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
@@ -192,6 +201,7 @@ export function TrainingsList() {
   const [selection, setSelection] = useState<RowSelectionState>({});
   const [bulkDialog, setBulkDialog] = useState<BulkDialog>(null);
   const [targetCategory, setTargetCategory] = useState<string>("");
+  const [bulkReport, setBulkReport] = useState<TrainingBulkResult | null>(null);
 
   const params = useMemo(() => ({ q, status, categoryId, method, sort, page }), [q, status, categoryId, method, sort, page]);
   const query = useQuery({
@@ -220,7 +230,7 @@ export function TrainingsList() {
 
   const bulk = useMutation({
     mutationFn: async (body: TrainingBulkAction) =>
-      (await apiSend<{ affected: number }>("/admin/trainings/bulk", "POST", body)).data,
+      (await apiSend<TrainingBulkResult>("/admin/trainings/bulk", "POST", body)).data,
     onSuccess: async (result, body) => {
       await queryClient.invalidateQueries({ queryKey: trainingKeys.all });
       await queryClient.invalidateQueries({ queryKey: categoryKeys.all });
@@ -233,6 +243,11 @@ export function TrainingsList() {
         delete: "dipindahkan ke Sampah",
         "set-category": "dipindahkan kategorinya",
       }[body.action];
+      if (body.action === "publish" && result.skipped.length > 0) {
+        // Laporan lengkap: berapa yang tayang, mana yang dilewati dan kenapa.
+        setBulkReport(result);
+        return;
+      }
       toast.success(`${result.affected} pelatihan ${verb}.`);
     },
     onError: (error) => toast.error(errorMessage(error)),
@@ -328,7 +343,7 @@ export function TrainingsList() {
         isError={query.isError}
         isFetching={query.isFetching}
         onRetry={() => void query.refetch()}
-        selection={{ value: selection, onChange: setSelection }}
+        selection={{ value: selection, onChange: setSelection, disabled: query.isPlaceholderData }}
         meta={query.data?.meta}
         onPageChange={(next) => {
           setPage(next);
@@ -359,7 +374,7 @@ export function TrainingsList() {
         }
         description={
           bulkDialog === "publish"
-            ? "Pelatihan terpilih langsung tampil di situs. Yang terjadwal ikut tayang sekarang."
+            ? "Pelatihan terpilih langsung tampil di situs. Yang terjadwal ikut tayang sekarang. Pelatihan yang belum punya 4-8 hasil belajar dilewati."
             : bulkDialog === "unpublish"
               ? "Pelatihan terpilih disembunyikan dari situs."
               : "Pelatihan terpilih dipindahkan ke Sampah dan hilang dari situs. Bisa dipulihkan dalam 30 hari."
@@ -414,6 +429,35 @@ export function TrainingsList() {
           </Select>
         </div>
       </ConfirmDialog>
+
+      <Dialog open={bulkReport !== null} onOpenChange={(open) => (!open ? setBulkReport(null) : undefined)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {bulkReport?.affected ?? 0} dipublikasikan, {bulkReport?.skipped.length ?? 0} dilewati
+            </DialogTitle>
+            <DialogDescription>
+              Pelatihan berikut belum memenuhi syarat tayang dan tetap sebagai draf. Lengkapi lalu tayangkan lagi.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="max-h-72 divide-y divide-border overflow-y-auto border-y border-border">
+            {bulkReport?.skipped.map((item) => (
+              <li key={item.id} className="py-3">
+                <Link
+                  href={`/admin/trainings/${item.id}`}
+                  className="font-medium text-fg-strong underline-offset-4 hover:underline"
+                >
+                  {item.title}
+                </Link>
+                <p className="mt-1 text-small text-fg-muted">{item.reason}</p>
+              </li>
+            ))}
+          </ul>
+          <DialogFooter>
+            <Button onClick={() => setBulkReport(null)}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -51,7 +51,13 @@ type DataTableProps<TData extends { id: string }> = {
   onRetry: () => void;
   empty: { icon?: LucideIcon; title: string; description?: string; action?: ReactNode };
   // Pilihan baris untuk bulk action; tanpa ini kolom checkbox tidak tampil.
-  selection?: { value: RowSelectionState; onChange: Dispatch<SetStateAction<RowSelectionState>> };
+  // disabled: mis. saat tabel masih menampilkan data lama (filter baru sedang dimuat), supaya
+  // admin tidak memilih baris yang sebentar lagi berganti.
+  selection?: {
+    value: RowSelectionState;
+    onChange: Dispatch<SetStateAction<RowSelectionState>>;
+    disabled?: boolean;
+  };
   meta?: PaginationMeta;
   onPageChange?: (page: number) => void;
   // Satuan untuk ringkasan paginasi, mis. "pelatihan".
@@ -114,6 +120,7 @@ export function DataTable<TData extends { id: string }>({
                 <TableHead className="w-10">
                   <Checkbox
                     aria-label="Pilih semua di halaman ini"
+                    disabled={selection.disabled}
                     checked={allSelected ? true : someSelected ? "indeterminate" : false}
                     onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked === true)}
                   />
@@ -134,6 +141,7 @@ export function DataTable<TData extends { id: string }>({
                 <TableCell className="w-10">
                   <Checkbox
                     aria-label={`Pilih ${rowLabel(row.original)}`}
+                    disabled={selection.disabled}
                     checked={row.getIsSelected()}
                     onCheckedChange={(checked) => row.toggleSelected(checked === true)}
                   />
