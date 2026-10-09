@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseEnv } from "@/lib/env";
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.resetModules();
+});
 
 describe("env FE", () => {
   it("menolak env server yang tidak lengkap", () => {
@@ -7,12 +12,10 @@ describe("env FE", () => {
   });
 
   it("getPublicEnv hanya butuh BE_INTERNAL_URL & NEXT_PUBLIC_SITE_URL (dipakai saat prerender build)", async () => {
-    const original = { ...process.env };
-    process.env.BE_INTERNAL_URL = "http://be:4000";
-    process.env.NEXT_PUBLIC_SITE_URL = "https://contoh.id";
-    delete process.env.REVALIDATE_SECRET;
+    vi.stubEnv("BE_INTERNAL_URL", "http://be:4000");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://contoh.id");
+    vi.stubEnv("REVALIDATE_SECRET", undefined);
     const { getPublicEnv } = await import("@/lib/env");
     expect(getPublicEnv()).toEqual({ BE_INTERNAL_URL: "http://be:4000", NEXT_PUBLIC_SITE_URL: "https://contoh.id" });
-    process.env = original;
   });
 });
