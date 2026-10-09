@@ -108,6 +108,12 @@ describe("createTraining", () => {
     expect(revalidate).not.toHaveBeenCalled();
   });
 
+  it("slug yang bentrok dengan route FE (kategori) dianggap terpakai", async () => {
+    await expect(createTraining(input({ slug: "kategori" }), "u1", now)).rejects.toMatchObject({ status: 409 });
+    const created = await createTraining(input({ title: "Kategori" }), "u1", now);
+    expect(created.slug).toBe("kategori-2");
+  });
+
   it("kategori tidak aktif ditolak 422", async () => {
     mock.category.count.mockResolvedValue(0);
     await expect(createTraining(input(), "u1", now)).rejects.toMatchObject({

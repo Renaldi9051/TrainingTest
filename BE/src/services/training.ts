@@ -155,7 +155,13 @@ async function toDto(row: TrainingRow, now = new Date()): Promise<TrainingDto> {
   };
 }
 
-const slugLookup: SlugLookup = (args) => getDb().training.findFirst(args);
+// Slug yang bentrok dengan route FE (/pelatihan/kategori/...) selalu dianggap terpakai.
+export const RESERVED_TRAINING_SLUGS = new Set(["kategori"]);
+
+export const trainingSlugLookup: SlugLookup = async (args) =>
+  RESERVED_TRAINING_SLUGS.has(args.where.slug) ? { id: "reserved" } : getDb().training.findFirst(args);
+
+const slugLookup = trainingSlugLookup;
 
 // Bentuk untuk audit/diff: kolom + daftar id kategori.
 function auditShape(row: TrainingRow | null) {
