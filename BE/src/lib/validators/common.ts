@@ -26,9 +26,9 @@ export const nullableText = (label: string, max: number) =>
     .string()
     .trim()
     .max(max, { error: `${label} maksimal ${max} karakter.` })
+    .transform((value) => value || null)
     .nullable()
-    .optional()
-    .transform((value) => (value === undefined ? undefined : value || null));
+    .optional();
 
 // Teks di JSON pengaturan: kosong tetap string kosong (bukan null).
 export const plainText = (label: string, max: number) =>

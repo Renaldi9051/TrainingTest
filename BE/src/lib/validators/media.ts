@@ -16,6 +16,8 @@ export const mediaListQuerySchema = z.object({
   q: z.string().trim().max(100).optional().transform((value) => value || undefined),
   folder: z.string().trim().max(60).optional().transform((value) => value || undefined),
   sort: z.enum(["newest", "oldest"]).default("newest"),
+  // Dipakai MediaPicker: hanya gambar (cover, logo) atau hanya PDF.
+  type: z.enum(["image", "pdf"]).optional(),
 });
 
 export type MediaListQuery = z.infer<typeof mediaListQuerySchema>;

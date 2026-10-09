@@ -209,6 +209,8 @@ export async function listMedia(query: MediaListQuery) {
   const where: Prisma.MediaWhereInput = {
     deletedAt: null,
     ...(query.folder ? { folder: query.folder } : {}),
+    ...(query.type === "image" ? { mime: { startsWith: "image/" } } : {}),
+    ...(query.type === "pdf" ? { mime: "application/pdf" } : {}),
     ...(query.q
       ? {
           OR: [
