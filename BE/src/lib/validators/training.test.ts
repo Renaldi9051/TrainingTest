@@ -18,7 +18,12 @@ describe("trainingCreateSchema", () => {
       publishedAt: null,
       showPrice: false,
       types: [],
-      body: null,
+      description: null,
+      outcomes: [],
+      modules: [],
+      audience: [],
+      facilities: null,
+      faq: [],
       seo: { title: "", description: "", ogImageId: null },
     });
   });
@@ -28,11 +33,13 @@ describe("trainingCreateSchema", () => {
     expect(trainingCreateSchema.safeParse({ ...base, title: " " }).success).toBe(false);
   });
 
-  it("tampilkan harga butuh teks investasi", () => {
-    const result = trainingCreateSchema.safeParse({ ...base, showPrice: true, priceText: "" });
-    expect(result.success).toBe(false);
-    expect(result.error?.issues[0]?.path).toEqual(["priceText"]);
-    expect(trainingCreateSchema.safeParse({ ...base, showPrice: true, priceText: "Rp4.500.000" }).success).toBe(true);
+  it("tampilkan harga boleh tanpa teks investasi (publik memakai harga sesi / fallback)", () => {
+    expect(trainingCreateSchema.safeParse({ ...base, showPrice: true, priceText: "" }).success).toBe(true);
+  });
+
+  it("ringkasan maks 200 karakter", () => {
+    expect(trainingCreateSchema.safeParse({ ...base, summary: "a".repeat(201) }).success).toBe(false);
+    expect(trainingCreateSchema.safeParse({ ...base, summary: "a".repeat(200) }).success).toBe(true);
   });
 
   it("tipe & metode dari daftar; tipe dobel digabung", () => {
@@ -62,7 +69,7 @@ describe("trainingCreateSchema", () => {
         },
       ],
     };
-    expect(trainingCreateSchema.safeParse({ ...base, syllabus: evil }).success).toBe(false);
+    expect(trainingCreateSchema.safeParse({ ...base, description: evil }).success).toBe(false);
   });
 
   it("update kosong ditolak; update parsial diterima", () => {

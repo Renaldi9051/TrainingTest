@@ -132,3 +132,9 @@ export async function getPublicSettings(): Promise<PublicSettings> {
     },
   };
 }
+
+// Default detail pelatihan (fasilitas, FAQ global, catatan in-house, disclaimer).
+export async function getTrainingDefaults(): Promise<SettingValues["training.defaults"]> {
+  const row = await getDb().siteSetting.findUnique({ where: { key: "training.defaults" } });
+  return parseStoredSetting("training.defaults", row?.value);
+}

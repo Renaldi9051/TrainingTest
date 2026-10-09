@@ -17,6 +17,16 @@ import type {
   TrainingListQuery,
   TrainingUpdateInput,
 } from "@/lib/validators/training";
+import {
+  publishIssues,
+  readAudience,
+  readFacilities,
+  readFaq,
+  readModules,
+  type AudienceItem,
+  type FaqItem,
+  type TrainingModule,
+} from "@/lib/validators/training-content";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
 import { assertImageMedia, getMediaMap, toMediaDto, type MediaDto } from "@/services/media";
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
@@ -28,11 +38,13 @@ const AUDIT_FIELDS = [
   "title",
   "slug",
   "summary",
-  "body",
-  "objectives",
-  "syllabus",
+  "description",
+  "outcomes",
+  "modules",
   "audience",
+  "prerequisites",
   "facilities",
+  "faq",
   "duration",
   "method",
   "types",
@@ -78,11 +90,14 @@ export type TrainingListItem = {
 
 export type TrainingDto = TrainingListItem & {
   summary: string | null;
-  body: unknown;
-  objectives: unknown;
-  syllabus: unknown;
-  audience: unknown;
-  facilities: unknown;
+  description: unknown;
+  outcomes: string[];
+  modules: TrainingModule[];
+  audience: AudienceItem[];
+  prerequisites: string | null;
+  // null = pakai fasilitas default global.
+  facilities: string[] | null;
+  faq: FaqItem[];
   duration: string | null;
   priceText: string | null;
   showPrice: boolean;
@@ -140,11 +155,13 @@ async function toDto(row: TrainingRow, now = new Date()): Promise<TrainingDto> {
   return {
     ...toListItem(row, now),
     summary: row.summary,
-    body: row.body,
-    objectives: row.objectives,
-    syllabus: row.syllabus,
-    audience: row.audience,
-    facilities: row.facilities,
+    description: row.description,
+    outcomes: row.outcomes,
+    modules: readModules(row.modules),
+    audience: readAudience(row.audience),
+    prerequisites: row.prerequisites,
+    facilities: readFacilities(row.facilities),
+    faq: readFaq(row.faq),
     duration: row.duration,
     priceText: row.priceText,
     showPrice: row.showPrice,
@@ -238,11 +255,17 @@ async function assertActiveCategories(ids: string[], db: Pick<Prisma.Transaction
   }
 }
 
-function assertPrice(showPrice: boolean, priceText: string | null) {
-  if (showPrice && !priceText) {
-    throw new HttpError(422, "VALIDATION_ERROR", "Data tidak valid.", {
-      priceText: ["Isi teks investasi atau matikan opsi tampilkan harga."],
-    });
+// Syarat konten untuk status Tayang (termasuk publish terjadwal): divalidasi saat disimpan.
+function assertPublishable(status: "DRAFT" | "PUBLISHED", content: { outcomes: readonly string[] }) {
+  if (status !== "PUBLISHED") return;
+  const issues = publishIssues(content);
+  if (issues.length > 0) {
+    throw new HttpError(
+      422,
+      "NOT_PUBLISHABLE",
+      "Konten belum lengkap untuk ditayangkan.",
+      Object.fromEntries(issues.map((issue) => [issue.field, [issue.message]])),
+    );
   }
 }
 
@@ -283,6 +306,7 @@ export async function createTraining(
   userId: string,
   now = new Date(),
 ): Promise<TrainingDto> {
+  assertPublishable(input.status, input);
   await assertActiveCategories(input.categoryIds);
   await assertImageMedia({ coverId: input.coverId, "seo.ogImageId": input.seo.ogImageId });
 
@@ -297,11 +321,13 @@ export async function createTraining(
           slug,
           title: input.title,
           summary: input.summary,
-          body: jsonOrNull(input.body),
-          objectives: jsonOrNull(input.objectives),
-          syllabus: jsonOrNull(input.syllabus),
-          audience: jsonOrNull(input.audience),
+          description: jsonOrNull(input.description),
+          outcomes: input.outcomes,
+          modules: input.modules,
+          audience: input.audience,
+          prerequisites: input.prerequisites,
           facilities: jsonOrNull(input.facilities),
+          faq: input.faq,
           duration: input.duration,
           method: input.method,
           types: input.types,
@@ -351,11 +377,8 @@ export async function updateTraining(
     "seo.ogImageId": input.seo ? input.seo.ogImageId : null,
   });
 
-  const showPrice = input.showPrice ?? before.showPrice;
-  const priceText = input.priceText === undefined ? before.priceText : input.priceText;
-  assertPrice(showPrice, priceText);
-
   const status = input.status ?? before.status;
+  assertPublishable(status, { outcomes: input.outcomes ?? before.outcomes });
   const requestedPublishedAt = input.publishedAt === undefined ? before.publishedAt : input.publishedAt;
   const publish = resolvePublish(status, requestedPublishedAt, now);
   // Sudah tayang sebelumnya dengan waktu yang sama: jangan reset penanda revalidate.
@@ -374,11 +397,13 @@ export async function updateTraining(
   if (input.title !== undefined) data.title = input.title;
   if (slugChanged) data.slug = input.slug;
   if (input.summary !== undefined) data.summary = input.summary;
-  if (input.body !== undefined) data.body = jsonOrNull(input.body);
-  if (input.objectives !== undefined) data.objectives = jsonOrNull(input.objectives);
-  if (input.syllabus !== undefined) data.syllabus = jsonOrNull(input.syllabus);
-  if (input.audience !== undefined) data.audience = jsonOrNull(input.audience);
+  if (input.description !== undefined) data.description = jsonOrNull(input.description);
+  if (input.outcomes !== undefined) data.outcomes = input.outcomes;
+  if (input.modules !== undefined) data.modules = input.modules;
+  if (input.audience !== undefined) data.audience = input.audience;
+  if (input.prerequisites !== undefined) data.prerequisites = input.prerequisites;
   if (input.facilities !== undefined) data.facilities = jsonOrNull(input.facilities);
+  if (input.faq !== undefined) data.faq = input.faq;
   if (input.duration !== undefined) data.duration = input.duration;
   if (input.method !== undefined) data.method = input.method;
   if (input.types !== undefined) data.types = input.types;
@@ -482,11 +507,13 @@ export async function duplicateTraining(id: string, userId: string): Promise<Tra
           slug,
           title,
           summary: source.summary,
-          body: json(source.body),
-          objectives: json(source.objectives),
-          syllabus: json(source.syllabus),
-          audience: json(source.audience),
+          description: json(source.description),
+          outcomes: source.outcomes,
+          modules: source.modules as Prisma.InputJsonValue,
+          audience: source.audience as Prisma.InputJsonValue,
+          prerequisites: source.prerequisites,
           facilities: json(source.facilities),
+          faq: source.faq as Prisma.InputJsonValue,
           duration: source.duration,
           method: source.method,
           types: source.types,
@@ -522,23 +549,38 @@ export async function duplicateTraining(id: string, userId: string): Promise<Tra
 
 // ===== Aksi massal =====
 
+export type BulkSkipped = { id: string; title: string; reason: string };
+export type BulkResult = { affected: number; skipped: BulkSkipped[] };
+
 export async function bulkTrainings(
   input: TrainingBulkInput,
   userId: string,
   now = new Date(),
-): Promise<{ affected: number }> {
+): Promise<BulkResult> {
   const db = getDb();
   const rows = await db.training.findMany({
     where: { id: { in: input.ids }, deletedAt: null },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, title: true, outcomes: true },
   });
   if (rows.length !== input.ids.length) {
     throw new HttpError(422, "VALIDATION_ERROR", "Sebagian pelatihan tidak ditemukan atau sudah dihapus.", {
       ids: ["Muat ulang daftar lalu pilih lagi."],
     });
   }
-  const ids = rows.map((row) => row.id);
   if (input.action === "set-category") await assertActiveCategories([input.categoryId]);
+
+  // Publish: pelatihan yang kontennya belum lengkap dilewati (bukan menggagalkan semuanya).
+  const skipped: BulkSkipped[] =
+    input.action === "publish"
+      ? rows.flatMap((row) => {
+          const issue = publishIssues(row)[0];
+          return issue ? [{ id: row.id, title: row.title, reason: issue.message }] : [];
+        })
+      : [];
+  const skippedIds = new Set(skipped.map((item) => item.id));
+  const targets = rows.filter((row) => !skippedIds.has(row.id));
+  const ids = targets.map((row) => row.id);
+  if (ids.length === 0) return { affected: 0, skipped };
 
   await db.$transaction(async (tx) => {
     switch (input.action) {
@@ -578,6 +620,7 @@ export async function bulkTrainings(
         diff: {
           action: input.action,
           ids,
+          ...(skipped.length > 0 ? { skipped: skipped.map((item) => item.id) } : {}),
           ...(input.action === "set-category" ? { categoryId: input.categoryId } : {}),
         },
       },
@@ -585,8 +628,8 @@ export async function bulkTrainings(
     );
   });
 
-  await revalidateTags(trainingTags(rows.map((row) => row.slug)));
-  return { affected: ids.length };
+  await revalidateTags(trainingTags(targets.map((row) => row.slug)));
+  return { affected: ids.length, skipped };
 }
 
 // ===== Pratinjau (draft mode) =====

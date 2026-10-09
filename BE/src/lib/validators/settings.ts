@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { hrefSchema, httpUrlSchema, mediaRefSchema, plainText } from "@/lib/validators/common";
+import { facilitiesListSchema, faqSchema } from "@/lib/validators/training-content";
 
 // SiteSetting: satu baris per key, value JSON yang divalidasi skema per key di bawah.
 // Semua referensi gambar disimpan sebagai mediaId (lihat SETTING_MEDIA_FIELDS).
@@ -140,6 +141,13 @@ export const settingSchemas = {
     description: plainText("Deskripsi footer", 500),
     copyright: plainText("Teks hak cipta", 200),
   }),
+  // Default untuk semua halaman detail pelatihan.
+  "training.defaults": z.object({
+    facilities: facilitiesListSchema.default([]),
+    faq: faqSchema.default([]),
+    inHouseNote: plainText("Catatan in-house", 500),
+    disclaimer: plainText("Disclaimer", 500),
+  }),
   "seo.default": z.object({
     titleTemplate: z
       .string()
@@ -170,6 +178,7 @@ export const SETTING_LABELS: Record<SettingKey, string> = {
   "site.contact": "Kontak",
   "site.social": "Sosial media",
   "site.footer": "Footer",
+  "training.defaults": "Default pelatihan",
   "seo.default": "SEO default",
 };
 
@@ -192,6 +201,7 @@ export const SETTING_DEFAULTS: SettingValues = {
   "site.contact": { phone: "", email: "", whatsapp: "", address: "", mapEmbedUrl: "" },
   "site.social": { links: [] },
   "site.footer": { description: "", copyright: "" },
+  "training.defaults": { facilities: [], faq: [], inHouseNote: "", disclaimer: "" },
   "seo.default": { titleTemplate: "%s", defaultTitle: "", description: "", ogImageId: null },
 };
 

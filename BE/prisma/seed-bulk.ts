@@ -129,6 +129,16 @@ const OUTCOMES = [
   "mengurangi kesalahan proses",
   "meningkatkan kualitas layanan",
 ];
+const OUTCOME_VERBS = ["Menerapkan", "Menyusun", "Menganalisis", "Mengevaluasi", "Merancang", "Memantau"];
+const OUTCOME_OBJECTS = [
+  "langkah kerja yang terstandar",
+  "rencana tindak lanjut untuk tim",
+  "indikator keberhasilan yang terukur",
+  "laporan ringkas untuk pimpinan",
+  "checklist pemeriksaan harian",
+  "prioritas perbaikan proses",
+];
+const MODULE_PREFIXES = ["Dasar-dasar", "Praktik", "Studi kasus", "Evaluasi dan tindak lanjut"];
 const DURATIONS = ["1 hari", "2 hari", "3 hari", "5 hari", "16 jam pelajaran"];
 const METHODS: TrainingMethod[] = ["ONLINE", "OFFLINE", "HYBRID"];
 const TYPE_SETS: TrainingType[][] = [["PUBLIC"], ["IN_HOUSE"], ["PUBLIC", "IN_HOUSE"]];
@@ -138,6 +148,9 @@ async function main() {
   assertDevDatabase();
   const db = getDb();
   const random = createRandom(20261010);
+  // RNG terpisah untuk konten terstruktur, supaya urutan `random` (judul/slug) tetap sama dengan
+  // seed bulk versi lama dan baris yang sudah ada dikenali lewat slug-nya.
+  const contentRandom = createRandom(20261011);
   const fieldNames = Object.keys(FIELDS);
 
   // Kategori
@@ -178,6 +191,18 @@ async function main() {
       status: "PUBLISHED" as const,
       publishedAt: new Date(now - Math.floor(random.next() * twoYears)),
       publishRevalidatedAt: new Date(now),
+      outcomes: Array.from({ length: contentRandom.int(4, 6) }, (_, i) =>
+        `${OUTCOME_VERBS[(index + i) % OUTCOME_VERBS.length]} ${OUTCOME_OBJECTS[(index + i * 2) % OUTCOME_OBJECTS.length]} terkait ${topic.toLowerCase()}`,
+      ),
+      modules: MODULE_PREFIXES.slice(0, contentRandom.int(2, 4)).map((prefix) => ({
+        title: `${prefix} ${topic}`,
+        points: [`Konsep ${topic.toLowerCase()}`, "Latihan terpandu", "Diskusi kasus peserta"].slice(0, contentRandom.int(2, 3)),
+        durationMinutes: contentRandom.pick([60, 90, 120]),
+      })),
+      audience: [...new Set([contentRandom.pick(AUDIENCES), contentRandom.pick(AUDIENCES)])].map((role) => ({
+        role: role.charAt(0).toUpperCase() + role.slice(1),
+        note: null,
+      })),
       categorySlugs: [...new Set([slugify(field), ...(secondField ? [slugify(secondField)] : [])])],
       hasSchedules: random.next() < 0.35,
     };
@@ -186,6 +211,7 @@ async function main() {
   let createdTrainings = 0;
   let createdLinks = 0;
   let createdSchedules = 0;
+  let backfilled = 0;
   for (let start = 0; start < planned.length; start += BATCH) {
     const batch = planned.slice(start, start + BATCH);
     const result = await db.training.createMany({
@@ -201,6 +227,9 @@ async function main() {
         status: item.status,
         publishedAt: item.publishedAt,
         publishRevalidatedAt: item.publishRevalidatedAt,
+        outcomes: item.outcomes,
+        modules: item.modules,
+        audience: item.audience,
       })),
       skipDuplicates: true,
     });
@@ -208,9 +237,23 @@ async function main() {
 
     const rows = await db.training.findMany({
       where: { slug: { in: batch.map((item) => item.slug) }, deletedAt: null },
-      select: { id: true, slug: true, _count: { select: { categories: true, schedules: true } } },
+      select: { id: true, slug: true, outcomes: true, _count: { select: { categories: true, schedules: true } } },
     });
     const bySlug = new Map(rows.map((row) => [row.slug, row]));
+
+    // Dummy dari seed bulk versi lama (sebelum konten terstruktur): lengkapi kontennya.
+    const outdated = batch.filter((item) => bySlug.get(item.slug)?.outcomes.length === 0);
+    if (outdated.length > 0) {
+      await db.$transaction(
+        outdated.map((item) =>
+          db.training.update({
+            where: { id: bySlug.get(item.slug)?.id },
+            data: { outcomes: item.outcomes, modules: item.modules, audience: item.audience },
+          }),
+        ),
+      );
+      backfilled += outdated.length;
+    }
 
     const links = batch.flatMap((item) => {
       const row = bySlug.get(item.slug);
@@ -250,7 +293,8 @@ async function main() {
   const totalPublic = await db.training.count({ where: { deletedAt: null, status: "PUBLISHED" } });
   console.info(
     `Seed bulk selesai: +${createdCategories.count} kategori, +${createdTrainings} pelatihan, ` +
-      `+${createdLinks} relasi kategori, +${createdSchedules} jadwal. Total pelatihan published: ${totalPublic}.`,
+      `+${createdLinks} relasi kategori, +${createdSchedules} jadwal, ${backfilled} dummy lama dilengkapi. ` +
+      `Total pelatihan published: ${totalPublic}.`,
   );
 }
 

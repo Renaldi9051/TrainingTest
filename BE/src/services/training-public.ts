@@ -8,6 +8,16 @@ import { appToday, toDateString } from "@/lib/time";
 import type { PublicTrainingQuery } from "@/lib/validators/training";
 import { getMediaMap, toMediaDto, toPublicImage, type PublicImage } from "@/services/media";
 import { scheduleDisplayStatus, type PublicScheduleStatus } from "@/services/schedule-status";
+import {
+  readAudience,
+  readFacilities,
+  readFaq,
+  readModules,
+  type AudienceItem,
+  type FaqItem,
+  type TrainingModule,
+} from "@/lib/validators/training-content";
+import { getTrainingDefaults } from "@/services/settings";
 import { parseSeo } from "@/services/training";
 import { publicTrainingWhere } from "@/services/training-visibility";
 
@@ -39,15 +49,29 @@ export type PublicTrainingSchedule = {
   status: PublicScheduleStatus;
 };
 
+// Investasi di strip fakta & panel CTA. null = tampil "Hubungi marketing".
+export type PublicInvestment = { type: "from"; amount: number } | { type: "text"; text: string } | null;
+
+export type PublicNextSchedule = Pick<PublicTrainingSchedule, "startDate" | "endDate" | "city" | "method">;
+
 export type PublicTrainingDetail = PublicTrainingCard & {
-  bodyHtml: string | null;
-  objectivesHtml: string | null;
-  syllabusHtml: string | null;
-  audienceHtml: string | null;
-  facilitiesHtml: string | null;
+  descriptionHtml: string | null;
+  outcomes: string[];
+  modules: TrainingModule[];
+  audience: AudienceItem[];
+  prerequisites: string | null;
+  // Sudah di-resolve: fasilitas pelatihan, atau default global kalau pelatihan memakai default.
+  facilities: string[];
+  // FAQ pelatihan lalu FAQ global.
+  faq: FaqItem[];
+  inHouseNote: string | null;
+  disclaimer: string | null;
   showPrice: boolean;
   // null kalau showPrice false: harga tidak pernah dikirim ke publik.
   priceText: string | null;
+  investment: PublicInvestment;
+  // Sesi DIBUKA terdekat; null = "Jadwal menyesuaikan".
+  nextSchedule: PublicNextSchedule | null;
   seo: { title: string; description: string; ogImage: PublicImage | null };
   schedules: PublicTrainingSchedule[];
   related: PublicTrainingCard[];
@@ -197,38 +221,68 @@ async function relatedTrainings(row: CardRow, now: Date): Promise<PublicTraining
   return related.map(toCard);
 }
 
+// Harga sesi DIBUKA termurah -> teks investasi -> null ("Hubungi marketing"). Tanpa showPrice: null.
+export function computeInvestment(
+  showPrice: boolean,
+  priceText: string | null,
+  schedules: Pick<PublicTrainingSchedule, "price" | "status">[],
+): PublicInvestment {
+  if (!showPrice) return null;
+  const prices = schedules
+    .filter((schedule) => schedule.status === "OPEN" && schedule.price !== null)
+    .map((schedule) => schedule.price as number);
+  if (prices.length > 0) return { type: "from", amount: Math.min(...prices) };
+  return priceText ? { type: "text", text: priceText } : null;
+}
+
+export function nextOpenSchedule(schedules: PublicTrainingSchedule[]): PublicNextSchedule | null {
+  const next = schedules.find((schedule) => schedule.status === "OPEN");
+  return next ? { startDate: next.startDate, endDate: next.endDate, city: next.city, method: next.method } : null;
+}
+
 async function buildDetail(
   row: CardRow & { schedules: Prisma.ScheduleGetPayload<object>[] },
   now: Date,
 ): Promise<PublicTrainingDetail> {
   const seo = parseSeo(row.seo);
-  const [media, related] = await Promise.all([getMediaMap([seo.ogImageId]), relatedTrainings(row, now)]);
+  const [media, related, defaults] = await Promise.all([
+    getMediaMap([seo.ogImageId]),
+    relatedTrainings(row, now),
+    getTrainingDefaults(),
+  ]);
   const today = appToday(now);
   const card = toCard(row);
+  const schedules: PublicTrainingSchedule[] = row.schedules.map((schedule) => ({
+    id: schedule.id,
+    startDate: toDateString(schedule.startDate),
+    endDate: toDateString(schedule.endDate),
+    city: schedule.city,
+    venue: schedule.venue,
+    method: schedule.method,
+    price: row.showPrice ? schedule.price : null,
+    status: scheduleDisplayStatus(schedule, today),
+  }));
   return {
     ...card,
-    bodyHtml: renderRichText(row.body),
-    objectivesHtml: renderRichText(row.objectives),
-    syllabusHtml: renderRichText(row.syllabus),
-    audienceHtml: renderRichText(row.audience),
-    facilitiesHtml: renderRichText(row.facilities),
+    descriptionHtml: renderRichText(row.description),
+    outcomes: row.outcomes,
+    modules: readModules(row.modules),
+    audience: readAudience(row.audience),
+    prerequisites: row.prerequisites,
+    facilities: readFacilities(row.facilities) ?? defaults.facilities,
+    faq: [...readFaq(row.faq), ...defaults.faq],
+    inHouseNote: defaults.inHouseNote || null,
+    disclaimer: defaults.disclaimer || null,
     showPrice: row.showPrice,
     priceText: row.showPrice ? row.priceText : null,
+    investment: computeInvestment(row.showPrice, row.priceText, schedules),
+    nextSchedule: nextOpenSchedule(schedules),
     seo: {
       title: seo.title,
       description: seo.description,
       ogImage: toPublicImage(seo.ogImageId ? media.get(seo.ogImageId) : null) ?? card.cover,
     },
-    schedules: row.schedules.map((schedule) => ({
-      id: schedule.id,
-      startDate: toDateString(schedule.startDate),
-      endDate: toDateString(schedule.endDate),
-      city: schedule.city,
-      venue: schedule.venue,
-      method: schedule.method,
-      price: row.showPrice ? schedule.price : null,
-      status: scheduleDisplayStatus(schedule, today),
-    })),
+    schedules,
     related,
     updatedAt: row.updatedAt,
   };

@@ -28,11 +28,13 @@ function row(extra: Record<string, unknown> = {}) {
     slug: "kpi",
     title: "KPI",
     summary: null,
-    body: null,
-    objectives: null,
-    syllabus: null,
-    audience: null,
+    description: null,
+    outcomes: [],
+    modules: [],
+    audience: [],
+    prerequisites: null,
     facilities: null,
+    faq: [],
     duration: null,
     method: null,
     types: [],
@@ -75,8 +77,10 @@ beforeEach(() => {
   mock.training.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => row(data));
 });
 
+const OUTCOMES = ["Hasil 1", "Hasil 2", "Hasil 3", "Hasil 4"];
+
 const input = (extra: Record<string, unknown> = {}) =>
-  trainingCreateSchema.parse({ title: "Manajemen Kinerja", categoryIds: [CATEGORY], ...extra });
+  trainingCreateSchema.parse({ title: "Manajemen Kinerja", categoryIds: [CATEGORY], outcomes: OUTCOMES, ...extra });
 
 describe("createTraining", () => {
   it("draft: slug otomatis, tidak me-revalidate halaman publik", async () => {
@@ -114,6 +118,14 @@ describe("createTraining", () => {
     expect(created.slug).toBe("kategori-2");
   });
 
+  it("tayang tanpa 4 hasil belajar ditolak; draf boleh", async () => {
+    await expect(createTraining(input({ status: "PUBLISHED", outcomes: ["a"] }), "u1", now)).rejects.toMatchObject({
+      status: 422,
+      code: "NOT_PUBLISHABLE",
+    });
+    await expect(createTraining(input({ outcomes: [] }), "u1", now)).resolves.toMatchObject({ publicState: "DRAFT" });
+  });
+
   it("kategori tidak aktif ditolak 422", async () => {
     mock.category.count.mockResolvedValue(0);
     await expect(createTraining(input(), "u1", now)).rejects.toMatchObject({
@@ -126,7 +138,9 @@ describe("createTraining", () => {
 describe("updateTraining", () => {
   it("slug pelatihan published berubah: redirect 301 + revalidate slug lama & baru", async () => {
     mock.training.findFirst
-      .mockResolvedValueOnce(row({ status: "PUBLISHED", publishedAt: new Date("2026-10-01T00:00:00Z"), publishRevalidatedAt: now }))
+      .mockResolvedValueOnce(
+        row({ status: "PUBLISHED", outcomes: OUTCOMES, publishedAt: new Date("2026-10-01T00:00:00Z"), publishRevalidatedAt: now }),
+      )
       .mockResolvedValueOnce(null);
     await updateTraining(ID, { slug: "kpi-baru" }, "u1", now);
     expect(mock.redirect.create.mock.calls[0][0].data).toMatchObject({
@@ -142,12 +156,18 @@ describe("updateTraining", () => {
     expect(mock.redirect.create).not.toHaveBeenCalled();
   });
 
-  it("menyalakan harga tanpa teks investasi ditolak", async () => {
+  it("status Tayang dengan hasil belajar < 4 ditolak (termasuk publish terjadwal)", async () => {
     mock.training.findFirst.mockResolvedValueOnce(row());
-    await expect(updateTraining(ID, { showPrice: true }, "u1", now)).rejects.toMatchObject({
-      status: 422,
-      fields: { priceText: [expect.any(String)] },
-    });
+    await expect(
+      updateTraining(ID, { status: "PUBLISHED", publishedAt: new Date("2026-12-01T00:00:00Z") }, "u1", now),
+    ).rejects.toMatchObject({ status: 422, code: "NOT_PUBLISHABLE", fields: { outcomes: [expect.any(String)] } });
+    expect(mock.training.update).not.toHaveBeenCalled();
+  });
+
+  it("draf boleh disimpan dengan hasil belajar belum lengkap", async () => {
+    mock.training.findFirst.mockResolvedValueOnce(row());
+    await updateTraining(ID, { outcomes: ["Satu"] }, "u1", now);
+    expect(mock.training.update.mock.calls[0][0].data.outcomes).toEqual(["Satu"]);
   });
 
   it("kategori diganti dalam transaksi yang sama", async () => {
@@ -180,8 +200,8 @@ describe("duplicateTraining", () => {
 describe("bulkTrainings", () => {
   beforeEach(() => {
     mock.training.findMany.mockResolvedValue([
-      { id: "a", slug: "a" },
-      { id: "b", slug: "b" },
+      { id: "a", slug: "a", title: "A", outcomes: OUTCOMES },
+      { id: "b", slug: "b", title: "B", outcomes: OUTCOMES },
     ]);
   });
 
@@ -193,6 +213,27 @@ describe("bulkTrainings", () => {
     });
     expect(mock.training.updateMany.mock.calls[1][0].data).toMatchObject({ status: "PUBLISHED" });
     expect(revalidate.mock.calls[0][0]).toEqual(expect.arrayContaining(["training:a", "training:b"]));
+  });
+
+  it("publish: yang belum lengkap dilewati dan dilaporkan dengan judulnya", async () => {
+    mock.training.findMany.mockResolvedValue([
+      { id: "a", slug: "a", title: "A", outcomes: OUTCOMES },
+      { id: "b", slug: "b", title: "Belum Lengkap", outcomes: ["x"] },
+    ]);
+    const result = await bulkTrainings({ action: "publish", ids: ["a", "b"] }, "u1", now);
+    expect(result).toEqual({
+      affected: 1,
+      skipped: [{ id: "b", title: "Belum Lengkap", reason: expect.stringMatching(/hasil belajar/) }],
+    });
+    expect(mock.training.updateMany.mock.calls[1][0].where).toEqual({ id: { in: ["a"] } });
+    expect(revalidate.mock.calls[0][0]).not.toContain("training:b");
+  });
+
+  it("publish: semua dilewati = tidak ada transaksi", async () => {
+    mock.training.findMany.mockResolvedValue([{ id: "b", slug: "b", title: "B", outcomes: [] }]);
+    const result = await bulkTrainings({ action: "publish", ids: ["b"] }, "u1", now);
+    expect(result.affected).toBe(0);
+    expect(mock.$transaction).not.toHaveBeenCalled();
   });
 
   it("ganti kategori: semua kategori lama diganti satu kategori", async () => {

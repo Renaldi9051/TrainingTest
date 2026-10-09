@@ -1,8 +1,17 @@
 import { z } from "zod";
 import { csvParam, listQuerySchema } from "@/lib/list-query";
-import { optionalRichTextSchema } from "@/lib/rich-text";
 import { optionalSlugSchema, slugSchema } from "@/lib/slug";
 import { idSchema, idsSchema, nullableText, requiredText, seoSchema } from "@/lib/validators/common";
+import {
+  audienceSchema,
+  descriptionSchema,
+  facilitiesSchema,
+  faqSchema,
+  modulesSchema,
+  outcomesSchema,
+  prerequisitesSchema,
+  summarySchema,
+} from "@/lib/validators/training-content";
 
 export const TRAINING_METHODS = ["ONLINE", "OFFLINE", "HYBRID"] as const;
 export const TRAINING_TYPES = ["PUBLIC", "IN_HOUSE"] as const;
@@ -25,12 +34,14 @@ const publishedAtSchema = z.iso
 const trainingFields = {
   title: requiredText("Judul", 200),
   slug: optionalSlugSchema,
-  summary: nullableText("Ringkasan", 500),
-  body: optionalRichTextSchema,
-  objectives: optionalRichTextSchema,
-  syllabus: optionalRichTextSchema,
-  audience: optionalRichTextSchema,
-  facilities: optionalRichTextSchema,
+  summary: summarySchema,
+  description: descriptionSchema,
+  outcomes: outcomesSchema,
+  modules: modulesSchema,
+  audience: audienceSchema,
+  prerequisites: prerequisitesSchema,
+  facilities: facilitiesSchema,
+  faq: faqSchema,
   duration: nullableText("Durasi", 100),
   method: methodSchema.nullable(),
   types: z.array(typeSchema).max(10).transform((types) => [...new Set(types)]),
@@ -43,31 +54,29 @@ const trainingFields = {
   seo: seoSchema,
 };
 
-const PRICE_REQUIRED = "Isi teks investasi atau matikan opsi tampilkan harga.";
-
-export const trainingCreateSchema = z
-  .object({
-    ...trainingFields,
-    summary: trainingFields.summary.default(null),
-    body: trainingFields.body.default(null),
-    objectives: trainingFields.objectives.default(null),
-    syllabus: trainingFields.syllabus.default(null),
-    audience: trainingFields.audience.default(null),
-    facilities: trainingFields.facilities.default(null),
-    duration: trainingFields.duration.default(null),
-    method: trainingFields.method.default(null),
-    types: trainingFields.types.default([]),
-    priceText: trainingFields.priceText.default(null),
-    showPrice: trainingFields.showPrice.default(false),
-    coverId: trainingFields.coverId.default(null),
-    status: trainingFields.status.default("DRAFT"),
-    publishedAt: trainingFields.publishedAt.default(null),
-    seo: seoSchema.default({ title: "", description: "", ogImageId: null }),
-  })
-  .refine((value) => !value.showPrice || Boolean(value.priceText), {
-    error: PRICE_REQUIRED,
-    path: ["priceText"],
-  });
+// Harga: showPrice boleh aktif tanpa teks investasi; publik memakai harga sesi termurah,
+// lalu priceText, lalu "Hubungi marketing" (lihat services/training-public.ts).
+export const trainingCreateSchema = z.object({
+  ...trainingFields,
+  summary: trainingFields.summary.default(null),
+  description: trainingFields.description.default(null),
+  outcomes: trainingFields.outcomes.default([]),
+  modules: trainingFields.modules.default([]),
+  audience: trainingFields.audience.default([]),
+  prerequisites: trainingFields.prerequisites.default(null),
+  // Tidak dikirim = pakai fasilitas default global.
+  facilities: trainingFields.facilities.default(null),
+  faq: trainingFields.faq.default([]),
+  duration: trainingFields.duration.default(null),
+  method: trainingFields.method.default(null),
+  types: trainingFields.types.default([]),
+  priceText: trainingFields.priceText.default(null),
+  showPrice: trainingFields.showPrice.default(false),
+  coverId: trainingFields.coverId.default(null),
+  status: trainingFields.status.default("DRAFT"),
+  publishedAt: trainingFields.publishedAt.default(null),
+  seo: seoSchema.default({ title: "", description: "", ogImageId: null }),
+});
 export type TrainingCreateInput = z.infer<typeof trainingCreateSchema>;
 
 export const trainingUpdateSchema = z
@@ -75,11 +84,13 @@ export const trainingUpdateSchema = z
     title: trainingFields.title.optional(),
     slug: trainingFields.slug,
     summary: trainingFields.summary,
-    body: trainingFields.body,
-    objectives: trainingFields.objectives,
-    syllabus: trainingFields.syllabus,
-    audience: trainingFields.audience,
-    facilities: trainingFields.facilities,
+    description: trainingFields.description,
+    outcomes: trainingFields.outcomes.optional(),
+    modules: trainingFields.modules.optional(),
+    audience: trainingFields.audience.optional(),
+    prerequisites: trainingFields.prerequisites,
+    facilities: trainingFields.facilities.optional(),
+    faq: trainingFields.faq.optional(),
     duration: trainingFields.duration,
     method: trainingFields.method.optional(),
     types: trainingFields.types.optional(),

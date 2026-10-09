@@ -4,7 +4,12 @@ import { createMockDb, type MockDb } from "@/test/mock-db";
 const db = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock("@/lib/db", () => ({ getDb: () => db.current }));
 
-import { getPublicTraining, listPublicTrainings } from "@/services/training-public";
+import {
+  computeInvestment,
+  getPublicTraining,
+  listPublicTrainings,
+  nextOpenSchedule,
+} from "@/services/training-public";
 import { publicTrainingQuerySchema } from "@/lib/validators/training";
 
 const now = new Date("2026-10-10T05:00:00.000Z");
@@ -14,11 +19,13 @@ const detailRow = (extra: Record<string, unknown> = {}) => ({
   slug: "kpi",
   title: "KPI",
   summary: "Ringkas",
-  body: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Isi" }] }] },
-  objectives: null,
-  syllabus: null,
-  audience: null,
+  description: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Isi" }] }] },
+  outcomes: ["A", "B", "C", "D"],
+  modules: [{ title: "Modul 1", points: ["Poin"], durationMinutes: 90 }],
+  audience: [{ role: "Supervisor", note: null }],
+  prerequisites: null,
   facilities: null,
+  faq: [{ q: "Khusus?", a: "Ya." }],
   duration: "2 hari",
   method: "OFFLINE",
   types: ["PUBLIC"],
@@ -62,6 +69,15 @@ beforeEach(() => {
   db.current = mock;
   mock.media.findMany.mockResolvedValue([]);
   mock.training.findMany.mockResolvedValue([]);
+  mock.siteSetting.findUnique.mockResolvedValue({
+    key: "training.defaults",
+    value: {
+      facilities: ["Sertifikat", "Modul digital"],
+      faq: [{ q: "Global?", a: "Ya." }],
+      inHouseNote: "Bisa in-house.",
+      disclaimer: "",
+    },
+  });
 });
 
 describe("getPublicTraining", () => {
@@ -90,12 +106,25 @@ describe("getPublicTraining", () => {
     expect(detail?.schedules[1].price).toBe(4500000);
   });
 
-  it("rich text dirender ke HTML; sesi yang lewat tampil SELESAI", async () => {
+  it("deskripsi dirender ke HTML; sesi yang lewat tampil SELESAI", async () => {
     mock.training.findFirst.mockResolvedValue(detailRow());
     const detail = await getPublicTraining("kpi", now);
-    expect(detail?.bodyHtml).toBe("<p>Isi</p>");
-    expect(detail?.objectivesHtml).toBeNull();
+    expect(detail?.descriptionHtml).toBe("<p>Isi</p>");
     expect(detail?.schedules.map((schedule) => schedule.status)).toEqual(["COMPLETED", "FULL"]);
+  });
+
+  it("fasilitas null memakai default global; FAQ pelatihan tampil sebelum FAQ global", async () => {
+    mock.training.findFirst.mockResolvedValue(detailRow());
+    const detail = await getPublicTraining("kpi", now);
+    expect(detail?.facilities).toEqual(["Sertifikat", "Modul digital"]);
+    expect(detail?.faq.map((item) => item.q)).toEqual(["Khusus?", "Global?"]);
+    expect(detail?.inHouseNote).toBe("Bisa in-house.");
+    expect(detail?.disclaimer).toBeNull();
+  });
+
+  it("fasilitas khusus pelatihan menggantikan default", async () => {
+    mock.training.findFirst.mockResolvedValue(detailRow({ facilities: ["Makan siang"] }));
+    expect((await getPublicTraining("kpi", now))?.facilities).toEqual(["Makan siang"]);
   });
 });
 
@@ -117,5 +146,36 @@ describe("listPublicTrainings", () => {
     const result = await listPublicTrainings(publicTrainingQuerySchema.parse({ q: "kpi'; DROP TABLE x;--" }), now);
     expect(result.items.map((item) => item.slug)).toEqual(["b", "a"]);
     expect(result.meta).toMatchObject({ total: 2, page: 1, pageSize: 24, totalPages: 1 });
+  });
+});
+
+describe("investasi & jadwal terdekat", () => {
+  const open = (price: number | null) => ({ price, status: "OPEN" as const });
+
+  it("showPrice mati: selalu null (Hubungi marketing)", () => {
+    expect(computeInvestment(false, "Rp1", [open(100)])).toBeNull();
+  });
+
+  it("harga sesi DIBUKA termurah dipakai dulu", () => {
+    expect(computeInvestment(true, "Rp9", [open(300), { price: 100, status: "FULL" }, open(200)])).toEqual({
+      type: "from",
+      amount: 200,
+    });
+  });
+
+  it("belum ada sesi berharga: pakai priceText, kalau kosong null", () => {
+    expect(computeInvestment(true, "Rp4.500.000 per peserta", [])).toEqual({ type: "text", text: "Rp4.500.000 per peserta" });
+    expect(computeInvestment(true, null, [open(null)])).toBeNull();
+  });
+
+  it("jadwal terdekat = sesi DIBUKA pertama; tidak ada = null", () => {
+    const base = { id: "s", endDate: "2026-11-02", city: "Jakarta", venue: null, method: "OFFLINE" as const, price: null };
+    expect(
+      nextOpenSchedule([
+        { ...base, startDate: "2026-10-20", status: "FULL" },
+        { ...base, startDate: "2026-11-01", status: "OPEN" },
+      ]),
+    ).toEqual({ startDate: "2026-11-01", endDate: "2026-11-02", city: "Jakarta", method: "OFFLINE" });
+    expect(nextOpenSchedule([{ ...base, startDate: "2026-10-20", status: "FULL" }])).toBeNull();
   });
 });
