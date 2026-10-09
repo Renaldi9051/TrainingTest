@@ -105,8 +105,8 @@ describe("listPublicTrainings", () => {
       callback({
         $executeRaw: vi.fn(),
         $queryRaw: vi.fn(async () => [
-          { id: "b", total: 2n },
-          { id: "a", total: 2n },
+          { id: "b", total: BigInt(2) },
+          { id: "a", total: BigInt(2) },
         ]),
       }),
     );

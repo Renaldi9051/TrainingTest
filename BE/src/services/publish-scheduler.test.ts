@@ -3,7 +3,7 @@ import { createMockDb, type MockDb } from "@/test/mock-db";
 
 const db = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock("@/lib/db", () => ({ getDb: () => db.current }));
-const revalidate = vi.hoisted(() => vi.fn(async () => true));
+const revalidate = vi.hoisted(() => vi.fn<(tags: string[]) => Promise<boolean>>(async () => true));
 vi.mock("@/lib/revalidate", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/revalidate")>()),
   revalidateTags: revalidate,

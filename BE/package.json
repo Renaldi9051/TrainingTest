@@ -15,8 +15,10 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
+    "db:seed:bulk": "dotenv -e ../.env -- tsx prisma/seed-bulk.ts",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "bench:search": "dotenv -e ../.env -- tsx scripts/bench-search.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

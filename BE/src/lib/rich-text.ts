@@ -106,11 +106,8 @@ export const richTextSchema: z.ZodType<RichTextDoc> = z
 // Field rich text opsional: null atau dokumen kosong disimpan sebagai null.
 export const optionalRichTextSchema = richTextSchema
   .nullable()
-  .optional()
-  .transform((doc) => {
-    if (doc === undefined) return undefined;
-    return doc && !isRichTextEmpty(doc) ? doc : null;
-  });
+  .transform((doc) => (doc && !isRichTextEmpty(doc) ? doc : null))
+  .optional();
 
 export function isRichTextEmpty(doc: RichTextDoc): boolean {
   return richTextToPlain(doc).trim() === "";
