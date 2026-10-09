@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/admin/ui/skeleton";
 import { Textarea } from "@/components/admin/ui/textarea";
 import { ApiError, apiFetch } from "@/lib/api/client";
 import type { Media, MediaDetail, MediaInUseDetails, MediaUsage } from "@/lib/api/types";
-import { MediaThumbnail } from "./media-thumbnail";
+import { MediaThumbnail } from "@/components/admin/media/media-thumbnail";
 import {
   formatBytes,
   isImage,
@@ -30,7 +30,7 @@ import {
   mediaKeys,
   mediaName,
   mediaTypeLabel,
-} from "./media-utils";
+} from "@/components/admin/media/media-utils";
 
 type MediaDetailSheetProps = {
   mediaId: string | null;

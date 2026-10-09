@@ -54,3 +54,22 @@ export async function apiFetch<TData, TMeta = undefined>(
   // Bentuk body belum divalidasi runtime; dipercaya sesuai kontrak di types.ts.
   return body as ApiSuccess<TData, TMeta>;
 }
+
+// Mutasi JSON (POST/PATCH/PUT/DELETE). Browser mengirim header Origin otomatis (dicek BE).
+export function apiSend<TData>(
+  path: string,
+  method: "POST" | "PATCH" | "PUT" | "DELETE",
+  body?: unknown,
+): Promise<ApiSuccess<TData>> {
+  return apiFetch<TData>(path, {
+    method,
+    ...(body === undefined
+      ? {}
+      : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+  });
+}
+
+// Pesan untuk toast dari error apa pun.
+export function errorMessage(error: unknown, fallback = "Terjadi kesalahan. Coba lagi."): string {
+  return error instanceof ApiError ? error.message : fallback;
+}

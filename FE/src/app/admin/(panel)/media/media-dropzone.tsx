@@ -9,7 +9,7 @@ import { ApiError } from "@/lib/api/client";
 import type { MediaUploadResult } from "@/lib/api/types";
 import { uploadWithProgress } from "@/lib/api/upload";
 import { cn } from "@/lib/utils";
-import { ACCEPTED_FILES, formatBytes, MAX_UPLOAD_BYTES, mediaKeys } from "./media-utils";
+import { ACCEPTED_FILES, formatBytes, MAX_UPLOAD_BYTES, mediaKeys } from "@/components/admin/media/media-utils";
 
 type UploadStatus = "queued" | "uploading" | "done" | "error";
 
