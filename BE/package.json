@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "dotenv -e ../.env -- next dev -p 4000",
+    "dev:e2e": "tsx scripts/e2e-dev.ts",
     "build": "dotenv -e ../.env -- next build",
     "start": "dotenv -e ../.env -- next start -p 4000",
     "lint": "eslint .",
@@ -15,6 +16,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
+    "db:e2e:reset": "tsx scripts/e2e-db-reset.ts",
     "db:seed:bulk": "dotenv -e ../.env -- tsx prisma/seed-bulk.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",

@@ -54,3 +54,35 @@ export type SeedEnv = z.infer<typeof seedEnvSchema>;
 export function parseSeedEnv(source: Record<string, string | undefined>): SeedEnv {
   return parseWith(seedEnvSchema, "Env seed", source);
 }
+
+// Database khusus e2e. Script e2e (scripts/e2e-*.ts) men-drop & membuat ulang database ini di setiap
+// run, jadi namanya dikunci: apa pun selain training_e2e ditolak sebelum ada koneksi dibuka.
+export const E2E_DATABASE_NAME = "training_e2e";
+
+const e2eEnvSchema = z.object({
+  DATABASE_URL_E2E: z
+    .url({ protocol: /^postgres(ql)?$/ })
+    .refine((value) => databaseName(value) === E2E_DATABASE_NAME, {
+      message: `nama database wajib ${E2E_DATABASE_NAME}`,
+    }),
+});
+
+export type E2eEnv = z.infer<typeof e2eEnvSchema>;
+
+export function databaseName(url: string): string {
+  return decodeURIComponent(new URL(url).pathname.replace(/^\//, ""));
+}
+
+export function parseE2eEnv(source: Record<string, string | undefined>): E2eEnv {
+  return parseWith(e2eEnvSchema, "Env e2e", source);
+}
+
+// next.config.ts: E2E_SERVER=1 dipasang script e2e supaya server e2e memakai folder build sendiri
+// (.next/e2e) dan bisa jalan berdampingan dengan `npm run dev` (Next mengunci .next/dev).
+const configEnvSchema = z.object({
+  E2E_SERVER: z.literal("1").optional(),
+});
+
+export function getConfigEnv(): z.infer<typeof configEnvSchema> {
+  return parseWith(configEnvSchema, "Env config BE", process.env);
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseEnv, parseSeedEnv } from "@/lib/env";
+import { databaseName, parseE2eEnv, parseEnv, parseSeedEnv } from "@/lib/env";
 
 const validEnv = {
   DATABASE_URL: "postgresql://user:pass@localhost:5433/training_dev",
@@ -78,5 +78,28 @@ describe("parseSeedEnv", () => {
   it("menolak password pendek dan email tidak valid", () => {
     expect(() => parseSeedEnv({ ...seedEnv, ADMIN_PASSWORD: "pendek" })).toThrow(/ADMIN_PASSWORD/);
     expect(() => parseSeedEnv({ ...seedEnv, ADMIN_EMAIL: "bukan-email" })).toThrow(/ADMIN_EMAIL/);
+  });
+});
+
+describe("parseE2eEnv", () => {
+  it("hanya menerima database bernama training_e2e", () => {
+    const url = "postgresql://user:pass@localhost:5433/training_e2e";
+    expect(parseE2eEnv({ DATABASE_URL_E2E: url }).DATABASE_URL_E2E).toBe(url);
+    for (const name of ["training_dev", "training_prod", "training_e2e_x", "postgres", ""]) {
+      expect(() =>
+        parseE2eEnv({ DATABASE_URL_E2E: `postgresql://user:pass@localhost:5433/${name}` }),
+      ).toThrow(/training_e2e/);
+    }
+  });
+
+  it("mewajibkan DATABASE_URL_E2E dan menolak selain PostgreSQL", () => {
+    expect(() => parseE2eEnv({})).toThrow(/DATABASE_URL_E2E/);
+    expect(() => parseE2eEnv({ DATABASE_URL_E2E: "mysql://u:p@localhost:3306/training_e2e" })).toThrow(
+      /DATABASE_URL_E2E/,
+    );
+  });
+
+  it("membaca nama database dari URL, termasuk dengan query string", () => {
+    expect(databaseName("postgresql://u:p@localhost:5433/training_e2e?schema=public")).toBe("training_e2e");
   });
 });

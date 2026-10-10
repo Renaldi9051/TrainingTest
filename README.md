@@ -129,4 +129,4 @@ Dijalankan dari `BE/` atau `FE/`:
 | `npm run db:seed:bulk` | BE, khusus dev: ~70 kategori + 1.200 pelatihan dummy + jadwal. Menolak jalan untuk database bernama `*prod*` |
 | `npm run bench:search` | BE: ukur latensi search katalog (p50/p95/p99) lewat HTTP ke BE yang sedang jalan. Target p95 < 300 ms |
 | `npm run db:studio` | BE: Prisma Studio |
-| `npm run test:e2e` | FE: Playwright. Butuh database jalan + seed; memakai dev server BE/FE yang sudah jalan atau menyalakannya sendiri. Sekali saja: `npx playwright install chromium` |
+| `npm run test:e2e` | FE: Playwright. Tidak memakai `training_dev`: menyalakan BE (:4100) dan FE (:3100) khusus e2e dengan database `training_e2e` (`DATABASE_URL_E2E`), yang di-drop, dimigrasi, dan di-seed ulang di awal setiap run. Bisa jalan bersamaan dengan `npm run dev`. Butuh container Postgres (`npm run db:up`). Sekali saja: `npx playwright install chromium` |

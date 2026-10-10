@@ -1,6 +1,7 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import { E2E_FE_ORIGIN } from "./e2e-env";
 
-export const ORIGIN = "http://localhost:3000";
+export const ORIGIN = E2E_FE_ORIGIN;
 
 export function adminCredentials() {
   const email = process.env.ADMIN_EMAIL;
