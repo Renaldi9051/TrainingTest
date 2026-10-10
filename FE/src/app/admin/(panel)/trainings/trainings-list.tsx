@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { BulkSelectionSummary } from "@/components/admin/bulk-selection-summary";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import {
   createDataTableColumns,
@@ -255,6 +256,9 @@ export function TrainingsList() {
 
   const filtered = Boolean(q) || status !== ALL || categoryId !== ALL || method !== ALL;
   const count = selectedIds.length;
+  // Selection dikosongkan setiap ganti halaman/filter, jadi baris terpilih ada di data halaman ini.
+  const selectedItems = (query.data?.data ?? EMPTY).filter((row) => selection[row.id]);
+  const selectionSummary = <BulkSelectionSummary items={selectedItems} total={count} label="Pelatihan terpilih" />;
   const targetName = categories.data?.find((category) => category.id === targetCategory)?.name;
 
   return (
@@ -387,7 +391,9 @@ export function TrainingsList() {
             bulk.mutate({ action: bulkDialog, ids: selectedIds });
           }
         }}
-      />
+      >
+        {selectionSummary}
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={bulkDialog === "set-category"}
@@ -413,6 +419,7 @@ export function TrainingsList() {
           bulk.mutate({ action: "set-category", ids: selectedIds, categoryId: targetCategory });
         }}
       >
+        {selectionSummary}
         <div className="space-y-2">
           <Label htmlFor="bulk-category">Kategori pengganti</Label>
           <Select value={targetCategory} onValueChange={setTargetCategory}>

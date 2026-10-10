@@ -93,7 +93,13 @@ test.describe("detail pelatihan terstruktur", () => {
     await expect(page.getByRole("row")).toHaveCount(3);
     await page.getByRole("checkbox", { name: "Pilih semua di halaman ini" }).click();
     await page.getByRole("button", { name: "Tayangkan" }).click();
-    await page.getByRole("alertdialog").getByRole("button", { name: "Tayangkan" }).click();
+    const confirm = page.getByRole("alertdialog");
+    await expect(confirm.getByRole("heading", { name: "Tayangkan 2 pelatihan?" })).toBeVisible();
+    await expect(confirm.getByRole("list", { name: "Pelatihan terpilih" }).getByRole("listitem")).toHaveCount(2);
+    await expect(confirm).toContainText(complete.title);
+    await expect(confirm).toContainText(incomplete.title);
+    await expect(confirm).not.toContainText("lainnya");
+    await confirm.getByRole("button", { name: "Tayangkan" }).click();
 
     const report = page.getByRole("dialog");
     await expect(report.getByRole("heading", { name: "1 dipublikasikan, 1 dilewati" })).toBeVisible();
@@ -107,5 +113,36 @@ test.describe("detail pelatihan terstruktur", () => {
       }),
     );
     expect(states).toEqual(["PUBLISHED", "DRAFT"]);
+  });
+
+  test("dialog konfirmasi bulk menampilkan jumlah dan 3 judul pertama untuk setiap aksi", async ({ page }) => {
+    await loginViaApi(page.request);
+    const category = await firstCategory(page.request);
+    const id = runId();
+    for (let index = 1; index <= 4; index += 1) {
+      const title = `Bulk Ringkas ${index} ${id}`;
+      created.push(await createTraining(page.request, { title, categoryIds: [category.id], status: "DRAFT" }));
+    }
+
+    await page.goto("/admin/trainings");
+    await page.getByPlaceholder("Cari judul atau slug").fill(id);
+    await expect(page.getByRole("row")).toHaveCount(5);
+    await page.getByRole("checkbox", { name: "Pilih semua di halaman ini" }).click();
+
+    const confirm = page.getByRole("alertdialog");
+    const actions = [
+      { button: "Jadikan draf", heading: "Jadikan 4 pelatihan sebagai draf?" },
+      { button: "Ganti semua kategori dengan...", heading: "Ganti semua kategori 4 pelatihan?" },
+      { button: "Hapus", heading: "Hapus 4 pelatihan?" },
+      { button: "Tayangkan", heading: "Tayangkan 4 pelatihan?" },
+    ];
+    for (const action of actions) {
+      await page.getByRole("region", { name: "Aksi massal" }).getByRole("button", { name: action.button }).click();
+      await expect(confirm.getByRole("heading", { name: action.heading })).toBeVisible();
+      await expect(confirm.getByRole("list", { name: "Pelatihan terpilih" }).getByRole("listitem")).toHaveCount(3);
+      await expect(confirm).toContainText("dan 1 lainnya");
+      await confirm.getByRole("button", { name: "Batal" }).click();
+      await expect(confirm).toBeHidden();
+    }
   });
 });
