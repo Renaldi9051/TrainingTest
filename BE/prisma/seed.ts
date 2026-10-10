@@ -512,20 +512,8 @@ async function seedAdmin(): Promise<"created" | "exists"> {
   return "created";
 }
 
-async function main() {
-  const adminResult = await seedAdmin();
-  for (const setting of settings) {
-    await db.siteSetting.upsert({ where: { key: setting.key }, update: {}, create: setting });
-  }
-
-  // Menu contoh hanya kalau belum ada menu sama sekali (termasuk yang di Sampah).
-  if ((await db.navItem.count()) === 0) {
-    for (const [index, item] of navItems.entries()) {
-      const order = navItems.slice(0, index).filter((other) => other.location === item.location).length;
-      await db.navItem.create({ data: { ...item, order } });
-    }
-  }
-
+// Dipanggil hanya kalau katalog masih kosong (lihat main).
+async function seedCatalog() {
   const categoryIds = new Map<string, string>();
   for (const category of categories) {
     const saved = await db.category.upsert({
@@ -578,10 +566,34 @@ async function main() {
       },
     });
   }
+}
 
+async function main() {
+  const adminResult = await seedAdmin();
+  for (const setting of settings) {
+    await db.siteSetting.upsert({ where: { key: setting.key }, update: {}, create: setting });
+  }
+
+  // Menu contoh hanya kalau belum ada menu sama sekali (termasuk yang di Sampah).
+  if ((await db.navItem.count()) === 0) {
+    for (const [index, item] of navItems.entries()) {
+      const order = navItems.slice(0, index).filter((other) => other.location === item.location).length;
+      await db.navItem.create({ data: { ...item, order } });
+    }
+  }
+
+  // Katalog contoh (kategori, pelatihan, jadwal) hanya untuk database yang belum punya katalog sama
+  // sekali, termasuk yang di Sampah. Kalau dicek per slug, pelatihan contoh yang dihapus atau diganti
+  // slug-nya oleh admin akan muncul lagi di setiap `docker compose up`.
+  const catalogEmpty = (await db.category.count()) === 0 && (await db.training.count()) === 0;
+  if (catalogEmpty) await seedCatalog();
+
+  const catalogResult = catalogEmpty
+    ? `dibuat (${categories.length} kategori, ${trainings.length} pelatihan, ${schedules.length} jadwal)`
+    : "dilewati (katalog sudah berisi)";
   console.info(
-    `Seed selesai: ${settings.length} pengaturan, ${navItems.length} menu, ${categories.length} kategori, ` +
-      `${trainings.length} pelatihan, ${schedules.length} jadwal, admin ${adminResult === "created" ? "dibuat" : "sudah ada"}.`,
+    `Seed selesai: ${settings.length} key pengaturan dicek (yang ada tidak ditimpa), katalog contoh ${catalogResult}, ` +
+      `admin ${adminResult === "created" ? "dibuat" : "sudah ada"}.`,
   );
 }
 
