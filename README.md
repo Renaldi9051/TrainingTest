@@ -38,7 +38,9 @@ Dari root repo:
 docker compose up --build
 ```
 
-Buka http://localhost:3000. Urutannya otomatis: Postgres siap → `migrate` menerapkan migrasi + seed (aman diulang) → BE → FE. Container berjalan dalam mode produksi (`next build` + `next start`), jadi setelah kode berubah jalankan ulang `docker compose up --build`.
+Buka http://localhost:3000. Urutannya otomatis: Postgres siap → `migrate` menerapkan migrasi + seed → BE sehat → FE. Seed hanya membuat yang belum ada: pengaturan yang sudah ada tidak ditimpa, dan katalog contoh hanya dibuat kalau katalog masih kosong.
+
+Container berjalan dalam mode produksi. Selalu pakai `--build` setelah menarik atau mengubah kode, karena `docker compose up` tanpa `--build` memakai image lama, termasuk seed versi lama. Saat start, FE membuat halaman publik dari data BE dulu (sekitar 10–20 detik). Kalau langkah ini gagal, container FE berhenti dengan error dan dicoba lagi. Halaman tidak pernah disajikan dengan data kosong.
 
 - Berhenti: `Ctrl+C`, atau `docker compose down` kalau berjalan di background (`-d`). Data database tetap tersimpan di volume.
 - Log: `docker compose logs -f be fe`.

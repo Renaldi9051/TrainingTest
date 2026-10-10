@@ -59,6 +59,8 @@ services:
     ports:
       - "127.0.0.1:4000:4000"
     depends_on:
+      db:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     healthcheck:
@@ -88,9 +90,24 @@ services:
       BE_INTERNAL_URL: http://be:4000
     ports:
       - "127.0.0.1:3000:3000"
+    # Prerender halaman publik terjadi saat start (docker/fe-entrypoint.sh) dan butuh BE yang sehat.
+    # Kalau gagal, container exit non-zero dan dicoba lagi oleh restart policy.
     depends_on:
       be:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      # Memberi waktu tahap generate (prerender) sebelum healthcheck dihitung gagal.
+      start_period: 180s
 
 volumes:
   db-data:
