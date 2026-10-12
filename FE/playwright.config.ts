@@ -12,6 +12,11 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 
 const baseURL = E2E_FE_ORIGIN;
 
+// E2E_PROD=1: FE e2e memakai build produksi (next build + next start) di folder build terpisah
+// .next/verify, bukan next dev. Dipakai untuk verifikasi cache/revalidate sungguhan.
+const prodFe = process.env.E2E_PROD === "1";
+const feEnv = { BE_INTERNAL_URL: E2E_BE_ORIGIN, NEXT_PUBLIC_SITE_URL: E2E_FE_ORIGIN };
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
@@ -37,13 +42,22 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 180_000,
     },
-    {
-      command: "npm run dev:e2e",
-      url: `${baseURL}/admin/login`,
-      reuseExistingServer: false,
-      timeout: 180_000,
-      env: { E2E_SERVER: "1", BE_INTERNAL_URL: E2E_BE_ORIGIN, NEXT_PUBLIC_SITE_URL: E2E_FE_ORIGIN },
-    },
+    prodFe
+      ? {
+          // Build butuh BE e2e (prerender halaman publik), jadi dijalankan setelah server BE siap.
+          command: "npm run build && npm run start:e2e",
+          url: `${baseURL}/admin/login`,
+          reuseExistingServer: false,
+          timeout: 600_000,
+          env: { ...feEnv, NEXT_DIST_DIR: ".next/verify" },
+        }
+      : {
+          command: "npm run dev:e2e",
+          url: `${baseURL}/admin/login`,
+          reuseExistingServer: false,
+          timeout: 180_000,
+          env: { ...feEnv, E2E_SERVER: "1" },
+        },
   ],
   // Dijalankan setelah server siap: reset + seed training_e2e.
   globalSetup: "./e2e/global-setup.ts",
