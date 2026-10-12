@@ -35,6 +35,27 @@ import { cn } from "@/lib/utils";
 const PAGE_SIZE = 18;
 const ACCEPTED_IMAGES = ".jpg,.jpeg,.png,.webp,.svg,image/jpeg,image/png,image/webp,image/svg+xml";
 
+export type MediaPickerKind = "image" | "pdf";
+
+// Teks dan filter per jenis media yang dipilih.
+const KIND_COPY: Record<
+  MediaPickerKind,
+  { noun: string; accept: string; missing: string; uploaded: string }
+> = {
+  image: {
+    noun: "gambar",
+    accept: ACCEPTED_IMAGES,
+    missing: "Gambar tidak ditemukan atau sudah dihapus.",
+    uploaded: "Gambar diupload. Jangan lupa isi alt text di media library.",
+  },
+  pdf: {
+    noun: "file PDF",
+    accept: ".pdf,application/pdf",
+    missing: "File PDF tidak ditemukan atau sudah dihapus.",
+    uploaded: "File PDF diupload.",
+  },
+};
+
 type MediaPickerProps = {
   id?: string;
   value: string | null;
@@ -45,6 +66,8 @@ type MediaPickerProps = {
   aspect?: "4/3" | "16/9" | "1/1" | "3/1";
   fit?: "cover" | "contain";
   dialogTitle?: string;
+  // Jenis media: gambar (default) atau PDF (blok Unduhan).
+  kind?: MediaPickerKind;
   // false = alt opsional (logo, foto orang: nama dipakai sebagai alt), badge "Tanpa alt" disembunyikan.
   altRequired?: boolean;
   "aria-invalid"?: boolean;
@@ -68,7 +91,8 @@ export function MediaPicker({
   initialMedia,
   aspect = "4/3",
   fit = "cover",
-  dialogTitle = "Pilih gambar",
+  kind = "image",
+  dialogTitle = kind === "pdf" ? "Pilih file PDF" : "Pilih gambar",
   altRequired = true,
   ...aria
 }: MediaPickerProps) {
@@ -100,12 +124,12 @@ export function MediaPicker({
           <Skeleton className="absolute inset-0 rounded-none" />
         ) : value && preview.isError ? (
           <div className="flex h-full items-center justify-center p-4 text-center text-small text-status-error">
-            Gambar tidak ditemukan atau sudah dihapus.
+            {KIND_COPY[kind].missing}
           </div>
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-fg-muted">
             <ImageIcon className="size-6" strokeWidth={1.5} aria-hidden />
-            <span className="text-small">Belum ada gambar</span>
+            <span className="text-small">Belum ada {KIND_COPY[kind].noun}</span>
           </div>
         )}
         {media && altRequired && isMissingAlt(media) ? (
@@ -129,7 +153,7 @@ export function MediaPicker({
           aria-invalid={aria["aria-invalid"]}
         >
           <ImagePlusIcon aria-hidden />
-          {value ? "Ganti gambar" : "Pilih gambar"}
+          {value ? `Ganti ${KIND_COPY[kind].noun}` : `Pilih ${KIND_COPY[kind].noun}`}
         </Button>
         {value ? (
           <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)}>
@@ -140,6 +164,7 @@ export function MediaPicker({
       {open ? (
         <MediaPickerDialog
           title={dialogTitle}
+          kind={kind}
           currentId={value}
           onClose={() => setOpen(false)}
           onSelect={(selected) => {
@@ -155,13 +180,15 @@ export function MediaPicker({
 
 export type MediaPickerDialogProps = {
   title: string;
+  kind?: MediaPickerKind;
   currentId: string | null;
   onClose: () => void;
   onSelect: (media: Media) => void;
 };
 
 // Dialog pilih/upload gambar; juga dipakai langsung oleh editor galeri.
-export function MediaPickerDialog({ title, currentId, onClose, onSelect }: MediaPickerDialogProps) {
+export function MediaPickerDialog({ title, kind = "image", currentId, onClose, onSelect }: MediaPickerDialogProps) {
+  const copy = KIND_COPY[kind];
   const queryClient = useQueryClient();
   const searchId = useId();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -172,9 +199,9 @@ export function MediaPickerDialog({ title, currentId, onClose, onSelect }: Media
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const list = useQuery({
-    queryKey: [...mediaKeys.all, "picker", { page, q }],
+    queryKey: [...mediaKeys.all, "picker", { page, q, kind }],
     queryFn: async () => {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE), type: "image" });
+      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE), type: kind });
       if (q) params.set("q", q);
       return apiFetch<Media[], PaginationMeta>(`/admin/media?${params}`);
     },
@@ -198,7 +225,7 @@ export function MediaPickerDialog({ title, currentId, onClose, onSelect }: Media
         return;
       }
       await queryClient.invalidateQueries({ queryKey: mediaKeys.all });
-      toast.success("Gambar diupload. Jangan lupa isi alt text di media library.");
+      toast.success(copy.uploaded);
       onSelect(created);
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : "Upload gagal. Coba lagi.");
@@ -216,13 +243,13 @@ export function MediaPickerDialog({ title, currentId, onClose, onSelect }: Media
       <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>Pilih dari media library atau upload gambar baru (maks. 10 MB).</DialogDescription>
+          <DialogDescription>Pilih dari media library atau upload {copy.noun} baru (maks. 10 MB).</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <label htmlFor={searchId} className="sr-only">
-              Cari gambar
+              Cari {copy.noun}
             </label>
             <SearchIcon
               className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted"
@@ -244,7 +271,7 @@ export function MediaPickerDialog({ title, currentId, onClose, onSelect }: Media
           <input
             ref={fileRef}
             type="file"
-            accept={ACCEPTED_IMAGES}
+            accept={copy.accept}
             className="sr-only"
             tabIndex={-1}
             aria-hidden
@@ -256,19 +283,19 @@ export function MediaPickerDialog({ title, currentId, onClose, onSelect }: Media
           />
           <Button type="button" variant="outline" disabled={uploading} onClick={() => fileRef.current?.click()}>
             {uploading ? <Loader2Icon className="animate-spin" aria-hidden /> : <UploadIcon aria-hidden />}
-            {uploading ? `Mengupload ${Math.round((uploadProgress ?? 0) * 100)}%` : "Upload gambar"}
+            {uploading ? `Mengupload ${Math.round((uploadProgress ?? 0) * 100)}%` : `Upload ${copy.noun}`}
           </Button>
         </div>
 
         {list.isPending ? (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6" role="status" aria-label="Memuat gambar">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6" role="status" aria-label={`Memuat ${copy.noun}`}>
             {Array.from({ length: 12 }, (_, index) => (
               <Skeleton key={index} className="aspect-square" />
             ))}
           </div>
         ) : list.isError ? (
           <div className="flex items-center justify-between gap-4 rounded-md border border-border px-4 py-3">
-            <p className="text-small text-status-error">Gambar tidak dapat dimuat.</p>
+            <p className="text-small text-status-error">Daftar {copy.noun} tidak dapat dimuat.</p>
             <Button variant="outline" size="sm" onClick={() => void list.refetch()}>
               Coba lagi
             </Button>
@@ -276,8 +303,8 @@ export function MediaPickerDialog({ title, currentId, onClose, onSelect }: Media
         ) : items.length === 0 ? (
           <EmptyState
             icon={ImageIcon}
-            title={q ? "Tidak ada gambar yang cocok" : "Belum ada gambar"}
-            description={q ? "Ubah kata kunci pencarian." : "Upload gambar pertama lewat tombol di atas."}
+            title={q ? `Tidak ada ${copy.noun} yang cocok` : `Belum ada ${copy.noun}`}
+            description={q ? "Ubah kata kunci pencarian." : `Upload ${copy.noun} pertama lewat tombol di atas.`}
           />
         ) : (
           <ul className="grid grid-cols-3 gap-3 sm:grid-cols-6" aria-busy={list.isFetching}>
@@ -344,7 +371,7 @@ export function MediaPickerDialog({ title, currentId, onClose, onSelect }: Media
             Batal
           </Button>
           <Button type="button" disabled={!selected || uploading} onClick={() => selected && onSelect(selected)}>
-            Pakai gambar ini
+            Pakai {copy.noun} ini
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -2,9 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { EyeIcon, Trash2Icon } from "lucide-react";
+import { Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useId, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { FormField } from "@/components/admin/form-field";
 import { IconPicker } from "@/components/admin/icon-picker";
 import { MediaPicker } from "@/components/admin/media/media-picker";
+import { PreviewButton } from "@/components/admin/preview-button";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { SEO_DESCRIPTION_MAX, SEO_TITLE_MAX, SeoPanel } from "@/components/admin/seo-panel";
 import { SlugField } from "@/components/admin/slug-field";
@@ -275,30 +276,6 @@ export function ServiceForm({ service }: { service: Service | null }) {
         }
       />
     </>
-  );
-}
-
-// Pratinjau memakai versi tersimpan, jadi dinonaktifkan selama ada perubahan yang belum disimpan.
-function PreviewButton({ href, disabled }: { href: string; disabled: boolean }) {
-  const helpId = useId();
-  if (disabled) {
-    return (
-      <Button type="button" variant="outline" disabled aria-describedby={helpId}>
-        <EyeIcon aria-hidden />
-        Pratinjau
-        <span id={helpId} className="sr-only">
-          Simpan dulu untuk melihat pratinjau.
-        </span>
-      </Button>
-    );
-  }
-  return (
-    <Button variant="outline" asChild>
-      <a href={href} target="_blank" rel="noreferrer">
-        <EyeIcon aria-hidden />
-        Pratinjau
-      </a>
-    </Button>
   );
 }
 

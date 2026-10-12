@@ -546,3 +546,78 @@ export type MediaPartner = {
 };
 
 export type PublicMediaPartner = { name: string; url: string | null };
+
+// ===== Halaman (blok konten) =====
+
+export type PageKind = "STANDARD" | "PROFILE";
+export type SelectionMode = "auto" | "manual";
+export type MediaRef = { mediaId: string };
+
+type BlockHeading = { eyebrow: string; heading: string };
+
+// Bentuk blok sama dengan BE (BE/src/lib/validators/page-blocks.ts). Di state editor, gambar/file
+// boleh null sebelum dipilih dan rich text boleh null; validasi form menolaknya saat simpan.
+export type PageBlock =
+  | ({ id: string; type: "RICH_TEXT"; body: RichTextDoc | null } & BlockHeading)
+  | { id: string; type: "VISION_MISSION"; eyebrow: string; vision: string; mission: string[]; motto: string }
+  | ({
+      id: string;
+      type: "FEATURES";
+      items: { title: string; description: string; icon: string | null }[];
+    } & BlockHeading)
+  | ({ id: string; type: "LIST"; style: "bullet" | "chips"; items: string[] } & BlockHeading)
+  | ({ id: string; type: "SERVICES"; intro: string; mode: SelectionMode; limit: number; ids: string[] } & BlockHeading)
+  | { id: string; type: "IMAGE"; image: MediaRef | null; caption: string }
+  | ({ id: string; type: "DOWNLOAD"; description: string; label: string; file: MediaRef | null } & BlockHeading);
+
+export type PageBlockType = PageBlock["type"];
+
+export type PageListItem = {
+  id: string;
+  kind: PageKind;
+  slug: string;
+  title: string;
+  status: ContentStatus;
+  blockCount: number;
+  updatedAt: string;
+};
+
+export type Page = PageListItem & {
+  blocks: PageBlock[];
+  seo: TrainingSeo;
+  ogImage: Media | null;
+  // Media yang dirujuk blok, untuk pratinjau di editor.
+  media: Record<string, Media>;
+  publishedAt: string | null;
+  createdAt: string;
+};
+
+export type PublicPageBlock =
+  | ({ id: string; type: "RICH_TEXT"; bodyHtml: string } & BlockHeading)
+  | { id: string; type: "VISION_MISSION"; eyebrow: string; vision: string; mission: string[]; motto: string }
+  | ({
+      id: string;
+      type: "FEATURES";
+      items: { title: string; description: string; icon: string | null }[];
+    } & BlockHeading)
+  | ({ id: string; type: "LIST"; style: "bullet" | "chips"; items: string[] } & BlockHeading)
+  | ({ id: string; type: "SERVICES"; intro: string; items: PublicServiceCard[] } & BlockHeading)
+  | { id: string; type: "IMAGE"; image: PublicImage; caption: string }
+  | ({
+      id: string;
+      type: "DOWNLOAD";
+      description: string;
+      label: string;
+      file: { url: string; size: number; mime: string };
+    } & BlockHeading);
+
+export type PublicPage = {
+  kind: PageKind;
+  slug: string;
+  title: string;
+  blocks: PublicPageBlock[];
+  seo: { title: string; description: string; ogImage: PublicImage | null };
+  updatedAt: string;
+};
+
+export type PublicPageRef = { slug: string; title: string };
