@@ -2,10 +2,16 @@ import { draftMode } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { adminServerFetch } from "@/lib/api/server";
-import type { ApiSuccess, Training } from "@/lib/api/types";
+import type { ApiSuccess } from "@/lib/api/types";
 import { ADMIN_LOGIN } from "@/lib/session";
 
-const querySchema = z.object({ type: z.literal("training"), id: z.uuid() });
+// Konten yang bisa dipratinjau: endpoint admin untuk cek sesi + ambil slug, dan path publiknya.
+const TARGETS = {
+  training: { endpoint: (id: string) => `/admin/trainings/${id}`, path: (slug: string) => `/pelatihan/${slug}` },
+  service: { endpoint: (id: string) => `/admin/services/${id}`, path: (slug: string) => `/layanan/${slug}` },
+} as const;
+
+const querySchema = z.object({ type: z.enum(["training", "service"]), id: z.uuid() });
 
 // Pratinjau konten sebelum tayang (draft mode Next). Hanya untuk sesi admin yang valid:
 // sesi dicek ke BE lewat endpoint admin, baru draft mode dinyalakan. Redirect selalu ke path yang
@@ -13,8 +19,9 @@ const querySchema = z.object({ type: z.literal("training"), id: z.uuid() });
 export async function GET(request: NextRequest) {
   const parsed = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams));
   if (!parsed.success) return new NextResponse("Parameter pratinjau tidak valid.", { status: 400 });
+  const target = TARGETS[parsed.data.type];
 
-  const response = await adminServerFetch(`/admin/trainings/${parsed.data.id}`);
+  const response = await adminServerFetch(target.endpoint(parsed.data.id));
   if (response.status === 401) {
     const login = new URL(ADMIN_LOGIN, request.url);
     login.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
@@ -22,7 +29,7 @@ export async function GET(request: NextRequest) {
   }
   if (!response.ok) return new NextResponse("Konten tidak ditemukan.", { status: response.status === 404 ? 404 : 502 });
 
-  const { data } = (await response.json()) as ApiSuccess<Training>;
+  const { data } = (await response.json()) as ApiSuccess<{ slug: string }>;
   (await draftMode()).enable();
-  return NextResponse.redirect(new URL(`/pelatihan/${data.slug}`, request.url));
+  return NextResponse.redirect(new URL(target.path(data.slug), request.url));
 }
