@@ -76,7 +76,7 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
 
       <div className="mt-8">
         {items.length > 0 ? (
-          <TrainingGrid trainings={items} />
+          <TrainingGrid trainings={items} headingLevel="h2" />
         ) : (
           <div className="border-t border-border py-16">
             <p className="text-[24px] leading-[1.25] font-medium text-fg-strong">Tidak ada pelatihan yang cocok</p>

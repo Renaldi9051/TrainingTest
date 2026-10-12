@@ -79,7 +79,7 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
 
       <div className="mt-12">
         {catalog.items.length > 0 ? (
-          <TrainingGrid trainings={catalog.items} />
+          <TrainingGrid trainings={catalog.items} headingLevel="h2" />
         ) : (
           <div className="py-12">
             <p className="text-[24px] leading-[1.25] font-medium text-fg-strong">Belum ada pelatihan di kategori ini</p>

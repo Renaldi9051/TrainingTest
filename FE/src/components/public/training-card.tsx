@@ -41,12 +41,20 @@ export function TrainingCard({ training, headingLevel = "h3" }: { training: Publ
   );
 }
 
-export function TrainingGrid({ trainings }: { trainings: PublicTrainingCard[] }) {
+// headingLevel: h2 kalau grid langsung di bawah h1 halaman (katalog, landing kategori), h3 kalau
+// di bawah judul section (pelatihan terkait), supaya urutan heading tidak melompat.
+export function TrainingGrid({
+  trainings,
+  headingLevel = "h3",
+}: {
+  trainings: PublicTrainingCard[];
+  headingLevel?: "h2" | "h3";
+}) {
   return (
     <ul className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
       {trainings.map((training) => (
         <li key={training.slug}>
-          <TrainingCard training={training} />
+          <TrainingCard training={training} headingLevel={headingLevel} />
         </li>
       ))}
     </ul>
