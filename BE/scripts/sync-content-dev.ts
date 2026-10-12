@@ -4,12 +4,14 @@
 //   npm run db:sync-content            # dry run: tampilkan rencana, tidak mengubah apa pun
 //   npm run db:sync-content -- --apply # jalankan dalam satu transaksi, lalu revalidate FE
 //
-// Menolak jalan kalau DATABASE_URL bukan training_dev. AuditLog lama tidak disentuh; satu baris
-// AuditLog "ContentSync" ditulis saat --apply.
+// Katalog (kategori, pelatihan, jadwal) lama dihapus permanen lalu diganti katalog contoh
+// (prisma/seed-data/catalog.ts). Menolak jalan kalau DATABASE_URL bukan training_dev. AuditLog lama
+// tidak disentuh; satu baris AuditLog "ContentSync" ditulis saat --apply.
 import { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
 import { databaseName } from "../src/lib/env";
 import { RevalidateTag, revalidateTags } from "../src/lib/revalidate";
+import { appDateString } from "../src/lib/time";
 import { AuditAction, writeAudit } from "../src/services/audit";
 import {
   buildClients,
@@ -23,7 +25,8 @@ import {
   buildStaticPages,
   buildTestimonials,
 } from "../prisma/seed-data/build";
-import { categories } from "../prisma/seed-data/catalog";
+import { buildSchedules, categories, trainings } from "../prisma/seed-data/catalog";
+import { writeCatalog } from "../prisma/seed-data/catalog-writer";
 import { footerNav, headerNav, profilePage } from "../prisma/seed-data/content";
 import { createSeedNav } from "../prisma/seed-data/nav";
 
@@ -33,82 +36,8 @@ const ALLOWED_DATABASES = new Set([TARGET_DATABASE, "training_e2e"]);
 const APPLY = process.argv.includes("--apply");
 const PUBLISHED_AT = new Date("2026-10-01T00:00:00.000Z");
 const EMPTY_SEO = { title: "", description: "", ogImageId: null };
-
-// Kategori lama training_dev (seed bulk, nama Indonesia) -> kategori referensi. Pelatihan di
-// kategori lama ditambahkan juga ke kategori referensi (kategori lama tetap ada).
-const LEGACY_CATEGORY_MAP: Record<string, string> = {
-  "keuangan-akuntansi": "accounting",
-  "akuntansi-keuangan": "accounting",
-  "akuntansi-manajemen": "accounting",
-  "sumber-daya-manusia": "human-resource",
-  "rekrutmen-dan-seleksi": "human-resource",
-  "manajemen-kinerja": "human-resource",
-  "pengembangan-sdm": "human-resource",
-  "kompensasi-dan-benefit": "employee",
-  "hubungan-industrial": "industrial",
-  "teknologi-informasi": "information-technology",
-  "keamanan-siber": "information-technology",
-  "data-dan-analitik": "information-technology",
-  "pemrograman": "programming",
-  "kecerdasan-buatan": "technology",
-  "telekomunikasi": "technology",
-  "penjualan-negosiasi": "negosiasi",
-  "penjualan": "sales",
-  "ritel": "sales",
-  "pemasaran": "marketing",
-  "pemasaran-digital": "marketing",
-  "k3-keselamatan-kerja": "health-safety-environment",
-  "k3": "health-safety-environment",
-  "keselamatan": "health-safety-environment",
-  "kesehatan": "health-safety-environment",
-  "lingkungan": "environment",
-  "perpajakan": "pajak",
-  "audit-internal": "audit",
-  "manajemen-risiko": "risk-management",
-  "treasury": "financial",
-  "pasar-modal": "financial",
-  "keuangan-non-keuangan": "keuangan",
-  "kepemimpinan": "leadership",
-  "supervisori": "leadership",
-  "komunikasi": "communication",
-  "bahasa-inggris-bisnis": "communication",
-  "layanan-pelanggan": "customer-services",
-  "perhotelan": "services",
-  "manajemen-proyek": "proyek",
-  "manajemen-operasional": "operation-management",
-  "rantai-pasok": "procurement",
-  "pengadaan": "procurement",
-  "logistik": "cargo",
-  "ekspor-impor": "international",
-  "produksi": "manufacture",
-  "kualitas-dan-iso": "industry",
-  "makanan-dan-minuman": "industry",
-  "kesekretariatan": "secretary",
-  "produktivitas-kantor": "administrative",
-  "hukum-bisnis": "law",
-  "tata-kelola": "company",
-  "perbankan": "banking",
-  "asuransi": "insurance",
-  "koperasi": "economy",
-  "statistik": "economy",
-  "sektor-publik": "social",
-  "manajemen-aset": "management",
-  "manajemen-fasilitas": "maintenance",
-  "properti": "properties",
-  "migas-dan-energi": "oil-and-gas",
-  "perkebunan": "agrobisnis",
-  "pendidikan": "education",
-  "kewirausahaan": "entrepreneur",
-  "strategi-bisnis": "strategic",
-  "inovasi": "business",
-  "pengembangan-diri": "personal-development",
-  "etika-dan-budaya-kerja": "organization",
-  "maritim": "transportasi",
-  "penerbangan": "transportasi",
-  "konstruksi": "civil",
-  "teknik": "engineering",
-  "farmasi": "chemical",
-};
+// Redirect slug pelatihan/kategori lama: tujuannya ikut terhapus.
+const CATALOG_REDIRECTS = { OR: [{ from: { startsWith: "/pelatihan/" } }, { to: { startsWith: "/pelatihan/" } }] };
 
 const db = getDb();
 
@@ -132,28 +61,24 @@ async function plan() {
   const otherServices = existingServices.filter((row) => !services.some((service) => service.slug === row.slug));
   if (otherServices.length > 0) add("Layanan", "tetap", `${otherServices.length} layanan lain dibiarkan`);
 
-  // Kategori.
-  const existingCategories = await db.category.findMany({
-    where: { deletedAt: null },
-    select: { id: true, slug: true, featured: true, _count: { select: { trainings: true } } },
-  });
-  const categoryBySlug = new Map(existingCategories.map((row) => [row.slug, row]));
-  const createdCategories = categories.filter((category) => !categoryBySlug.has(category.slug));
-  const updatedCategories = categories.filter((category) => categoryBySlug.has(category.slug));
-  const referenceSlugs = new Set(categories.map((category) => category.slug));
-  const legacy = existingCategories.filter((row) => !referenceSlugs.has(row.slug));
-  add("Kategori", "tambah", `${createdCategories.length} kategori referensi baru`);
-  if (updatedCategories.length > 0) add("Kategori", "ubah", `${updatedCategories.length} kategori referensi yang sudah ada (nama/deskripsi/ikon/urutan): ${updatedCategories.map((c) => c.slug).join(", ")}`);
-  add("Kategori", "ubah", `unggulan: ${categories.filter((c) => c.featured).map((c) => c.name).join(", ")}`);
-  const unfeatured = legacy.filter((row) => row.featured);
-  if (unfeatured.length > 0) add("Kategori", "ubah", `${unfeatured.length} kategori lama tidak lagi unggulan: ${unfeatured.map((row) => row.slug).join(", ")}`);
-  add("Kategori", "tetap", `${legacy.length} kategori lama tetap ada (${legacy.filter((row) => row._count.trainings > 0).length} punya pelatihan), diurutkan setelah kategori referensi`);
+  // Katalog: semua kategori, pelatihan, dan jadwal lama dihapus permanen (termasuk Sampah).
+  const catalog = await catalogImpact();
+  add("Katalog lama", "hapus", `${catalog.categories} kategori (${catalog.categoriesTrash} di Sampah)`);
+  add("Katalog lama", "hapus", `${catalog.trainings} pelatihan (${catalog.trainingsTrash} di Sampah)`);
+  add("Katalog lama", "hapus", `${catalog.schedules} jadwal (${catalog.schedulesTrash} di Sampah)`);
+  add("Katalog lama", "hapus", `${catalog.trainingCategories} tautan pelatihan-kategori (ikut terhapus)`);
+  add("Katalog baru", "tambah", `${categories.length} kategori (${categories.filter((c) => c.featured).length} unggulan)`);
+  add("Katalog baru", "tambah", `${trainings.length} pelatihan (${trainings.filter((t) => t.categorySlugs.length === 2).length} dengan 2 kategori)`);
+  add("Katalog baru", "tambah", `${trainings.reduce((sum, t) => sum + t.categorySlugs.length, 0)} tautan pelatihan-kategori`);
+  add("Katalog baru", "tambah", `${buildSchedules(appDateString()).length} jadwal dalam 6 bulan ke depan`);
 
-  // Tautan pelatihan ke kategori referensi (tanpa melepas kategori lama).
-  const links = await legacyLinks(existingCategories.map((row) => ({ id: row.id, slug: row.slug })));
-  const unmapped = legacy.filter((row) => !LEGACY_CATEGORY_MAP[row.slug]).map((row) => row.slug);
-  add("Kategori", "tambah", `${links.count} tautan pelatihan -> kategori referensi (${links.trainings} pelatihan, dari ${links.mappedCategories} kategori lama)`);
-  if (unmapped.length > 0) add("Kategori", "tetap", `kategori lama tanpa padanan: ${unmapped.join(", ")}`);
+  // Relasi lain yang ikut terdampak.
+  add("Relasi terdampak", catalog.evaluations > 0 ? "hapus" : "tetap", `${catalog.evaluations} respons evaluasi pada jadwal lama${catalog.evaluations > 0 ? " (MENGHALANGI penghapusan jadwal: FK Restrict)" : ""}`);
+  add("Relasi terdampak", catalog.inquiries > 0 ? "ubah" : "tetap", `${catalog.inquiries} inquiry yang menautkan pelatihan lama (kolom pelatihan menjadi kosong)`);
+  add("Relasi terdampak", catalog.redirects > 0 ? "hapus" : "tetap", `${catalog.redirects} redirect /pelatihan/... (tujuannya tidak ada lagi)`);
+  add("Relasi terdampak", "tetap", `${catalog.coverMedia} media sampul pelatihan lama tetap di media library (tidak lagi dipakai)`);
+  add("Relasi terdampak", "tetap", `${catalog.manualSections} section beranda mode manual yang menunjuk pelatihan/kategori (section beranda diganti penuh di bawah)`);
+  add("Relasi terdampak", "tetap", `${catalog.auditLogs} baris AuditLog pelatihan/kategori/jadwal lama disimpan sebagai riwayat`);
 
   // Konten yang diganti penuh: hapus permanen baris lama (termasuk Sampah), buat ulang.
   const replace = async (section: string, count: number, created: number, unit: string) => {
@@ -178,41 +103,47 @@ async function plan() {
   // Pengaturan.
   for (const key of Object.keys(buildSettings())) add("Pengaturan", "ubah", key);
 
-  return { lines, links, categoryBySlug, legacy };
+  return { lines, catalog };
 }
 
-// Pasangan (pelatihan, kategori referensi) yang belum ada, dari kategori lama yang punya padanan.
-async function legacyLinks(existing: { id: string; slug: string }[]) {
-  const idBySlug = new Map(existing.map((row) => [row.slug, row.id]));
-  const pairs: { legacyCategoryId: string; targetSlug: string }[] = [];
-  for (const [legacySlug, targetSlug] of Object.entries(LEGACY_CATEGORY_MAP)) {
-    const legacyCategoryId = idBySlug.get(legacySlug);
-    if (legacyCategoryId) pairs.push({ legacyCategoryId, targetSlug });
-  }
-  const rows = await db.trainingCategory.findMany({
-    where: { categoryId: { in: pairs.map((pair) => pair.legacyCategoryId) }, training: { deletedAt: null } },
-    select: { trainingId: true, categoryId: true },
-  });
-  const targetByLegacy = new Map(pairs.map((pair) => [pair.legacyCategoryId, pair.targetSlug]));
-  const wanted = new Map<string, { trainingId: string; targetSlug: string }>();
-  for (const row of rows) {
-    const targetSlug = targetByLegacy.get(row.categoryId);
-    if (targetSlug) wanted.set(`${row.trainingId}:${targetSlug}`, { trainingId: row.trainingId, targetSlug });
-  }
-  // Tautan yang sudah ada ke kategori referensi (kalau kategori referensi sudah ada) tidak dihitung.
-  const targetIds = new Map(existing.filter((row) => categories.some((c) => c.slug === row.slug)).map((row) => [row.id, row.slug]));
-  const already = await db.trainingCategory.findMany({ where: { categoryId: { in: [...targetIds.keys()] } }, select: { trainingId: true, categoryId: true } });
-  for (const row of already) wanted.delete(`${row.trainingId}:${targetIds.get(row.categoryId)}`);
-  const list = [...wanted.values()];
+// Jumlah baris katalog lama dan relasi yang ikut terdampak penghapusannya.
+async function catalogImpact() {
+  const [categoriesCount, categoriesTrash, trainingsCount, trainingsTrash, schedulesCount, schedulesTrash] = await Promise.all([
+    db.category.count(),
+    db.category.count({ where: { deletedAt: { not: null } } }),
+    db.training.count(),
+    db.training.count({ where: { deletedAt: { not: null } } }),
+    db.schedule.count(),
+    db.schedule.count({ where: { deletedAt: { not: null } } }),
+  ]);
+  const manualSections = await db.$queryRaw<{ count: bigint }[]>`
+    SELECT count(*) AS count FROM "HomeSection"
+    WHERE type IN ('LATEST_TRAININGS', 'CATEGORIES') AND content->>'mode' = 'manual'`;
   return {
-    list,
-    count: list.length,
-    trainings: new Set(list.map((item) => item.trainingId)).size,
-    mappedCategories: pairs.length,
+    categories: categoriesCount,
+    categoriesTrash,
+    trainings: trainingsCount,
+    trainingsTrash,
+    schedules: schedulesCount,
+    schedulesTrash,
+    trainingCategories: await db.trainingCategory.count(),
+    evaluations: await db.evaluationResponse.count(),
+    inquiries: await db.inquiry.count({ where: { trainingId: { not: null } } }),
+    redirects: await db.redirect.count({ where: CATALOG_REDIRECTS }),
+    coverMedia: (await db.training.findMany({ where: { coverId: { not: null } }, distinct: ["coverId"], select: { coverId: true } })).length,
+    manualSections: Number(manualSections[0]?.count ?? 0),
+    auditLogs: await db.auditLog.count({ where: { entity: { in: ["Training", "Category", "Schedule"] } } }),
+    // Untuk revalidate cache halaman lama (detail pelatihan & landing kategori).
+    oldTrainingSlugs: (await db.training.findMany({ select: { slug: true } })).map((row) => row.slug),
+    oldCategorySlugs: (await db.category.findMany({ select: { slug: true } })).map((row) => row.slug),
   };
 }
 
 async function apply(result: Awaited<ReturnType<typeof plan>>) {
+  // Respons evaluasi adalah data peserta: tidak dihapus diam-diam. Hentikan dan minta keputusan.
+  if (result.catalog.evaluations > 0) {
+    throw new Error(`Ada ${result.catalog.evaluations} respons evaluasi pada jadwal lama. Sinkronisasi dibatalkan; tidak ada yang diubah.`);
+  }
   const settings = buildSettings();
   await db.$transaction(
     async (tx) => {
@@ -236,23 +167,12 @@ async function apply(result: Awaited<ReturnType<typeof plan>>) {
         else await tx.service.create({ data: { ...data, slug: service.slug, seo: EMPTY_SEO } });
       }
 
-      // Kategori referensi: buat/ubah, urutan 0..74. Kategori lama diurutkan sesudahnya, tidak unggulan.
-      const ids = new Map<string, string>();
-      for (const [order, category] of categories.entries()) {
-        const existing = result.categoryBySlug.get(category.slug);
-        const data = { name: category.name, description: category.description, icon: category.icon, featured: category.featured, order };
-        const saved = existing
-          ? await tx.category.update({ where: { id: existing.id }, data, select: { id: true } })
-          : await tx.category.create({ data: { ...data, slug: category.slug }, select: { id: true } });
-        ids.set(category.slug, saved.id);
-      }
-      for (const [index, row] of result.legacy.entries()) {
-        await tx.category.update({ where: { id: row.id }, data: { featured: false, order: categories.length + index } });
-      }
-      await tx.trainingCategory.createMany({
-        data: result.links.list.map((link) => ({ trainingId: link.trainingId, categoryId: ids.get(link.targetSlug) ?? "" })),
-        skipDuplicates: true,
-      });
+      // Katalog: hapus permanen yang lama (jadwal dulu karena FK Restrict), lalu tulis katalog contoh.
+      await tx.redirect.deleteMany({ where: CATALOG_REDIRECTS });
+      await tx.schedule.deleteMany({});
+      await tx.training.deleteMany({});
+      await tx.category.deleteMany({});
+      await writeCatalog(tx);
 
       // Konten yang diganti penuh.
       await tx.homeSection.deleteMany({});
@@ -323,6 +243,8 @@ async function apply(result: Awaited<ReturnType<typeof plan>>) {
     ...buildStaticPages().map((page) => `page:${page.slug}`),
     ...buildServices().map((service) => `service:${service.slug}`),
     ...categories.map((category) => `category:${category.slug}`),
+    ...result.catalog.oldCategorySlugs.map((slug) => `category:${slug}`),
+    ...result.catalog.oldTrainingSlugs.map((slug) => `training:${slug}`),
   ]);
   console.info(ok ? "Cache FE direvalidasi." : "Revalidate FE gagal (FE tidak menyala?). Data tetap tersimpan; muat ulang FE bila perlu.");
 }
@@ -342,6 +264,15 @@ async function main() {
     }
     console.info(`  [${line.action}] ${line.detail}`);
   }
+  console.info("\nKatalog baru per kategori (jumlah pelatihan termasuk kategori kedua; 3 contoh judul):");
+  for (const category of categories) {
+    const items = trainings.filter((training) => training.categorySlugs.includes(category.slug));
+    const primary = items.filter((training) => training.categorySlugs[0] === category.slug);
+    const examples = [primary[0], primary[Math.floor(primary.length / 2)], primary[primary.length - 1]].map((t) => t.title);
+    console.info(`  ${category.featured ? "*" : " "} ${category.name}: ${items.length} pelatihan (${primary.length} utama)`);
+    console.info(`      ${examples.join(" | ")}`);
+  }
+  console.info("  (* = unggulan)");
   if (!APPLY) {
     console.info("\nJalankan dengan --apply untuk menerapkan.");
     return;
