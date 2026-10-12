@@ -10,9 +10,10 @@ export const MEDIA_REF_KEY = "mediaId";
 
 export type MediaKind = "image" | "pdf";
 
-export const mediaRefObjectSchema = z.object({
-  mediaId: z.uuid({ error: "Media tidak valid." }),
-});
+export const mediaRefObjectSchema = z.object(
+  { mediaId: z.uuid({ error: "Media tidak valid." }) },
+  { error: "Media tidak valid." },
+);
 export type MediaRef = z.infer<typeof mediaRefObjectSchema>;
 
 // Referensi media + path field-nya (format path error form, mis. "image" atau "3.file").

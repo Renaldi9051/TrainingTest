@@ -81,6 +81,7 @@ describe("pageBlockSchema", () => {
     ["LIST gaya asing", { id: id(1), type: "LIST", style: "table", items: ["a"] }, ["style"]],
     ["SERVICES manual tanpa pilihan", { id: id(1), type: "SERVICES", mode: "manual" }, ["ids"]],
     ["IMAGE tanpa gambar", { id: id(1), type: "IMAGE" }, ["image"]],
+    ["IMAGE gambar null", { id: id(1), type: "IMAGE", image: null }, ["image"]],
     ["DOWNLOAD tanpa label", { id: id(1), type: "DOWNLOAD", file: null }, ["label"]],
     ["VISION_MISSION tanpa visi", { id: id(1), type: "VISION_MISSION", mission: ["a"] }, ["vision"]],
   ] as const)("menolak %s", (_label, block, path) => {
@@ -88,6 +89,13 @@ describe("pageBlockSchema", () => {
     expect(result.success).toBe(false);
     if (path.length > 0) expect(result.error?.issues.map((issue) => issue.path)).toContainEqual(path);
   });
+});
+
+it("pesan error media dalam Bahasa Indonesia", () => {
+  const missing = pageBlockSchema.safeParse({ id: id(1), type: "IMAGE", image: null });
+  expect(missing.error?.issues[0]?.message).toBe("Pilih gambar.");
+  const broken = pageBlockSchema.safeParse({ id: id(1), type: "DOWNLOAD", label: "Unduh", file: "x.pdf" });
+  expect(broken.error?.issues[0]?.message).toBe("Media tidak valid.");
 });
 
 describe("pageBlocksSchema", () => {

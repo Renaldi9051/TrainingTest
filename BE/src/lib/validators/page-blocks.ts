@@ -98,7 +98,7 @@ const servicesBlock = z
 const imageBlock = z.object({
   id: blockId,
   type: z.literal("IMAGE"),
-  image: mediaRefObjectSchema,
+  image: z.object(mediaRefObjectSchema.shape, { error: "Pilih gambar." }),
   caption: plainText("Keterangan", 200),
 });
 
