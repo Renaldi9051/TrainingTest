@@ -9,8 +9,18 @@ export const RevalidateTag = {
   CATEGORIES: "categories",
   TRAININGS: "trainings",
   SCHEDULES: "schedules",
+  HOME: "home",
+  PAGES: "pages",
+  SERVICES: "services",
+  CLIENTS: "clients",
+  TESTIMONIALS: "testimonials",
+  PORTFOLIO: "portfolio",
+  MARKETING: "marketing",
+  MEDIA_PARTNERS: "media-partners",
   category: (slug: string) => `category:${slug}`,
   training: (slug: string) => `training:${slug}`,
+  page: (slug: string) => `page:${slug}`,
+  service: (slug: string) => `service:${slug}`,
 } as const;
 
 // Gabungkan tag tanpa duplikat; nilai kosong dilewati (mis. slug lama yang sama dengan slug baru).

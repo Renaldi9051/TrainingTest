@@ -3,7 +3,9 @@ import { revalidateTags, RevalidateTag, tags } from "@/lib/revalidate";
 
 // Satu-satunya peta entitas -> tag cache FE. Service memanggil revalidateEntity dengan event
 // entitas yang berubah, bukan menyusun daftar tag sendiri, supaya halaman yang ikut menampilkan
-// data itu (mis. beranda) tidak terlupa. Tabel konvensi tag: AGENTS.md.
+// data itu tidak terlupa. Beranda (`home`) menampilkan pelatihan, jadwal, kategori, layanan,
+// klien, dan testimoni, jadi semua entitas itu ikut me-revalidate `home`.
+// Tabel konvensi tag: AGENTS.md.
 
 type Slugs = readonly (string | null | undefined)[];
 
@@ -18,7 +20,17 @@ export type RevalidateEvent =
   // Slug pelatihan pemilik jadwal (lama + baru kalau jadwal pindah pelatihan).
   | { entity: "Schedule"; trainingSlugs: Slugs }
   // Tanggal WIB berganti: status sesi (SELESAI) dan jadwal terdekat berubah.
-  | { entity: "DayChange" };
+  | { entity: "DayChange" }
+  | { entity: "HomeSection" }
+  | { entity: "Page"; slugs: Slugs }
+  | { entity: "Service"; slugs: Slugs }
+  | { entity: "Client" }
+  | { entity: "Testimonial" }
+  | { entity: "PortfolioItem" }
+  | { entity: "MarketingContact" }
+  | { entity: "MediaPartner" };
+
+export type RevalidateEntityName = RevalidateEvent["entity"];
 
 const slugTags = (slugs: Slugs, toTag: (slug: string) => string) =>
   slugs.map((slug) => (slug ? toTag(slug) : null));
@@ -35,21 +47,49 @@ export function tagsForEvent(event: RevalidateEvent): string[] {
       return tags(
         RevalidateTag.CATEGORIES,
         RevalidateTag.TRAININGS,
+        RevalidateTag.HOME,
         ...slugTags(event.slugs, RevalidateTag.category),
       );
     case "CategoryOrder":
-      return [RevalidateTag.CATEGORIES];
+      return [RevalidateTag.CATEGORIES, RevalidateTag.HOME];
     case "Training":
       return tags(
         RevalidateTag.TRAININGS,
         RevalidateTag.CATEGORIES,
         RevalidateTag.SCHEDULES,
+        RevalidateTag.HOME,
         ...slugTags(event.slugs, RevalidateTag.training),
       );
     case "Schedule":
-      return tags(RevalidateTag.SCHEDULES, ...slugTags(event.trainingSlugs, RevalidateTag.training));
+      return tags(
+        RevalidateTag.SCHEDULES,
+        RevalidateTag.HOME,
+        ...slugTags(event.trainingSlugs, RevalidateTag.training),
+      );
     case "DayChange":
-      return [RevalidateTag.SCHEDULES, RevalidateTag.TRAININGS];
+      return [RevalidateTag.SCHEDULES, RevalidateTag.TRAININGS, RevalidateTag.HOME];
+    case "HomeSection":
+      return [RevalidateTag.HOME];
+    case "Page":
+      return tags(RevalidateTag.PAGES, ...slugTags(event.slugs, RevalidateTag.page));
+    // Layanan tampil di beranda dan di blok SERVICES halaman (semua fetch halaman bertag `pages`).
+    case "Service":
+      return tags(
+        RevalidateTag.SERVICES,
+        RevalidateTag.HOME,
+        RevalidateTag.PAGES,
+        ...slugTags(event.slugs, RevalidateTag.service),
+      );
+    case "Client":
+      return [RevalidateTag.CLIENTS, RevalidateTag.HOME];
+    case "Testimonial":
+      return [RevalidateTag.TESTIMONIALS, RevalidateTag.HOME];
+    case "PortfolioItem":
+      return [RevalidateTag.PORTFOLIO];
+    case "MarketingContact":
+      return [RevalidateTag.MARKETING];
+    case "MediaPartner":
+      return [RevalidateTag.MEDIA_PARTNERS];
   }
 }
 

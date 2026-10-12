@@ -123,7 +123,7 @@ describe("importSchedules", () => {
     expect(mock.$transaction).toHaveBeenCalledTimes(1);
     expect(mock.schedule.createMany.mock.calls[0][0].data).toHaveLength(2);
     expect(mock.auditLog.create.mock.calls[0][0].data).toMatchObject({ action: "IMPORT", entity: "Schedule" });
-    expect(revalidate).toHaveBeenCalledWith(["schedules", "training:kpi"]);
+    expect(revalidate).toHaveBeenCalledWith(["schedules", "home", "training:kpi"]);
   });
 
   it("ada satu baris salah: 422 dan tidak ada yang disimpan", async () => {

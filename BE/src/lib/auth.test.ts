@@ -125,6 +125,7 @@ describe("adminRoute", () => {
       "trainings",
       "categories",
       "schedules",
+      "home",
       "training:a",
       "training:b",
     ]);

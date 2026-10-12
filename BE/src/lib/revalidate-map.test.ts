@@ -14,8 +14,8 @@ beforeEach(() => {
 });
 
 // Tag yang dipanggil service Fase 2 sebelum peta ini ada. Pemindahan ke peta tidak boleh
-// menghilangkan satu pun.
-describe("tagsForEvent: tag Fase 2 tetap sama", () => {
+// menghilangkan satu pun (Fase 3 hanya menambah `home`).
+describe("tagsForEvent: tag Fase 2 tetap terpanggil", () => {
   it.each([
     [{ entity: "Settings" } as const, ["settings"]],
     [{ entity: "Nav" } as const, ["nav"]],
@@ -30,10 +30,55 @@ describe("tagsForEvent: tag Fase 2 tetap sama", () => {
       { entity: "Training", slugs: ["baru", null, "lama"] } as const,
       ["trainings", "categories", "schedules", "training:baru", "training:lama"],
     ],
+    [{ entity: "Schedule", trainingSlugs: ["a", "a", undefined] } as const, ["schedules", "training:a"]],
+  ])("%o", (event, phase2Tags) => {
+    const result = tagsForEvent(event);
+    expect(result).toEqual(expect.arrayContaining(phase2Tags));
+    expect(new Set(result).size).toBe(result.length);
+  });
+});
+
+describe("tagsForEvent: beranda ikut di-revalidate saat datanya berubah", () => {
+  it.each([
+    { entity: "Training", slugs: ["a"] } as const,
+    { entity: "Schedule", trainingSlugs: ["a"] } as const,
+    { entity: "Category", slugs: ["a"] } as const,
+    { entity: "CategoryOrder" } as const,
+    { entity: "Service", slugs: ["a"] } as const,
+    { entity: "Client" } as const,
+    { entity: "Testimonial" } as const,
+    { entity: "HomeSection" } as const,
+    { entity: "DayChange" } as const,
+  ])("%o", (event) => {
+    expect(tagsForEvent(event)).toContain("home");
+  });
+
+  it.each([
+    { entity: "Settings" } as const,
+    { entity: "Nav" } as const,
+    { entity: "Media" } as const,
+    { entity: "PortfolioItem" } as const,
+    { entity: "MarketingContact" } as const,
+    { entity: "MediaPartner" } as const,
+    { entity: "Page", slugs: ["a"] } as const,
+  ])("%o tidak menyentuh beranda", (event) => {
+    expect(tagsForEvent(event)).not.toContain("home");
+  });
+});
+
+describe("tagsForEvent: entitas Fase 3", () => {
+  it.each([
+    [{ entity: "Page", slugs: ["baru", "lama"] } as const, ["pages", "page:baru", "page:lama"]],
     [
-      { entity: "Schedule", trainingSlugs: ["a", "a", undefined] } as const,
-      ["schedules", "training:a"],
+      { entity: "Service", slugs: ["baru", "lama"] } as const,
+      ["services", "home", "pages", "service:baru", "service:lama"],
     ],
+    [{ entity: "Client" } as const, ["clients", "home"]],
+    [{ entity: "Testimonial" } as const, ["testimonials", "home"]],
+    [{ entity: "PortfolioItem" } as const, ["portfolio"]],
+    [{ entity: "MarketingContact" } as const, ["marketing"]],
+    [{ entity: "MediaPartner" } as const, ["media-partners"]],
+    [{ entity: "HomeSection" } as const, ["home"]],
   ])("%o", (event, expected) => {
     expect(tagsForEvent(event)).toEqual(expected);
   });
@@ -46,7 +91,7 @@ describe("revalidateEntity", () => {
       { entity: "Schedule", trainingSlugs: ["a"] },
     ]);
     expect(revalidate).toHaveBeenCalledTimes(1);
-    expect(revalidate).toHaveBeenCalledWith(["trainings", "categories", "schedules", "training:a"]);
+    expect(revalidate).toHaveBeenCalledWith(["trainings", "categories", "schedules", "home", "training:a"]);
   });
 
   it("meneruskan hasil gagal dari FE (dipakai scheduler untuk mencoba lagi)", async () => {
@@ -56,7 +101,7 @@ describe("revalidateEntity", () => {
 
   it("slug kosong saja tidak menambah tag slug", async () => {
     await revalidateEntity({ entity: "Category", slugs: [] });
-    expect(revalidate).toHaveBeenCalledWith(["categories", "trainings"]);
+    expect(revalidate).toHaveBeenCalledWith(["categories", "trainings", "home"]);
   });
 });
 

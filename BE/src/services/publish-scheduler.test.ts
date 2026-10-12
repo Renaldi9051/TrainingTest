@@ -38,7 +38,7 @@ describe("revalidateDuePublications", () => {
   it("revalidate tag katalog + slug, lalu tandai sudah di-revalidate", async () => {
     mock.training.findMany.mockResolvedValue([{ id: "a", slug: "kpi" }]);
     expect(await revalidateDuePublications(now)).toBe(1);
-    expect(revalidate).toHaveBeenCalledWith(["trainings", "categories", "schedules", "training:kpi"]);
+    expect(revalidate).toHaveBeenCalledWith(["trainings", "categories", "schedules", "home", "training:kpi"]);
     expect(mock.training.updateMany).toHaveBeenCalledWith({
       where: { id: { in: ["a"] } },
       data: { publishRevalidatedAt: now },
@@ -56,7 +56,7 @@ describe("revalidateDuePublications", () => {
 describe("revalidateOnDayChange", () => {
   it("revalidate jadwal & katalog sekali per tanggal WIB", async () => {
     expect(await revalidateOnDayChange(null, now)).toBe("2026-10-10");
-    expect(revalidate).toHaveBeenCalledWith(["schedules", "trainings"]);
+    expect(revalidate).toHaveBeenCalledWith(["schedules", "trainings", "home"]);
     revalidate.mockClear();
     expect(await revalidateOnDayChange("2026-10-10", now)).toBe("2026-10-10");
     expect(revalidate).not.toHaveBeenCalled();
