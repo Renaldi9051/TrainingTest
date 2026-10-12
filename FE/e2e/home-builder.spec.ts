@@ -6,7 +6,7 @@ import { loginViaApi, ORIGIN, runId } from "./helpers";
 // Builder beranda (3.4): tambah section per type, HERO/CTA satu instance (menu nonaktif + alasan,
 // 409 di API termasuk restore), error isi per baris, urutan & toggle tampil langsung tersimpan
 // dengan rollback saat gagal, hapus + urungkan, pratinjau dengan flag visible/empty.
-// Bagian halaman publik "/" di-skip sampai halamannya dibuat (3.5). Data uji berawalan [UJI].
+// Data uji berawalan [UJI].
 
 const HEADERS = { Origin: ORIGIN };
 
@@ -202,8 +202,37 @@ test.describe("builder beranda", () => {
     expect(publicHome).toContain("HERO");
   });
 
-  test("beranda publik mengikuti urutan & sembunyi dari builder", async ({ page }) => {
-    test.skip(true, "Halaman beranda publik dibuat di Fase 3.5.");
+  test("beranda publik mengikuti urutan & sembunyi dari builder < 5 detik", async ({ page }) => {
+    const vision = await page.request.post("/api/admin/home-sections", {
+      headers: HEADERS,
+      data: { type: "VISION_MISSION", content: { vision: "[UJI] Visi beranda publik", mission: ["[UJI] Misi pertama"] } },
+    });
+    expect(vision.status()).toBe(201);
+    const visionId = ((await vision.json()) as { data: { id: string } }).data.id;
+    const all = await sections(page.request);
+    const stats = all.find((section) => section.type === "STATS");
+    await page.request.patch(`/api/admin/home-sections/${stats?.id}`, { headers: HEADERS, data: { visible: true } });
+
+    // Visi & misi dipindah ke atas statistik: urutan di HTML beranda ikut berubah.
+    const order = [visionId, ...all.map((section) => section.id).filter((id) => id !== visionId)];
+    await page.request.post("/api/admin/home-sections/reorder", { headers: HEADERS, data: { ids: order } });
+    const positions = async () => {
+      const html = await (await page.request.get("/")).text();
+      return { vision: html.indexOf("[UJI] Visi beranda publik"), stats: html.indexOf("Negara") };
+    };
+    await expect
+      .poll(async () => {
+        const { vision: v, stats: s } = await positions();
+        return v >= 0 && s >= 0 && v < s;
+      }, { timeout: 5_000 })
+      .toBe(true);
+
+    // Sembunyikan: hilang dari beranda < 5 detik.
+    await page.request.patch(`/api/admin/home-sections/${visionId}`, { headers: HEADERS, data: { visible: false } });
+    await expect
+      .poll(async () => (await positions()).vision, { timeout: 5_000 })
+      .toBe(-1);
     await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   });
 });
