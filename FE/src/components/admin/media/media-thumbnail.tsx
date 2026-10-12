@@ -8,11 +8,11 @@ type MediaThumbnailProps = {
   sizes: string;
   className?: string;
   fit?: "cover" | "contain";
-  priority?: boolean;
 };
 
 // Gambar raster memakai varian WebP dari BE lewat image loader; SVG tanpa loader (unoptimized).
-export function MediaThumbnail({ media, sizes, className, fit = "cover", priority }: MediaThumbnailProps) {
+// Selalu lazy (bawaan next/image): thumbnail admin bukan konten layar pertama halaman publik.
+export function MediaThumbnail({ media, sizes, className, fit = "cover" }: MediaThumbnailProps) {
   if (media.mime === "application/pdf") {
     return (
       <div className={cn("flex h-full w-full items-center justify-center bg-bg-subtle", className)}>
@@ -29,7 +29,6 @@ export function MediaThumbnail({ media, sizes, className, fit = "cover", priorit
         alt={media.alt ?? ""}
         fill
         sizes={sizes}
-        priority={priority}
         unoptimized={media.mime === "image/svg+xml"}
         className={fit === "cover" ? "object-cover" : "object-contain"}
       />

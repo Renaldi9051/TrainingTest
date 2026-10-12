@@ -164,7 +164,7 @@ function MediaDetailBody({ media, onDeleted }: { media: MediaDetail; onDeleted: 
     <div className="flex flex-1 flex-col">
       <div className="space-y-6 p-4">
         <div className="relative aspect-video overflow-hidden rounded-md border border-border">
-          <MediaThumbnail media={media} sizes="(min-width: 640px) 420px, 100vw" fit="contain" priority />
+          <MediaThumbnail media={media} sizes="(min-width: 640px) 420px, 100vw" fit="contain" />
         </div>
 
         <div className="flex flex-wrap gap-2">

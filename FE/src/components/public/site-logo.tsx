@@ -17,7 +17,8 @@ export function SiteLogo({ logo, name }: { logo: PublicImage | null; name: strin
       sizes={`${Math.round((32 * width) / height)}px`}
       unoptimized={logo.mime === "image/svg+xml"}
       className="h-8 w-auto"
-      priority
+      // Logo header ada di layar pertama: dimuat langsung, tanpa prioritas tinggi (bukan LCP).
+      loading="eager"
     />
   );
 }
