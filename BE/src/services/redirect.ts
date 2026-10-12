@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { getDb } from "@/lib/db";
 import { AuditAction, writeAudit } from "@/services/audit";
 
 type Tx = Pick<Prisma.TransactionClient, "redirect" | "auditLog">;
@@ -68,4 +69,12 @@ export async function recordSlugRedirect(
     },
     tx,
   );
+}
+
+export type PublicRedirect = { to: string; permanent: boolean };
+
+// Redirect aktif untuk path publik (dipakai halaman FE saat slug tidak ditemukan).
+export async function findPublicRedirect(path: string): Promise<PublicRedirect | null> {
+  const row = await getDb().redirect.findFirst({ where: { from: path, deletedAt: null }, select: { to: true, code: true } });
+  return row ? { to: row.to, permanent: row.code === "PERMANENT" } : null;
 }

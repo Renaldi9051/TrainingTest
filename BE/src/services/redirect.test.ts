@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { recordSlugRedirect } from "@/services/redirect";
+
+const db = vi.hoisted(() => ({ current: undefined as unknown }));
+vi.mock("@/lib/db", () => ({ getDb: () => db.current }));
+
+import { findPublicRedirect, recordSlugRedirect } from "@/services/redirect";
 
 function createTx() {
   return {
@@ -69,5 +73,22 @@ describe("recordSlugRedirect", () => {
       where: { id: "r1" },
       data: { to: "/pelatihan/baru" },
     });
+  });
+});
+
+describe("findPublicRedirect", () => {
+  it("redirect aktif dari path; 301 = permanent", async () => {
+    const findFirst = vi.fn<(args: { where: unknown }) => Promise<{ to: string; code: string }>>(async () => ({
+      to: "/layanan/baru",
+      code: "PERMANENT",
+    }));
+    db.current = { redirect: { findFirst } };
+    expect(await findPublicRedirect("/layanan/lama")).toEqual({ to: "/layanan/baru", permanent: true });
+    expect(findFirst.mock.calls[0][0]).toMatchObject({ where: { from: "/layanan/lama", deletedAt: null } });
+  });
+
+  it("tidak ada redirect: null", async () => {
+    db.current = { redirect: { findFirst: vi.fn(async () => null) } };
+    expect(await findPublicRedirect("/layanan/x")).toBeNull();
   });
 });
