@@ -1,6 +1,7 @@
 // Seed data placeholder untuk development. Idempotent: aman dijalankan berulang.
 // `prisma db seed -- --minimal` (setup e2e): hanya admin, pengaturan, menu, katalog, dan halaman
 // profil; konten beranda & entitas Fase 3 dibuat sendiri oleh test.
+// `prisma db seed -- --bulk` (khusus dev): ditambah ~1.200 pelatihan dummy untuk uji performa search.
 // Hanya MEMBUAT data yang belum ada; data yang sudah diubah admin tidak pernah ditimpa
 // (service `migrate` di compose menjalankan seed setiap `docker compose up`).
 // Data contoh ada di seed-data/ (katalog, konten Fase 3); teksnya ditulis sendiri.
@@ -8,9 +9,10 @@ import type { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
 import { parseSeedEnv } from "../src/lib/env";
 import { hashPassword } from "../src/lib/password";
+import { seedBulk } from "./seed-bulk";
 import { seedContent } from "./seed-content";
 import { buildProfileBlocks, buildSettings } from "./seed-data/build";
-import { categories, schedules, trainings } from "./seed-data/catalog";
+import { writeCatalog } from "./seed-data/catalog-writer";
 import { profilePage } from "./seed-data/content";
 import { createSeedNav } from "./seed-data/nav";
 
@@ -75,6 +77,7 @@ const settings: { key: string; value: Prisma.InputJsonValue }[] = [
 
 const PUBLISHED_AT = new Date("2026-10-01T00:00:00.000Z");
 const MINIMAL = process.argv.includes("--minimal");
+const BULK = process.argv.includes("--bulk");
 
 // Admin pertama dari ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME. Hanya dibuat kalau email belum ada;
 // password admin yang sudah ada tidak pernah ditimpa.
@@ -87,64 +90,6 @@ async function seedAdmin(): Promise<"created" | "exists"> {
     data: { email, name: admin.ADMIN_NAME, passwordHash: await hashPassword(admin.ADMIN_PASSWORD) },
   });
   return "created";
-}
-
-// Dipanggil hanya kalau katalog masih kosong (lihat main).
-async function seedCatalog() {
-  const categoryIds = new Map<string, string>();
-  for (const [order, category] of categories.entries()) {
-    const saved = await db.category.upsert({
-      where: { slug: category.slug, deletedAt: null },
-      update: {},
-      create: { ...category, order },
-    });
-    categoryIds.set(category.slug, saved.id);
-  }
-
-  const trainingIds = new Map<string, string>();
-  for (const [index, { categorySlug, facilities, description, ...training }] of trainings.entries()) {
-    // Tanggal terbit berurutan (satu hari per pelatihan) supaya urutan "terbaru" stabil.
-    const publishedAt = new Date(PUBLISHED_AT.getTime() + index * 24 * 60 * 60 * 1000);
-    const data = {
-      ...training,
-      description: description as unknown as Prisma.InputJsonValue,
-      // Tanpa fasilitas khusus: kolom dibiarkan NULL = pakai default global (training.defaults).
-      ...(facilities ? { facilities } : {}),
-      status: "PUBLISHED" as const,
-      publishedAt,
-      publishRevalidatedAt: publishedAt,
-    };
-    const saved = await db.training.upsert({
-      where: { slug: training.slug, deletedAt: null },
-      update: {},
-      create: data,
-    });
-    trainingIds.set(training.slug, saved.id);
-
-    const categoryId = categoryIds.get(categorySlug);
-    if (!categoryId) throw new Error(`Kategori ${categorySlug} tidak ditemukan`);
-    await db.trainingCategory.upsert({
-      where: { trainingId_categoryId: { trainingId: saved.id, categoryId } },
-      update: {},
-      create: { trainingId: saved.id, categoryId },
-    });
-  }
-
-  for (const { id, trainingSlug, startDate, endDate, ...schedule } of schedules) {
-    const trainingId = trainingIds.get(trainingSlug);
-    if (!trainingId) throw new Error(`Pelatihan ${trainingSlug} untuk jadwal contoh tidak ditemukan`);
-    await db.schedule.upsert({
-      where: { id },
-      update: {},
-      create: {
-        id,
-        trainingId,
-        startDate: new Date(`${startDate}T00:00:00.000Z`),
-        endDate: new Date(`${endDate}T00:00:00.000Z`),
-        ...schedule,
-      },
-    });
-  }
 }
 
 // Halaman sistem profil (/profil). Hanya dibuat kalau belum ada; isi selanjutnya diatur admin.
@@ -179,13 +124,15 @@ async function main() {
   // sekali, termasuk yang di Sampah. Kalau dicek per slug, pelatihan contoh yang dihapus atau diganti
   // slug-nya oleh admin akan muncul lagi di setiap `docker compose up`.
   const catalogEmpty = (await db.category.count()) === 0 && (await db.training.count()) === 0;
-  if (catalogEmpty) await seedCatalog();
+  const catalog = catalogEmpty ? await writeCatalog(db) : null;
 
   const profileResult = await seedProfilePage();
   const contentResult = MINIMAL ? null : await seedContent(PUBLISHED_AT);
+  // Seed bulk mencetak ringkasannya sendiri.
+  if (BULK) await seedBulk();
 
-  const catalogResult = catalogEmpty
-    ? `dibuat (${categories.length} kategori, ${trainings.length} pelatihan, ${schedules.length} jadwal)`
+  const catalogResult = catalog
+    ? `dibuat (${catalog.categories} kategori, ${catalog.trainings} pelatihan, ${catalog.schedules} jadwal)`
     : "dilewati (katalog sudah berisi)";
   console.info(
     `Seed selesai: ${settings.length} key pengaturan dicek (yang ada tidak ditimpa), katalog contoh ${catalogResult}, ` +

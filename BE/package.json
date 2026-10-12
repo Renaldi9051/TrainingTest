@@ -21,7 +21,7 @@
     "db:e2e:reset": "tsx scripts/e2e-db-reset.ts",
     "e2e:cleanup": "tsx scripts/e2e-uploads-cleanup.ts",
     "db:sync-content": "dotenv -e ../.env -- tsx scripts/sync-content-dev.ts",
-    "db:seed:bulk": "dotenv -e ../.env -- tsx prisma/seed-bulk.ts",
+    "db:seed:bulk": "dotenv -e ../.env -- prisma db seed -- --bulk",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "bench:search": "dotenv -e ../.env -- tsx scripts/bench-search.ts"

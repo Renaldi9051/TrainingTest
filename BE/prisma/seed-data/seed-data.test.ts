@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { slugSchema } from "../../src/lib/slug";
 import { buildAll } from "./build";
-import { categories, schedules, trainings } from "./catalog";
+import { buildSchedules, categories, publishOrder, trainings } from "./catalog";
 import * as content from "./content";
 
 // Data contoh dipakai seed & skrip sinkronisasi training_dev: harus lolos validator API dan
@@ -39,24 +39,57 @@ describe("data contoh", () => {
     ]);
   });
 
-  it("kategori: 75 slug valid & unik, 8-12 unggulan", () => {
-    expect(categories).toHaveLength(75);
+  it("kategori: 15 slug valid & unik, 8 unggulan dengan semua kategori drone", () => {
+    expect(categories).toHaveLength(15);
     for (const category of categories) expect(slugSchema.safeParse(category.slug).success, category.slug).toBe(true);
-    expect(new Set(categories.map((category) => category.slug)).size).toBe(categories.length);
-    expect(new Set(categories.map((category) => category.name)).size).toBe(categories.length);
-    const featured = categories.filter((category) => category.featured).length;
-    expect(featured).toBeGreaterThanOrEqual(8);
-    expect(featured).toBeLessThanOrEqual(12);
+    expect(new Set(categories.map((category) => category.slug)).size).toBe(15);
+    const featured = categories.filter((category) => category.featured);
+    expect(featured).toHaveLength(8);
+    expect(categories.slice(0, 7).every((category) => category.featured)).toBe(true);
   });
 
-  it("pelatihan & jadwal merujuk data yang ada; kategori unggulan punya pelatihan", () => {
+  it("pelatihan: 20-25 per kategori, slug unik, kategori kedua valid, variasi level/metode/tipe", () => {
     const slugs = new Set(categories.map((category) => category.slug));
-    expect(trainings).toHaveLength(12);
-    for (const training of trainings) expect(slugs.has(training.categorySlug), training.categorySlug).toBe(true);
-    const trainingSlugs = new Set(trainings.map((training) => training.slug));
-    for (const schedule of schedules) expect(trainingSlugs.has(schedule.trainingSlug)).toBe(true);
-    const used = new Set(trainings.map((training) => training.categorySlug));
-    for (const category of categories.filter((item) => item.featured)) expect(used.has(category.slug), category.slug).toBe(true);
+    expect(new Set(trainings.map((training) => training.slug)).size).toBe(trainings.length);
+    for (const category of categories) {
+      const count = trainings.filter((training) => training.categorySlugs[0] === category.slug).length;
+      expect(count, category.slug).toBeGreaterThanOrEqual(20);
+      expect(count, category.slug).toBeLessThanOrEqual(25);
+      // Termasuk pelatihan yang memakai kategori ini sebagai kategori kedua.
+      const total = trainings.filter((training) => training.categorySlugs.includes(category.slug)).length;
+      expect(total, category.slug).toBeLessThanOrEqual(25);
+    }
+    for (const training of trainings) {
+      expect(training.categorySlugs.every((slug) => slugs.has(slug)), training.slug).toBe(true);
+      expect(new Set(training.categorySlugs).size).toBe(training.categorySlugs.length);
+      expect(training.outcomes.length).toBeGreaterThanOrEqual(3);
+      expect(training.modules.length).toBeGreaterThanOrEqual(3);
+      expect(training.audience.length).toBeGreaterThanOrEqual(2);
+      expect(training.priceText).toMatch(/^Rp[\d.]+ per peserta$/);
+    }
+    expect(trainings.some((training) => training.categorySlugs.length === 2)).toBe(true);
+    expect(new Set(trainings.map((training) => training.level))).toEqual(new Set(["dasar", "menengah", "lanjut"]));
+    expect(new Set(trainings.map((training) => training.method))).toEqual(new Set(["ONLINE", "OFFLINE", "HYBRID"]));
+    expect(new Set(trainings.map((training) => training.types.join("+")))).toEqual(new Set(["PUBLIC+IN_HOUSE", "PUBLIC"]));
+    expect(new Set(publishOrder())).toEqual(new Set(trainings.map((training) => training.slug)));
+  });
+
+  it("jadwal: 2-3 sesi per pelatihan dalam 6 bulan ke depan, status campuran", () => {
+    const today = "2026-10-12";
+    const schedules = buildSchedules(today);
+    for (const training of trainings) {
+      const count = schedules.filter((schedule) => schedule.trainingSlug === training.slug).length;
+      expect(count).toBeGreaterThanOrEqual(2);
+      expect(count).toBeLessThanOrEqual(3);
+    }
+    for (const schedule of schedules) {
+      expect(schedule.startDate > today).toBe(true);
+      expect(schedule.startDate <= "2027-04-12").toBe(true);
+      expect(schedule.endDate >= schedule.startDate).toBe(true);
+      expect(schedule.method === "ONLINE" ? schedule.city === null : schedule.city !== null).toBe(true);
+    }
+    expect(new Set(schedules.map((schedule) => schedule.status))).toEqual(new Set(["OPEN", "FULL"]));
+    expect(new Set(schedules.map((schedule) => schedule.city)).size).toBeGreaterThan(5);
   });
 
   it("menu sesuai struktur yang disepakati", () => {
@@ -82,6 +115,7 @@ describe("data contoh", () => {
     expect(built.marketing.map((item) => item.phone)).toEqual([1, 2, 3, 4, 5].map((n) => `628120000000${n}`));
     expect(built.mediaPartners.every((partner) => /^https:\/\/contoh-[a-z]+\.id$/.test(partner.url ?? ""))).toBe(true);
     expect(JSON.stringify({ content, categories, trainings }).toLowerCase()).not.toContain("diotraining");
+    expect(JSON.stringify(trainings)).not.toMatch(/\[UJI\]/);
     expect(content.clients.every((name) => name.startsWith("PT Contoh "))).toBe(true);
   });
 });

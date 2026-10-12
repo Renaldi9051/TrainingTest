@@ -2,7 +2,8 @@
 // dan performa search (PRD: p95 < 300 ms dengan 1.000+ judul). Idempotent: data dengan slug yang
 // sudah ada dilewati. Semua teks dibuat dari kombinasi kata, bukan salinan website referensi.
 //
-// Jalankan: npm run db:seed:bulk   (BE/)
+// Dijalankan lewat seed utama: `npx prisma db seed -- --bulk` (atau `npm run db:seed:bulk`), setelah
+// katalog contoh. Kategori bulk (nama Indonesia) ditambahkan di samping 15 kategori contoh.
 import type { TrainingMethod, TrainingType } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
 import { slugify } from "../src/lib/slug";
@@ -144,7 +145,7 @@ const METHODS: TrainingMethod[] = ["ONLINE", "OFFLINE", "HYBRID"];
 const TYPE_SETS: TrainingType[][] = [["PUBLIC"], ["IN_HOUSE"], ["PUBLIC", "IN_HOUSE"]];
 const CITIES = ["Jakarta", "Bandung", "Surabaya", "Yogyakarta", "Bali", "Medan", "Makassar", "Batam"];
 
-async function main() {
+export async function seedBulk() {
   assertDevDatabase();
   const db = getDb();
   const random = createRandom(20261010);
@@ -297,10 +298,3 @@ async function main() {
       `Total pelatihan published: ${totalPublic}.`,
   );
 }
-
-main()
-  .catch((error: unknown) => {
-    console.error(error);
-    process.exitCode = 1;
-  })
-  .finally(() => getDb().$disconnect());
