@@ -7,6 +7,8 @@ type Tx = Pick<Prisma.TransactionClient, "redirect" | "auditLog">;
 export const publicPath = {
   training: (slug: string) => `/pelatihan/${slug}`,
   category: (slug: string) => `/pelatihan/kategori/${slug}`,
+  service: (slug: string) => `/layanan/${slug}`,
+  page: (slug: string) => `/${slug}`,
 };
 
 // Path yang sekarang dipakai konten aktif tidak boleh di-redirect ke tempat lain.

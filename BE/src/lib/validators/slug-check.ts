@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const slugCheckQuerySchema = z.object({
-  entity: z.enum(["category", "training"], { error: "Entitas tidak dikenal." }),
+  entity: z.enum(["category", "training", "service"], { error: "Entitas tidak dikenal." }),
   slug: z.string().trim().max(200),
   excludeId: z.uuid().optional(),
 });
