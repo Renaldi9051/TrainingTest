@@ -6,6 +6,7 @@ import type { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
 import { parseSeedEnv } from "../src/lib/env";
 import { hashPassword } from "../src/lib/password";
+import { pageBlocksSchema } from "../src/lib/validators/page-blocks";
 
 const db = getDb();
 
@@ -568,6 +569,69 @@ async function seedCatalog() {
   }
 }
 
+// Halaman sistem profil (/profil). Hanya dibuat kalau belum ada; isi selanjutnya diatur admin.
+// Blok divalidasi skema yang sama dengan API, jadi seed tidak bisa menyimpan bentuk yang salah.
+const profileBlocks = () =>
+  pageBlocksSchema.parse([
+    {
+      id: crypto.randomUUID(),
+      type: "RICH_TEXT",
+      eyebrow: "01 / Tentang",
+      heading: "Mitra belajar untuk tim yang terus bertumbuh",
+      body: doc(
+        "Kami menyelenggarakan pelatihan public dan in-house untuk perusahaan, instansi, dan organisasi.",
+        "Setiap program disusun bersama praktisi sehingga materi bisa langsung diterapkan di pekerjaan.",
+      ),
+    },
+    {
+      id: crypto.randomUUID(),
+      type: "VISION_MISSION",
+      eyebrow: "02 / Visi & misi",
+      vision: "Menjadi mitra pengembangan kompetensi yang dipercaya organisasi di seluruh Indonesia.",
+      mission: [
+        "Menyusun program pelatihan yang relevan dengan kebutuhan kerja.",
+        "Menghadirkan trainer praktisi dengan pengalaman lapangan.",
+        "Mendampingi peserta sampai materi diterapkan di tempat kerja.",
+      ],
+      motto: "Belajar, terapkan, ukur hasilnya.",
+    },
+    {
+      id: crypto.randomUUID(),
+      type: "FEATURES",
+      eyebrow: "03 / Keunggulan",
+      heading: "Kenapa memilih kami",
+      items: [
+        { title: "Trainer praktisi", description: "Pengajar berpengalaman di bidangnya.", icon: "users" },
+        { title: "Materi aplikatif", description: "Studi kasus dari dunia kerja nyata.", icon: "clipboard-check" },
+        { title: "Fleksibel", description: "Online, offline, atau hybrid sesuai kebutuhan.", icon: "laptop" },
+      ],
+    },
+    {
+      id: crypto.randomUUID(),
+      type: "LIST",
+      eyebrow: "04 / Peserta",
+      heading: "Target peserta",
+      style: "chips",
+      items: ["Manajer", "Supervisor", "Staf HR", "Tim keuangan", "Tim operasional"],
+    },
+  ]);
+
+async function seedProfilePage(): Promise<"created" | "exists"> {
+  if ((await db.page.count({ where: { kind: "PROFILE" } })) > 0) return "exists";
+  await db.page.create({
+    data: {
+      kind: "PROFILE",
+      slug: "profil",
+      title: "Tentang kami",
+      status: "PUBLISHED",
+      publishedAt: PUBLISHED_AT,
+      blocks: profileBlocks() as Prisma.InputJsonValue,
+      seo: { title: "", description: "", ogImageId: null },
+    },
+  });
+  return "created";
+}
+
 async function main() {
   const adminResult = await seedAdmin();
   for (const setting of settings) {
@@ -588,11 +652,14 @@ async function main() {
   const catalogEmpty = (await db.category.count()) === 0 && (await db.training.count()) === 0;
   if (catalogEmpty) await seedCatalog();
 
+  const profileResult = await seedProfilePage();
+
   const catalogResult = catalogEmpty
     ? `dibuat (${categories.length} kategori, ${trainings.length} pelatihan, ${schedules.length} jadwal)`
     : "dilewati (katalog sudah berisi)";
   console.info(
     `Seed selesai: ${settings.length} key pengaturan dicek (yang ada tidak ditimpa), katalog contoh ${catalogResult}, ` +
+      `halaman profil ${profileResult === "created" ? "dibuat" : "sudah ada"}, ` +
       `admin ${adminResult === "created" ? "dibuat" : "sudah ada"}.`,
   );
 }
