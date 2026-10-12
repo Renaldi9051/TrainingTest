@@ -25,7 +25,8 @@ export function AdminProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
-      <Toaster position="bottom-right" />
+      {/* Jarak bawah di atas sticky save bar (DESIGN 10), supaya toast tidak menutupi tombol Simpan. */}
+      <Toaster position="bottom-right" offset={{ bottom: 88, right: 24 }} mobileOffset={{ bottom: 88 }} />
     </QueryClientProvider>
   );
 }

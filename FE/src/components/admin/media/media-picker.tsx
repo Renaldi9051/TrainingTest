@@ -45,6 +45,8 @@ type MediaPickerProps = {
   aspect?: "4/3" | "16/9" | "1/1" | "3/1";
   fit?: "cover" | "contain";
   dialogTitle?: string;
+  // false = alt opsional (logo, foto orang: nama dipakai sebagai alt), badge "Tanpa alt" disembunyikan.
+  altRequired?: boolean;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 };
@@ -67,6 +69,7 @@ export function MediaPicker({
   aspect = "4/3",
   fit = "cover",
   dialogTitle = "Pilih gambar",
+  altRequired = true,
   ...aria
 }: MediaPickerProps) {
   const [open, setOpen] = useState(false);
@@ -105,7 +108,7 @@ export function MediaPicker({
             <span className="text-small">Belum ada gambar</span>
           </div>
         )}
-        {media && isMissingAlt(media) ? (
+        {media && altRequired && isMissingAlt(media) ? (
           <Badge
             variant="outline"
             className="absolute top-2 left-2 border-status-warning bg-bg font-mono text-[10px] uppercase text-status-warning"
@@ -150,14 +153,15 @@ export function MediaPicker({
   );
 }
 
-type MediaPickerDialogProps = {
+export type MediaPickerDialogProps = {
   title: string;
   currentId: string | null;
   onClose: () => void;
   onSelect: (media: Media) => void;
 };
 
-function MediaPickerDialog({ title, currentId, onClose, onSelect }: MediaPickerDialogProps) {
+// Dialog pilih/upload gambar; juga dipakai langsung oleh editor galeri.
+export function MediaPickerDialog({ title, currentId, onClose, onSelect }: MediaPickerDialogProps) {
   const queryClient = useQueryClient();
   const searchId = useId();
   const fileRef = useRef<HTMLInputElement>(null);

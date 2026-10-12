@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon, ImagesIcon, SearchIcon } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDeferredValue, useState } from "react";
 import { EmptyState } from "@/components/admin/empty-state";
 import { Badge } from "@/components/admin/ui/badge";
@@ -26,12 +27,16 @@ import { formatBytes, isMissingAlt, mediaKeys, mediaName } from "@/components/ad
 const PAGE_SIZE = 24;
 const ALL_FOLDERS = "__all";
 
+// ?media=<id> membuka detail media itu langsung (dipakai link "Isi alt" dari form konten).
 export function MediaLibrary() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const q = useDeferredValue(search.trim());
   const [folder, setFolder] = useState(ALL_FOLDERS);
   const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get("media"));
 
   const activeFolder = folder === ALL_FOLDERS ? "" : folder;
 
@@ -194,7 +199,10 @@ export function MediaLibrary() {
 
       <MediaDetailSheet
         mediaId={selectedId}
-        onClose={() => setSelectedId(null)}
+        onClose={() => {
+          setSelectedId(null);
+          if (searchParams.has("media")) router.replace(pathname, { scroll: false });
+        }}
         onDeleted={() => {
           setSelectedId(null);
           if (items.length === 1 && page > 1) setPage((current) => current - 1);
