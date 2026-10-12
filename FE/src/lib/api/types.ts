@@ -621,3 +621,80 @@ export type PublicPage = {
 };
 
 export type PublicPageRef = { slug: string; title: string };
+
+// ===== Beranda (section) =====
+
+export type HomeSectionType =
+  | "HERO"
+  | "STATS"
+  | "SERVICES"
+  | "CATEGORIES"
+  | "LATEST_TRAININGS"
+  | "UPCOMING_SCHEDULES"
+  | "CLIENTS"
+  | "VISION_MISSION"
+  | "TESTIMONIALS"
+  | "CTA";
+
+export type Cta = { label: string; href: string };
+type SectionHeading = { eyebrow: string; heading: string };
+type SelectionConfig = { mode: SelectionMode; limit: number; ids: string[] };
+
+// Isi section per type, sama dengan BE (BE/src/lib/validators/home-section.ts).
+export type HomeSectionContentMap = {
+  HERO: {
+    eyebrow: string;
+    headline: string;
+    rotatingWords: string[];
+    subheadline: string;
+    showSearch: boolean;
+    searchPlaceholder: string;
+    primaryCta: Cta | null;
+    secondaryCta: Cta | null;
+    image: MediaRef | null;
+  };
+  STATS: SectionHeading & { items: { value: number; prefix: string; suffix: string; label: string }[] };
+  SERVICES: SectionHeading & SelectionConfig & { intro: string; cta: Cta | null };
+  CATEGORIES: SectionHeading & SelectionConfig & { intro: string; cta: Cta | null };
+  LATEST_TRAININGS: SectionHeading & SelectionConfig & { intro: string; cta: Cta | null };
+  UPCOMING_SCHEDULES: SectionHeading & { intro: string; limit: number; cta: Cta | null };
+  CLIENTS: SectionHeading & SelectionConfig & { intro: string };
+  VISION_MISSION: { eyebrow: string; vision: string; mission: string[]; motto: string };
+  TESTIMONIALS: SectionHeading & SelectionConfig & { intro: string };
+  CTA: { eyebrow: string; heading: string; body: string; primaryCta: Cta; secondaryCta: Cta | null };
+};
+
+export type HomeSection = {
+  id: string;
+  type: HomeSectionType;
+  // Label internal di builder (tidak tampil di publik).
+  title: string | null;
+  visible: boolean;
+  order: number;
+  // null kalau isi tersimpan sudah tidak lolos skema dan perlu diisi ulang.
+  content: HomeSectionContentMap[HomeSectionType] | null;
+  media: Record<string, Media>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type Omit3<T> = Omit<T, "mode" | "limit" | "ids">;
+type PublicBase<K extends HomeSectionType> = { id: string; type: K };
+
+export type PublicHomeSection =
+  | (PublicBase<"HERO"> & Omit<HomeSectionContentMap["HERO"], "image"> & { image: PublicImage | null })
+  | (PublicBase<"STATS"> & HomeSectionContentMap["STATS"])
+  | (PublicBase<"SERVICES"> & Omit3<HomeSectionContentMap["SERVICES"]> & { items: PublicServiceCard[] })
+  | (PublicBase<"CATEGORIES"> & Omit3<HomeSectionContentMap["CATEGORIES"]> & { items: PublicCategory[] })
+  | (PublicBase<"LATEST_TRAININGS"> & Omit3<HomeSectionContentMap["LATEST_TRAININGS"]> & { items: PublicTrainingCard[] })
+  | (PublicBase<"UPCOMING_SCHEDULES"> & Omit<HomeSectionContentMap["UPCOMING_SCHEDULES"], "limit"> & { items: PublicSchedule[] })
+  | (PublicBase<"CLIENTS"> & Omit3<HomeSectionContentMap["CLIENTS"]> & { items: PublicClient[] })
+  | (PublicBase<"VISION_MISSION"> & HomeSectionContentMap["VISION_MISSION"])
+  | (PublicBase<"TESTIMONIALS"> & Omit3<HomeSectionContentMap["TESTIMONIALS"]> & { items: PublicTestimonial[] })
+  | (PublicBase<"CTA"> & HomeSectionContentMap["CTA"]);
+
+export type PublicHome = { sections: PublicHomeSection[] };
+
+// GET /api/admin/home-sections/preview: termasuk section tersembunyi dan kosong.
+export type PreviewHomeSection = PublicHomeSection & { visible: boolean; empty: boolean };
+export type HomePreview = { sections: PreviewHomeSection[] };

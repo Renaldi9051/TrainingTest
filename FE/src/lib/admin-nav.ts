@@ -44,7 +44,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     modules: [
       { slug: "settings", label: "Pengaturan situs", icon: Settings2Icon, available: true },
       { slug: "navigation", label: "Navigasi", icon: MenuIcon, available: true },
-      { slug: "home", label: "Beranda", icon: HouseIcon, available: false },
+      { slug: "home", label: "Beranda", icon: HouseIcon, available: true },
       { slug: "pages", label: "Halaman", icon: FileTextIcon, available: true },
       { slug: "services", label: "Layanan", icon: LayoutListIcon, available: true },
     ],

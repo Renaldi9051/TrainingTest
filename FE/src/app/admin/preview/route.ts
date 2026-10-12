@@ -24,7 +24,21 @@ const TARGETS = {
   },
 } as const;
 
-const querySchema = z.object({ type: z.enum(["training", "service", "page"]), id: z.uuid() });
+// Beranda tidak punya id: sesi dicek lewat endpoint pratinjau beranda, tujuan selalu "/".
+const querySchema = z.discriminatedUnion("type", [
+  z.object({ type: z.enum(["training", "service", "page"]), id: z.uuid() }),
+  z.object({ type: z.literal("home") }),
+]);
+
+function isUnauthorized(response: Response): boolean {
+  return response.status === 401;
+}
+
+function loginRedirect(request: NextRequest): NextResponse {
+  const login = new URL(ADMIN_LOGIN, request.url);
+  login.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  return NextResponse.redirect(login);
+}
 
 // Pratinjau konten sebelum tayang (draft mode Next). Hanya untuk sesi admin yang valid:
 // sesi dicek ke BE lewat endpoint admin, baru draft mode dinyalakan. Redirect selalu ke path yang
@@ -32,14 +46,18 @@ const querySchema = z.object({ type: z.enum(["training", "service", "page"]), id
 export async function GET(request: NextRequest) {
   const parsed = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams));
   if (!parsed.success) return new NextResponse("Parameter pratinjau tidak valid.", { status: 400 });
-  const target = TARGETS[parsed.data.type];
 
-  const response = await adminServerFetch(target.endpoint(parsed.data.id));
-  if (response.status === 401) {
-    const login = new URL(ADMIN_LOGIN, request.url);
-    login.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-    return NextResponse.redirect(login);
+  if (parsed.data.type === "home") {
+    const response = await adminServerFetch("/admin/home-sections/preview");
+    if (isUnauthorized(response)) return loginRedirect(request);
+    if (!response.ok) return new NextResponse("Pratinjau beranda tidak dapat dimuat.", { status: 502 });
+    (await draftMode()).enable();
+    return NextResponse.redirect(new URL("/", request.url));
   }
+
+  const target = TARGETS[parsed.data.type];
+  const response = await adminServerFetch(target.endpoint(parsed.data.id));
+  if (isUnauthorized(response)) return loginRedirect(request);
   if (!response.ok) return new NextResponse("Konten tidak ditemukan.", { status: response.status === 404 ? 404 : 502 });
 
   const { data } = (await response.json()) as ApiSuccess<PreviewData>;
