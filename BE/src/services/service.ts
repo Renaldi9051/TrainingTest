@@ -377,3 +377,34 @@ export async function getServicePreview(slug: string): Promise<PublicServiceDeta
   const row = await getDb().service.findFirst({ where: { slug, deletedAt: null }, include });
   return row ? toPublicDetail(row) : null;
 }
+
+// Konfigurasi pilihan layanan dari blok halaman / section beranda (bukan salinan data).
+export type ServiceSelection = { mode: "auto" | "manual"; limit: number; ids: string[] };
+
+// Resolve banyak konfigurasi sekaligus: maksimal satu query untuk semua id manual dan satu query
+// untuk mode auto (limit terbesar). Id yang dihapus/draft otomatis tersaring; urutan manual dijaga.
+export async function resolveServiceSelections(selections: ServiceSelection[]): Promise<PublicServiceCard[][]> {
+  const manualIds = [...new Set(selections.flatMap((selection) => (selection.mode === "manual" ? selection.ids : [])))];
+  const autoLimit = Math.max(0, ...selections.filter((selection) => selection.mode === "auto").map((s) => s.limit));
+  const db = getDb();
+  const [manualRows, autoRows] = await Promise.all([
+    manualIds.length
+      ? db.service.findMany({ where: { id: { in: manualIds }, ...publicServiceWhere }, include })
+      : Promise.resolve([]),
+    autoLimit
+      ? db.service.findMany({
+          where: publicServiceWhere,
+          include,
+          orderBy: [{ order: "asc" }, { title: "asc" }],
+          take: autoLimit,
+        })
+      : Promise.resolve([]),
+  ]);
+  const byId = new Map(manualRows.map((row) => [row.id, toPublicServiceCard(row)]));
+  const auto = autoRows.map(toPublicServiceCard);
+  return selections.map((selection) =>
+    selection.mode === "manual"
+      ? selection.ids.flatMap((id) => byId.get(id) ?? [])
+      : auto.slice(0, selection.limit),
+  );
+}

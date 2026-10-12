@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { isSlugTaken, nextAvailableSlug, slugify, slugSchema, type SlugLookup } from "@/lib/slug";
 import type { SlugCheckQuery } from "@/lib/validators/slug-check";
+import { pageSlugLookup } from "@/services/page";
 import { serviceSlugLookup } from "@/services/service";
 import { trainingSlugLookup } from "@/services/training";
 
@@ -17,6 +18,7 @@ const lookups: Record<SlugCheckQuery["entity"], SlugLookup> = {
   category: (args) => getDb().category.findFirst(args),
   training: trainingSlugLookup,
   service: serviceSlugLookup,
+  page: pageSlugLookup,
 };
 
 // Validasi slug realtime di form admin. Tetap dicek ulang saat simpan (dan dijaga unique index).
