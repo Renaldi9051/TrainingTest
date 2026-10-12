@@ -32,7 +32,7 @@ export const socialSetting = {
 
 export const footerSetting = {
   description:
-    "Lembaga pelatihan untuk profesional dan perusahaan: public training, in-house training, sertifikasi, dan outbound di berbagai bidang.",
+    "Lembaga pelatihan drone dan industri kreatif: pilot drone, pemetaan udara, fotografi, videografi, desain, sampai keuangan untuk pelaku usaha kreatif.",
   copyright: "Lembaga Pelatihan Contoh",
 };
 
@@ -44,16 +44,16 @@ export const services: SeedService[] = [
   {
     slug: "top-training",
     title: "Top Training",
-    icon: "cog",
+    icon: "plane",
     summary:
-      "Pelatihan bidang engineering dan teknik industri, tersedia sebagai kelas public terjadwal maupun in-house di lokasi perusahaan.",
+      "Program unggulan drone dan industri kreatif: pilot drone, pemetaan udara, foto dan video, sampai desain, dalam kelas public maupun in-house.",
     body: doc(
-      p("Top Training adalah rangkaian program teknik untuk tim operasi, perawatan, dan produksi. Materinya dekat dengan pekerjaan di lapangan: membaca gambar teknik, merawat peralatan, sampai menganalisis kerusakan yang berulang."),
-      p("Setiap kelas dipandu instruktur yang berpengalaman di industri, dengan porsi latihan dan diskusi kasus yang besar. Peserta pulang membawa lembar kerja dan prosedur yang bisa langsung diterapkan."),
+      p("Top Training adalah rangkaian program paling diminati kami. Peserta belajar langsung dari praktisi yang setiap hari menerbangkan drone untuk survei, inspeksi, dan produksi, atau bekerja di studio foto, video, dan desain."),
+      p("Kelas drone menggabungkan teori singkat dengan jam terbang di area latihan. Kelas kreatif berbasis proyek: setiap peserta pulang membawa karya yang bisa langsung masuk portofolio."),
       h3("Bidang yang tersedia"),
-      ul("Mechanical dan maintenance", "Electrical dan instrumentasi", "Migas, pertambangan, dan pembangkit", "K3 dan lingkungan kerja"),
+      ul("Pilot drone, sertifikasi, dan perawatan drone", "Pemetaan, survei udara, dan inspeksi industri", "Fotografi, videografi, dan sinematografi", "Desain grafis, animasi, dan konten digital"),
       h3("Format pelaksanaan"),
-      ul("Public training di kota besar dengan jadwal tetap", "In-house training dengan materi dan studi kasus perusahaan", "Kelas online untuk topik teori dan pengantar"),
+      ul("Public training di beberapa kota dengan jadwal tetap", "In-house training dengan materi dan studi kasus organisasi Anda", "Kelas online untuk materi teori, desain, dan konten"),
     ),
   },
   {
@@ -61,12 +61,12 @@ export const services: SeedService[] = [
     title: "TOT LSP - IKI BNSP",
     icon: "graduation-cap",
     summary:
-      "Persiapan sertifikasi kompetensi trainer dan instruktur: dari menyusun materi dan merancang sesi sampai simulasi uji kompetensi.",
+      "Persiapan sertifikasi kompetensi trainer dan instruktur, cocok bagi pilot drone senior dan praktisi kreatif yang ingin mengajar secara profesional.",
     body: doc(
-      p("Program Training of Trainers ini ditujukan bagi praktisi yang ingin mengajar secara profesional dan memiliki bukti kompetensi sebagai instruktur. Peserta mempelajari cara menganalisis kebutuhan pelatihan, menyusun rencana sesi, dan menyampaikan materi dengan metode yang melibatkan peserta."),
+      p("Banyak praktisi drone dan kreatif sudah ahli di bidangnya, tetapi belum terbiasa mengajar. Program Training of Trainers ini membekali peserta cara menganalisis kebutuhan belajar, menyusun rencana sesi, dan memandu praktik dengan aman."),
       p("Di akhir program, peserta dibimbing menyiapkan portofolio bukti dan berlatih menghadapi asesmen. Pelaksanaan uji kompetensi mengikuti ketentuan lembaga sertifikasi yang ditunjuk."),
       h3("Yang dipelajari"),
-      ul("Analisis kebutuhan pelatihan", "Penyusunan rencana dan materi sesi", "Teknik fasilitasi dan presentasi", "Evaluasi hasil belajar", "Persiapan portofolio dan simulasi asesmen"),
+      ul("Analisis kebutuhan pelatihan", "Penyusunan rencana dan materi sesi teori maupun praktik", "Teknik fasilitasi dan demonstrasi", "Evaluasi hasil belajar", "Persiapan portofolio dan simulasi asesmen"),
     ),
   },
   {
@@ -74,12 +74,12 @@ export const services: SeedService[] = [
     title: "Persiapan Pensiun & Kewirausahaan",
     icon: "lightbulb",
     summary:
-      "Membantu karyawan menyambut masa pensiun dengan semangat dan bekal praktis untuk memulai usaha sendiri.",
+      "Bekal menyambut masa pensiun dengan semangat, sekaligus peluang usaha di bidang jasa drone, fotografi, dan produksi konten.",
     body: doc(
-      p("Masa pensiun adalah awal babak baru. Program ini menyiapkan peserta secara mental dan finansial, sehingga perubahan rutinitas dan penghasilan bisa dihadapi dengan tenang."),
-      p("Sesi kewirausahaan membahas cara memilih jenis usaha yang sesuai minat dan modal, menghitung kelayakan sederhana, serta mengelola keuangan usaha agar tidak tercampur dengan keuangan keluarga."),
+      p("Masa pensiun adalah awal babak baru. Program ini menyiapkan peserta secara mental dan finansial, lalu memperkenalkan peluang usaha yang bisa dimulai dengan modal terukur, seperti jasa foto udara, pemetaan lahan skala kecil, atau produksi konten untuk UMKM."),
+      p("Sesi kewirausahaan membahas cara memilih jenis usaha, menghitung kelayakan sederhana, menentukan harga jasa, dan memisahkan keuangan usaha dari keuangan keluarga."),
       h3("Materi utama"),
-      ul("Kesiapan mental dan motivasi menghadapi pensiun", "Perencanaan keuangan masa pensiun", "Memilih dan merancang usaha", "Pemasaran sederhana dan pengelolaan kas usaha"),
+      ul("Kesiapan mental dan motivasi menghadapi pensiun", "Perencanaan keuangan masa pensiun", "Peluang usaha jasa drone dan kreatif", "Pemasaran sederhana dan pengelolaan kas usaha"),
     ),
   },
   {
@@ -87,10 +87,10 @@ export const services: SeedService[] = [
     title: "Outbound Training",
     icon: "users",
     summary:
-      "Kegiatan team building dan acara perusahaan berpeserta banyak, dirancang dengan tujuan belajar yang jelas.",
+      "Team building dan acara perusahaan berpeserta banyak, lengkap dengan dokumentasi foto, video, dan liputan udara.",
     body: doc(
       p("Outbound training memadukan permainan luar ruang dengan refleksi yang terarah. Setiap aktivitas dipilih untuk melatih satu aspek kerja sama: komunikasi, kepercayaan, pembagian peran, atau pengambilan keputusan."),
-      p("Kami menangani acara dari puluhan sampai ratusan peserta, termasuk pemilihan lokasi, fasilitator, perlengkapan, dan dokumentasi kegiatan."),
+      p("Kami menangani acara dari puluhan sampai ratusan peserta, termasuk lokasi, fasilitator, perlengkapan, serta dokumentasi foto, video, dan rekaman drone yang siap dibagikan setelah acara."),
       h3("Cocok untuk"),
       ul("Team building antardivisi", "Gathering dan family day perusahaan", "Pembukaan program pengembangan karyawan", "Pembekalan kepemimpinan"),
     ),
@@ -273,13 +273,13 @@ export const staticPages = [
 
 export const visionMission = {
   vision:
-    "Menjadi pusat pengembangan ilmu dan keterampilan bagi para profesional di Indonesia dan Asia Tenggara.",
+    "Menjadi pusat pengembangan keterampilan drone dan industri kreatif bagi para profesional di Indonesia dan Asia Tenggara.",
   mission: [
-    "Menyediakan ruang belajar tempat praktisi dan peserta saling berbagi pengetahuan dan pengalaman kerja.",
-    "Memberikan pelayanan pelatihan yang profesional, tepat waktu, dan mudah diakses.",
+    "Menyediakan ruang belajar tempat pilot drone, fotografer, videografer, dan desainer saling berbagi ilmu dan pengalaman.",
+    "Memberikan pelayanan pelatihan yang profesional, aman, dan mudah diakses dari mana saja.",
     "Membangun kerja sama dengan tenaga ahli, perguruan tinggi, pemerintah, dan pelaku industri untuk menghadirkan materi yang relevan.",
   ],
-  motto: "Belajar hari ini, berkarya lebih baik esok hari.",
+  motto: "Terbang lebih tinggi, berkarya lebih jauh.",
 };
 
 // ===== Halaman profil (PRD 5.4) =====
@@ -291,18 +291,18 @@ export const profilePage = {
     {
       type: "RICH_TEXT",
       eyebrow: "01 / Tentang kami",
-      heading: "Mitra belajar para profesional",
+      heading: "Belajar drone dan industri kreatif dari praktisi",
       body: paragraphs(
-        "Kami adalah lembaga pelatihan yang menyelenggarakan public training, in-house training, program sertifikasi, dan outbound untuk perusahaan, instansi, serta perorangan.",
-        "Program kami mencakup lebih dari tujuh puluh bidang, dari keuangan dan sumber daya manusia sampai engineering, migas, dan pertambangan. Setiap kelas dipandu praktisi yang memahami tantangan di tempat kerja.",
-        "Kami percaya pelatihan yang baik diukur dari perubahan cara kerja peserta setelah kelas selesai, bukan hanya dari sertifikat yang dibawa pulang.",
+        "Kami adalah lembaga pelatihan drone dan industri kreatif yang menyelenggarakan public training, in-house training, program sertifikasi, dan outbound untuk perusahaan, instansi, serta perorangan.",
+        "Program kami mencakup lima belas bidang: dari pilot drone, pemetaan, inspeksi, dan drone pertanian sampai fotografi, videografi, desain, animasi, dan konten digital, ditambah keuangan dan perpajakan untuk pelaku usaha kreatif.",
+        "Setiap kelas dipandu praktisi aktif. Kami percaya pelatihan yang baik diukur dari jam terbang dan karya yang dihasilkan peserta, bukan hanya dari sertifikat yang dibawa pulang.",
       ),
     },
     {
       type: "SERVICES",
       eyebrow: "02 / Layanan",
       heading: "Layanan kami",
-      intro: "Empat jenis program yang bisa disesuaikan dengan kebutuhan organisasi Anda.",
+      intro: "Empat jenis program drone dan kreatif yang bisa disesuaikan dengan kebutuhan organisasi Anda.",
       mode: "auto",
       limit: 4,
     },
@@ -312,9 +312,9 @@ export const profilePage = {
       eyebrow: "04 / Keunggulan",
       heading: "Kenapa memilih kami",
       items: [
-        { title: "Instruktur praktisi", description: "Pengajar berpengalaman langsung di bidang yang diajarkan.", icon: "users" },
-        { title: "Materi aplikatif", description: "Studi kasus dan latihan yang dekat dengan pekerjaan sehari-hari.", icon: "clipboard-check" },
-        { title: "Program bisa disesuaikan", description: "Silabus in-house disusun bersama tim Anda.", icon: "settings" },
+        { title: "Instruktur praktisi", description: "Pilot drone berlisensi dan praktisi kreatif yang aktif di industri.", icon: "users" },
+        { title: "Jam terbang nyata", description: "Kelas drone memakai unit latihan dan area terbang yang aman.", icon: "plane" },
+        { title: "Berbasis proyek", description: "Kelas kreatif menghasilkan karya yang langsung masuk portofolio.", icon: "camera" },
         { title: "Pilihan format", description: "Kelas public, in-house, online, atau hybrid.", icon: "laptop" },
         { title: "Jadwal rutin", description: "Kelas public terjadwal setiap bulan di beberapa kota.", icon: "presentation" },
         { title: "Sertifikat & evaluasi", description: "Sertifikat keikutsertaan dan laporan evaluasi untuk instansi.", icon: "award" },
@@ -326,18 +326,18 @@ export const profilePage = {
       heading: "Bidang pelatihan unggulan",
       style: "chips",
       items: [
-        "Accounting",
-        "Audit",
-        "Human Resource",
-        "Leadership",
-        "Maintenance",
-        "Electrical",
-        "Oil and Gas",
-        "Mining",
-        "Health, Safety & Environment",
-        "Procurement",
-        "Information Technology",
-        "Customer Services",
+        "Pilot Drone",
+        "Sertifikasi Pilot Drone",
+        "Pemetaan & Survei Udara",
+        "Fotografi & Videografi Udara",
+        "Drone Pertanian",
+        "Inspeksi Industri dengan Drone",
+        "Perakitan & Perawatan Drone",
+        "Fotografi",
+        "Videografi & Sinematografi",
+        "Desain Grafis",
+        "Animasi & Motion Graphic",
+        "Konten Digital & Media Sosial",
       ],
     },
     {
@@ -346,19 +346,19 @@ export const profilePage = {
       heading: "Target peserta",
       style: "bullet",
       items: [
-        "Karyawan BUMN dan perusahaan swasta",
-        "Aparatur instansi pemerintah",
-        "Supervisor, manajer, dan pimpinan unit",
-        "Teknisi dan tenaga ahli di lapangan",
-        "Calon trainer dan instruktur",
-        "Karyawan yang memasuki masa persiapan pensiun",
+        "Pemula yang ingin menjadi pilot drone",
+        "Surveyor, inspektur, dan tenaga teknik di lapangan",
+        "Petani, penyuluh, dan staf perkebunan",
+        "Fotografer, videografer, desainer, dan kreator konten",
+        "Tim humas, pemasaran, dan media internal instansi",
+        "Pelaku UMKM dan karyawan yang menyiapkan usaha di masa pensiun",
       ],
     },
     {
       type: "DOWNLOAD",
       eyebrow: "07 / Company profile",
       heading: "Unduh company profile",
-      description: "Ringkasan profil lembaga, daftar program, dan cara bekerja sama dalam satu dokumen PDF.",
+      description: "Ringkasan profil lembaga, daftar program drone dan kreatif, serta cara bekerja sama dalam satu dokumen PDF.",
       label: "Unduh company profile",
       // File PDF diunggah admin; selama kosong blok ini tidak tampil di publik.
       file: null,
@@ -375,11 +375,11 @@ export const homeSections = [
     content: {
       eyebrow: "Training provider",
       headline: "Tambah pengetahuan, tingkatkan kemampuan",
-      rotatingWords: ["profesional", "tim Anda", "karier Anda"],
+      rotatingWords: ["terbang", "berkarya", "berbisnis"],
       subheadline:
-        "Public training dan in-house training di lebih dari tujuh puluh bidang, dipandu praktisi yang memahami pekerjaan Anda.",
+        "Pelatihan drone dan industri kreatif, dari pilot drone dan pemetaan udara sampai fotografi, videografi, dan desain, dipandu praktisi aktif.",
       showSearch: true,
-      searchPlaceholder: "Cari pelatihan, mis. maintenance",
+      searchPlaceholder: "Cari pelatihan, mis. pemetaan drone",
       primaryCta: { label: "Dapatkan harga spesial", href: "/pelatihan" },
       secondaryCta: null,
       image: null,
@@ -390,7 +390,7 @@ export const homeSections = [
     content: {
       eyebrow: "01 / Layanan",
       heading: "Program dan layanan training kami",
-      intro: "Pilih program yang paling sesuai dengan kebutuhan Anda dan tim.",
+      intro: "Pilih program drone dan kreatif yang paling sesuai dengan kebutuhan Anda dan tim.",
       mode: "auto",
       limit: 4,
       cta: { label: "Semua layanan", href: "/layanan" },
@@ -414,10 +414,10 @@ export const homeSections = [
       eyebrow: "05 / Angka",
       heading: "Dipercaya banyak organisasi",
       items: [
-        { value: 100, prefix: "", suffix: "+", label: "Instruktur praktisi" },
-        { value: 1000, prefix: "", suffix: "+", label: "Judul pelatihan" },
-        { value: 70, prefix: "", suffix: "+", label: "Bidang pelatihan" },
-        { value: 4, prefix: "", suffix: "", label: "Negara" },
+        { value: 50, prefix: "", suffix: "+", label: "Instruktur dan pilot praktisi" },
+        { value: 330, prefix: "", suffix: "+", label: "Judul pelatihan" },
+        { value: 15, prefix: "", suffix: "", label: "Bidang drone dan kreatif" },
+        { value: 2000, prefix: "", suffix: "+", label: "Jam terbang latihan" },
       ],
     },
   },
@@ -445,8 +445,8 @@ export const homeSections = [
     type: "CTA",
     content: {
       eyebrow: "Konsultasi",
-      heading: "Butuh pelatihan khusus untuk tim Anda?",
-      body: "Ceritakan kebutuhan tim, kami bantu susun program, jadwal, dan anggarannya.",
+      heading: "Butuh pelatihan drone atau kreatif untuk tim Anda?",
+      body: "Ceritakan kebutuhan tim, kami bantu susun program, jadwal, unit latihan, dan anggarannya.",
       primaryCta: { label: "Lihat layanan", href: "/layanan" },
       secondaryCta: { label: "Jadwal training", href: "/jadwal" },
     },
