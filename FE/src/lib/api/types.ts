@@ -409,3 +409,140 @@ export type PublicScheduleMeta = PaginationMeta & {
   month: string | null;
   upcomingOnly: boolean;
 };
+
+// ===== Pilihan (picker & panel urutkan) =====
+
+// GET /api/admin/{resource}/options?q=&limit=&ids=
+export type OptionItem = {
+  id: string;
+  label: string;
+  sublabel: string | null;
+  imageUrl: string | null;
+};
+
+// ===== Layanan =====
+
+export type ServiceListItem = {
+  id: string;
+  slug: string;
+  title: string;
+  icon: string | null;
+  summary: string | null;
+  image: Media | null;
+  order: number;
+  status: ContentStatus;
+  updatedAt: string;
+};
+
+export type Service = ServiceListItem & {
+  body: RichTextDoc | null;
+  imageId: string | null;
+  seo: TrainingSeo;
+  ogImage: Media | null;
+  createdAt: string;
+};
+
+export type PublicServiceCard = {
+  slug: string;
+  title: string;
+  icon: string | null;
+  summary: string | null;
+  image: PublicImage | null;
+};
+
+export type PublicServiceDetail = PublicServiceCard & {
+  bodyHtml: string | null;
+  seo: { title: string; description: string; ogImage: PublicImage | null };
+  updatedAt: string;
+};
+
+// ===== Klien, testimoni, portofolio, kontak marketing, media partner =====
+
+export type Client = {
+  id: string;
+  name: string;
+  url: string | null;
+  logoId: string | null;
+  logo: Media | null;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PublicClient = { name: string; url: string | null; logo: PublicImage | null };
+
+export type Testimonial = {
+  id: string;
+  name: string;
+  role: string | null;
+  company: string | null;
+  quote: string;
+  photoId: string | null;
+  photo: Media | null;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PublicTestimonial = {
+  name: string;
+  role: string | null;
+  company: string | null;
+  quote: string;
+  photo: PublicImage | null;
+};
+
+export type PortfolioItem = {
+  id: string;
+  title: string;
+  // "YYYY-MM-DD"
+  date: string | null;
+  client: string | null;
+  description: string | null;
+  imageIds: string[];
+  images: Media[];
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PublicPortfolioItem = {
+  title: string;
+  date: string | null;
+  client: string | null;
+  description: string | null;
+  images: PublicImage[];
+};
+
+export type MarketingContact = {
+  id: string;
+  name: string;
+  // Format wa.me (62...).
+  phone: string;
+  defaultMessage: string | null;
+  photoId: string | null;
+  photo: Media | null;
+  active: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PublicMarketingContact = {
+  name: string;
+  phone: string;
+  whatsappUrl: string | null;
+  defaultMessage: string | null;
+  photo: PublicImage | null;
+};
+
+export type MediaPartner = {
+  id: string;
+  name: string;
+  url: string | null;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PublicMediaPartner = { name: string; url: string | null };
