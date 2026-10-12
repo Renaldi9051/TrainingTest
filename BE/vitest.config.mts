@@ -7,7 +7,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
     // Env dummy untuk unit test; test tidak pernah menyentuh database asli (DB di-mock).
     env: {
       DATABASE_URL: "postgresql://test:test@localhost:5433/training_test",
