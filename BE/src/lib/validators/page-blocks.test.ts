@@ -131,15 +131,15 @@ describe("pageBlockMediaRefs", () => {
     expect(typed).toEqual(collectMediaRefs(blocks));
   });
 
-  it("IMAGE = gambar, DOWNLOAD = PDF, DOWNLOAD tanpa file dilewati", () => {
+  it("IMAGE = gambar wajib alt, DOWNLOAD = PDF, DOWNLOAD tanpa file dilewati", () => {
     const blocks = pageBlocksSchema.parse([
       { id: id(1), type: "IMAGE", image: { mediaId: MEDIA_IMAGE } },
       { id: id(2), type: "DOWNLOAD", label: "Unduh", file: null },
       { id: id(3), type: "DOWNLOAD", label: "Unduh", file: { mediaId: MEDIA_PDF } },
     ]);
     expect(pageBlockMediaRefs(blocks)).toEqual([
-      { path: "0.image", mediaId: MEDIA_IMAGE, kind: "image" },
-      { path: "2.file", mediaId: MEDIA_PDF, kind: "pdf" },
+      { path: "0.image", mediaId: MEDIA_IMAGE, kind: "image", requireAlt: true },
+      { path: "2.file", mediaId: MEDIA_PDF, kind: "pdf", requireAlt: false },
     ]);
   });
 });

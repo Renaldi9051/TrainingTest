@@ -28,7 +28,7 @@ import {
   type TrainingModule,
 } from "@/lib/validators/training-content";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
-import { assertImageMedia, getMediaMap, toMediaDto, type MediaDto } from "@/services/media";
+import { assertMediaRefs, getMediaMap, toMediaDto, type MediaDto } from "@/services/media";
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
 import { isPubliclyVisible } from "@/services/training-visibility";
 
@@ -299,7 +299,10 @@ export async function createTraining(
 ): Promise<TrainingDto> {
   assertPublishable(input.status, input);
   await assertActiveCategories(input.categoryIds);
-  await assertImageMedia({ coverId: input.coverId, "seo.ogImageId": input.seo.ogImageId });
+  await assertMediaRefs([
+    { field: "coverId", mediaId: input.coverId, kind: "image", requireAlt: true },
+    { field: "seo.ogImageId", mediaId: input.seo.ogImageId, kind: "image" },
+  ]);
 
   const slug = input.slug ?? (await nextAvailableSlug(slugLookup, slugify(input.title) || "pelatihan"));
   if (input.slug) await assertSlugAvailable(slugLookup, slug);
@@ -363,10 +366,10 @@ export async function updateTraining(
   if (slugChanged && input.slug) await assertSlugAvailable(slugLookup, input.slug, id);
   if (input.categoryIds) await assertActiveCategories(input.categoryIds);
   const seo = input.seo ?? parseSeo(before.seo);
-  await assertImageMedia({
-    coverId: input.coverId === undefined ? null : input.coverId,
-    "seo.ogImageId": input.seo ? input.seo.ogImageId : null,
-  });
+  await assertMediaRefs([
+    { field: "coverId", mediaId: input.coverId, kind: "image", requireAlt: true },
+    { field: "seo.ogImageId", mediaId: input.seo?.ogImageId, kind: "image" },
+  ]);
 
   const status = input.status ?? before.status;
   assertPublishable(status, { outcomes: input.outcomes ?? before.outcomes });

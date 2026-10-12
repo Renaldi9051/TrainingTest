@@ -191,8 +191,10 @@ describe("homeSectionMediaRefs", () => {
     }
   });
 
-  it("gambar hero bertipe image", () => {
+  it("gambar hero bertipe image dan wajib alt", () => {
     const section = homeSectionContentSchema.parse({ type: "HERO", content: FULL.HERO });
-    expect(homeSectionMediaRefs(section)).toEqual([{ path: "image", mediaId: MEDIA, kind: "image" }]);
+    expect(homeSectionMediaRefs(section)).toEqual([
+      { path: "image", mediaId: MEDIA, kind: "image", requireAlt: true },
+    ]);
   });
 });

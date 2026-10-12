@@ -17,7 +17,7 @@ import type { ServiceCreateInput, ServiceListQuery, ServiceUpdateInput } from "@
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
 import {
   activeMediaDto,
-  assertImageMedia,
+  assertMediaRefs,
   getMediaMap,
   thumbnailUrl,
   toPublicImage,
@@ -170,7 +170,10 @@ export async function getService(id: string): Promise<ServiceDto> {
 }
 
 export async function createService(input: ServiceCreateInput, userId: string): Promise<ServiceDto> {
-  await assertImageMedia({ imageId: input.imageId, "seo.ogImageId": input.seo.ogImageId });
+  await assertMediaRefs([
+    { field: "imageId", mediaId: input.imageId, kind: "image", requireAlt: true },
+    { field: "seo.ogImageId", mediaId: input.seo.ogImageId, kind: "image" },
+  ]);
   const slug = input.slug ?? (await nextAvailableSlug(serviceSlugLookup, slugify(input.title) || "layanan"));
   if (input.slug) await assertSlugAvailable(serviceSlugLookup, slug);
   const order = await nextOrder(getDb().service);
@@ -215,10 +218,10 @@ export async function updateService(id: string, input: ServiceUpdateInput, userI
   const before = await findActive(id);
   const slugChanged = input.slug !== undefined && input.slug !== before.slug;
   if (slugChanged && input.slug) await assertSlugAvailable(serviceSlugLookup, input.slug, id);
-  await assertImageMedia({
-    imageId: input.imageId === undefined ? null : input.imageId,
-    "seo.ogImageId": input.seo ? input.seo.ogImageId : null,
-  });
+  await assertMediaRefs([
+    { field: "imageId", mediaId: input.imageId, kind: "image", requireAlt: true },
+    { field: "seo.ogImageId", mediaId: input.seo?.ogImageId, kind: "image" },
+  ]);
 
   const data: Prisma.ServiceUncheckedUpdateInput = { updatedById: userId };
   if (input.title !== undefined) data.title = input.title;

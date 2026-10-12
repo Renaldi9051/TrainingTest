@@ -96,6 +96,31 @@ describe("createService", () => {
     ).rejects.toMatchObject({ status: 409, code: "SLUG_TAKEN" });
   });
 
+  it("gambar layanan wajib punya alt", async () => {
+    const IMAGE = "0199b4d0-0000-7000-8000-0000000000d1";
+    mock.service.findFirst.mockResolvedValue(null);
+    mock.media.findMany.mockResolvedValue([{ id: IMAGE, mime: "image/png", alt: null }]);
+    await expect(
+      createService(
+        {
+          title: "x",
+          slug: undefined,
+          icon: null,
+          summary: null,
+          body: null,
+          imageId: IMAGE,
+          status: "DRAFT",
+          seo: { title: "", description: "", ogImageId: null },
+        },
+        "u1",
+      ),
+    ).rejects.toMatchObject({
+      status: 422,
+      fields: { imageId: ["Gambar belum punya teks alt. Isi alt di media library dulu."] },
+    });
+    expect(mock.service.create).not.toHaveBeenCalled();
+  });
+
   it("tayang langsung: revalidate layanan, beranda, halaman, dan slug", async () => {
     mock.service.findFirst.mockResolvedValue(null);
     mock.service.aggregate.mockResolvedValue({ _max: { order: null } });

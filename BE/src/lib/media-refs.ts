@@ -17,7 +17,8 @@ export type MediaRef = z.infer<typeof mediaRefObjectSchema>;
 
 // Referensi media + path field-nya (format path error form, mis. "image" atau "3.file").
 export type MediaRefHit = { path: string; mediaId: string };
-export type TypedMediaRef = MediaRefHit & { kind: MediaKind };
+// requireAlt: gambar konten yang tampil di publik wajib punya alt (lihat assertMediaRefs).
+export type TypedMediaRef = MediaRefHit & { kind: MediaKind; requireAlt: boolean };
 
 export function collectMediaRefs(value: unknown, prefix = ""): MediaRefHit[] {
   if (Array.isArray(value)) {

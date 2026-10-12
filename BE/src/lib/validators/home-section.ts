@@ -220,7 +220,7 @@ export function homeSectionMediaRefs(section: HomeSectionContent): TypedMediaRef
   switch (section.type) {
     case "HERO":
       return section.content.image
-        ? [{ path: "image", mediaId: section.content.image.mediaId, kind: "image" }]
+        ? [{ path: "image", mediaId: section.content.image.mediaId, kind: "image", requireAlt: true }]
         : [];
     case "STATS":
     case "SERVICES":

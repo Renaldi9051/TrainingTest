@@ -303,8 +303,12 @@ function matchesKind(mime: string, kind: MediaKind): boolean {
   return kind === "image" ? mime.startsWith("image/") : mime === "application/pdf";
 }
 
-// Seperti assertImageMedia, untuk referensi dengan jenis berbeda (gambar/PDF), mis. mediaId di
-// JSON blok halaman. `field` = path field form (mis. "blocks.3.file").
+// Validasi referensi media saat simpan; satu-satunya tempat cek jenis file dan alt.
+// `field` = path field form (mis. "coverId", "blocks.3.file").
+// Kebijakan alt (PRD 6.3): gambar konten wajib requireAlt: cover pelatihan, gambar layanan,
+// gambar hero, blok IMAGE, galeri portofolio. Logo klien, foto testimoni, dan foto marketing
+// boleh tanpa alt (FE memakai nama orang/klien sebagai alt). Hanya dicek saat simpan; data lama
+// tidak dimigrasi.
 export async function assertMediaRefs(refs: MediaRefCheck[], db: MediaReader = getDb()): Promise<void> {
   const ids = [...new Set(refs.flatMap((ref) => (ref.mediaId ? [ref.mediaId] : [])))];
   if (ids.length === 0) return;

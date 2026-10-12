@@ -142,9 +142,11 @@ export function pageBlockMediaRefs(blocks: PageBlock[]): TypedMediaRef[] {
   return blocks.flatMap((block, index): TypedMediaRef[] => {
     switch (block.type) {
       case "IMAGE":
-        return [{ path: `${index}.image`, mediaId: block.image.mediaId, kind: "image" }];
+        return [{ path: `${index}.image`, mediaId: block.image.mediaId, kind: "image", requireAlt: true }];
       case "DOWNLOAD":
-        return block.file ? [{ path: `${index}.file`, mediaId: block.file.mediaId, kind: "pdf" }] : [];
+        return block.file
+          ? [{ path: `${index}.file`, mediaId: block.file.mediaId, kind: "pdf", requireAlt: false }]
+          : [];
       case "RICH_TEXT":
       case "VISION_MISSION":
       case "FEATURES":

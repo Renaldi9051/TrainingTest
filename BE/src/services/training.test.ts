@@ -112,6 +112,34 @@ describe("createTraining", () => {
     expect(revalidate).not.toHaveBeenCalled();
   });
 
+  it("cover wajib punya alt; gambar OG tidak", async () => {
+    const COVER = "0199b4d0-0000-7000-8000-0000000000d1";
+    const OG = "0199b4d0-0000-7000-8000-0000000000d2";
+    mock.media.findMany.mockResolvedValue([
+      { id: COVER, mime: "image/webp", alt: "" },
+      { id: OG, mime: "image/webp", alt: null },
+    ]);
+    await expect(
+      createTraining(input({ coverId: COVER, seo: { title: "", description: "", ogImageId: OG } }), "u1", now),
+    ).rejects.toMatchObject({
+      status: 422,
+      fields: { coverId: ["Gambar belum punya teks alt. Isi alt di media library dulu."] },
+    });
+
+    mock.media.findMany.mockResolvedValue([
+      { id: COVER, mime: "image/webp", alt: "Peserta diskusi" },
+      { id: OG, mime: "image/webp", alt: null },
+    ]);
+    await createTraining(input({ coverId: COVER, seo: { title: "", description: "", ogImageId: OG } }), "u1", now);
+    expect(mock.training.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("update tanpa coverId tidak mengecek cover lama (data lama tidak dimigrasi)", async () => {
+    mock.training.findFirst.mockResolvedValue(row({ coverId: "0199b4d0-0000-7000-8000-0000000000d1" }));
+    await updateTraining(ID, { title: "KPI baru" }, "u1", now);
+    expect(mock.media.findMany).not.toHaveBeenCalled();
+  });
+
   it("slug yang bentrok dengan route FE (kategori) dianggap terpakai", async () => {
     await expect(createTraining(input({ slug: "kategori" }), "u1", now)).rejects.toMatchObject({ status: 409 });
     const created = await createTraining(input({ title: "Kategori" }), "u1", now);
