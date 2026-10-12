@@ -46,7 +46,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { slug: "navigation", label: "Navigasi", icon: MenuIcon, available: true },
       { slug: "home", label: "Beranda", icon: HouseIcon, available: false },
       { slug: "pages", label: "Halaman", icon: FileTextIcon, available: false },
-      { slug: "services", label: "Layanan", icon: LayoutListIcon, available: false },
+      { slug: "services", label: "Layanan", icon: LayoutListIcon, available: true },
     ],
   },
   {
@@ -60,11 +60,11 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: "Konten pendukung",
     modules: [
-      { slug: "clients", label: "Klien", icon: BriefcaseBusinessIcon, available: false },
-      { slug: "testimonials", label: "Testimoni", icon: MessageSquareQuoteIcon, available: false },
-      { slug: "portfolio", label: "Portofolio", icon: ImageIcon, available: false },
-      { slug: "marketing", label: "Kontak marketing", icon: PhoneIcon, available: false },
-      { slug: "media-partners", label: "Media partner", icon: MegaphoneIcon, available: false },
+      { slug: "clients", label: "Klien", icon: BriefcaseBusinessIcon, available: true },
+      { slug: "testimonials", label: "Testimoni", icon: MessageSquareQuoteIcon, available: true },
+      { slug: "portfolio", label: "Portofolio", icon: ImageIcon, available: true },
+      { slug: "marketing", label: "Kontak marketing", icon: PhoneIcon, available: true },
+      { slug: "media-partners", label: "Media partner", icon: MegaphoneIcon, available: true },
       { slug: "media", label: "Media library", icon: ImagesIcon, available: true },
     ],
   },
