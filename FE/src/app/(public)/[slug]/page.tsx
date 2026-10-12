@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
-import { notFound, permanentRedirect, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { PageBlocks } from "@/components/public/page-blocks";
 import { PageIntro } from "@/components/public/page-intro";
 import { PreviewBanner } from "@/components/public/preview-banner";
@@ -8,6 +8,7 @@ import { getPage, getPageRefs, getRedirect, Tag } from "@/lib/api/public";
 import { getPagePreview } from "@/lib/api/preview";
 import type { PublicPage } from "@/lib/api/types";
 import { pageMetadata } from "@/lib/page-metadata";
+import { followRedirect } from "@/lib/public-redirect";
 
 // Halaman statis (Syarat & Ketentuan, Kebijakan Privasi, dst.). Slug yang belum di-prerender
 // (mis. halaman baru setelah build) dirender saat diminta lalu di-cache; ensureStatic menunggu
@@ -52,10 +53,7 @@ export default async function StaticPage({ params }: PageProps<"/[slug]">) {
   if (!loaded) {
     // Slug lama yang pernah tayang: ikuti tabel Redirect.
     const target = slug === BUILD_PLACEHOLDER ? null : await getRedirect(`/${slug}`, Tag.page(slug));
-    if (target) {
-      if (target.permanent) permanentRedirect(target.to);
-      redirect(target.to);
-    }
+    if (target) followRedirect(target);
     notFound();
   }
   const { page, preview } = loaded;

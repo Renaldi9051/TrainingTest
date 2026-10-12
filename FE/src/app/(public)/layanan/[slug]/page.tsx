@@ -2,7 +2,7 @@ import { MessageCircleIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import Link from "next/link";
-import { notFound, permanentRedirect, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { PreviewBanner } from "@/components/public/preview-banner";
 import { PublicImage } from "@/components/public/public-image";
 import { RichTextHtml } from "@/components/public/rich-text-html";
@@ -15,6 +15,7 @@ import { getRedirect, getServices, getService, getSettings, Tag } from "@/lib/ap
 import { getServicePreview } from "@/lib/api/preview";
 import type { PublicServiceDetail } from "@/lib/api/types";
 import { pageMetadata } from "@/lib/page-metadata";
+import { followRedirect } from "@/lib/public-redirect";
 import { whatsappServiceUrl } from "@/lib/structured-data";
 
 // Pola sama dengan detail pelatihan: halaman statis dari cache; slug baru setelah build dirender
@@ -66,10 +67,7 @@ export default async function ServicePage({ params }: PageProps<"/layanan/[slug]
   if (!loaded) {
     // Slug lama yang pernah tayang (diganti admin): ikuti tabel Redirect.
     const target = slug === BUILD_PLACEHOLDER ? null : await getRedirect(`/layanan/${slug}`, Tag.service(slug));
-    if (target) {
-      if (target.permanent) permanentRedirect(target.to);
-      redirect(target.to);
-    }
+    if (target) followRedirect(target);
     notFound();
   }
   const { service, preview } = loaded;

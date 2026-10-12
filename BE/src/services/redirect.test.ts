@@ -87,6 +87,11 @@ describe("findPublicRedirect", () => {
     expect(findFirst.mock.calls[0][0]).toMatchObject({ where: { from: "/layanan/lama", deletedAt: null } });
   });
 
+  it("redirect TEMPORARY (302): permanent false", async () => {
+    db.current = { redirect: { findFirst: vi.fn(async () => ({ to: "/promo", code: "TEMPORARY" })) } };
+    expect(await findPublicRedirect("/promo-lama")).toEqual({ to: "/promo", permanent: false });
+  });
+
   it("tidak ada redirect: null", async () => {
     db.current = { redirect: { findFirst: vi.fn(async () => null) } };
     expect(await findPublicRedirect("/layanan/x")).toBeNull();
