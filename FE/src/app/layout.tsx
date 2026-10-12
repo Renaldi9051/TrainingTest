@@ -8,9 +8,13 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+// Tanpa preload: font mono hanya untuk label & angka, bukan elemen LCP (h1). Preload-nya berebut
+// bandwidth dengan CSS render-blocking di jaringan lambat. Fallback metrik (adjustFontFallback)
+// menjaga CLS saat font tertukar.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 // Favicon cadangan untuk semua halaman (termasuk admin); layout publik menimpanya dengan favicon CMS.
