@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typecheck": "dotenv -e ../.env -- next typegen && tsc --noEmit",
     "test": "vitest run",
+    "check": "npm run lint && npm run typecheck && npm run test",
     "test:e2e": "playwright test"
   },
   "dependencies": {

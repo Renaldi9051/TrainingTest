@@ -124,7 +124,9 @@ Dijalankan dari `BE/` atau `FE/`:
 | `npm run typecheck` | Cek tipe TypeScript |
 | `npm run test` | Vitest |
 | `npm run db:up` / `db:logs` | BE: start dan lihat log container Postgres |
-| `npm run db:down` | BE: hentikan semua container proyek (termasuk be/fe dari cara A). Data tidak dihapus |
+| `npm run db:down` | BE: hentikan container Postgres saja (`docker compose stop db`). Data tidak dihapus |
+| `npm run stack:down` | BE: hentikan dan hapus semua container proyek (db, migrate, be, fe). Data di volume tidak dihapus |
+| `npm run check` | BE/FE: lint + typecheck + test. Wajib lulus sebelum commit |
 | `npm run db:generate` | BE: generate Prisma Client |
 | `npm run db:migrate` | BE: `prisma migrate dev`. Perubahan skema: `npm run db:migrate -- --name <nama>` |
 | `npm run db:seed` | BE: isi data placeholder + admin pertama (hanya membuat yang belum ada, suntingan admin tidak ditimpa) |
