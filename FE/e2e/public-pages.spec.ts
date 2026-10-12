@@ -1,7 +1,7 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 import { loginViaApi, ORIGIN, runId } from "./helpers";
 
 // Halaman publik Fase 3.5: beranda dari CMS, profil, portofolio, layanan, halaman statis, footer.
@@ -24,15 +24,56 @@ async function patch(request: APIRequestContext, url: string, data: unknown) {
   expect(response.status(), `${url}: ${await response.text()}`).toBe(200);
 }
 
-async function uploadImage(request: APIRequestContext, name: string, alt: string): Promise<string> {
-  const buffer = await readFile(path.join(__dirname, "fixtures", "sample.png"));
+async function uploadImage(
+  request: APIRequestContext,
+  name: string,
+  alt: string,
+  file?: { buffer: Buffer; mimeType: string },
+): Promise<string> {
+  const buffer = file?.buffer ?? (await readFile(path.join(__dirname, "fixtures", "sample.png")));
   const response = await request.post("/api/admin/media", {
     headers: HEADERS,
-    multipart: { files: { name, mimeType: "image/png", buffer }, folder: "uji" },
+    multipart: { files: { name, mimeType: file?.mimeType ?? "image/png", buffer }, folder: "uji" },
   });
   const id = ((await response.json()) as { data: { created: { id: string }[] } }).data.created[0].id;
   await patch(request, `/admin/media/${id}`, { alt });
   return id;
+}
+
+// JPEG 2400x1350 dengan gradasi + noise, supaya ukuran varian WebP mendekati foto sungguhan
+// (sample.png berwarna rata sehingga ukurannya tidak mewakili). Dibuat saat test, tanpa file biner.
+async function photoLikeJpeg(browser: Browser): Promise<{ buffer: Buffer; mimeType: string }> {
+  const page = await browser.newPage({ viewport: { width: 2400, height: 1350 } });
+  await page.setContent('<canvas id="c" width="2400" height="1350" style="display:block"></canvas>');
+  await page.evaluate(() => {
+    const canvas = document.getElementById("c") as HTMLCanvasElement;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    const gradient = context.createLinearGradient(0, 0, 2400, 1350);
+    gradient.addColorStop(0, "#5b6b7a");
+    gradient.addColorStop(1, "#c9b79c");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 2400, 1350);
+    let seed = 7;
+    const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 1400; i += 1) {
+      context.fillStyle = `rgba(${Math.floor(random() * 255)}, ${Math.floor(random() * 255)}, ${Math.floor(random() * 255)}, 0.35)`;
+      context.beginPath();
+      context.arc(random() * 2400, random() * 1350, 4 + random() * 60, 0, Math.PI * 2);
+      context.fill();
+    }
+    const noise = context.getImageData(0, 0, 2400, 1350);
+    for (let i = 0; i < noise.data.length; i += 4) {
+      const delta = (random() - 0.5) * 40;
+      noise.data[i] += delta;
+      noise.data[i + 1] += delta;
+      noise.data[i + 2] += delta;
+    }
+    context.putImageData(noise, 0, 0);
+  });
+  const buffer = await page.screenshot({ type: "jpeg", quality: 85 });
+  await page.close();
+  return { buffer, mimeType: "image/jpeg" };
 }
 
 async function clearHome(request: APIRequestContext) {
@@ -94,10 +135,15 @@ test.describe("halaman publik", () => {
   let serviceId = "";
   let pageSlug = "";
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeAll(async ({ request, browser }) => {
     await loginViaApi(request);
     await clearHome(request);
-    const heroImage = await uploadImage(request, `[UJI]-hero-${id}.png`, "[UJI] Peserta pelatihan berdiskusi");
+    const heroImage = await uploadImage(
+      request,
+      `[UJI]-hero-${id}.jpg`,
+      "[UJI] Peserta pelatihan berdiskusi",
+      await photoLikeJpeg(browser),
+    );
     const serviceImage = await uploadImage(request, `[UJI]-layanan-${id}.png`, "[UJI] Sesi in-house");
     const galleryA = await uploadImage(request, `[UJI]-galeri-a-${id}.png`, "[UJI] Dokumentasi kegiatan A");
     const galleryB = await uploadImage(request, `[UJI]-galeri-b-${id}.png`, "[UJI] Dokumentasi kegiatan B");
@@ -202,6 +248,28 @@ test.describe("halaman publik", () => {
     expect(lazy).toBe(true);
     // Footer menampilkan media partner.
     await expect(page.getByRole("contentinfo").getByRole("link", { name: new RegExp(`\\[UJI\\] Majalah Uji ${id}`) })).toBeVisible();
+  });
+
+  test("hero di viewport 360: srcset memilih varian 768, bukan 1600", async ({ browser }) => {
+    // Ukuran file yang dimuat dicatat ke test-results/hero-360.json untuk laporan.
+    const loaded: { deviceScaleFactor: number; file: string; bytes: number }[] = [];
+    for (const deviceScaleFactor of [1, 2, 3]) {
+      const context = await browser.newContext({ viewport: { width: 360, height: 800 }, deviceScaleFactor });
+      const page = await context.newPage();
+      await page.goto(`${ORIGIN}/`);
+      const hero = page.getByRole("img", { name: "[UJI] Peserta pelatihan berdiskusi" });
+      await expect.poll(() => hero.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+      const { src, bytes } = await hero.evaluate((image: HTMLImageElement) => {
+        const entry = performance.getEntriesByName(image.currentSrc)[0] as PerformanceResourceTiming | undefined;
+        return { src: image.currentSrc, bytes: entry?.encodedBodySize ?? 0 };
+      });
+      loaded.push({ deviceScaleFactor, file: src.split("/").pop() ?? src, bytes });
+      await context.close();
+    }
+    mkdirSync(path.dirname(SCREEN_DIR), { recursive: true });
+    writeFileSync(path.join(path.dirname(SCREEN_DIR), "hero-360.json"), JSON.stringify(loaded, null, 2));
+    // Lebar tampil 328 px: DPR 1-2 butuh <= 768 px, jadi varian 768 (bukan 1600).
+    for (const entry of loaded.filter((item) => item.deviceScaleFactor <= 2)) expect(entry.file).toMatch(/-768\.webp$/);
   });
 
   test("testimoni bisa digulir dengan keyboard", async ({ page }) => {
