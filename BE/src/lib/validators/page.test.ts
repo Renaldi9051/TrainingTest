@@ -10,7 +10,7 @@ import {
 } from "@/lib/validators/page";
 
 describe("pageSlugIssue", () => {
-  it.each(["profil", "layanan", "pelatihan", "jadwal", "evaluasi", "kontak", "admin", "api", "uploads", "sitemap"])(
+  it.each(["profil", "layanan", "pelatihan", "jadwal", "evaluasi", "kontak", "admin", "api", "uploads", "sitemap", "icon"])(
     "halaman STANDARD tidak boleh memakai slug route %s",
     (slug) => {
       expect(pageSlugIssue(slug, "STANDARD")).toBe(PAGE_SLUG_RESERVED_MESSAGE);

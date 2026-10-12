@@ -3,6 +3,7 @@ import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { getSettings } from "@/lib/api/public";
 import { getPublicEnv } from "@/lib/env";
+import { FALLBACK_ICON_PATH } from "@/lib/monogram";
 
 // Metadata dasar seluruh halaman publik dari pengaturan SEO default (bisa diubah admin).
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,7 +19,8 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       images: seo.ogImage ? [{ url: seo.ogImage.url, alt: seo.ogImage.alt ?? identity.name }] : undefined,
     },
-    icons: identity.favicon ? { icon: identity.favicon.url } : undefined,
+    // Favicon dari CMS; selama kosong pakai monogram cadangan (app/icon).
+    icons: { icon: identity.favicon ? identity.favicon.url : FALLBACK_ICON_PATH },
   };
 }
 
