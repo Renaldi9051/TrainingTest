@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/admin/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/admin/ui/tabs";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
 import type { AdminNavTree, NavItem, NavLocation } from "@/lib/api/types";
 import { applyFieldErrors } from "@/lib/form-errors";
@@ -270,6 +271,7 @@ function NavItemDialog({
   roots: NavItem[];
   onClose: () => void;
 }) {
+  const sid = useScopedId("nav");
   const queryClient = useQueryClient();
   const editing = state.mode === "edit" ? state.item : null;
   const form = useForm<NavFormValues>({
@@ -313,15 +315,15 @@ function NavItemDialog({
           <DialogDescription>Tautan internal diawali / (mis. /jadwal). Tautan luar memakai https://.</DialogDescription>
         </DialogHeader>
         <form
-          id="nav-item-form"
+          id={sid("item-form")}
           noValidate
           className="space-y-4"
           onSubmit={form.handleSubmit((values) => save.mutate(values))}
         >
-          <FormField id="nav-label" label="Label" required error={errors.label?.message}>
+          <FormField id={sid("label")} label="Label" required error={errors.label?.message}>
             <Input {...form.register("label")} autoFocus />
           </FormField>
-          <FormField id="nav-href" label="Tautan" required error={errors.href?.message}>
+          <FormField id={sid("href")} label="Tautan" required error={errors.href?.message}>
             <Input {...form.register("href")} placeholder="/pelatihan" />
           </FormField>
           <Controller
@@ -329,9 +331,9 @@ function NavItemDialog({
             name="parentId"
             render={({ field }) => (
               <div className="space-y-2">
-                <Label htmlFor="nav-parent">Induk</Label>
+                <Label htmlFor={sid("parent")}>Induk</Label>
                 <Select value={field.value} onValueChange={field.onChange} disabled={!canChangeParent}>
-                  <SelectTrigger id="nav-parent" className="w-full" aria-describedby="nav-parent-help">
+                  <SelectTrigger id={sid("parent")} className="w-full" aria-describedby={sid("parent-help")}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -343,7 +345,7 @@ function NavItemDialog({
                     ))}
                   </SelectContent>
                 </Select>
-                <p id="nav-parent-help" className="text-small text-fg-muted">
+                <p id={sid("parent-help")} className="text-small text-fg-muted">
                   {canChangeParent
                     ? "Pilih induk untuk menjadikannya submenu (dropdown)."
                     : "Menu yang punya submenu tidak bisa dijadikan submenu."}
@@ -359,7 +361,7 @@ function NavItemDialog({
           <Button type="button" variant="ghost" disabled={save.isPending} onClick={onClose}>
             Batal
           </Button>
-          <Button type="submit" form="nav-item-form" disabled={save.isPending} aria-busy={save.isPending}>
+          <Button type="submit" form={sid("item-form")} disabled={save.isPending} aria-busy={save.isPending}>
             Simpan
           </Button>
         </DialogFooter>

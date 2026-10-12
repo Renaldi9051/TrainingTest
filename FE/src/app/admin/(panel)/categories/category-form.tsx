@@ -19,6 +19,7 @@ import { Label } from "@/components/admin/ui/label";
 import { Switch } from "@/components/admin/ui/switch";
 import { Textarea } from "@/components/admin/ui/textarea";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { ApiError, apiSend, errorMessage } from "@/lib/api/client";
 import type { Category, CategoryInUseDetails } from "@/lib/api/types";
 import { applyFieldErrors } from "@/lib/form-errors";
@@ -39,9 +40,10 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-const FORM_ID = "category-form";
 
 export function CategoryForm({ category }: { category: Category | null }) {
+  const sid = useScopedId("category");
+  const formId = sid("form");
   const router = useRouter();
   const queryClient = useQueryClient();
   const [autoSlug, setAutoSlug] = useState(category === null);
@@ -118,13 +120,13 @@ export function CategoryForm({ category }: { category: Category | null }) {
   return (
     <>
       <form
-        id={FORM_ID}
+        id={formId}
         noValidate
         onSubmit={form.handleSubmit((values) => save.mutate(values))}
         className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]"
       >
         <div className="space-y-6">
-          <FormField id="category-name" label="Nama" required error={errors.name?.message}>
+          <FormField id={sid("name")} label="Nama" required error={errors.name?.message}>
             <Input {...form.register("name")} />
           </FormField>
           <Controller
@@ -132,7 +134,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
             name="slug"
             render={({ field }) => (
               <SlugField
-                id="category-slug"
+                id={sid("slug")}
                 entity="category"
                 value={field.value}
                 onChange={field.onChange}
@@ -147,7 +149,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
             )}
           />
           <FormField
-            id="category-description"
+            id={sid("description")}
             label="Deskripsi"
             description="Tampil di halaman kategori publik."
             error={errors.description?.message}
@@ -163,16 +165,16 @@ export function CategoryForm({ category }: { category: Category | null }) {
             render={({ field }) => (
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <Label htmlFor="category-featured">Unggulan</Label>
-                  <p id="category-featured-help" className="mt-1 text-small text-fg-muted">
+                  <Label htmlFor={sid("featured")}>Unggulan</Label>
+                  <p id={sid("featured-help")} className="mt-1 text-small text-fg-muted">
                     Tampil sebagai kategori populer.
                   </p>
                 </div>
                 <Switch
-                  id="category-featured"
+                  id={sid("featured")}
                   checked={field.value}
                   onCheckedChange={field.onChange}
-                  aria-describedby="category-featured-help"
+                  aria-describedby={sid("featured-help")}
                 />
               </div>
             )}
@@ -181,7 +183,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
             control={form.control}
             name="icon"
             render={({ field }) => (
-              <IconPicker name="category-icon" value={field.value} onChange={field.onChange} error={errors.icon?.message} />
+              <IconPicker name={sid("icon")} value={field.value} onChange={field.onChange} error={errors.icon?.message} />
             )}
           />
           {category ? (
@@ -206,7 +208,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
         </aside>
       </form>
 
-      <StickySaveBar formId={FORM_ID} dirty={dirty} pending={save.isPending} onReset={() => form.reset()} />
+      <StickySaveBar formId={formId} dirty={dirty} pending={save.isPending} onReset={() => form.reset()} />
 
       <ConfirmDialog
         open={confirmDelete}

@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/admin/ui/
 import { Textarea } from "@/components/admin/ui/textarea";
 import { FaqEditor, StringListEditor } from "@/components/admin/training-editors";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
 import type { AdminSettings, SettingKey, SettingValues, SocialPlatform } from "@/lib/api/types";
 import { applyFieldErrors } from "@/lib/form-errors";
@@ -166,7 +167,8 @@ function useSettingForm<K extends SettingKey, TValues extends FieldValues>(
     },
   });
 
-  const formId = `settings-${key.replace(".", "-")}`;
+  // Id unik per instance (lihat useScopedId); sub-field memakai `${formId}-<nama>`.
+  const formId = useScopedId(`settings-${key.replace(".", "-")}`)();
   const onSubmit = form.handleSubmit((input) => mutation.mutate(input));
   const saveBar = (
     <StickySaveBar

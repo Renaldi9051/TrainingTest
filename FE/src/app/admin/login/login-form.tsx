@@ -8,6 +8,7 @@ import { z } from "zod";
 import { FormField } from "@/components/admin/form-field";
 import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { ApiError, apiFetch } from "@/lib/api/client";
 import type { AuthUserResponse } from "@/lib/api/types";
 
@@ -23,6 +24,7 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm({ next }: { next: string }) {
+  const sid = useScopedId("login");
   const router = useRouter();
   const {
     register,
@@ -61,10 +63,10 @@ export function LoginForm({ next }: { next: string }) {
 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-5">
-      <FormField id="email" label="Email" error={errors.email?.message}>
+      <FormField id={sid("email")} label="Email" error={errors.email?.message}>
         <Input type="email" autoComplete="username" autoFocus {...register("email")} />
       </FormField>
-      <FormField id="password" label="Kata sandi" error={errors.password?.message}>
+      <FormField id={sid("password")} label="Kata sandi" error={errors.password?.message}>
         <Input type="password" autoComplete="current-password" {...register("password")} />
       </FormField>
 

@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/admin/ui/select";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
 import type { PaginationMeta, Schedule, Training } from "@/lib/api/types";
 import { formatDateRange, formatRupiah } from "@/lib/format";
@@ -312,6 +313,8 @@ function ScheduleDialog({
   defaultTraining: { id: string; title: string } | null;
   onClose: () => void;
 }) {
+  const sid = useScopedId("schedule");
+  const formId = sid("form");
   const queryClient = useQueryClient();
   const editing = state.mode === "edit" ? state.schedule : null;
   const [trainingTitle, setTrainingTitle] = useState<string | null>(
@@ -362,12 +365,12 @@ function ScheduleDialog({
           <DialogTitle>{editing ? "Ubah jadwal" : "Tambah jadwal"}</DialogTitle>
           <DialogDescription>Tanggal dalam WIB. Harga dalam Rupiah tanpa titik.</DialogDescription>
         </DialogHeader>
-        <form id="schedule-form" noValidate className="space-y-4" onSubmit={form.handleSubmit((values) => save.mutate(values))}>
+        <form id={formId} noValidate className="space-y-4" onSubmit={form.handleSubmit((values) => save.mutate(values))}>
           <Controller
             control={form.control}
             name="trainingId"
             render={({ field }) => (
-              <FormField id="schedule-training" label="Pelatihan" required error={errors.trainingId?.message}>
+              <FormField id={sid("training")} label="Pelatihan" required error={errors.trainingId?.message}>
                 <TrainingPicker
                   value={field.value || null}
                   selectedTitle={trainingTitle}
@@ -380,16 +383,16 @@ function ScheduleDialog({
             )}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField id="schedule-start" label="Tanggal mulai" required error={errors.startDate?.message}>
+            <FormField id={sid("start")} label="Tanggal mulai" required error={errors.startDate?.message}>
               <Input type="date" {...form.register("startDate")} />
             </FormField>
-            <FormField id="schedule-end" label="Tanggal selesai" required error={errors.endDate?.message}>
+            <FormField id={sid("end")} label="Tanggal selesai" required error={errors.endDate?.message}>
               <Input type="date" {...form.register("endDate")} />
             </FormField>
-            <FormField id="schedule-city" label="Kota" error={errors.city?.message}>
+            <FormField id={sid("city")} label="Kota" error={errors.city?.message}>
               <Input {...form.register("city")} placeholder="Jakarta" />
             </FormField>
-            <FormField id="schedule-venue" label="Tempat" error={errors.venue?.message}>
+            <FormField id={sid("venue")} label="Tempat" error={errors.venue?.message}>
               <Input {...form.register("venue")} placeholder="Nama hotel / Zoom" />
             </FormField>
             <Controller
@@ -397,9 +400,9 @@ function ScheduleDialog({
               name="method"
               render={({ field }) => (
                 <div className="space-y-2">
-                  <Label htmlFor="schedule-method">Metode</Label>
+                  <Label htmlFor={sid("method")}>Metode</Label>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="schedule-method" className="w-full">
+                    <SelectTrigger id={sid("method")} className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -418,9 +421,9 @@ function ScheduleDialog({
               name="status"
               render={({ field }) => (
                 <div className="space-y-2">
-                  <Label htmlFor="schedule-status">Status</Label>
+                  <Label htmlFor={sid("status")}>Status</Label>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="schedule-status" className="w-full">
+                    <SelectTrigger id={sid("status")} className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -435,7 +438,7 @@ function ScheduleDialog({
               )}
             />
             <FormField
-              id="schedule-price"
+              id={sid("price")}
               label="Harga (Rp)"
               description="Tampil hanya kalau pelatihan menampilkan harga."
               error={errors.price?.message}
@@ -449,7 +452,7 @@ function ScheduleDialog({
           <Button type="button" variant="ghost" disabled={save.isPending} onClick={onClose}>
             Batal
           </Button>
-          <Button type="submit" form="schedule-form" disabled={save.isPending} aria-busy={save.isPending}>
+          <Button type="submit" form={formId} disabled={save.isPending} aria-busy={save.isPending}>
             Simpan
           </Button>
         </DialogFooter>

@@ -47,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/admin/ui/select";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
 import type {
   CategoryOption,
@@ -191,6 +192,7 @@ const columns: DataTableColumn<TrainingListItem>[] = columnHelper.columns([
 type BulkDialog = "publish" | "unpublish" | "delete" | "set-category" | null;
 
 export function TrainingsList() {
+  const sid = useScopedId("bulk");
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const q = useDeferredValue(search.trim());
@@ -421,9 +423,9 @@ export function TrainingsList() {
       >
         {selectionSummary}
         <div className="space-y-2">
-          <Label htmlFor="bulk-category">Kategori pengganti</Label>
+          <Label htmlFor={sid("category")}>Kategori pengganti</Label>
           <Select value={targetCategory} onValueChange={setTargetCategory}>
-            <SelectTrigger id="bulk-category" className="w-full">
+            <SelectTrigger id={sid("category")} className="w-full">
               <SelectValue placeholder="Pilih kategori" />
             </SelectTrigger>
             <SelectContent>

@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/admin/ui/select";
 import { Skeleton } from "@/components/admin/ui/skeleton";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { apiFetch } from "@/lib/api/client";
 import type { Media, PaginationMeta } from "@/lib/api/types";
 import { MediaDetailSheet } from "./media-detail";
@@ -29,6 +30,7 @@ const ALL_FOLDERS = "__all";
 
 // ?media=<id> membuka detail media itu langsung (dipakai link "Isi alt" dari form konten).
 export function MediaLibrary() {
+  const sid = useScopedId("media");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -66,7 +68,7 @@ export function MediaLibrary() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex-1 space-y-2">
-          <Label htmlFor="media-search">Cari</Label>
+          <Label htmlFor={sid("search")}>Cari</Label>
           <div className="relative">
             <SearchIcon
               className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted"
@@ -74,7 +76,7 @@ export function MediaLibrary() {
               aria-hidden
             />
             <Input
-              id="media-search"
+              id={sid("search")}
               type="search"
               className="pl-9"
               placeholder="Nama file atau alt text"
@@ -87,7 +89,7 @@ export function MediaLibrary() {
           </div>
         </div>
         <div className="space-y-2 sm:w-56">
-          <Label htmlFor="media-folder">Folder</Label>
+          <Label htmlFor={sid("folder")}>Folder</Label>
           <Select
             value={folder}
             onValueChange={(value) => {
@@ -95,7 +97,7 @@ export function MediaLibrary() {
               setPage(1);
             }}
           >
-            <SelectTrigger id="media-folder" className="w-full">
+            <SelectTrigger id={sid("folder")} className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -133,7 +135,7 @@ export function MediaLibrary() {
         <ul
           className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
           aria-busy={list.isFetching}
-          data-testid="media-grid"
+          data-testid={sid("grid")}
         >
           {items.map((media) => (
             <li key={media.id}>

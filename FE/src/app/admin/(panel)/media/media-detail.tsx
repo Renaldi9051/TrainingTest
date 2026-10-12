@@ -20,6 +20,7 @@ import {
 } from "@/components/admin/ui/sheet";
 import { Skeleton } from "@/components/admin/ui/skeleton";
 import { Textarea } from "@/components/admin/ui/textarea";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { ApiError, apiFetch } from "@/lib/api/client";
 import type { Media, MediaDetail, MediaInUseDetails, MediaUsage } from "@/lib/api/types";
 import { MediaThumbnail } from "@/components/admin/media/media-thumbnail";
@@ -91,6 +92,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 function MediaDetailBody({ media, onDeleted }: { media: MediaDetail; onDeleted: () => void }) {
+  const sid = useScopedId("media");
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [blockingUsages, setBlockingUsages] = useState<MediaUsage[] | null>(null);
@@ -214,7 +216,7 @@ function MediaDetailBody({ media, onDeleted }: { media: MediaDetail; onDeleted: 
         </dl>
 
         <form
-          id="media-detail-form"
+          id={sid("detail-form")}
           className="space-y-4 border-t border-border pt-6"
           onSubmit={form.handleSubmit((values) => save.mutate(values))}
           noValidate
@@ -227,7 +229,7 @@ function MediaDetailBody({ media, onDeleted }: { media: MediaDetail; onDeleted: 
           ) : null}
           {isImage(media) ? (
             <FormField
-              id="media-alt"
+              id={sid("alt")}
               label="Alt text"
               description="Jelaskan isi gambar secara singkat untuk pembaca layar dan SEO."
               error={form.formState.errors.alt?.message}
@@ -236,7 +238,7 @@ function MediaDetailBody({ media, onDeleted }: { media: MediaDetail; onDeleted: 
             </FormField>
           ) : null}
           <FormField
-            id="media-folder-edit"
+            id={sid("folder-edit")}
             label="Folder"
             description="Kosongkan kalau tanpa folder."
             error={form.formState.errors.folder?.message}
@@ -261,7 +263,7 @@ function MediaDetailBody({ media, onDeleted }: { media: MediaDetail; onDeleted: 
         </Button>
         <Button
           type="submit"
-          form="media-detail-form"
+          form={sid("detail-form")}
           size="sm"
           disabled={save.isPending || !form.formState.isDirty}
           aria-busy={save.isPending}

@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/admin/ui/table";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { ApiError, apiSend } from "@/lib/api/client";
 import type { ScheduleImportResult } from "@/lib/api/types";
 import { formatDateRange, formatRupiah } from "@/lib/format";
@@ -25,6 +26,7 @@ import { scheduleKeys } from "../schedules-list";
 const MAX_BYTES = 1024 * 1024;
 
 export function ScheduleImport() {
+  const sid = useScopedId("import");
   const router = useRouter();
   const queryClient = useQueryClient();
   const inputId = useId();
@@ -142,10 +144,10 @@ export function ScheduleImport() {
       ) : null}
 
       {preview ? (
-        <section aria-labelledby="import-preview-title" className="space-y-4">
+        <section aria-labelledby={sid("preview-title")} className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 id="import-preview-title" className="text-lg font-medium text-fg-strong">
+              <h2 id={sid("preview-title")} className="text-lg font-medium text-fg-strong">
                 Pratinjau
               </h2>
               <p className="text-small text-fg-muted" aria-live="polite">

@@ -38,6 +38,7 @@ import { Skeleton } from "@/components/admin/ui/skeleton";
 import { Switch } from "@/components/admin/ui/switch";
 import { Textarea } from "@/components/admin/ui/textarea";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
 import type { CategoryOption, RichTextDoc, Training, TrainingMethod, TrainingType } from "@/lib/api/types";
 import { fromWibInputValue, toWibInputValue } from "@/lib/format";
@@ -63,7 +64,6 @@ import { categoryKeys } from "../categories/category-form";
 import { trainingKeys } from "./training-keys";
 import { previewHref } from "./trainings-list";
 
-const FORM_ID = "training-form";
 const NO_METHOD = "none";
 
 const richText = z.custom<RichTextDoc | null>((value) => value === null || typeof value === "object");
@@ -197,6 +197,8 @@ function paragraphCount(doc: RichTextDoc | null): number {
 }
 
 export function TrainingForm({ training }: { training: Training | null }) {
+  const sid = useScopedId("training");
+  const formId = sid("form");
   const router = useRouter();
   const queryClient = useQueryClient();
   const [autoSlug, setAutoSlug] = useState(training === null);
@@ -277,13 +279,13 @@ export function TrainingForm({ training }: { training: Training | null }) {
   return (
     <>
       <form
-        id={FORM_ID}
+        id={formId}
         noValidate
         onSubmit={form.handleSubmit((values) => save.mutate(values))}
         className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]"
       >
         <div className="min-w-0 space-y-6">
-          <FormField id="training-title" label="Judul" required error={errors.title?.message}>
+          <FormField id={sid("title")} label="Judul" required error={errors.title?.message}>
             <Input {...form.register("title")} />
           </FormField>
           <Controller
@@ -291,7 +293,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
             name="slug"
             render={({ field }) => (
               <SlugField
-                id="training-slug"
+                id={sid("slug")}
                 entity="training"
                 value={field.value}
                 onChange={field.onChange}
@@ -306,7 +308,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
             )}
           />
           <FormField
-            id="training-summary"
+            id={sid("summary")}
             label="Ringkasan"
             description={`Satu kalimat. Tampil di bawah judul, kartu katalog, dan hasil pencarian. ${summary.length}/${SUMMARY_MAX} karakter.`}
             error={errors.summary?.message}
@@ -319,7 +321,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
             name="description"
             render={({ field, fieldState }) => (
               <FormField
-                id="training-description"
+                id={sid("description")}
                 label="Deskripsi"
                 description={
                   paragraphs > 2
@@ -381,7 +383,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
           </ContentSection>
 
           <FormField
-            id="training-prerequisites"
+            id={sid("prerequisites")}
             label="Prasyarat"
             description={`Opsional. Kosongkan kalau tidak ada. Maks ${PREREQUISITES_MAX} karakter.`}
             error={errors.prerequisites?.message}
@@ -396,14 +398,14 @@ export function TrainingForm({ training }: { training: Training | null }) {
               render={({ field }) => (
                 <div className="flex items-start gap-3">
                   <Switch
-                    id="training-default-facilities"
+                    id={sid("default-facilities")}
                     checked={field.value}
                     onCheckedChange={field.onChange}
-                    aria-describedby="training-default-facilities-help"
+                    aria-describedby={sid("default-facilities-help")}
                   />
                   <div>
-                    <Label htmlFor="training-default-facilities">Pakai fasilitas default</Label>
-                    <p id="training-default-facilities-help" className="mt-1 text-small text-fg-muted">
+                    <Label htmlFor={sid("default-facilities")}>Pakai fasilitas default</Label>
+                    <p id={sid("default-facilities-help")} className="mt-1 text-small text-fg-muted">
                       Daftar default diatur di Pengaturan situs, tab Pelatihan.
                     </p>
                   </div>
@@ -439,7 +441,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
           </ContentSection>
 
           <div className="grid gap-6 sm:grid-cols-2">
-            <FormField id="training-duration" label="Durasi" description="Mis. 2 hari, 16 jam pelajaran." error={errors.duration?.message}>
+            <FormField id={sid("duration")} label="Durasi" description="Mis. 2 hari, 16 jam pelajaran." error={errors.duration?.message}>
               <Input {...form.register("duration")} />
             </FormField>
             <Controller
@@ -447,9 +449,9 @@ export function TrainingForm({ training }: { training: Training | null }) {
               name="method"
               render={({ field }) => (
                 <div className="space-y-2">
-                  <Label htmlFor="training-method">Metode</Label>
+                  <Label htmlFor={sid("method")}>Metode</Label>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="training-method" className="w-full">
+                    <SelectTrigger id={sid("method")} className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -494,7 +496,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
 
           <div className="space-y-4 border-t border-border pt-6">
             <FormField
-              id="training-price"
+              id={sid("price")}
               label="Investasi"
               description="Teks bebas, mis. Rp4.500.000 per peserta. Dipakai kalau belum ada sesi berharga."
               error={errors.priceText?.message}
@@ -507,14 +509,14 @@ export function TrainingForm({ training }: { training: Training | null }) {
               render={({ field }) => (
                 <div className="flex items-start gap-3">
                   <Switch
-                    id="training-show-price"
+                    id={sid("show-price")}
                     checked={field.value}
                     onCheckedChange={field.onChange}
-                    aria-describedby="training-show-price-help"
+                    aria-describedby={sid("show-price-help")}
                   />
                   <div>
-                    <Label htmlFor="training-show-price">Tampilkan harga di situs</Label>
-                    <p id="training-show-price-help" className="mt-1 text-small text-fg-muted">
+                    <Label htmlFor={sid("show-price")}>Tampilkan harga di situs</Label>
+                    <p id={sid("show-price-help")} className="mt-1 text-small text-fg-muted">
                       {showPrice
                         ? "Situs menampilkan harga sesi termurah, lalu teks investasi, lalu Hubungi marketing."
                         : "Situs menampilkan \"Hubungi marketing\", termasuk di tabel jadwal."}
@@ -542,7 +544,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
             name="coverId"
             render={({ field, fieldState }) => (
               <FormField
-                id="training-cover"
+                id={sid("cover")}
                 label="Gambar sampul"
                 description="Rasio 4:3. Tampil grayscale di situs."
                 error={fieldState.error?.message}
@@ -614,7 +616,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
       </form>
 
       <StickySaveBar
-        formId={FORM_ID}
+        formId={formId}
         dirty={dirty}
         pending={save.isPending}
         onReset={() => form.reset()}
@@ -698,6 +700,7 @@ function PublishPanel({
   training: Training | null;
   errors?: string;
 }) {
+  const sid = useScopedId("training");
   const status = useWatch({ control, name: "status" });
   const publishedAt = useWatch({ control, name: "publishedAt" });
   const scheduled = status === "PUBLISHED" && publishedAt !== "" && new Date(fromWibInputValue(publishedAt) ?? "") > new Date();
@@ -746,7 +749,7 @@ function PublishPanel({
         name="publishedAt"
         render={({ field }) => (
           <FormField
-            id="training-published-at"
+            id={sid("published-at")}
             label="Waktu tayang (WIB)"
             description={
               status !== "PUBLISHED"

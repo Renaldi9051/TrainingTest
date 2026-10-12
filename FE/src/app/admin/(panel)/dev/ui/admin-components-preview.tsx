@@ -1,6 +1,7 @@
 "use client";
 
 import { InboxIcon } from "lucide-react";
+import { useScopedId } from "@/hooks/use-scoped-id";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
@@ -11,6 +12,7 @@ import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 
 export function AdminComponentsPreview() {
+  const sid = useScopedId("preview");
   const [open, setOpen] = useState(false);
 
   return (
@@ -39,10 +41,10 @@ export function AdminComponentsPreview() {
       </div>
 
       <div className="grid max-w-md gap-5">
-        <FormField id="preview-title" label="Judul" required description="Tampil di halaman publik.">
+        <FormField id={sid("title")} label="Judul" required description="Tampil di halaman publik.">
           <Input placeholder="Judul pelatihan" />
         </FormField>
-        <FormField id="preview-slug" label="Slug" error="Slug sudah dipakai.">
+        <FormField id={sid("slug")} label="Slug" error="Slug sudah dipakai.">
           <Input defaultValue="analisis-laporan" />
         </FormField>
       </div>

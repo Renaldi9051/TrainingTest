@@ -25,8 +25,8 @@ test.describe("katalog & detail pelatihan", () => {
     const title = `Pelatihan E2E Tayang ${id}`;
 
     await page.goto("/admin/trainings/new");
-    await page.locator("#training-title").fill(title);
-    await page.locator("#training-summary").fill(`Ringkasan pelatihan uji ${id}.`);
+    await page.getByRole("textbox", { name: "Judul", exact: true }).fill(title);
+    await page.getByRole("textbox", { name: "Ringkasan", exact: true }).fill(`Ringkasan pelatihan uji ${id}.`);
     await page.getByPlaceholder("Cari kategori").fill(category.name);
     await page.getByRole("checkbox", { name: category.name, exact: true }).click();
     // Status Tayang wajib 4 hasil belajar.
@@ -61,7 +61,7 @@ test.describe("katalog & detail pelatihan", () => {
     // Ubah judul di admin: halaman publik ikut berubah < 5 detik tanpa redeploy.
     const renamed = `${title} Edisi Baru`;
     await page.goto(`/admin/trainings/${trainingId}`);
-    await page.locator("#training-title").fill(renamed);
+    await page.getByRole("textbox", { name: "Judul", exact: true }).fill(renamed);
     await page.getByRole("button", { name: "Simpan", exact: true }).click();
     await expect(page.getByText(/Pelatihan disimpan/).first()).toBeVisible();
     const renamedAt = Date.now();
