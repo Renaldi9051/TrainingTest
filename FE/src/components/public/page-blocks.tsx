@@ -111,9 +111,11 @@ function Block({ block }: { block: PublicPageBlock }) {
 }
 
 // Blok halaman berurutan. Pemisah antar blok: garis tipis (bukan kartu berlatar).
+// Blok pertama langsung menyusul PageIntro: tanpa padding atas, jadi jarak judul -> blok pertama
+// cukup dari padding bawah PageIntro (48/64 px). Jarak 128/80 px hanya antar section.
 export function PageBlocks({ blocks }: { blocks: PublicPageBlock[] }) {
   return (
-    <div className="divide-y divide-border">
+    <div className="divide-y divide-border [&>:first-child]:pt-0">
       {blocks.map((block) => (
         <Block key={block.id} block={block} />
       ))}
