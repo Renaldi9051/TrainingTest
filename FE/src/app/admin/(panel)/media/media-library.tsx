@@ -23,7 +23,8 @@ import type { Media, PaginationMeta } from "@/lib/api/types";
 import { MediaDetailSheet } from "./media-detail";
 import { MediaDropzone } from "./media-dropzone";
 import { MediaThumbnail } from "@/components/admin/media/media-thumbnail";
-import { formatBytes, isMissingAlt, mediaKeys, mediaName } from "@/components/admin/media/media-utils";
+import { isMissingAlt, mediaKeys, mediaName } from "@/components/admin/media/media-utils";
+import { formatBytes } from "@/lib/format";
 
 const PAGE_SIZE = 24;
 const ALL_FOLDERS = "__all";

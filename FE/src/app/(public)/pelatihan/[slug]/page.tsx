@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Accordion } from "@/components/public/accordion";
 import { JsonLd } from "@/components/public/json-ld";
+import { PreviewBanner } from "@/components/public/preview-banner";
 import { PublicImage } from "@/components/public/public-image";
 import { RichTextHtml } from "@/components/public/rich-text-html";
 import { ScheduleTable } from "@/components/public/schedule-table";
@@ -19,7 +20,6 @@ import type { PublicTrainingDetail } from "@/lib/api/types";
 import { getPublicEnv } from "@/lib/env";
 import { formatDateRange, formatRupiah } from "@/lib/format";
 import { METHOD_LABELS } from "@/lib/labels";
-import { PREVIEW_EXIT } from "@/lib/session";
 import {
   courseJsonLd,
   scheduleEventJsonLd,
@@ -463,23 +463,5 @@ function FaqList({ training }: { training: PublicTrainingDetail }) {
         content: <p className="max-w-[65ch] text-body text-fg-muted">{item.a}</p>,
       }))}
     />
-  );
-}
-
-function PreviewBanner({ path }: { path: string }) {
-  return (
-    <div role="status" className="border-b border-fg-strong bg-bg-subtle">
-      <Container className="flex flex-wrap items-center justify-between gap-3 py-3">
-        <p className="font-mono text-label uppercase tracking-[0.08em] text-fg-strong">
-          Mode pratinjau · konten mungkin belum tayang
-        </p>
-        <form action={PREVIEW_EXIT} method="post">
-          <input type="hidden" name="path" value={path} />
-          <button type="submit" className={buttonVariants({ variant: "secondary", size: "sm" })}>
-            Keluar dari pratinjau
-          </button>
-        </form>
-      </Container>
-    </div>
   );
 }

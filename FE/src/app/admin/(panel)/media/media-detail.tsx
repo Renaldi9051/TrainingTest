@@ -21,11 +21,11 @@ import {
 import { Skeleton } from "@/components/admin/ui/skeleton";
 import { Textarea } from "@/components/admin/ui/textarea";
 import { useScopedId } from "@/hooks/use-scoped-id";
+import { formatBytes } from "@/lib/format";
 import { ApiError, apiFetch } from "@/lib/api/client";
 import type { Media, MediaDetail, MediaInUseDetails, MediaUsage } from "@/lib/api/types";
 import { MediaThumbnail } from "@/components/admin/media/media-thumbnail";
 import {
-  formatBytes,
   isImage,
   isMissingAlt,
   mediaKeys,
