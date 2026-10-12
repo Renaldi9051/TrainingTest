@@ -247,6 +247,45 @@ export type PublicScheduleList = {
   meta: ListMeta & { cities: string[]; month: string | null; upcomingOnly: boolean };
 };
 
+export const publicScheduleInclude = {
+  training: {
+    select: {
+      slug: true,
+      title: true,
+      showPrice: true,
+      categories: {
+        select: { category: { select: { slug: true, name: true, order: true, deletedAt: true } } },
+      },
+    },
+  },
+} satisfies Prisma.ScheduleInclude;
+
+type PublicScheduleRow = Prisma.ScheduleGetPayload<{ include: typeof publicScheduleInclude }>;
+
+// Dipakai /jadwal dan section Jadwal terdekat di beranda.
+export function toPublicSchedule(row: PublicScheduleRow, today: Date): PublicSchedule {
+  return {
+    id: row.id,
+    training: {
+      slug: row.training.slug,
+      title: row.training.title,
+      categories: row.training.categories
+        .map((link) => link.category)
+        .filter((category) => category.deletedAt === null)
+        .sort((a, b) => a.order - b.order)
+        .map(({ slug, name }) => ({ slug, name })),
+    },
+    startDate: toDateString(row.startDate),
+    endDate: toDateString(row.endDate),
+    city: row.city,
+    venue: row.venue,
+    method: row.method,
+    price: row.training.showPrice ? row.price : null,
+    showPrice: row.training.showPrice,
+    status: scheduleDisplayStatus(row, today),
+  };
+}
+
 export async function listPublicSchedules(query: PublicScheduleQuery, now = new Date()): Promise<PublicScheduleList> {
   const today = appToday(now);
   const visibleTraining = publicTrainingWhere(now);
@@ -273,18 +312,7 @@ export async function listPublicSchedules(query: PublicScheduleQuery, now = new 
   const [rows, total, cityRows] = await Promise.all([
     db.schedule.findMany({
       where,
-      include: {
-        training: {
-          select: {
-            slug: true,
-            title: true,
-            showPrice: true,
-            categories: {
-              select: { category: { select: { slug: true, name: true, order: true, deletedAt: true } } },
-            },
-          },
-        },
-      },
+      include: publicScheduleInclude,
       orderBy: [{ startDate: "asc" }, { id: "asc" }],
       ...pagination(query.hal, query.per),
     }),
@@ -300,26 +328,7 @@ export async function listPublicSchedules(query: PublicScheduleQuery, now = new 
   ]);
 
   return {
-    items: rows.map((row) => ({
-      id: row.id,
-      training: {
-        slug: row.training.slug,
-        title: row.training.title,
-        categories: row.training.categories
-          .map((link) => link.category)
-          .filter((category) => category.deletedAt === null)
-          .sort((a, b) => a.order - b.order)
-          .map(({ slug, name }) => ({ slug, name })),
-      },
-      startDate: toDateString(row.startDate),
-      endDate: toDateString(row.endDate),
-      city: row.city,
-      venue: row.venue,
-      method: row.method,
-      price: row.training.showPrice ? row.price : null,
-      showPrice: row.training.showPrice,
-      status: scheduleDisplayStatus(row, today),
-    })),
+    items: rows.map((row) => toPublicSchedule(row, today)),
     meta: {
       ...listMeta(query.hal, query.per, total),
       cities: cityRows.flatMap((row) => (row.city ? [row.city] : [])),

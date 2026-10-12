@@ -273,13 +273,13 @@ export type PublicCategory = {
   trainingCount: number;
 };
 
-function publicCountInclude(now: Date) {
+export function publicCountInclude(now: Date) {
   return {
     _count: { select: { trainings: { where: { training: publicTrainingWhere(now) } } } },
   } satisfies Prisma.CategoryInclude;
 }
 
-function toPublic(category: CategoryWithCount): PublicCategory {
+export function toPublicCategory(category: CategoryWithCount): PublicCategory {
   return {
     slug: category.slug,
     name: category.name,
@@ -296,7 +296,7 @@ export async function listPublicCategories(now = new Date()): Promise<PublicCate
     include: publicCountInclude(now),
     orderBy: [{ order: "asc" }, { name: "asc" }],
   });
-  return rows.map(toPublic);
+  return rows.map(toPublicCategory);
 }
 
 export async function getPublicCategory(slug: string, now = new Date()): Promise<PublicCategory | null> {
@@ -304,5 +304,5 @@ export async function getPublicCategory(slug: string, now = new Date()): Promise
     where: { slug, deletedAt: null },
     include: publicCountInclude(now),
   });
-  return category ? toPublic(category) : null;
+  return category ? toPublicCategory(category) : null;
 }

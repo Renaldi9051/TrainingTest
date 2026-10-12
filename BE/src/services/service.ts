@@ -27,6 +27,7 @@ import {
 import { withSelected, type OptionItem } from "@/services/options";
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
 import { nextOrder, reorderResource } from "@/services/reorder";
+import { resolveSelections, type Selection } from "@/services/selection";
 import { parseSeo, type TrainingSeo } from "@/services/training";
 
 const ENTITY = "Service";
@@ -379,32 +380,16 @@ export async function getServicePreview(slug: string): Promise<PublicServiceDeta
 }
 
 // Konfigurasi pilihan layanan dari blok halaman / section beranda (bukan salinan data).
-export type ServiceSelection = { mode: "auto" | "manual"; limit: number; ids: string[] };
+export type ServiceSelection = Selection;
 
-// Resolve banyak konfigurasi sekaligus: maksimal satu query untuk semua id manual dan satu query
-// untuk mode auto (limit terbesar). Id yang dihapus/draft otomatis tersaring; urutan manual dijaga.
-export async function resolveServiceSelections(selections: ServiceSelection[]): Promise<PublicServiceCard[][]> {
-  const manualIds = [...new Set(selections.flatMap((selection) => (selection.mode === "manual" ? selection.ids : [])))];
-  const autoLimit = Math.max(0, ...selections.filter((selection) => selection.mode === "auto").map((s) => s.limit));
+// Resolve banyak konfigurasi sekaligus (lihat resolveSelections): id yang dihapus/draft tersaring,
+// urutan manual dijaga, mode auto mengikuti urutan modul Layanan.
+export async function resolveServiceSelections(selections: Selection[]): Promise<PublicServiceCard[][]> {
   const db = getDb();
-  const [manualRows, autoRows] = await Promise.all([
-    manualIds.length
-      ? db.service.findMany({ where: { id: { in: manualIds }, ...publicServiceWhere }, include })
-      : Promise.resolve([]),
-    autoLimit
-      ? db.service.findMany({
-          where: publicServiceWhere,
-          include,
-          orderBy: [{ order: "asc" }, { title: "asc" }],
-          take: autoLimit,
-        })
-      : Promise.resolve([]),
-  ]);
-  const byId = new Map(manualRows.map((row) => [row.id, toPublicServiceCard(row)]));
-  const auto = autoRows.map(toPublicServiceCard);
-  return selections.map((selection) =>
-    selection.mode === "manual"
-      ? selection.ids.flatMap((id) => byId.get(id) ?? [])
-      : auto.slice(0, selection.limit),
-  );
+  return resolveSelections(selections, {
+    byIds: (ids) => db.service.findMany({ where: { id: { in: ids }, ...publicServiceWhere }, include }),
+    top: (limit) =>
+      db.service.findMany({ where: publicServiceWhere, include, orderBy: [{ order: "asc" }, { title: "asc" }], take: limit }),
+    toItem: toPublicServiceCard,
+  });
 }

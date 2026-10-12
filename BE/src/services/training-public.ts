@@ -78,16 +78,16 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   updatedAt: Date;
 };
 
-const cardInclude = {
+export const cardInclude = {
   cover: true,
   categories: {
     include: { category: { select: { slug: true, name: true, order: true, deletedAt: true } } },
   },
 } satisfies Prisma.TrainingInclude;
 
-type CardRow = Prisma.TrainingGetPayload<{ include: typeof cardInclude }>;
+export type CardRow = Prisma.TrainingGetPayload<{ include: typeof cardInclude }>;
 
-function toCard(row: CardRow): PublicTrainingCard {
+export function toCard(row: CardRow): PublicTrainingCard {
   return {
     slug: row.slug,
     title: row.title,
