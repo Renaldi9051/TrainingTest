@@ -9,12 +9,11 @@ import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 import { Skeleton } from "@/components/admin/ui/skeleton";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { apiFetch } from "@/lib/api/client";
-import type { OptionItem } from "@/lib/api/types";
-import type { AdminResource } from "@/lib/admin-resources";
+import type { OptionSource } from "@/lib/admin-resources";
 
 type OptionMultiPickerProps = {
-  resource: AdminResource;
+  // Sumber pilihan (lihat resourceOptionSource / categoryOptionSource).
+  source: OptionSource;
   value: string[];
   onChange: (ids: string[]) => void;
   max: number;
@@ -27,26 +26,21 @@ const SEARCH_LIMIT = 8;
 
 // Pilih beberapa item dari GET /api/admin/{resource}/options (search + limit), urutan pilihan
 // bisa diubah (drag & drop / keyboard). Nilai yang disimpan hanya id; label diambil dari BE.
-export function OptionMultiPicker({ resource, value, onChange, max, noun, error }: OptionMultiPickerProps) {
+export function OptionMultiPicker({ source, value, onChange, max, noun, error }: OptionMultiPickerProps) {
   const searchId = useId();
   const [search, setSearch] = useState("");
   const q = useDebouncedValue(search.trim());
 
   // Label item terpilih (ids selalu ikut dikembalikan BE walau di luar limit).
   const selected = useQuery({
-    queryKey: ["admin", resource, "options", "selected", value],
-    queryFn: async () =>
-      (await apiFetch<OptionItem[]>(`/admin/${resource}/options?limit=1&ids=${value.join(",")}`)).data,
+    queryKey: [...source.key, "selected", value],
+    queryFn: () => source.load({ limit: 1, ids: value }),
     enabled: value.length > 0,
     placeholderData: keepPreviousData,
   });
   const results = useQuery({
-    queryKey: ["admin", resource, "options", "search", q],
-    queryFn: async () => {
-      const params = new URLSearchParams({ limit: String(SEARCH_LIMIT + value.length) });
-      if (q) params.set("q", q);
-      return (await apiFetch<OptionItem[]>(`/admin/${resource}/options?${params}`)).data;
-    },
+    queryKey: [...source.key, "search", q],
+    queryFn: () => source.load({ q: q || undefined, limit: SEARCH_LIMIT + value.length, ids: [] }),
     placeholderData: keepPreviousData,
   });
 

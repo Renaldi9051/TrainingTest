@@ -18,9 +18,12 @@ import {
 } from "@/components/admin/ui/select";
 import { Textarea } from "@/components/admin/ui/textarea";
 import { useScopedId } from "@/hooks/use-scoped-id";
+import { resourceOptionSource } from "@/lib/admin-resources";
 import type { Media, PageBlock } from "@/lib/api/types";
 import { CATEGORY_ICON_NAMES, CATEGORY_ICONS } from "@/lib/category-icons";
 import { FEATURES_MAX, LIST_ITEMS_MAX, MISSION_ITEMS_MAX, SERVICES_LIMIT_MAX } from "@/lib/page-blocks";
+
+const SERVICE_OPTIONS = resourceOptionSource("services");
 
 // Error RHF untuk satu blok: errors.blocks[N] berbentuk { field: { message } | array }.
 export type BlockErrors = Record<string, unknown> | undefined;
@@ -219,7 +222,7 @@ export function BlockFields({ block, onChange, errors, media }: FieldsProps<Page
             </FormField>
           ) : (
             <OptionMultiPicker
-              resource="services"
+              source={SERVICE_OPTIONS}
               value={block.ids}
               onChange={(ids) => onChange({ ...block, ids })}
               max={SERVICES_LIMIT_MAX}

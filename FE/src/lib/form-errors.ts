@@ -21,3 +21,28 @@ export function applyFieldErrors<TValues extends FieldValues>(
   }
   return applied;
 }
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Index baris dari key field API untuk daftar dengan prefix tertentu, mis. prefix "blocks":
+// "blocks.3.file" -> 3; prefix "content.items": "content.items.1.label" -> 1. Unik & terurut.
+export function indexesFromFieldKeys(prefix: string, keys: readonly string[]): number[] {
+  const pattern = new RegExp(`^${escapeRegExp(prefix)}\\.(\\d+)(\\.|$)`);
+  const indexes = keys.flatMap((key) => {
+    const match = pattern.exec(key);
+    return match ? [Number(match[1])] : [];
+  });
+  return [...new Set(indexes)].sort((a, b) => a - b);
+}
+
+// Index baris yang punya error di objek error React Hook Form untuk sebuah array (bisa berbentuk
+// array jarang atau objek ber-index).
+export function indexesFromFormErrors(errors: unknown): number[] {
+  if (!errors || typeof errors !== "object") return [];
+  return Object.keys(errors)
+    .filter((key) => /^\d+$/.test(key) && (errors as Record<string, unknown>)[key])
+    .map(Number)
+    .sort((a, b) => a - b);
+}

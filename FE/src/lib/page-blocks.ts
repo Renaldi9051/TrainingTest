@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { PageBlock, PageBlockType, RichTextDoc } from "@/lib/api/types";
+import { indexesFromFieldKeys, indexesFromFormErrors } from "@/lib/form-errors";
 
 // Logika state editor blok halaman (tanpa UI), supaya bisa diuji Vitest. Batas & aturan wajib
 // mengikuti BE/src/lib/validators/page-blocks.ts; BE tetap memvalidasi ulang saat simpan.
@@ -99,21 +100,12 @@ export function reorderBlocks(blocks: PageBlock[], ids: string[]): PageBlock[] {
 
 // Index blok yang punya error dari key field API, mis. "blocks.3.file" -> 3.
 export function blockIndexesFromFieldKeys(keys: readonly string[]): number[] {
-  const indexes = keys.flatMap((key) => {
-    const match = /^blocks\.(\d+)(\.|$)/.exec(key);
-    return match ? [Number(match[1])] : [];
-  });
-  return [...new Set(indexes)].sort((a, b) => a - b);
+  return indexesFromFieldKeys("blocks", keys);
 }
 
-// Index blok yang punya error di objek error React Hook Form (errors.blocks), yang berbentuk
-// array jarang (sparse) atau objek ber-index.
+// Index blok yang punya error di objek error React Hook Form (errors.blocks).
 export function blockIndexesFromFormErrors(errors: unknown): number[] {
-  if (!errors || typeof errors !== "object") return [];
-  return Object.keys(errors)
-    .filter((key) => /^\d+$/.test(key) && (errors as Record<string, unknown>)[key])
-    .map(Number)
-    .sort((a, b) => a - b);
+  return indexesFromFormErrors(errors);
 }
 
 function richTextText(doc: RichTextDoc | null): string {
