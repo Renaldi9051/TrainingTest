@@ -2,7 +2,7 @@ import type { Category, Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
 import { listMeta, pagination, type ListMeta } from "@/lib/list-query";
-import { revalidateTags, RevalidateTag, tags } from "@/lib/revalidate";
+import { revalidateEntity } from "@/lib/revalidate-map";
 import {
   assertSlugAvailable,
   nextAvailableSlug,
@@ -114,14 +114,6 @@ export async function getCategory(id: string): Promise<CategoryDto> {
   return toDto(await findActive(id));
 }
 
-function categoryTags(...slugs: (string | null | undefined)[]): string[] {
-  return tags(
-    RevalidateTag.CATEGORIES,
-    RevalidateTag.TRAININGS,
-    ...slugs.map((slug) => (slug ? RevalidateTag.category(slug) : null)),
-  );
-}
-
 export async function createCategory(input: CategoryCreateInput, userId: string): Promise<CategoryDto> {
   // Slug ditulis admin: bentrok = 409. Slug otomatis dari nama: cari sufiks yang kosong.
   const slug = input.slug ?? (await nextAvailableSlug(slugLookup, slugify(input.name) || "kategori"));
@@ -159,7 +151,7 @@ export async function createCategory(input: CategoryCreateInput, userId: string)
     }),
   );
 
-  await revalidateTags(categoryTags(created.slug));
+  await revalidateEntity({ entity: "Category", slugs: [created.slug] });
   return toDto(created);
 }
 
@@ -203,7 +195,7 @@ export async function updateCategory(
     }),
   );
 
-  await revalidateTags(categoryTags(updated.slug, slugChanged ? before.slug : null));
+  await revalidateEntity({ entity: "Category", slugs: [updated.slug, slugChanged ? before.slug : null] });
   return toDto(updated);
 }
 
@@ -227,7 +219,7 @@ export async function deleteCategory(id: string, userId: string): Promise<void> 
       tx,
     );
   });
-  await revalidateTags(categoryTags(category.slug));
+  await revalidateEntity({ entity: "Category", slugs: [category.slug] });
 }
 
 // Pulihkan dari Sampah. Kalau slug lama sudah dipakai kategori lain: 409 dan admin diminta
@@ -260,7 +252,7 @@ export async function restoreCategory(id: string, input: RestoreInput, userId: s
       return updated;
     }),
   );
-  await revalidateTags(categoryTags(restored.slug));
+  await revalidateEntity({ entity: "Category", slugs: [restored.slug] });
   return toDto(restored);
 }
 
@@ -283,7 +275,7 @@ export async function reorderCategories(input: ReorderInput, userId: string): Pr
       tx,
     );
   });
-  await revalidateTags([RevalidateTag.CATEGORIES]);
+  await revalidateEntity({ entity: "CategoryOrder" });
 }
 
 // ===== Publik =====

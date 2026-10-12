@@ -2,7 +2,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
 import { listMeta, pagination, type ListMeta } from "@/lib/list-query";
-import { revalidateTags, RevalidateTag, tags } from "@/lib/revalidate";
+import { revalidateEntity } from "@/lib/revalidate-map";
 import {
   assertSlugAvailable,
   nextAvailableSlug,
@@ -281,15 +281,6 @@ function resolvePublish(
   return { publishedAt: at, publishRevalidatedAt: at.getTime() <= now.getTime() ? now : null };
 }
 
-function trainingTags(slugs: (string | null | undefined)[]): string[] {
-  return tags(
-    RevalidateTag.TRAININGS,
-    RevalidateTag.CATEGORIES,
-    RevalidateTag.SCHEDULES,
-    ...slugs.map((slug) => (slug ? RevalidateTag.training(slug) : null)),
-  );
-}
-
 function seoJson(seo: SeoInput): Prisma.InputJsonValue {
   return { title: seo.title, description: seo.description, ogImageId: seo.ogImageId };
 }
@@ -357,7 +348,7 @@ export async function createTraining(
     }),
   );
 
-  if (isPubliclyVisible(created, now)) await revalidateTags(trainingTags([created.slug]));
+  if (isPubliclyVisible(created, now)) await revalidateEntity({ entity: "Training", slugs: [created.slug] });
   return toDto(created, now);
 }
 
@@ -445,7 +436,7 @@ export async function updateTraining(
     }),
   );
 
-  await revalidateTags(trainingTags([updated.slug, slugChanged ? before.slug : null]));
+  await revalidateEntity({ entity: "Training", slugs: [updated.slug, slugChanged ? before.slug : null] });
   return toDto(updated, now);
 }
 
@@ -460,7 +451,7 @@ export async function deleteTraining(id: string, userId: string): Promise<void> 
       tx,
     );
   });
-  await revalidateTags(trainingTags([row.slug]));
+  await revalidateEntity({ entity: "Training", slugs: [row.slug] });
 }
 
 export async function restoreTraining(id: string, input: RestoreInput, userId: string): Promise<TrainingDto> {
@@ -490,7 +481,7 @@ export async function restoreTraining(id: string, input: RestoreInput, userId: s
       return updated;
     }),
   );
-  await revalidateTags(trainingTags([restored.slug]));
+  await revalidateEntity({ entity: "Training", slugs: [restored.slug] });
   return toDto(restored);
 }
 
@@ -628,7 +619,7 @@ export async function bulkTrainings(
     );
   });
 
-  await revalidateTags(trainingTags(targets.map((row) => row.slug)));
+  await revalidateEntity({ entity: "Training", slugs: targets.map((row) => row.slug) });
   return { affected: ids.length, skipped };
 }
 

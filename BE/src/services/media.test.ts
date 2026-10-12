@@ -3,8 +3,8 @@ import { createMockDb, type MockDb } from "@/test/mock-db";
 
 const db = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock("@/lib/db", () => ({ getDb: () => db.current }));
-vi.mock("@/lib/revalidate", () => ({
-  RevalidateTag: { MEDIA: "media" },
+vi.mock("@/lib/revalidate", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/revalidate")>()),
   revalidateTags: vi.fn(),
 }));
 const saved = vi.hoisted(() => [] as { path: string; content: string }[]);

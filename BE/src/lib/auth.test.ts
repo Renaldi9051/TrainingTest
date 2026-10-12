@@ -4,9 +4,15 @@ import { createMockDb, type MockDb } from "@/test/mock-db";
 
 const db = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock("@/lib/db", () => ({ getDb: () => db.current }));
+const revalidate = vi.hoisted(() => vi.fn(async () => true));
+vi.mock("@/lib/revalidate", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/revalidate")>()),
+  revalidateTags: revalidate,
+}));
 
 import { adminRoute, requireAdmin } from "@/lib/auth";
 import { ok } from "@/lib/http";
+import { revalidateEntity } from "@/lib/revalidate-map";
 import { SESSION_COOKIE } from "@/lib/session-cookie";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -17,6 +23,7 @@ let mock: MockDb;
 beforeEach(() => {
   mock = createMockDb();
   db.current = mock;
+  revalidate.mockClear();
 });
 
 function request(init: { cookie?: string; method?: string; headers?: Record<string, string> } = {}) {
@@ -100,5 +107,26 @@ describe("adminRoute", () => {
     );
     expect(response.headers.get("set-cookie")).toBeNull();
     expect(mock.session.update).not.toHaveBeenCalled();
+  });
+
+  it("beberapa revalidate dalam satu request digabung jadi satu panggilan tanpa tag dobel", async () => {
+    mock.session.findUnique.mockResolvedValue(sessionExpiringIn(3 * DAY));
+    const bulk = adminRoute(async () => {
+      await revalidateEntity({ entity: "Training", slugs: ["a"] });
+      await revalidateEntity({ entity: "Training", slugs: ["b"] });
+      await revalidateEntity({ entity: "Schedule", trainingSlugs: ["a"] });
+      expect(revalidate).not.toHaveBeenCalled();
+      return ok({ done: true });
+    });
+    const response = await bulk(request({ cookie: "token" }), {});
+    expect(response.status).toBe(200);
+    expect(revalidate).toHaveBeenCalledTimes(1);
+    expect(revalidate).toHaveBeenCalledWith([
+      "trainings",
+      "categories",
+      "schedules",
+      "training:a",
+      "training:b",
+    ]);
   });
 });

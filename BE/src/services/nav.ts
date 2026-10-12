@@ -1,7 +1,7 @@
 import type { NavItem, NavLocation, Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
-import { revalidateTags, RevalidateTag } from "@/lib/revalidate";
+import { revalidateEntity } from "@/lib/revalidate-map";
 import type { ReorderInput } from "@/lib/validators/common";
 import type { NavCreateInput, NavUpdateInput } from "@/lib/validators/nav";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
@@ -121,7 +121,7 @@ export async function createNavItem(input: NavCreateInput, userId: string): Prom
     return created;
   });
 
-  await revalidateTags([RevalidateTag.NAV]);
+  await revalidateEntity({ entity: "Nav" });
   return toDto(item);
 }
 
@@ -164,7 +164,7 @@ export async function updateNavItem(
     return updated;
   });
 
-  await revalidateTags([RevalidateTag.NAV]);
+  await revalidateEntity({ entity: "Nav" });
   return toDto(item);
 }
 
@@ -182,7 +182,7 @@ export async function deleteNavItem(id: string, userId: string): Promise<void> {
       tx,
     );
   });
-  await revalidateTags([RevalidateTag.NAV]);
+  await revalidateEntity({ entity: "Nav" });
 }
 
 export async function restoreNavItem(id: string, userId: string): Promise<NavItemDto> {
@@ -203,7 +203,7 @@ export async function restoreNavItem(id: string, userId: string): Promise<NavIte
     await writeAudit({ userId, action: AuditAction.RESTORE, entity: ENTITY, entityId: id }, tx);
     return updated;
   });
-  await revalidateTags([RevalidateTag.NAV]);
+  await revalidateEntity({ entity: "Nav" });
   return toDto(restored);
 }
 
@@ -240,7 +240,7 @@ export async function reorderNav(input: ReorderInput, userId: string): Promise<v
       tx,
     );
   });
-  await revalidateTags([RevalidateTag.NAV]);
+  await revalidateEntity({ entity: "Nav" });
 }
 
 // ===== Publik =====

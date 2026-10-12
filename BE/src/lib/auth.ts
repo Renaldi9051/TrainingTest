@@ -2,6 +2,7 @@ import type { NextRequest, NextResponse } from "next/server";
 import { getEnv } from "@/lib/env";
 import { HttpError, route } from "@/lib/http";
 import { assertAllowedOrigin, getClientIp } from "@/lib/request";
+import { withRevalidateBatch } from "@/lib/revalidate-map";
 import { SESSION_COOKIE, SESSION_PEEK_HEADER, setSessionCookie } from "@/lib/session-cookie";
 import { validateSession, type ValidSession } from "@/services/session";
 
@@ -32,14 +33,15 @@ export function requestMeta(request: NextRequest) {
 }
 
 // Route handler admin: sesi dicek dulu (401), lalu Origin untuk request mutasi (403).
-// Kalau sesi diperpanjang, cookie di respons ikut diperbarui.
+// Kalau sesi diperpanjang, cookie di respons ikut diperbarui. Semua revalidate selama request
+// digabung dan dikirim sekali (bulk action atau beberapa mutasi tidak memicu revalidate berulang).
 export function adminRoute<TContext>(
   handler: (request: NextRequest, context: TContext, admin: AdminContext) => Promise<NextResponse>,
 ) {
   return route<TContext>(async (request, context) => {
     const admin = await requireAdmin(request);
     assertAllowedOrigin(request, getEnv().ALLOWED_ORIGINS);
-    const response = await handler(request, context, admin);
+    const response = await withRevalidateBatch(() => handler(request, context, admin));
     if (admin.extended) setSessionCookie(response, admin.token, admin.expiresAt);
     return response;
   });

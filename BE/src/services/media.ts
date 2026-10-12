@@ -4,7 +4,7 @@ import { getDb } from "@/lib/db";
 import { detectFileType, MAX_UPLOAD_BYTES } from "@/lib/file-type";
 import { HttpError } from "@/lib/http";
 import { processRasterImage, readSvgSize, VARIANT_WIDTHS } from "@/lib/image";
-import { revalidateTags, RevalidateTag } from "@/lib/revalidate";
+import { revalidateEntity } from "@/lib/revalidate-map";
 import { monthFolder, saveUpload, uploadUrl } from "@/lib/storage";
 import { sanitizeSvg } from "@/lib/svg";
 import type { MediaListQuery, MediaUpdateInput } from "@/lib/validators/media";
@@ -199,7 +199,7 @@ export async function uploadMedia(
     }
   }
 
-  if (created.length > 0) await revalidateTags([RevalidateTag.MEDIA]);
+  if (created.length > 0) await revalidateEntity({ entity: "Media" });
   return { created, failed };
 }
 
@@ -324,7 +324,7 @@ export async function updateMedia(
       after: { alt: media.alt, folder: media.folder },
     },
   });
-  await revalidateTags([RevalidateTag.MEDIA]);
+  await revalidateEntity({ entity: "Media" });
   return toMediaDto(media);
 }
 
@@ -490,5 +490,5 @@ export async function deleteMedia(id: string, userId: string): Promise<void> {
     data: { deletedAt: new Date(), updatedBy: { connect: { id: userId } } },
   });
   await writeAudit({ userId, action: AuditAction.DELETE, entity: "Media", entityId: id });
-  await revalidateTags([RevalidateTag.MEDIA]);
+  await revalidateEntity({ entity: "Media" });
 }

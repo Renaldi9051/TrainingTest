@@ -1,7 +1,7 @@
 import { csvCell, CsvError, parseCsv } from "@/lib/csv";
 import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
-import { revalidateTags, RevalidateTag, tags } from "@/lib/revalidate";
+import { revalidateEntity } from "@/lib/revalidate-map";
 import { isValidDateString, MAX_IMPORT_ROWS, type ScheduleImportInput } from "@/lib/validators/schedule";
 import { AuditAction, writeAudit } from "@/services/audit";
 
@@ -222,8 +222,8 @@ export async function importSchedules(input: ScheduleImportInput, userId: string
 
   const importedSlugs = trainings
     .filter((training) => valid.some((row) => row.trainingId === training.id))
-    .map((training) => RevalidateTag.training(training.slug));
-  await revalidateTags(tags(RevalidateTag.SCHEDULES, ...importedSlugs));
+    .map((training) => training.slug);
+  await revalidateEntity({ entity: "Schedule", trainingSlugs: importedSlugs });
   return { ...preview, created: valid.length };
 }
 

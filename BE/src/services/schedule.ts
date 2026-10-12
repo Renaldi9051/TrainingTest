@@ -2,7 +2,7 @@ import type { Prisma, Schedule } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
 import { listMeta, pagination, type ListMeta } from "@/lib/list-query";
-import { revalidateTags, RevalidateTag, tags } from "@/lib/revalidate";
+import { revalidateEntity } from "@/lib/revalidate-map";
 import { appToday, monthRange, toDateString } from "@/lib/time";
 import {
   END_AFTER_START_MESSAGE,
@@ -124,13 +124,6 @@ async function findTraining(trainingId: string) {
   return training;
 }
 
-function scheduleTags(...trainingSlugs: (string | null | undefined)[]): string[] {
-  return tags(
-    RevalidateTag.SCHEDULES,
-    ...trainingSlugs.map((slug) => (slug ? RevalidateTag.training(slug) : null)),
-  );
-}
-
 export async function createSchedule(input: ScheduleCreateInput, userId: string): Promise<ScheduleDto> {
   const training = await findTraining(input.trainingId);
   const created = await getDb().$transaction(async (tx) => {
@@ -160,7 +153,7 @@ export async function createSchedule(input: ScheduleCreateInput, userId: string)
     );
     return row;
   });
-  await revalidateTags(scheduleTags(training.slug));
+  await revalidateEntity({ entity: "Schedule", trainingSlugs: [training.slug] });
   return toDto(created, appToday());
 }
 
@@ -197,7 +190,7 @@ export async function updateSchedule(id: string, input: ScheduleUpdateInput, use
     );
     return row;
   });
-  await revalidateTags(scheduleTags(training.slug, before.training.slug));
+  await revalidateEntity({ entity: "Schedule", trainingSlugs: [training.slug, before.training.slug] });
   return toDto(updated, appToday());
 }
 
@@ -207,7 +200,7 @@ export async function deleteSchedule(id: string, userId: string): Promise<void> 
     await tx.schedule.update({ where: { id }, data: { deletedAt: new Date(), updatedById: userId } });
     await writeAudit({ userId, action: AuditAction.DELETE, entity: ENTITY, entityId: id }, tx);
   });
-  await revalidateTags(scheduleTags(row.training.slug));
+  await revalidateEntity({ entity: "Schedule", trainingSlugs: [row.training.slug] });
 }
 
 export async function restoreSchedule(id: string, userId: string): Promise<ScheduleDto> {
@@ -225,7 +218,7 @@ export async function restoreSchedule(id: string, userId: string): Promise<Sched
     await writeAudit({ userId, action: AuditAction.RESTORE, entity: ENTITY, entityId: id }, tx);
     return updated;
   });
-  await revalidateTags(scheduleTags(row.training.slug));
+  await revalidateEntity({ entity: "Schedule", trainingSlugs: [row.training.slug] });
   return toDto(restored, appToday());
 }
 

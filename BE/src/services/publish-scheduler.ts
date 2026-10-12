@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { revalidateTags, RevalidateTag, tags } from "@/lib/revalidate";
+import { revalidateEntity } from "@/lib/revalidate-map";
 import { appDateString } from "@/lib/time";
 
 // Cache FE tidak tahu kapan `publishedAt` sebuah pelatihan tiba, dan tidak tahu kapan hari berganti
@@ -31,14 +31,7 @@ export async function revalidateDuePublications(now = new Date()): Promise<numbe
   });
   if (due.length === 0) return 0;
 
-  const ok = await revalidateTags(
-    tags(
-      RevalidateTag.TRAININGS,
-      RevalidateTag.CATEGORIES,
-      RevalidateTag.SCHEDULES,
-      ...due.map((row) => RevalidateTag.training(row.slug)),
-    ),
-  );
+  const ok = await revalidateEntity({ entity: "Training", slugs: due.map((row) => row.slug) });
   // FE tidak bisa dihubungi: penanda tidak diisi supaya dicoba lagi di putaran berikutnya.
   if (!ok) return 0;
 
@@ -53,7 +46,7 @@ export async function revalidateDuePublications(now = new Date()): Promise<numbe
 export async function revalidateOnDayChange(lastDate: string | null, now = new Date()): Promise<string | null> {
   const today = appDateString(now);
   if (today === lastDate) return lastDate;
-  const ok = await revalidateTags([RevalidateTag.SCHEDULES, RevalidateTag.TRAININGS]);
+  const ok = await revalidateEntity({ entity: "DayChange" });
   return ok ? today : lastDate;
 }
 

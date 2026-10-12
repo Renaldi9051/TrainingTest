@@ -1,6 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
-import { revalidateTags, RevalidateTag } from "@/lib/revalidate";
+import { revalidateEntity } from "@/lib/revalidate-map";
 import {
   parseStoredSetting,
   SETTING_DEFAULTS,
@@ -69,7 +69,7 @@ export async function updateSetting<K extends SettingKey>(
     );
   });
 
-  await revalidateTags([RevalidateTag.SETTINGS]);
+  await revalidateEntity({ entity: "Settings" });
   return getAdminSettings();
 }
 
