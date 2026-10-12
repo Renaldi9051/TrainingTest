@@ -5,8 +5,8 @@ import { revealStart } from "./reveal-state";
 import { DURATION, EASE, IN_VIEW_MARGIN, STAGGER, staggerDelay } from "./tokens";
 
 describe("token gerak", () => {
-  it("easing sama dengan --ease-standard di globals.css", () => {
-    const css = readFileSync(path.resolve(__dirname, "../../app/globals.css"), "utf8");
+  it("easing sama dengan --ease-standard di theme.css", () => {
+    const css = readFileSync(path.resolve(__dirname, "../../app/theme.css"), "utf8");
     const match = /--ease-standard:\s*cubic-bezier\(([^)]+)\)/.exec(css);
     expect(match?.[1].split(",").map(Number)).toEqual([...EASE]);
   });

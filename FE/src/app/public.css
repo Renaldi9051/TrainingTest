@@ -1,0 +1,7 @@
+/* CSS halaman publik (layout root). Hanya memindai source non-admin, supaya utilitas khusus panel
+   admin (shadcn, tw-animate-css) tidak ikut diunduh di jalur render pertama halaman publik.
+   components/ui, components/motion, dan lib tetap terpindai (dipakai publik dan admin). */
+@import "tailwindcss" source("..");
+@source not "./admin";
+@source not "../components/admin";
+@import "./theme.css";

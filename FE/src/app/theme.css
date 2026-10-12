@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+/* Token & gaya dasar bersama publik dan admin. Diimpor oleh public.css dan admin/admin.css (setelah
+   @import "tailwindcss"), jadi token :root dan @theme hanya punya satu sumber. */
 
 /* Design tokens: DESIGN.md bagian 2. Komponen memakai token ini, bukan hex langsung. */
 :root {

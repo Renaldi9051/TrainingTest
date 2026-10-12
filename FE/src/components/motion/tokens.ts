@@ -1,7 +1,7 @@
 // Token gerak DESIGN.md 8 (detik, untuk Motion). Acuan rasa gerak: blueprint prototipe; kalau
 // blueprint berbeda dengan DESIGN.md, nilai DESIGN.md yang dipakai (lihat catatan per token).
 
-// Easing standar; sama dengan --ease-standard di globals.css (dijaga test).
+// Easing standar; sama dengan --ease-standard di theme.css (dijaga test).
 export const EASE = [0.22, 1, 0.36, 1] as const;
 
 export const DURATION = {

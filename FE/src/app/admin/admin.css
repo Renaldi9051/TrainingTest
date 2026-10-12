@@ -1,0 +1,6 @@
+/* CSS panel admin (layout /admin), dimuat setelah public.css dari layout root. Memindai seluruh
+   source (superset public.css) supaya urutan utilitas tetap benar walau kedua file ada di halaman
+   yang sama (stylesheet tidak dilepas saat navigasi klien publik <-> admin). */
+@import "tailwindcss" source("../..");
+@import "tw-animate-css";
+@import "../theme.css";

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { FALLBACK_ICON_PATH } from "@/lib/monogram";
-import "./globals.css";
+import "./public.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
