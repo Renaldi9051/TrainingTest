@@ -55,7 +55,7 @@ export const CATEGORY_ICONS = [
 
 export type CategoryIcon = (typeof CATEGORY_ICONS)[number];
 
-const iconSchema = z
+export const iconSchema = z
   .enum(CATEGORY_ICONS, { error: "Ikon tidak dikenal. Pilih dari daftar ikon." })
   .nullable();
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { normalizeWhatsapp } from "@/lib/validators/common";
 import {
   isAllowedMapEmbedUrl,
-  normalizeWhatsapp,
   parseStoredSetting,
   SETTING_DEFAULTS,
   SETTING_KEYS,

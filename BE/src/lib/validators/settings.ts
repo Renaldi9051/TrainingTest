@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { hrefSchema, httpUrlSchema, mediaRefSchema, plainText } from "@/lib/validators/common";
+import {
+  hrefSchema,
+  httpUrlSchema,
+  mediaRefSchema,
+  optionalWhatsappSchema,
+  plainText,
+} from "@/lib/validators/common";
 import { facilitiesListSchema, faqSchema } from "@/lib/validators/training-content";
 
 // SiteSetting: satu baris per key, value JSON yang divalidasi skema per key di bawah.
@@ -39,27 +45,7 @@ const mapEmbedUrlSchema = z
   .refine((value) => value === "" || isAllowedMapEmbedUrl(value), { error: MAP_EMBED_ERROR })
   .default("");
 
-// ===== WhatsApp & telepon =====
-
-// "+62 812-0000-0000", "0812 0000 0000", "62812..." -> "6281200000000" (format wa.me).
-export function normalizeWhatsapp(value: string): string {
-  const digits = value.replace(/[^\d]/g, "");
-  if (digits.startsWith("0")) return `62${digits.slice(1)}`;
-  return digits;
-}
-
-const whatsappSchema = z
-  .string()
-  .trim()
-  .max(30)
-  .refine((value) => value === "" || /^[+\d][\d\s().-]*$/.test(value), {
-    error: "Nomor WhatsApp hanya boleh berisi angka, spasi, +, -, dan tanda kurung.",
-  })
-  .transform(normalizeWhatsapp)
-  .refine((value) => value === "" || (value.length >= 9 && value.length <= 15), {
-    error: "Nomor WhatsApp tidak valid. Contoh: +62 812 3456 7890.",
-  })
-  .default("");
+// ===== Telepon & email =====
 
 const phoneSchema = z
   .string()
@@ -121,7 +107,7 @@ export const settingSchemas = {
   "site.contact": z.object({
     phone: phoneSchema,
     email: emailSchema,
-    whatsapp: whatsappSchema,
+    whatsapp: optionalWhatsappSchema,
     address: plainText("Alamat", 500),
     mapEmbedUrl: mapEmbedUrlSchema,
   }),
