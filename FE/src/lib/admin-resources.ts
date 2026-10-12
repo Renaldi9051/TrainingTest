@@ -2,7 +2,14 @@ import { apiFetch } from "@/lib/api/client";
 import type { OptionItem } from "@/lib/api/types";
 
 // Resource admin yang memakai pola list + options + reorder + restore yang sama (BE 3.2a).
-export type AdminResource = "services" | "clients" | "testimonials" | "portfolio" | "marketing" | "media-partners";
+export type AdminResource =
+  | "services"
+  | "clients"
+  | "testimonials"
+  | "portfolio"
+  | "marketing"
+  | "media-partners"
+  | "pages";
 
 export function resourceKeys(resource: AdminResource) {
   return {

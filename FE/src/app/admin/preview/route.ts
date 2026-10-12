@@ -6,12 +6,25 @@ import type { ApiSuccess } from "@/lib/api/types";
 import { ADMIN_LOGIN } from "@/lib/session";
 
 // Konten yang bisa dipratinjau: endpoint admin untuk cek sesi + ambil slug, dan path publiknya.
+type PreviewData = { slug: string; kind?: "STANDARD" | "PROFILE" };
+
 const TARGETS = {
-  training: { endpoint: (id: string) => `/admin/trainings/${id}`, path: (slug: string) => `/pelatihan/${slug}` },
-  service: { endpoint: (id: string) => `/admin/services/${id}`, path: (slug: string) => `/layanan/${slug}` },
+  training: {
+    endpoint: (id: string) => `/admin/trainings/${id}`,
+    path: (data: PreviewData) => `/pelatihan/${data.slug}`,
+  },
+  service: {
+    endpoint: (id: string) => `/admin/services/${id}`,
+    path: (data: PreviewData) => `/layanan/${data.slug}`,
+  },
+  // Halaman profil punya route sendiri (/profil); halaman lain di /[slug].
+  page: {
+    endpoint: (id: string) => `/admin/pages/${id}`,
+    path: (data: PreviewData) => (data.kind === "PROFILE" ? "/profil" : `/${data.slug}`),
+  },
 } as const;
 
-const querySchema = z.object({ type: z.enum(["training", "service"]), id: z.uuid() });
+const querySchema = z.object({ type: z.enum(["training", "service", "page"]), id: z.uuid() });
 
 // Pratinjau konten sebelum tayang (draft mode Next). Hanya untuk sesi admin yang valid:
 // sesi dicek ke BE lewat endpoint admin, baru draft mode dinyalakan. Redirect selalu ke path yang
@@ -29,7 +42,7 @@ export async function GET(request: NextRequest) {
   }
   if (!response.ok) return new NextResponse("Konten tidak ditemukan.", { status: response.status === 404 ? 404 : 502 });
 
-  const { data } = (await response.json()) as ApiSuccess<{ slug: string }>;
+  const { data } = (await response.json()) as ApiSuccess<PreviewData>;
   (await draftMode()).enable();
-  return NextResponse.redirect(new URL(target.path(data.slug), request.url));
+  return NextResponse.redirect(new URL(target.path(data), request.url));
 }
