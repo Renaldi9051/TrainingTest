@@ -15,6 +15,7 @@ import {
   createTraining,
   duplicateTraining,
   restoreTraining,
+  listTrainingOptions,
   updateTraining,
 } from "@/services/training";
 
@@ -291,5 +292,25 @@ describe("restoreTraining", () => {
       status: 409,
       code: "SLUG_TAKEN",
     });
+  });
+});
+
+describe("listTrainingOptions", () => {
+  it("search + limit, id terpilih ikut, keterangan status draf/terjadwal", async () => {
+    const SELECTED = "0199b4d0-0000-7000-8000-0000000000e1";
+    mock.training.findMany
+      .mockResolvedValueOnce([{ id: ID, title: "KPI", status: "PUBLISHED", publishedAt: now, cover: null }])
+      .mockResolvedValueOnce([
+        { id: SELECTED, title: "Draf lama", status: "DRAFT", publishedAt: null, cover: null },
+      ]);
+    const options = await listTrainingOptions({ q: "kpi", limit: 5, ids: [SELECTED] }, now);
+    expect(mock.training.findMany.mock.calls[0][0]).toMatchObject({
+      where: { deletedAt: null, title: { contains: "kpi", mode: "insensitive" } },
+      take: 5,
+    });
+    expect(options).toEqual([
+      { id: ID, label: "KPI", sublabel: null, imageUrl: null },
+      { id: SELECTED, label: "Draf lama", sublabel: "Draf", imageUrl: null },
+    ]);
   });
 });

@@ -28,7 +28,9 @@ import {
   type TrainingModule,
 } from "@/lib/validators/training-content";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
-import { assertMediaRefs, getMediaMap, toMediaDto, type MediaDto } from "@/services/media";
+import type { OptionsQuery } from "@/lib/validators/options";
+import { assertMediaRefs, getMediaMap, thumbnailUrl, toMediaDto, type MediaDto } from "@/services/media";
+import { withSelected, type OptionItem } from "@/services/options";
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
 import { isPubliclyVisible } from "@/services/training-visibility";
 
@@ -631,4 +633,33 @@ export async function bulkTrainings(
 export async function findTrainingIdBySlug(slug: string): Promise<string | null> {
   const row = await getDb().training.findFirst({ where: { slug, deletedAt: null }, select: { id: true } });
   return row?.id ?? null;
+}
+
+// ===== Pilihan untuk picker (section beranda mode manual) =====
+
+const OPTION_STATE_LABELS: Record<TrainingPublicState, string | null> = {
+  DRAFT: "Draf",
+  SCHEDULED: "Terjadwal",
+  PUBLISHED: null,
+};
+
+// GET /admin/trainings/options: search judul + limit; id terpilih selalu ikut (lihat withSelected).
+export async function listTrainingOptions(query: OptionsQuery, now = new Date()): Promise<OptionItem[]> {
+  const db = getDb();
+  const select = { id: true, title: true, status: true, publishedAt: true, cover: true } as const;
+  const rows = await db.training.findMany({
+    where: { deletedAt: null, ...(query.q ? { title: { contains: query.q, mode: "insensitive" } } : {}) },
+    select,
+    orderBy: [{ title: "asc" }, { id: "asc" }],
+    take: query.limit,
+  });
+  const withIds = await withSelected(rows, query.ids, (ids) =>
+    db.training.findMany({ where: { id: { in: ids }, deletedAt: null }, select }),
+  );
+  return withIds.map((row) => ({
+    id: row.id,
+    label: row.title,
+    sublabel: OPTION_STATE_LABELS[publicState(row, now)],
+    imageUrl: thumbnailUrl(row.cover),
+  }));
 }
