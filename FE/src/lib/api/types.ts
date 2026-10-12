@@ -73,7 +73,9 @@ export type MediaUsage = {
     | "Testimonial"
     | "MarketingContact"
     | "PortfolioItem"
-    | "SiteSetting";
+    | "SiteSetting"
+    | "HomeSection"
+    | "Page";
   entityLabel: string;
   id: string;
   label: string;

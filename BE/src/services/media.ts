@@ -1,13 +1,16 @@
 import { randomUUID } from "node:crypto";
-import type { Media, Prisma } from "@/generated/prisma/client";
+import type { HomeSectionType, Media, Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { detectFileType, MAX_UPLOAD_BYTES } from "@/lib/file-type";
 import { HttpError } from "@/lib/http";
 import { processRasterImage, readSvgSize, VARIANT_WIDTHS } from "@/lib/image";
+import { collectMediaRefs, type MediaKind } from "@/lib/media-refs";
 import { revalidateEntity } from "@/lib/revalidate-map";
 import { monthFolder, saveUpload, uploadUrl } from "@/lib/storage";
 import { sanitizeSvg } from "@/lib/svg";
+import { HOME_SECTION_LABELS } from "@/lib/validators/home-section";
 import type { MediaListQuery, MediaUpdateInput } from "@/lib/validators/media";
+import { PAGE_BLOCK_LABELS, type PageBlockType } from "@/lib/validators/page-blocks";
 import {
   SETTING_KEYS,
   SETTING_LABELS,
@@ -263,16 +266,38 @@ export async function assertImageMedia(
   refs: Record<string, string | null | undefined>,
   db: MediaReader = getDb(),
 ): Promise<void> {
-  const ids = [...new Set(Object.values(refs).filter((id): id is string => Boolean(id)))];
+  await assertMediaRefs(
+    Object.entries(refs).map(([field, mediaId]) => ({ field, mediaId, kind: "image" as const })),
+    db,
+  );
+}
+
+export type MediaRefCheck = { field: string; mediaId: string | null | undefined; kind: MediaKind };
+
+const MEDIA_KIND_ERROR: Record<MediaKind, string> = {
+  image: "Gambar tidak ditemukan atau sudah dihapus.",
+  pdf: "File PDF tidak ditemukan atau sudah dihapus.",
+};
+
+function matchesKind(mime: string, kind: MediaKind): boolean {
+  return kind === "image" ? mime.startsWith("image/") : mime === "application/pdf";
+}
+
+// Seperti assertImageMedia, untuk referensi dengan jenis berbeda (gambar/PDF), mis. mediaId di
+// JSON blok halaman. `field` = path field form (mis. "blocks.3.file").
+export async function assertMediaRefs(refs: MediaRefCheck[], db: MediaReader = getDb()): Promise<void> {
+  const ids = [...new Set(refs.flatMap((ref) => (ref.mediaId ? [ref.mediaId] : [])))];
   if (ids.length === 0) return;
   const found = await db.media.findMany({
-    where: { id: { in: ids }, deletedAt: null, mime: { startsWith: "image/" } },
-    select: { id: true },
+    where: { id: { in: ids }, deletedAt: null },
+    select: { id: true, mime: true },
   });
-  const valid = new Set(found.map((row) => row.id));
+  const mimeById = new Map(found.map((row) => [row.id, row.mime]));
   const fields: Record<string, string[]> = {};
-  for (const [field, id] of Object.entries(refs)) {
-    if (id && !valid.has(id)) fields[field] = ["Gambar tidak ditemukan atau sudah dihapus."];
+  for (const ref of refs) {
+    if (!ref.mediaId) continue;
+    const mime = mimeById.get(ref.mediaId);
+    if (!mime || !matchesKind(mime, ref.kind)) fields[ref.field] = [MEDIA_KIND_ERROR[ref.kind]];
   }
   if (Object.keys(fields).length > 0) {
     throw new HttpError(422, "VALIDATION_ERROR", "Data tidak valid.", fields);
@@ -338,7 +363,9 @@ export type MediaUsage = {
     | "Testimonial"
     | "MarketingContact"
     | "PortfolioItem"
-    | "SiteSetting";
+    | "SiteSetting"
+    | "HomeSection"
+    | "Page";
   entityLabel: string;
   id: string;
   label: string;
@@ -347,19 +374,77 @@ export type MediaUsage = {
   inTrash: boolean;
 };
 
+// Jsonpath untuk mencari { mediaId } di tingkat mana pun (konvensi lib/media-refs.ts).
+// Jsonpath dan id dikirim sebagai parameter query; id masuk lewat variabel jsonpath
+// (jsonb_build_object), tidak pernah digabung ke string query.
+const JSON_MEDIA_REF_PATH = "$.**.mediaId ? (@ == $id)";
+
+type JsonContentRow = { id: string; deletedAt: Date | null };
+type HomeSectionRow = JsonContentRow & { type: HomeSectionType; title: string | null; content: unknown };
+type PageRow = JsonContentRow & { title: string; blocks: unknown };
+
+const JSON_FIELD_LABELS: Record<string, string> = { image: "Gambar", file: "File" };
+
+function jsonFieldLabel(key: string): string {
+  return JSON_FIELD_LABELS[key] ?? key;
+}
+
+function homeSectionUsages(rows: HomeSectionRow[], mediaId: string): MediaUsage[] {
+  return rows.flatMap((row) =>
+    collectMediaRefs(row.content)
+      .filter((ref) => ref.mediaId === mediaId)
+      .map((ref) => ({
+        entity: "HomeSection" as const,
+        entityLabel: "Beranda",
+        id: row.id,
+        label: row.title ? `${HOME_SECTION_LABELS[row.type]} (${row.title})` : HOME_SECTION_LABELS[row.type],
+        field: jsonFieldLabel(ref.path.split(".").at(-1) ?? ref.path),
+        inTrash: row.deletedAt !== null,
+      })),
+  );
+}
+
+// Path blok: "<indeks>.<field>" (mis. "3.file") -> "Blok 4 (Unduhan) › File".
+function pageUsages(rows: PageRow[], mediaId: string): MediaUsage[] {
+  return rows.flatMap((row) => {
+    const blocks = Array.isArray(row.blocks) ? (row.blocks as unknown[]) : [];
+    return collectMediaRefs(blocks)
+      .filter((ref) => ref.mediaId === mediaId)
+      .map((ref) => {
+        const [index, ...rest] = ref.path.split(".");
+        const block = blocks[Number(index)];
+        const type = typeof block === "object" && block !== null ? (block as { type?: unknown }).type : undefined;
+        const typeLabel = PAGE_BLOCK_LABELS[type as PageBlockType] ?? "Blok";
+        return {
+          entity: "Page" as const,
+          entityLabel: "Halaman",
+          id: row.id,
+          label: row.title,
+          field: `Blok ${Number(index) + 1} (${typeLabel}) › ${jsonFieldLabel(rest.at(-1) ?? "")}`,
+          inTrash: row.deletedAt !== null,
+        };
+      });
+  });
+}
+
 // Semua referensi ke Media: relasi di skema (cover, image, logo, photo, galeri), mediaId di JSON
-// (SEO pelatihan, pengaturan situs), termasuk item di Sampah.
+// (SEO pelatihan/layanan/halaman, pengaturan situs, isi section beranda, blok halaman),
+// termasuk item di Sampah.
 export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
   const db = getDb();
   const [
     trainings,
     trainingSeo,
     services,
+    serviceSeo,
+    pageSeo,
     clients,
     testimonials,
     marketing,
     portfolio,
     settings,
+    homeSections,
+    pages,
   ] = await Promise.all([
     db.training.findMany({
       where: { coverId: mediaId },
@@ -371,6 +456,14 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
     }),
     db.service.findMany({
       where: { imageId: mediaId },
+      select: { id: true, title: true, deletedAt: true },
+    }),
+    db.service.findMany({
+      where: { seo: { path: ["ogImageId"], equals: mediaId } },
+      select: { id: true, title: true, deletedAt: true },
+    }),
+    db.page.findMany({
+      where: { seo: { path: ["ogImageId"], equals: mediaId } },
       select: { id: true, title: true, deletedAt: true },
     }),
     db.client.findMany({
@@ -393,6 +486,16 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
       where: { key: { in: SETTING_KEYS.filter((key) => SETTING_MEDIA_FIELDS[key]) } },
       select: { id: true, key: true, value: true },
     }),
+    db.$queryRaw<HomeSectionRow[]>`
+      SELECT "id", "type", "title", "content", "deletedAt"
+      FROM "HomeSection"
+      WHERE jsonb_path_exists("content", ${JSON_MEDIA_REF_PATH}::jsonpath, jsonb_build_object('id', ${mediaId}::text))
+    `,
+    db.$queryRaw<PageRow[]>`
+      SELECT "id", "title", "blocks", "deletedAt"
+      FROM "Page"
+      WHERE jsonb_path_exists("blocks", ${JSON_MEDIA_REF_PATH}::jsonpath, jsonb_build_object('id', ${mediaId}::text))
+    `,
   ]);
 
   const settingUsages: MediaUsage[] = settings.flatMap((row) => {
@@ -467,7 +570,25 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
       field: "Galeri",
       inTrash: row.deletedAt !== null,
     })),
+    ...serviceSeo.map((row) => ({
+      entity: "Service" as const,
+      entityLabel: "Layanan",
+      id: row.id,
+      label: row.title,
+      field: "Gambar OG",
+      inTrash: row.deletedAt !== null,
+    })),
+    ...pageSeo.map((row) => ({
+      entity: "Page" as const,
+      entityLabel: "Halaman",
+      id: row.id,
+      label: row.title,
+      field: "Gambar OG",
+      inTrash: row.deletedAt !== null,
+    })),
     ...settingUsages,
+    ...homeSectionUsages(homeSections, mediaId),
+    ...pageUsages(pages, mediaId),
   ];
 }
 

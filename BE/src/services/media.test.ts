@@ -15,7 +15,7 @@ vi.mock("@/lib/storage", async (importOriginal) => ({
   }),
 }));
 
-import { deleteMedia, toMediaDto, uploadMedia } from "@/services/media";
+import { assertMediaRefs, deleteMedia, getMediaUsages, toMediaDto, uploadMedia } from "@/services/media";
 
 const media = {
   id: "0199b4d0-0000-7000-8000-000000000001",
@@ -45,9 +45,11 @@ function noUsages() {
     mock.marketingContact,
     mock.portfolioImage,
     mock.siteSetting,
+    mock.page,
   ]) {
     model.findMany.mockResolvedValue([]);
   }
+  mock.$queryRaw.mockResolvedValue([]);
 }
 
 beforeEach(() => {
@@ -128,6 +130,112 @@ describe("deleteMedia", () => {
   it("404 kalau media tidak ada atau sudah dihapus", async () => {
     mock.media.findFirst.mockResolvedValue(null);
     await expect(deleteMedia(media.id, "u1")).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe("getMediaUsages: mediaId di JSON beranda & halaman", () => {
+  const BLOCK = "0199b4d0-0000-7000-8000-0000000000b1";
+
+  it("section beranda dan blok halaman yang memuat { mediaId } ikut dihitung, termasuk di Sampah", async () => {
+    noUsages();
+    mock.$queryRaw
+      .mockResolvedValueOnce([
+        { id: "h1", type: "HERO", title: null, content: { headline: "x", image: { mediaId: media.id } }, deletedAt: null },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "pg1",
+          title: "Profil",
+          deletedAt: new Date(),
+          blocks: [
+            { id: BLOCK, type: "LIST", items: ["a"] },
+            { id: BLOCK, type: "DOWNLOAD", label: "Unduh", file: { mediaId: media.id } },
+            { id: BLOCK, type: "IMAGE", image: { mediaId: "lain" } },
+          ],
+        },
+      ]);
+
+    expect(await getMediaUsages(media.id)).toEqual([
+      { entity: "HomeSection", entityLabel: "Beranda", id: "h1", label: "Hero", field: "Gambar", inTrash: false },
+      {
+        entity: "Page",
+        entityLabel: "Halaman",
+        id: "pg1",
+        label: "Profil",
+        field: "Blok 2 (Unduhan) › File",
+        inTrash: true,
+      },
+    ]);
+  });
+
+  it("query JSON memakai parameter: id dan jsonpath tidak digabung ke string SQL", async () => {
+    noUsages();
+    await getMediaUsages(media.id);
+    expect(mock.$queryRaw).toHaveBeenCalledTimes(2);
+    for (const [strings, ...values] of mock.$queryRaw.mock.calls as [TemplateStringsArray, ...unknown[]][]) {
+      const sql = strings.join("?");
+      expect(sql).toContain("jsonb_path_exists");
+      expect(sql).toContain("jsonb_build_object('id', ?::text)");
+      expect(sql).not.toContain(media.id);
+      expect(values).toEqual(["$.**.mediaId ? (@ == $id)", media.id]);
+    }
+  });
+
+  it("gambar OG layanan dan halaman ikut dihitung", async () => {
+    noUsages();
+    mock.service.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: "sv1", title: "In-house", deletedAt: null }]);
+    mock.page.findMany.mockResolvedValueOnce([{ id: "pg2", title: "Kebijakan privasi", deletedAt: null }]);
+    expect(await getMediaUsages(media.id)).toEqual([
+      expect.objectContaining({ entity: "Service", id: "sv1", field: "Gambar OG" }),
+      expect.objectContaining({ entity: "Page", id: "pg2", field: "Gambar OG" }),
+    ]);
+  });
+
+  it("hapus media yang dipakai section beranda: 409", async () => {
+    mock.media.findFirst.mockResolvedValue(media);
+    noUsages();
+    mock.$queryRaw.mockResolvedValueOnce([
+      { id: "h1", type: "HERO", title: "Utama", content: { image: { mediaId: media.id } }, deletedAt: null },
+    ]);
+    await expect(deleteMedia(media.id, "u1")).rejects.toMatchObject({
+      status: 409,
+      code: "MEDIA_IN_USE",
+      details: { usages: [expect.objectContaining({ entity: "HomeSection", label: "Hero (Utama)" })] },
+    });
+    expect(mock.media.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("assertMediaRefs", () => {
+  it("gambar harus image/*, PDF harus application/pdf; error per path field", async () => {
+    mock.media.findMany.mockResolvedValue([
+      { id: "img", mime: "image/webp" },
+      { id: "pdf", mime: "application/pdf" },
+    ]);
+    await expect(
+      assertMediaRefs([
+        { field: "blocks.0.image", mediaId: "img", kind: "image" },
+        { field: "blocks.1.file", mediaId: "img", kind: "pdf" },
+        { field: "blocks.2.image", mediaId: "pdf", kind: "image" },
+        { field: "blocks.3.file", mediaId: "hilang", kind: "pdf" },
+        { field: "blocks.4.file", mediaId: null, kind: "pdf" },
+      ]),
+    ).rejects.toMatchObject({
+      status: 422,
+      fields: {
+        "blocks.1.file": ["File PDF tidak ditemukan atau sudah dihapus."],
+        "blocks.2.image": ["Gambar tidak ditemukan atau sudah dihapus."],
+        "blocks.3.file": ["File PDF tidak ditemukan atau sudah dihapus."],
+      },
+    });
+    expect(mock.media.findMany.mock.calls[0][0].where).toMatchObject({ deletedAt: null });
+  });
+
+  it("tanpa referensi: tidak query", async () => {
+    await assertMediaRefs([{ field: "image", mediaId: null, kind: "image" }]);
+    expect(mock.media.findMany).not.toHaveBeenCalled();
   });
 });
 
