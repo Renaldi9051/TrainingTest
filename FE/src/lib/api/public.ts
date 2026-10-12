@@ -6,7 +6,14 @@ import type {
   PaginationMeta,
   PublicCatalogMeta,
   PublicCategory,
+  PublicHome,
+  PublicMediaPartner,
   PublicNav,
+  PublicPage,
+  PublicPageRef,
+  PublicPortfolioItem,
+  PublicServiceCard,
+  PublicServiceDetail,
   PublicSchedule,
   PublicScheduleMeta,
   PublicSettings,
@@ -23,8 +30,15 @@ export const Tag = {
   TRAININGS: "trainings",
   SCHEDULES: "schedules",
   MEDIA: "media",
+  HOME: "home",
+  PAGES: "pages",
+  SERVICES: "services",
+  PORTFOLIO: "portfolio",
+  MEDIA_PARTNERS: "media-partners",
   category: (slug: string) => `category:${slug}`,
   training: (slug: string) => `training:${slug}`,
+  page: (slug: string) => `page:${slug}`,
+  service: (slug: string) => `service:${slug}`,
 } as const;
 
 class PublicApiError extends Error {
@@ -155,6 +169,71 @@ export function getSchedules(params: ScheduleParams): Promise<ScheduleList> {
   if (params.kategori) search.set("kategori", params.kategori);
   if (params.hal && params.hal > 1) search.set("hal", String(params.hal));
   return getSchedulesByQuery(search.toString());
+}
+
+// ===== Beranda, halaman, layanan, portofolio, media partner (Fase 3) =====
+
+export async function getHome(): Promise<PublicHome> {
+  "use cache";
+  cacheLife("content");
+  // BE me-revalidate `home` saat section beranda ATAU data yang tampil di sana berubah.
+  cacheTag(Tag.HOME, Tag.MEDIA);
+  return getRequired<PublicHome>("/home");
+}
+
+export async function getPage(slug: string): Promise<PublicPage | null> {
+  "use cache";
+  cacheLife("content");
+  // `pages` juga di-revalidate saat layanan berubah (blok SERVICES).
+  cacheTag(Tag.page(slug), Tag.PAGES, Tag.MEDIA);
+  return (await getJson<PublicPage>(`/pages/${encodeURIComponent(slug)}`))?.data ?? null;
+}
+
+// Halaman statis yang tayang (tanpa halaman profil), untuk generateStaticParams /[slug].
+export async function getPageRefs(): Promise<PublicPageRef[]> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(Tag.PAGES);
+  return getRequired<PublicPageRef[]>("/pages");
+}
+
+export async function getServices(): Promise<PublicServiceCard[]> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(Tag.SERVICES, Tag.MEDIA);
+  return getRequired<PublicServiceCard[]>("/services");
+}
+
+export async function getService(slug: string): Promise<PublicServiceDetail | null> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(Tag.service(slug), Tag.SERVICES, Tag.MEDIA);
+  return (await getJson<PublicServiceDetail>(`/services/${encodeURIComponent(slug)}`))?.data ?? null;
+}
+
+export async function getPortfolio(): Promise<PublicPortfolioItem[]> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(Tag.PORTFOLIO, Tag.MEDIA);
+  return getRequired<PublicPortfolioItem[]>("/portfolio");
+}
+
+export async function getMediaPartners(): Promise<PublicMediaPartner[]> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(Tag.MEDIA_PARTNERS);
+  return getRequired<PublicMediaPartner[]>("/media-partners");
+}
+
+export type PublicRedirect = { to: string; permanent: boolean };
+
+// Redirect dari tabel Redirect untuk slug yang tidak ditemukan. Di-cache dengan tag slug lama
+// (`service:<slug>` / `page:<slug>`), yang di-revalidate BE saat slug itu berubah.
+export async function getRedirect(path: string, tag: string): Promise<PublicRedirect | null> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(tag);
+  return (await getJson<PublicRedirect>(`/redirects?path=${encodeURIComponent(path)}`))?.data ?? null;
 }
 
 export type { PaginationMeta };

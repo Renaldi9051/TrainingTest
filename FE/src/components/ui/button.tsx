@@ -18,6 +18,10 @@ export const buttonVariants = cva(
         primary: "rounded-md bg-fg-strong text-inverse-fg hover:bg-fg-strong-hover",
         secondary:
           "rounded-md border border-border-strong bg-bg text-fg hover:bg-bg-subtle",
+        // Untuk section terbalik (latar --inverse-bg): CTA penutup.
+        inverse: "rounded-md bg-inverse-fg text-fg-strong hover:bg-bg-muted focus-visible:ring-inverse-fg focus-visible:ring-offset-inverse-bg",
+        inverseOutline:
+          "rounded-md border border-inverse-fg/40 text-inverse-fg hover:border-inverse-fg hover:bg-inverse-fg/10 focus-visible:ring-inverse-fg focus-visible:ring-offset-inverse-bg",
         // Garis tipis selalu ada; garis tegas memanjang dari kiri saat hover/fokus.
         ghost: [
           "rounded-none px-0 text-fg-strong",
@@ -34,9 +38,9 @@ export const buttonVariants = cva(
       },
     },
     compoundVariants: [
-      { variant: ["primary", "secondary"], size: "sm", className: "px-3" },
-      { variant: ["primary", "secondary"], size: "md", className: "px-4" },
-      { variant: ["primary", "secondary"], size: "lg", className: "px-6" },
+      { variant: ["primary", "secondary", "inverse", "inverseOutline"], size: "sm", className: "px-3" },
+      { variant: ["primary", "secondary", "inverse", "inverseOutline"], size: "md", className: "px-4" },
+      { variant: ["primary", "secondary", "inverse", "inverseOutline"], size: "lg", className: "px-6" },
     ],
     defaultVariants: { variant: "primary", size: "md" },
   },
@@ -55,7 +59,7 @@ export function ButtonArrow() {
     <ArrowRightIcon
       aria-hidden
       strokeWidth={1.5}
-      className="transition-transform duration-150 ease-standard group-hover/button:translate-x-1"
+      className="transition-transform duration-150 ease-standard motion-safe:group-hover/button:translate-x-1"
     />
   );
 }

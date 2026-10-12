@@ -9,6 +9,7 @@ export function SectionHeading({
   title,
   id,
   className,
+  inverse,
   children,
 }: {
   index?: string;
@@ -16,13 +17,25 @@ export function SectionHeading({
   title?: string;
   id?: string;
   className?: string;
+  // Di section terbalik (latar hitam).
+  inverse?: boolean;
   children?: ReactNode;
 }) {
   return (
     <div className={cn("space-y-3", className)}>
-      <Eyebrow index={index}>{eyebrow}</Eyebrow>
+      {eyebrow ? (
+        <Eyebrow index={index} className={inverse ? "text-inverse-fg/70" : undefined}>
+          {eyebrow}
+        </Eyebrow>
+      ) : null}
       {title ? (
-        <h2 id={id} className="text-[28px] leading-[1.1] font-semibold tracking-[-0.03em] text-fg-strong md:text-[40px]">
+        <h2
+          id={id}
+          className={cn(
+            "text-[28px] leading-[1.1] font-semibold tracking-[-0.03em] md:text-[40px]",
+            inverse ? "text-inverse-fg" : "text-fg-strong",
+          )}
+        >
           {title}
         </h2>
       ) : null}

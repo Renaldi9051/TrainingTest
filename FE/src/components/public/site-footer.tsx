@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
-import { getNav, getSettings, Tag } from "@/lib/api/public";
+import { getMediaPartners, getNav, getSettings, Tag } from "@/lib/api/public";
 import type { SocialPlatform } from "@/lib/api/types";
 import { SiteLogo } from "./site-logo";
 
@@ -27,14 +27,15 @@ function FooterHeading({ children }: { children: string }) {
 export async function SiteFooter() {
   "use cache";
   cacheLife("content");
-  cacheTag(Tag.SETTINGS, Tag.NAV, Tag.MEDIA);
+  cacheTag(Tag.SETTINGS, Tag.NAV, Tag.MEDIA, Tag.MEDIA_PARTNERS);
 
-  const [settings, nav] = await Promise.all([getSettings(), getNav()]);
+  const [settings, nav, partners] = await Promise.all([getSettings(), getNav(), getMediaPartners()]);
   const { identity, contact, social, footer } = settings;
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto bg-inverse-bg text-inverse-fg">
+    // Garis atas: pemisah kalau footer langsung menyusul section CTA hitam.
+    <footer className="mt-auto border-t border-inverse-fg/15 bg-inverse-bg text-inverse-fg">
       <Container className="grid gap-12 py-20 md:grid-cols-12 md:py-24">
         <div className="space-y-6 md:col-span-5">
           <SiteLogo logo={identity.logoDark} name={identity.name} />
@@ -107,6 +108,26 @@ export async function SiteFooter() {
             ) : null}
           </address>
         </div>
+
+        {partners.length > 0 ? (
+          <div className="space-y-4 md:col-span-12">
+            <FooterHeading>Media partner</FooterHeading>
+            <ul className="flex flex-wrap gap-x-6 gap-y-2">
+              {partners.map((partner, index) => (
+                <li key={`${partner.name}-${index}`}>
+                  {partner.url ? (
+                    <a href={partner.url} target="_blank" rel="noopener noreferrer" className={footerLink}>
+                      {partner.name}
+                      <span className="sr-only"> (tab baru)</span>
+                    </a>
+                  ) : (
+                    <span className="text-small text-inverse-fg/80">{partner.name}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {contact.mapEmbedUrl ? (
           <div className="relative aspect-[16/7] overflow-hidden border border-inverse-fg/20 md:col-span-12">
