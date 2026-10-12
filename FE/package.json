@@ -13,7 +13,8 @@
     "test": "vitest run",
     "check": "npm run lint && npm run typecheck && npm run test",
     "test:e2e": "playwright test",
-    "test:e2e:prod": "dotenv -v E2E_PROD=1 -- playwright test"
+    "test:e2e:prod": "dotenv -v E2E_PROD=1 -- playwright test",
+    "size:js": "node scripts/js-size.mjs .next/verify"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -28,6 +29,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.53.0",
+    "motion": "^14.1.0",
     "next": "16.4.0",
     "radix-ui": "^1.7.0",
     "react": "19.3.0",
