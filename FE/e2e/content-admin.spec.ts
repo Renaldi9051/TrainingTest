@@ -211,7 +211,8 @@ test.describe("konten pendukung", () => {
 
   test("kategori: ReorderPanel memindah urutan lalu dikembalikan", async ({ page }) => {
     const before = (await get<{ id: string; name: string }[]>(page.request, "/admin/categories/options")).data;
-    test.skip(before.length < 2, "Butuh minimal 2 kategori (seed).");
+    // Seed minimal e2e (global setup) membuat kategori contoh.
+    expect(before.length, "seed minimal harus membuat minimal 2 kategori").toBeGreaterThanOrEqual(2);
     await page.goto("/admin/categories");
     await page.getByRole("button", { name: "Urutkan" }).click();
     await moveUp(page, before[1].name);

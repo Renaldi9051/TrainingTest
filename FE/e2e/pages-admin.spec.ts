@@ -142,14 +142,14 @@ test.describe("editor halaman", () => {
     expect(kinds).not.toContain("PROFILE");
   });
 
-  // Halaman profil dibuat seed (3.6). Sebelum itu test ini dilewati.
+  // Halaman profil dibuat seed minimal e2e (global setup), jadi test ini tidak pernah dilewati.
   test("halaman profil: slug terkunci (422) dan tidak bisa dihapus (409) @manual", async ({ page }) => {
     await loginViaApi(page.request);
     const response = await page.request.get("/api/admin/pages?q=profil&pageSize=50");
     const profile = ((await response.json()) as { data: { id: string; kind: string }[] }).data.find(
       (item) => item.kind === "PROFILE",
     );
-    test.skip(!profile, "Butuh halaman profil dari seed (Fase 3.6).");
+    expect(profile, "seed minimal harus membuat halaman profil").toBeDefined();
     if (!profile) return;
 
     const rename = await page.request.patch(`/api/admin/pages/${profile.id}`, {

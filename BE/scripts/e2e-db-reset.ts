@@ -6,7 +6,8 @@ async function main() {
   const url = e2eDatabaseUrl();
   await recreateE2eDatabase(url);
   runWithDatabase("npx prisma migrate deploy", url);
-  runWithDatabase("npx prisma db seed", url);
+  // Seed minimal: admin, pengaturan, menu, katalog, halaman profil. Konten lain dibuat test sendiri.
+  runWithDatabase("npx prisma db seed -- --minimal", url);
 }
 
 main().catch((error: unknown) => {
