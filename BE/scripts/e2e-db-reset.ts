@@ -11,6 +11,7 @@ async function main() {
 }
 
 main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
+  // AggregateError (mis. Postgres tidak menyala) tidak punya message: cetak error utuh.
+  console.error(error instanceof Error && error.message ? error.message : error);
   process.exit(1);
 });
