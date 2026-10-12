@@ -34,6 +34,8 @@ const TARGET_DATABASE = "training_dev";
 // training_e2e (database sekali pakai, di-reset setiap run e2e) boleh untuk menguji skrip ini.
 const ALLOWED_DATABASES = new Set([TARGET_DATABASE, "training_e2e"]);
 const APPLY = process.argv.includes("--apply");
+// --only=portfolio,testimonials: hanya sinkronkan tabel itu (tanpa menyentuh bagian lain).
+const ONLY = process.argv.find((arg) => arg.startsWith("--only="))?.slice("--only=".length).split(",").filter(Boolean) ?? null;
 const PUBLISHED_AT = new Date("2026-10-01T00:00:00.000Z");
 const EMPTY_SEO = { title: "", description: "", ogImageId: null };
 // Redirect slug pelatihan/kategori lama: tujuannya ikut terhapus.
@@ -249,10 +251,66 @@ async function apply(result: Awaited<ReturnType<typeof plan>>) {
   console.info(ok ? "Cache FE direvalidasi." : "Revalidate FE gagal (FE tidak menyala?). Data tetap tersimpan; muat ulang FE bila perlu.");
 }
 
+// Sinkronisasi sebagian: tabel yang diganti penuh dengan data contoh, satu transaksi.
+const PARTIAL = {
+  portfolio: {
+    label: "Portofolio",
+    tags: [RevalidateTag.PORTFOLIO],
+    count: () => db.portfolioItem.count(),
+    rows: () => buildPortfolio().map((row) => row.title),
+    replace: async (tx: Prisma.TransactionClient) => {
+      await tx.portfolioItem.deleteMany({});
+      await tx.portfolioItem.createMany({
+        data: buildPortfolio().map((row, order) => ({
+          title: row.title,
+          client: row.client,
+          description: row.description,
+          date: row.date ? new Date(`${row.date}T00:00:00.000Z`) : null,
+          order,
+        })),
+      });
+    },
+  },
+  testimonials: {
+    label: "Testimoni",
+    tags: [RevalidateTag.TESTIMONIALS, RevalidateTag.HOME],
+    count: () => db.testimonial.count(),
+    rows: () => buildTestimonials().map((row) => `${row.name}, ${row.role} (${row.company})`),
+    replace: async (tx: Prisma.TransactionClient) => {
+      await tx.testimonial.deleteMany({});
+      await tx.testimonial.createMany({ data: buildTestimonials().map((row, order) => ({ ...row, order })) });
+    },
+  },
+} as const;
+
+async function runPartial(name: string, keys: string[]) {
+  const unknown = keys.filter((key) => !(key in PARTIAL));
+  if (unknown.length > 0) throw new Error(`--only tidak dikenal: ${unknown.join(", ")}. Pilihan: ${Object.keys(PARTIAL).join(", ")}.`);
+  const selected = keys.map((key) => PARTIAL[key as keyof typeof PARTIAL]);
+  console.info(`${APPLY ? "Menjalankan" : "Rencana (dry run, belum ada yang diubah)"} sinkronisasi sebagian ${name}:`);
+  for (const table of selected) {
+    console.info(`\n${table.label}\n  [hapus] ${await table.count()} baris lama (termasuk Sampah)`);
+    for (const row of table.rows()) console.info(`  [tambah] ${row}`);
+  }
+  if (!APPLY) return console.info("\nJalankan dengan --apply untuk menerapkan.");
+  await db.$transaction(async (tx) => {
+    for (const table of selected) await table.replace(tx);
+    await writeAudit(
+      { userId: null, action: AuditAction.UPDATE, entity: "ContentSync", diff: { script: "scripts/sync-content-dev.ts", only: keys } },
+      tx,
+    );
+  });
+  const ok = await revalidateTags(selected.flatMap((table) => table.tags));
+  console.info(ok ? "Cache FE direvalidasi." : "Revalidate FE gagal (FE tidak menyala?). Data tetap tersimpan.");
+  console.info("Selesai.");
+}
+
 async function main() {
   const url = process.env.DATABASE_URL ?? "";
   const name = url ? databaseName(url) : "";
   if (!ALLOWED_DATABASES.has(name)) throw new Error(`Menolak jalan: database "${name}" bukan ${TARGET_DATABASE}.`);
+
+  if (ONLY) return runPartial(name, ONLY);
 
   const result = await plan();
   console.info(`${APPLY ? "Menjalankan" : "Rencana (dry run, belum ada yang diubah)"} sinkronisasi konten ${name}:\n`);

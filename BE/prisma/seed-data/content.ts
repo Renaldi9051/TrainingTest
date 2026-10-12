@@ -117,63 +117,63 @@ export const clients = [
 export const testimonials = [
   {
     name: "Rina",
-    role: "HR Development Manager",
-    company: "PT Contoh Energi Nusantara",
+    role: "Koordinator Survei",
+    company: "PT Contoh Konstruksi Bangun",
     quote:
-      "Materi disusun sesuai kebutuhan tim kami. Instruktur sabar menjawab pertanyaan dan contoh kasusnya sangat dekat dengan pekerjaan di lapangan.",
+      "Setelah kelas pemetaan, tim kami bisa menghitung volume stockpile sendiri tanpa menunggu surveyor luar. Instruktur sabar membahas data dari proyek kami.",
   },
   {
     name: "Andi",
-    role: "Supervisor Maintenance",
-    company: "PT Contoh Semen Indonesia",
+    role: "Pilot Drone",
+    company: "PT Contoh Energi Nusantara",
     quote:
-      "Setelah pelatihan, kami mulai menyusun jadwal perawatan dari data kerusakan. Jumlah perbaikan mendadak di lini produksi turun cukup terasa.",
+      "Latihan prosedur darurat dan simulasi uji praktiknya sangat membantu. Saya lulus uji kompetensi di percobaan pertama.",
   },
   {
     name: "Sari",
-    role: "Kepala Bagian Pengadaan",
+    role: "Kepala Humas",
     company: "PT Contoh Logistik Utama",
     quote:
-      "Pelaksanaannya rapi dari pendaftaran sampai sertifikat. Template evaluasi pemasok yang dibagikan langsung kami pakai.",
+      "Tim humas kami sekarang bisa memproduksi video profil dan konten media sosial sendiri, dari pengambilan gambar sampai editing.",
   },
 ];
 
 export const portfolio = [
   {
-    title: "In-house training preventive maintenance",
+    title: "Pelatihan pilot drone untuk tim inspeksi",
     date: "2026-09-15",
-    client: "PT Contoh Semen Indonesia",
-    description: "Tiga hari di area pabrik bersama 30 teknisi dan planner perawatan, ditutup dengan penyusunan jadwal perawatan per lini.",
-  },
-  {
-    title: "TOT instruktur internal",
-    date: "2026-08-25",
     client: "PT Contoh Energi Nusantara",
-    description: "Pembekalan 20 calon instruktur internal, dari menyusun rencana sesi sampai simulasi asesmen kompetensi.",
+    description: "Tiga hari di area latihan bersama 16 teknisi, dari kendali dasar sampai simulasi inspeksi panel surya dan menara.",
   },
   {
-    title: "Program persiapan pensiun angkatan 2026",
+    title: "Pemetaan lahan perkebunan dengan drone",
+    date: "2026-08-25",
+    client: "PT Contoh Agro Lestari",
+    description: "Pendampingan tim kebun memetakan 300 hektare lahan dan menyusun peta blok untuk perencanaan pemupukan.",
+  },
+  {
+    title: "Kelas drone penyemprot untuk kelompok tani",
     date: "2026-07-30",
-    client: "PT Contoh Bank Sentosa",
-    description: "Dua hari untuk 45 karyawan yang memasuki masa persiapan pensiun, termasuk klinik rencana usaha.",
+    client: "Koperasi Contoh Tani Makmur",
+    description: "Dua hari praktik kalibrasi dan penyemprotan dengan air untuk 25 anggota kelompok tani, ditutup penyusunan SOP semprot.",
   },
   {
-    title: "Outbound team building 250 peserta",
+    title: "Produksi video profil perusahaan",
     date: "2026-06-20",
     client: "PT Contoh Logistik Utama",
-    description: "Kegiatan satu hari di area perbukitan dengan 12 pos permainan dan sesi refleksi per divisi.",
+    description: "Workshop videografi untuk tim humas: naskah, pengambilan gambar darat dan udara, sampai editing video profil berdurasi tiga menit.",
   },
   {
-    title: "Pelatihan K3 untuk pengawas lapangan",
+    title: "Workshop desain identitas visual UMKM",
     date: "2026-05-12",
-    client: "PT Contoh Tambang Sejahtera",
-    description: "Pelatihan identifikasi bahaya dan investigasi insiden untuk 40 pengawas di lokasi tambang.",
+    client: "Dinas Contoh Koperasi dan UMKM",
+    description: "Pendampingan 40 pelaku UMKM menyusun logo, palet warna, dan template konten media sosial untuk usahanya.",
   },
   {
-    title: "Workshop audit internal berbasis risiko",
+    title: "Dokumentasi udara acara tahunan",
     date: "2026-04-08",
-    client: "PT Contoh Asuransi Abadi",
-    description: "Workshop tiga hari bagi tim audit internal untuk menyusun rencana audit tahunan berbasis risiko.",
+    client: "PT Contoh Bank Sentosa",
+    description: "Liputan foto dan video udara untuk acara 1.000 peserta, sekaligus pelatihan singkat tim internal tentang keselamatan terbang.",
   },
 ];
 
