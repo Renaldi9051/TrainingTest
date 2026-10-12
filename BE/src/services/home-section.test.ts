@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { HomeSectionType, Prisma } from "@/generated/prisma/client";
 import { createMockDb, passThroughTransactions, type MockDb } from "@/test/mock-db";
 
 const db = vi.hoisted(() => ({ current: undefined as unknown }));
@@ -25,7 +26,7 @@ const ID = uuid(1);
 const MEDIA = uuid(900);
 
 let seq = 0;
-const section = (type: string, content: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+const section = (type: HomeSectionType, content: Prisma.JsonObject, extra: Record<string, unknown> = {}) => ({
   id: uuid(100 + ++seq),
   type,
   title: null,
@@ -77,7 +78,7 @@ describe("HERO/CTA maksimal satu", () => {
   });
 
   it("type lain boleh lebih dari satu (tidak dicek)", async () => {
-    mock.homeSection.create.mockImplementation(async ({ data }) => section("STATS", data.content as Record<string, unknown>));
+    mock.homeSection.create.mockImplementation(async ({ data }) => section("STATS", data.content as Prisma.JsonObject));
     await createHomeSection(
       homeSectionCreateSchema.parse({ type: "STATS", content: { items: [{ value: 1, label: "x" }] } }),
       "u1",
