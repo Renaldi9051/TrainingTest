@@ -121,6 +121,7 @@ export type SettingValues = {
   "site.contact": {
     phone: string;
     email: string;
+    emailSecondary: string;
     whatsapp: string;
     address: string;
     mapEmbedUrl: string;

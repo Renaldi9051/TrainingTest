@@ -40,6 +40,12 @@ describe("site.header", () => {
 });
 
 describe("site.contact", () => {
+  it("email kedua opsional; nilai lama tanpa field ini tetap terbaca", () => {
+    const schema = settingSchemas["site.contact"];
+    expect(schema.parse({ email: "halo@contoh.id" }).emailSecondary).toBe("");
+    expect(schema.parse({ emailSecondary: "daftar@contoh.id" }).emailSecondary).toBe("daftar@contoh.id");
+  });
+
   it.each([
     ["+62 812-3456-7890", "6281234567890"],
     ["0812 3456 7890", "6281234567890"],
@@ -53,6 +59,7 @@ describe("site.contact", () => {
     expect(schema.safeParse({ whatsapp: "abc" }).success).toBe(false);
     expect(schema.safeParse({ whatsapp: "123" }).success).toBe(false);
     expect(schema.safeParse({ email: "bukan-email" }).success).toBe(false);
+    expect(schema.safeParse({ emailSecondary: "bukan-email" }).success).toBe(false);
     expect(schema.safeParse({ phone: "021<script>" }).success).toBe(false);
     expect(schema.parse({ whatsapp: "0812 3456 7890" }).whatsapp).toBe("6281234567890");
   });

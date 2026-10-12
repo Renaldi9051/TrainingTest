@@ -107,6 +107,8 @@ export const settingSchemas = {
   "site.contact": z.object({
     phone: phoneSchema,
     email: emailSchema,
+    // Email kedua (mis. pendaftaran/keuangan); opsional.
+    emailSecondary: emailSchema,
     whatsapp: optionalWhatsappSchema,
     address: plainText("Alamat", 500),
     mapEmbedUrl: mapEmbedUrlSchema,
@@ -184,7 +186,7 @@ export const SETTING_DEFAULTS: SettingValues = {
     faviconId: null,
   },
   "site.header": { ctaLabel: "", ctaHref: "" },
-  "site.contact": { phone: "", email: "", whatsapp: "", address: "", mapEmbedUrl: "" },
+  "site.contact": { phone: "", email: "", emailSecondary: "", whatsapp: "", address: "", mapEmbedUrl: "" },
   "site.social": { links: [] },
   "site.footer": { description: "", copyright: "" },
   "training.defaults": { facilities: [], faq: [], inHouseNote: "", disclaimer: "" },

@@ -57,7 +57,7 @@ export async function SiteFooter() {
 
         {nav.footer.length > 0 ? (
           <nav aria-label="Menu footer" className="space-y-4 md:col-span-3">
-            <FooterHeading>Tautan</FooterHeading>
+            <FooterHeading>Bantuan</FooterHeading>
             <ul className="space-y-2">
               {nav.footer.map((item) => (
                 <li key={`${item.label}-${item.href}`}>
@@ -92,13 +92,13 @@ export async function SiteFooter() {
                 </a>
               </p>
             ) : null}
-            {contact.email ? (
-              <p>
-                <a href={`mailto:${contact.email}`} className={footerLink}>
-                  {contact.email}
+            {[contact.email, contact.emailSecondary].filter(Boolean).map((email) => (
+              <p key={email}>
+                <a href={`mailto:${email}`} className={footerLink}>
+                  {email}
                 </a>
               </p>
-            ) : null}
+            ))}
             {contact.whatsappUrl ? (
               <p>
                 <a href={contact.whatsappUrl} target="_blank" rel="noopener noreferrer" className={footerLink}>

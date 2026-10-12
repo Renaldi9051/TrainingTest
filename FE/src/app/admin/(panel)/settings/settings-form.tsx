@@ -309,6 +309,9 @@ const contactSchema = z.object({
   email: z.string().trim().max(200).refine((v) => v === "" || z.email().safeParse(v).success, {
     error: "Format email tidak valid.",
   }),
+  emailSecondary: z.string().trim().max(200).refine((v) => v === "" || z.email().safeParse(v).success, {
+    error: "Format email tidak valid.",
+  }),
   whatsapp: text("WhatsApp", 30).refine((v) => v === "" || /^[+\d][\d\s().-]*$/.test(v), {
     error: "Nomor WhatsApp hanya boleh berisi angka, spasi, +, -, dan tanda kurung.",
   }),
@@ -336,9 +339,19 @@ function ContactSection({ value, onDirtyChange }: SectionProps<"site.contact">) 
           <Input type="tel" {...form.register("whatsapp")} placeholder="+62 812 3456 7890" />
         </FormField>
       </div>
-      <FormField id={`${formId}-email`} label="Email" error={errors.email?.message}>
-        <Input type="email" {...form.register("email")} placeholder="halo@contoh.com" />
-      </FormField>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <FormField id={`${formId}-email`} label="Email" error={errors.email?.message}>
+          <Input type="email" {...form.register("email")} placeholder="halo@contoh.com" />
+        </FormField>
+        <FormField
+          id={`${formId}-email-secondary`}
+          label="Email kedua"
+          description="Opsional, mis. untuk pendaftaran."
+          error={errors.emailSecondary?.message}
+        >
+          <Input type="email" {...form.register("emailSecondary")} placeholder="daftar@contoh.com" />
+        </FormField>
+      </div>
       <FormField id={`${formId}-address`} label="Alamat" error={errors.address?.message}>
         <Textarea rows={3} {...form.register("address")} />
       </FormField>
