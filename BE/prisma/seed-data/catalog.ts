@@ -257,7 +257,7 @@ const profiles: Profile[] = [
     ],
   },
   {
-    category: { slug: "fotografi-videografi-udara", name: "Fotografi & Videografi Udara", icon: "target", featured: true, description: "Foto dan video dari udara untuk properti, pariwisata, acara, dan produksi komersial." },
+    category: { slug: "fotografi-videografi-udara", name: "Fotografi & Videografi Udara", icon: "camera", featured: true, description: "Foto dan video dari udara untuk properti, pariwisata, acara, dan produksi komersial." },
     context: "Setiap sesi praktik menghasilkan materi yang langsung diedit dan dibahas bersama instruktur.",
     audience: [
       { role: "Fotografer dan videografer", note: "yang ingin menambah sudut pandang udara" },
@@ -486,7 +486,7 @@ const profiles: Profile[] = [
     ],
   },
   {
-    category: { slug: "fotografi", name: "Fotografi", icon: "lightbulb", featured: true, description: "Teknik memotret, pencahayaan, dan editing untuk kebutuhan pribadi, bisnis, dan komersial." },
+    category: { slug: "fotografi", name: "Fotografi", icon: "camera", featured: true, description: "Teknik memotret, pencahayaan, dan editing untuk kebutuhan pribadi, bisnis, dan komersial." },
     context: "Kelas berbasis praktik dengan tugas pemotretan dan sesi kritik karya di setiap pertemuan.",
     audience: [
       { role: "Pemula yang ingin belajar fotografi", note: null },
@@ -541,7 +541,7 @@ const profiles: Profile[] = [
     ],
   },
   {
-    category: { slug: "videografi-sinematografi", name: "Videografi & Sinematografi", icon: "presentation", featured: false, description: "Produksi video dari perencanaan, pengambilan gambar, audio, sampai pascaproduksi." },
+    category: { slug: "videografi-sinematografi", name: "Videografi & Sinematografi", icon: "video", featured: false, description: "Produksi video dari perencanaan, pengambilan gambar, audio, sampai pascaproduksi." },
     context: "Peserta bekerja dalam kelompok kecil dan menyelesaikan satu karya video di akhir kelas.",
     audience: [
       { role: "Videografer pemula", note: null },
@@ -596,7 +596,7 @@ const profiles: Profile[] = [
     ],
   },
   {
-    category: { slug: "desain-grafis", name: "Desain Grafis", icon: "lightbulb", featured: false, description: "Tipografi, warna, layout, identitas visual, dan desain untuk cetak maupun digital." },
+    category: { slug: "desain-grafis", name: "Desain Grafis", icon: "palette", featured: false, description: "Tipografi, warna, layout, identitas visual, dan desain untuk cetak maupun digital." },
     context: "Setiap materi diikuti latihan desain dengan brief yang mirip pekerjaan nyata.",
     audience: [
       { role: "Pemula di bidang desain", note: null },
