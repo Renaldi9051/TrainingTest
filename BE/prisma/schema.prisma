@@ -38,6 +38,12 @@ enum HomeSectionType {
   CTA
 }
 
+// PROFILE = halaman sistem /profil: hanya satu, tidak bisa dihapus, slug terkunci "profil".
+enum PageKind {
+  STANDARD
+  PROFILE
+}
+
 enum ContentStatus {
   DRAFT
   PUBLISHED
@@ -176,14 +182,22 @@ model HomeSection {
   updatedById String?         @db.Uuid
   updatedBy   User?           @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 
+  // HERO dan CTA masing-masing maksimal satu di antara section yang belum dihapus.
+  // Index ditulis manual di migrasi phase3_pages_home (`"type" IN ('HERO', 'CTA') AND ...`).
+  // Predikat di sini disalin persis dari `prisma db pull --print` (bentuk yang disimpan Postgres:
+  // IN -> = ANY (ARRAY[...])). Bentuk lain membuat migrate dev melihat drift dan men-generate
+  // DROP INDEX + CREATE INDEX. Cek: prisma migrate diff --from-config-datasource --to-schema.
+  @@unique([type], map: "HomeSection_single_type_key", where: raw("((type = ANY (ARRAY['HERO'::\"HomeSectionType\", 'CTA'::\"HomeSectionType\"])) AND (\"deletedAt\" IS NULL))"))
   @@index([order])
   @@index([deletedAt])
 }
 
 model Page {
   id          String        @id @default(uuid(7)) @db.Uuid
+  kind        PageKind      @default(STANDARD)
   slug        String
   title       String
+  // Blok konten, divalidasi Zod per type di BE (lib/validators/page-blocks.ts).
   blocks      Json
   status      ContentStatus @default(DRAFT)
   seo         Json?
@@ -195,6 +209,8 @@ model Page {
   updatedBy   User?         @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 
   @@unique([slug], map: "Page_slug_active_key", where: raw("\"deletedAt\" IS NULL"))
+  // Hanya satu halaman PROFILE (ditulis manual di migrasi phase3_pages_home).
+  @@unique([kind], map: "Page_profile_key", where: raw("\"kind\" = 'PROFILE'"))
   @@index([status])
   @@index([deletedAt])
 }
@@ -386,6 +402,7 @@ model PortfolioItem {
   date        DateTime? @db.Date
   client      String?
   description String?
+  order       Int       @default(0)
   createdAt   DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
   deletedAt   DateTime? @db.Timestamptz(3)
@@ -394,6 +411,7 @@ model PortfolioItem {
 
   images PortfolioImage[]
 
+  @@index([order])
   @@index([date])
   @@index([deletedAt])
 }
