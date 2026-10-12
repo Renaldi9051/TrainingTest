@@ -1,0 +1,692 @@
+// Katalog contoh: kategori, pelatihan, dan jadwal. Dipakai prisma/seed.ts (database baru) dan
+// scripts/sync-content-dev.ts (menyamakan training_dev).
+// Nama kategori mengikuti label kategori umum situs referensi (kapitalisasi dirapikan, "Slider" dan
+// "Training" dilewati karena bukan kategori). Deskripsi, pelatihan, dan jadwal ditulis sendiri.
+import type { CategoryIcon } from "../../src/lib/validators/category";
+import type { RichTextDoc } from "../../src/lib/rich-text";
+import { paragraphs } from "./rich-text";
+
+export type SeedCategory = {
+  slug: string;
+  name: string;
+  description: string;
+  icon: CategoryIcon | null;
+  featured: boolean;
+};
+
+// Urutan = urutan tampil (order). featured = kategori populer di beranda.
+export const categories: SeedCategory[] = [
+  { slug: "accounting", name: "Accounting", icon: "calculator", featured: true, description: "Pencatatan, penyusunan laporan, dan analisis akuntansi untuk berbagai jenis usaha." },
+  { slug: "administrative", name: "Administrative", icon: "file-text", featured: false, description: "Tata kelola dokumen, korespondensi, dan administrasi perkantoran yang rapi." },
+  { slug: "agrobisnis", name: "Agrobisnis", icon: "leaf", featured: false, description: "Pengelolaan usaha pertanian dan perkebunan dari hulu sampai pemasaran." },
+  { slug: "audit", name: "Audit", icon: "clipboard-check", featured: true, description: "Audit internal, audit operasional, dan pengendalian berbasis risiko." },
+  { slug: "banking", name: "Banking", icon: "landmark", featured: false, description: "Operasional bank, perkreditan, kepatuhan, dan layanan nasabah." },
+  { slug: "business", name: "Business", icon: "briefcase-business", featured: false, description: "Model bisnis, perencanaan usaha, dan pengambilan keputusan bisnis." },
+  { slug: "cargo", name: "Cargo", icon: "truck", featured: false, description: "Penanganan kargo, pergudangan, dan dokumen pengiriman barang." },
+  { slug: "cement-fertilizer-industry", name: "Cement & Fertilizer Industry", icon: "factory", featured: false, description: "Proses produksi, perawatan, dan keselamatan di industri semen dan pupuk." },
+  { slug: "chemical", name: "Chemical", icon: "factory", featured: false, description: "Proses kimia industri, penanganan bahan, dan pengendalian mutu." },
+  { slug: "chemist", name: "Chemist", icon: "clipboard-check", featured: false, description: "Kompetensi analis laboratorium, uji sampel, dan keselamatan laboratorium." },
+  { slug: "civil", name: "Civil", icon: "hard-hat", featured: false, description: "Perencanaan, pengawasan, dan manajemen proyek konstruksi sipil." },
+  { slug: "coal-mining", name: "Coal Mining", icon: "hard-hat", featured: false, description: "Operasi tambang batu bara, perencanaan tambang, dan keselamatan." },
+  { slug: "communication", name: "Communication", icon: "messages-square", featured: false, description: "Komunikasi efektif, presentasi, dan komunikasi antarbagian." },
+  { slug: "company", name: "Company", icon: "building-2", featured: false, description: "Tata kelola perusahaan, kebijakan internal, dan budaya organisasi." },
+  { slug: "customer-services", name: "Customer Services", icon: "users", featured: true, description: "Standar pelayanan, komunikasi dengan pelanggan, dan penanganan keluhan." },
+  { slug: "economy", name: "Economy", icon: "chart-column", featured: false, description: "Ekonomi makro dan mikro untuk perencanaan dan analisis usaha." },
+  { slug: "education", name: "Education", icon: "graduation-cap", featured: false, description: "Metode mengajar, desain pembelajaran, dan pengembangan pendidik." },
+  { slug: "electrical", name: "Electrical", icon: "zap", featured: true, description: "Sistem kelistrikan industri, instalasi, dan perawatan peralatan listrik." },
+  { slug: "employee", name: "Employee", icon: "user-cog", featured: false, description: "Pengelolaan karyawan, hubungan kerja, dan kesejahteraan pegawai." },
+  { slug: "energy", name: "Energy", icon: "zap", featured: false, description: "Manajemen energi, efisiensi, dan sumber energi terbarukan." },
+  { slug: "engineering", name: "Engineering", icon: "cog", featured: false, description: "Keteknikan umum, analisis teknis, dan pemecahan masalah di lapangan." },
+  { slug: "entrepreneur", name: "Entrepreneur", icon: "lightbulb", featured: false, description: "Merintis dan mengembangkan usaha, dari ide sampai arus kas yang sehat." },
+  { slug: "environment", name: "Environment", icon: "leaf", featured: false, description: "Pengelolaan lingkungan, limbah, dan kepatuhan regulasi lingkungan." },
+  { slug: "financial", name: "Financial", icon: "coins", featured: false, description: "Perencanaan keuangan, anggaran, treasuri, dan analisis investasi." },
+  { slug: "fraud", name: "Fraud", icon: "shield-check", featured: false, description: "Pencegahan, deteksi, dan investigasi kecurangan di organisasi." },
+  { slug: "geology", name: "Geology", icon: "globe", featured: false, description: "Geologi terapan untuk eksplorasi, pertambangan, dan migas." },
+  { slug: "health-safety-environment", name: "Health, Safety & Environment", icon: "shield-check", featured: true, description: "K3, budaya keselamatan, dan pengelolaan lingkungan kerja." },
+  { slug: "human-resource", name: "Human Resource", icon: "users", featured: true, description: "Rekrutmen, manajemen kinerja, kompensasi, dan pengembangan SDM." },
+  { slug: "industrial", name: "Industrial", icon: "factory", featured: false, description: "Hubungan industrial, peraturan ketenagakerjaan, dan perundingan." },
+  { slug: "industry", name: "Industry", icon: "factory", featured: false, description: "Produktivitas, mutu, dan perbaikan proses di lingkungan industri." },
+  { slug: "information-technology", name: "Information Technology", icon: "laptop", featured: true, description: "Infrastruktur TI, keamanan informasi, dan pengolahan data." },
+  { slug: "instrumental", name: "Instrumental", icon: "settings", featured: false, description: "Instrumentasi, kalibrasi, dan sistem kontrol proses." },
+  { slug: "insurance", name: "Insurance", icon: "shield-check", featured: false, description: "Produk asuransi, underwriting, dan penanganan klaim." },
+  { slug: "international", name: "International", icon: "globe", featured: false, description: "Perdagangan internasional, ekspor impor, dan kerja sama lintas negara." },
+  { slug: "keuangan", name: "Keuangan", icon: "banknote", featured: false, description: "Keuangan untuk non-keuangan, pengelolaan kas, dan pelaporan." },
+  { slug: "law", name: "Law", icon: "scale", featured: false, description: "Hukum bisnis, kontrak, dan kepatuhan terhadap regulasi." },
+  { slug: "leadership", name: "Leadership", icon: "target", featured: true, description: "Kepemimpinan, supervisi, dan pengembangan tim yang solid." },
+  { slug: "maintenance", name: "Maintenance", icon: "wrench", featured: true, description: "Perawatan preventif dan prediktif, keandalan aset, dan perencanaan perawatan." },
+  { slug: "management", name: "Management", icon: "chart-pie", featured: false, description: "Fungsi manajemen, perencanaan, dan pengendalian organisasi." },
+  { slug: "manufacture", name: "Manufacture", icon: "factory", featured: false, description: "Perencanaan produksi, lean manufacturing, dan pengendalian mutu." },
+  { slug: "marketing", name: "Marketing", icon: "megaphone", featured: false, description: "Strategi pemasaran, merek, dan pemasaran digital." },
+  { slug: "mechanical", name: "Mechanical", icon: "cog", featured: false, description: "Sistem mekanikal, mesin industri, dan troubleshooting." },
+  { slug: "media", name: "Media", icon: "presentation", featured: false, description: "Produksi konten, hubungan media, dan komunikasi publik." },
+  { slug: "migas", name: "Migas", icon: "fuel", featured: false, description: "Kegiatan hulu dan hilir minyak dan gas bumi." },
+  { slug: "mining", name: "Mining", icon: "hard-hat", featured: false, description: "Operasi pertambangan, perencanaan tambang, dan pengolahan mineral." },
+  { slug: "motivasional", name: "Motivasional", icon: "lightbulb", featured: false, description: "Motivasi kerja, pola pikir positif, dan semangat tim." },
+  { slug: "natural-resources", name: "Natural Resources", icon: "leaf", featured: false, description: "Pengelolaan sumber daya alam yang bertanggung jawab." },
+  { slug: "negosiasi", name: "Negosiasi", icon: "handshake", featured: false, description: "Teknik negosiasi, persuasi, dan penyelesaian kesepakatan." },
+  { slug: "oil-and-gas", name: "Oil and Gas", icon: "fuel", featured: false, description: "Operasi, fasilitas produksi, dan keselamatan industri minyak dan gas." },
+  { slug: "operation-management", name: "Operation Management", icon: "settings", featured: false, description: "Manajemen operasi, rantai pasok, dan efisiensi proses." },
+  { slug: "organization", name: "Organization", icon: "building-2", featured: false, description: "Desain organisasi, budaya kerja, dan manajemen perubahan." },
+  { slug: "pajak", name: "Pajak", icon: "calculator", featured: false, description: "Perpajakan badan dan pribadi, pelaporan, dan perencanaan pajak." },
+  { slug: "personal-development", name: "Personal Development", icon: "brain", featured: false, description: "Pengembangan diri, manajemen waktu, dan produktivitas pribadi." },
+  { slug: "personality", name: "Personality", icon: "brain", featured: false, description: "Kepribadian, etiket profesional, dan citra diri di tempat kerja." },
+  { slug: "pertambangan", name: "Pertambangan", icon: "hard-hat", featured: false, description: "Regulasi, operasi, dan reklamasi kegiatan pertambangan." },
+  { slug: "petroleum-industry", name: "Petroleum Industry", icon: "fuel", featured: false, description: "Pengolahan minyak bumi, kilang, dan distribusi produk." },
+  { slug: "photography", name: "Photography", icon: "presentation", featured: false, description: "Fotografi dasar sampai lanjutan untuk dokumentasi dan publikasi." },
+  { slug: "power-plant-industry", name: "Power Plant Industry", icon: "zap", featured: false, description: "Operasi dan perawatan pembangkit listrik." },
+  { slug: "procurement", name: "Procurement", icon: "shopping-cart", featured: true, description: "Pengadaan barang dan jasa, evaluasi pemasok, dan kontrak." },
+  { slug: "programming", name: "Programming", icon: "code", featured: false, description: "Pemrograman, pengembangan aplikasi, dan otomasi pekerjaan." },
+  { slug: "properties", name: "Properties", icon: "building-2", featured: false, description: "Pengelolaan properti, gedung, dan aset real estat." },
+  { slug: "proyek", name: "Proyek", icon: "clipboard-check", featured: false, description: "Manajemen proyek, penjadwalan, dan pengendalian biaya proyek." },
+  { slug: "public-relation", name: "Public Relation", icon: "megaphone", featured: false, description: "Hubungan masyarakat, reputasi, dan komunikasi krisis." },
+  { slug: "purchasing", name: "Purchasing", icon: "shopping-cart", featured: false, description: "Pembelian, negosiasi harga, dan pengelolaan persediaan." },
+  { slug: "risk-management", name: "Risk Management", icon: "shield-check", featured: false, description: "Identifikasi, penilaian, dan mitigasi risiko perusahaan." },
+  { slug: "sales", name: "Sales", icon: "chart-column", featured: false, description: "Teknik penjualan, pengelolaan pelanggan, dan pencapaian target." },
+  { slug: "secretarial", name: "Secretarial", icon: "file-text", featured: false, description: "Keterampilan kesekretariatan, notulen, dan pengelolaan agenda." },
+  { slug: "secretary", name: "Secretary", icon: "file-text", featured: false, description: "Peran sekretaris profesional dan dukungan untuk pimpinan." },
+  { slug: "services", name: "Services", icon: "users", featured: false, description: "Industri jasa, standar layanan, dan pengalaman pelanggan." },
+  { slug: "skill", name: "Skill", icon: "award", featured: false, description: "Keterampilan teknis dan nonteknis untuk kebutuhan kerja sehari-hari." },
+  { slug: "social", name: "Social", icon: "users", featured: false, description: "Program sosial, pemberdayaan masyarakat, dan tanggung jawab sosial." },
+  { slug: "softskill", name: "Softskill", icon: "messages-square", featured: false, description: "Kerja sama tim, berpikir kritis, dan kecerdasan emosional." },
+  { slug: "strategic", name: "Strategic", icon: "target", featured: false, description: "Perencanaan strategis, balanced scorecard, dan eksekusi strategi." },
+  { slug: "technology", name: "Technology", icon: "cpu", featured: false, description: "Teknologi baru dan pemanfaatannya untuk proses bisnis." },
+  { slug: "transportasi", name: "Transportasi", icon: "truck", featured: false, description: "Manajemen transportasi, armada, dan keselamatan berkendara." },
+];
+
+export type SeedTraining = {
+  slug: string;
+  title: string;
+  summary: string;
+  description: RichTextDoc;
+  outcomes: string[];
+  modules: { title: string; points: string[]; durationMinutes: number | null }[];
+  audience: { role: string; note: string | null }[];
+  prerequisites: string | null;
+  facilities: string[] | null;
+  faq: { q: string; a: string }[];
+  duration: string;
+  method: "ONLINE" | "OFFLINE" | "HYBRID";
+  types: ("PUBLIC" | "IN_HOUSE")[];
+  priceText: string | null;
+  showPrice: boolean;
+  categorySlug: string;
+};
+
+export const trainings: SeedTraining[] = [
+  {
+    slug: "menyusun-kpi-tim-yang-bisa-diukur",
+    title: "Menyusun KPI Tim yang Bisa Diukur",
+    summary: "Ubah target tim yang abstrak jadi indikator yang jelas, adil, dan mudah dipantau.",
+    description: paragraphs(
+      "Banyak tim punya target, tapi sedikit yang punya indikator yang benar-benar bisa diukur setiap minggu. Pelatihan ini memandu peserta dari sasaran organisasi sampai KPI per peran yang disepakati bersama.",
+      "Peserta bekerja dengan data dan struktur tim masing-masing, sehingga hasil akhirnya adalah draf KPI yang siap dibahas dengan atasan.",
+    ),
+    outcomes: [
+      "Menurunkan sasaran organisasi menjadi KPI per peran",
+      "Membedakan indikator hasil dan indikator proses",
+      "Menetapkan baseline, target, dan frekuensi pengukuran",
+      "Menyusun dashboard pemantauan sederhana untuk tim",
+    ],
+    modules: [
+      {
+        title: "Dari sasaran ke indikator",
+        points: ["Peta sasaran organisasi", "Kriteria SMART", "Jebakan KPI vanity"],
+        durationMinutes: 90,
+      },
+      {
+        title: "Merancang KPI per peran",
+        points: ["Bobot indikator", "Sumber data", "Definisi operasional"],
+        durationMinutes: 120,
+      },
+      {
+        title: "Memantau dan meninjau",
+        points: ["Ritme review", "Menangani KPI yang meleset", "Studi kasus"],
+        durationMinutes: 120,
+      },
+    ],
+    audience: [
+      { role: "Kepala unit", note: null },
+      { role: "Supervisor", note: null },
+      { role: "Staf HR/perencanaan", note: "yang menyiapkan target tahunan" },
+    ],
+    prerequisites: "Pernah mengelola atau menyusun target tim.",
+    facilities: null,
+    faq: [
+      {
+        q: "Apakah perlu membawa data perusahaan?",
+        a: "Disarankan membawa struktur tim dan target tahun berjalan. Data sensitif boleh disamarkan.",
+      },
+    ],
+    duration: "2 hari",
+    method: "HYBRID",
+    types: ["PUBLIC", "IN_HOUSE"],
+    priceText: "Rp4.200.000 per peserta",
+    showPrice: true,
+    categorySlug: "human-resource",
+  },
+  {
+    slug: "membaca-laporan-keuangan-untuk-manajer",
+    title: "Membaca Laporan Keuangan untuk Manajer",
+    summary: "Pahami neraca, laba rugi, dan arus kas cukup dalam untuk mengambil keputusan bisnis.",
+    description: paragraphs(
+      "Pelatihan ini untuk manajer yang sehari-hari menerima laporan keuangan tapi jarang diajak membedahnya. Fokusnya bukan pada pencatatan, melainkan pada membaca angka dan bertanya hal yang tepat.",
+    ),
+    outcomes: [
+      "Membaca hubungan antara neraca, laba rugi, dan arus kas",
+      "Menghitung rasio likuiditas dan profitabilitas dasar",
+      "Mengenali tanda awal masalah arus kas",
+      "Menyampaikan temuan keuangan secara ringkas kepada tim",
+    ],
+    modules: [
+      {
+        title: "Tiga laporan, satu cerita",
+        points: ["Struktur neraca", "Laba rugi dan margin", "Arus kas operasi"],
+        durationMinutes: 120,
+      },
+      {
+        title: "Rasio yang paling sering dipakai",
+        points: ["Likuiditas", "Profitabilitas", "Efisiensi modal kerja"],
+        durationMinutes: 90,
+      },
+      {
+        title: "Dari angka ke keputusan",
+        points: ["Membaca tren", "Pertanyaan untuk tim keuangan", "Latihan kasus"],
+        durationMinutes: 120,
+      },
+    ],
+    audience: [
+      { role: "Manajer non-keuangan", note: null },
+      { role: "Supervisor", note: "yang mengelola anggaran unit" },
+    ],
+    prerequisites: null,
+    facilities: null,
+    faq: [],
+    duration: "2 hari",
+    method: "OFFLINE",
+    types: ["PUBLIC", "IN_HOUSE"],
+    priceText: null,
+    showPrice: true,
+    categorySlug: "accounting",
+  },
+  {
+    slug: "negosiasi-b2b-yang-menjaga-hubungan",
+    title: "Negosiasi B2B yang Menjaga Hubungan",
+    summary: "Capai kesepakatan yang menguntungkan tanpa merusak hubungan jangka panjang dengan klien.",
+    description: paragraphs(
+      "Negosiasi bisnis jarang selesai dalam satu pertemuan. Pelatihan ini melatih persiapan, membaca kepentingan lawan bicara, dan menyusun konsesi yang terukur.",
+      "Sebagian besar waktu dipakai untuk simulasi berpasangan dengan skenario pengadaan dan perpanjangan kontrak.",
+    ),
+    outcomes: [
+      "Menyusun rencana negosiasi beserta batas dan alternatif terbaik",
+      "Menggali kepentingan di balik posisi klien",
+      "Merancang paket konsesi yang tetap menguntungkan",
+      "Menutup kesepakatan dan mendokumentasikannya dengan jelas",
+      "Menangani taktik tekanan tanpa terpancing",
+    ],
+    modules: [
+      {
+        title: "Persiapan sebelum bertemu",
+        points: ["Tujuan dan batas", "Alternatif terbaik", "Peta pemangku kepentingan"],
+        durationMinutes: 90,
+      },
+      {
+        title: "Di meja negosiasi",
+        points: ["Pertanyaan pembuka", "Membaca kepentingan", "Menyusun konsesi"],
+        durationMinutes: 150,
+      },
+      {
+        title: "Simulasi dan evaluasi",
+        points: ["Skenario pengadaan", "Skenario perpanjangan kontrak", "Umpan balik terstruktur"],
+        durationMinutes: 150,
+      },
+    ],
+    audience: [
+      { role: "Account manager", note: null },
+      { role: "Tim penjualan B2B", note: null },
+      { role: "Staf pengadaan", note: "yang bernegosiasi dengan vendor" },
+    ],
+    prerequisites: null,
+    facilities: ["Modul materi digital", "Lembar persiapan negosiasi", "Sertifikat keikutsertaan"],
+    faq: [],
+    duration: "2 hari",
+    method: "OFFLINE",
+    types: ["PUBLIC", "IN_HOUSE"],
+    priceText: "Rp3.900.000 per peserta",
+    showPrice: true,
+    categorySlug: "negosiasi",
+  },
+  {
+    slug: "dasar-k3-di-tempat-kerja",
+    title: "Dasar K3 di Tempat Kerja",
+    summary: "Kenali bahaya di sekitar area kerja dan bangun kebiasaan aman yang dijalankan bersama.",
+    description: paragraphs(
+      "Pelatihan pengantar keselamatan dan kesehatan kerja untuk semua level karyawan. Peserta belajar mengenali bahaya, menilai risiko sederhana, dan tahu apa yang harus dilakukan saat terjadi insiden.",
+    ),
+    outcomes: [
+      "Mengidentifikasi bahaya umum di area kerja",
+      "Menilai risiko dengan matriks sederhana",
+      "Memilih alat pelindung diri yang sesuai",
+      "Melaporkan insiden dan nyaris celaka dengan benar",
+    ],
+    modules: [
+      {
+        title: "Mengapa K3 penting",
+        points: ["Kewajiban dan tanggung jawab", "Biaya kecelakaan kerja"],
+        durationMinutes: 60,
+      },
+      {
+        title: "Bahaya dan risiko",
+        points: ["Jenis bahaya", "Matriks risiko", "Hierarki pengendalian"],
+        durationMinutes: 120,
+      },
+      {
+        title: "Tanggap darurat",
+        points: ["Prosedur evakuasi", "Pelaporan insiden", "Latihan singkat"],
+        durationMinutes: 90,
+      },
+    ],
+    audience: [
+      { role: "Karyawan baru", note: null },
+      { role: "Staf operasional", note: null },
+      { role: "Koordinator area", note: "yang ditunjuk sebagai petugas K3" },
+    ],
+    prerequisites: null,
+    facilities: null,
+    faq: [],
+    duration: "1 hari",
+    method: "OFFLINE",
+    types: ["IN_HOUSE"],
+    priceText: null,
+    showPrice: false,
+    categorySlug: "health-safety-environment",
+  },
+  {
+    slug: "analisis-data-dengan-spreadsheet",
+    title: "Analisis Data dengan Spreadsheet",
+    summary: "Olah data operasional jadi ringkasan dan grafik yang siap dipresentasikan.",
+    description: paragraphs(
+      "Kelas praktik untuk pekerja kantor yang setiap minggu menyusun laporan dari data mentah. Peserta belajar merapikan data, merangkum dengan tabel pivot, dan membuat grafik yang mudah dibaca.",
+    ),
+    outcomes: [
+      "Merapikan data mentah agar siap dianalisis",
+      "Merangkum data dengan tabel pivot",
+      "Memakai fungsi pencarian dan logika yang paling sering dibutuhkan",
+      "Membuat grafik yang jelas untuk laporan rutin",
+      "Menyusun dashboard satu halaman",
+    ],
+    modules: [
+      {
+        title: "Menyiapkan data",
+        points: ["Format tabel", "Membersihkan duplikat", "Validasi data"],
+        durationMinutes: 90,
+      },
+      {
+        title: "Merangkum dan mencari",
+        points: ["Tabel pivot", "Fungsi pencarian", "Fungsi logika"],
+        durationMinutes: 120,
+      },
+      {
+        title: "Menyajikan hasil",
+        points: ["Memilih jenis grafik", "Dashboard satu halaman"],
+        durationMinutes: 90,
+      },
+    ],
+    audience: [
+      { role: "Staf administrasi", note: null },
+      { role: "Analis junior", note: null },
+      { role: "Supervisor", note: "yang menyusun laporan mingguan" },
+    ],
+    prerequisites: "Terbiasa memakai spreadsheet untuk input data.",
+    facilities: null,
+    faq: [
+      {
+        q: "Aplikasi spreadsheet apa yang dipakai?",
+        a: "Materi berlaku untuk aplikasi spreadsheet umum. Peserta membawa laptop dengan aplikasi yang biasa dipakai di kantor.",
+      },
+    ],
+    duration: "2 hari",
+    method: "ONLINE",
+    types: ["PUBLIC"],
+    priceText: "Rp2.750.000 per peserta",
+    showPrice: true,
+    categorySlug: "information-technology",
+  },
+  {
+    slug: "menangani-keluhan-pelanggan-dengan-tenang",
+    title: "Menangani Keluhan Pelanggan dengan Tenang",
+    summary: "Ubah keluhan jadi kesempatan memperbaiki layanan tanpa kehilangan kendali percakapan.",
+    description: paragraphs(
+      "Pelatihan untuk tim garis depan yang setiap hari menghadapi pelanggan kecewa, baik tatap muka, telepon, maupun chat. Peserta berlatih alur penanganan keluhan yang konsisten dan bahasa yang menenangkan.",
+    ),
+    outcomes: [
+      "Menerapkan alur penanganan keluhan yang konsisten",
+      "Mendengarkan aktif dan merumuskan ulang masalah pelanggan",
+      "Memilih kata yang menenangkan di lisan dan tulisan",
+      "Menentukan kapan perlu eskalasi",
+    ],
+    modules: [
+      {
+        title: "Memahami pelanggan yang kecewa",
+        points: ["Sumber keluhan", "Emosi dan ekspektasi"],
+        durationMinutes: 60,
+      },
+      {
+        title: "Alur penanganan keluhan",
+        points: ["Mendengarkan", "Mengakui", "Menawarkan solusi", "Menindaklanjuti"],
+        durationMinutes: 120,
+      },
+      {
+        title: "Latihan per kanal",
+        points: ["Tatap muka", "Telepon", "Chat dan email"],
+        durationMinutes: 120,
+      },
+    ],
+    audience: [
+      { role: "Customer service", note: null },
+      { role: "Front office", note: null },
+      { role: "Team leader layanan", note: null },
+    ],
+    prerequisites: null,
+    facilities: null,
+    faq: [],
+    duration: "1 hari",
+    method: "HYBRID",
+    types: ["PUBLIC", "IN_HOUSE"],
+    priceText: null,
+    showPrice: false,
+    categorySlug: "customer-services",
+  },
+  {
+    slug: "audit-internal-berbasis-risiko",
+    title: "Audit Internal Berbasis Risiko",
+    summary: "Susun rencana audit yang fokus pada area paling berisiko, bukan sekadar mengulang daftar periksa tahun lalu.",
+    description: paragraphs(
+      "Waktu auditor selalu terbatas. Pelatihan ini membantu tim audit internal memetakan risiko unit kerja, menentukan prioritas, dan menyusun program audit yang hasilnya benar-benar dipakai manajemen.",
+      "Peserta berlatih dari studi kasus: menilai pengendalian, mengumpulkan bukti, sampai menulis temuan dan rekomendasi yang jelas.",
+    ),
+    outcomes: [
+      "Memetakan risiko dan menyusun rencana audit tahunan",
+      "Menilai rancangan dan efektivitas pengendalian internal",
+      "Mengumpulkan bukti audit yang cukup dan relevan",
+      "Menulis temuan dengan format kondisi, kriteria, sebab, dan akibat",
+    ],
+    modules: [
+      { title: "Kerangka audit berbasis risiko", points: ["Risk universe", "Penilaian risiko inheren dan residual", "Prioritas audit"], durationMinutes: 120 },
+      { title: "Pelaksanaan audit", points: ["Program kerja audit", "Teknik sampling", "Kertas kerja"], durationMinutes: 150 },
+      { title: "Pelaporan dan tindak lanjut", points: ["Menyusun temuan", "Rekomendasi yang bisa dijalankan", "Pemantauan tindak lanjut"], durationMinutes: 120 },
+    ],
+    audience: [
+      { role: "Auditor internal", note: null },
+      { role: "Staf SPI dan kepatuhan", note: null },
+      { role: "Manajer risiko", note: "yang bekerja sama dengan fungsi audit" },
+    ],
+    prerequisites: "Memahami dasar pengendalian internal.",
+    facilities: null,
+    faq: [{ q: "Apakah materi mengacu ke standar tertentu?", a: "Materi mengacu pada praktik audit internal yang umum dipakai, lalu disesuaikan dengan contoh dari peserta." }],
+    duration: "3 hari",
+    method: "OFFLINE",
+    types: ["PUBLIC", "IN_HOUSE"],
+    priceText: "Rp5.500.000 per peserta",
+    showPrice: true,
+    categorySlug: "audit",
+  },
+  {
+    slug: "perencanaan-preventive-maintenance",
+    title: "Perencanaan Preventive Maintenance",
+    summary: "Kurangi kerusakan mendadak dengan jadwal perawatan yang disusun dari data riwayat mesin.",
+    description: paragraphs(
+      "Perawatan yang baik dimulai dari data. Peserta belajar mengelompokkan aset menurut tingkat kekritisannya, menentukan interval perawatan, dan menyusun jadwal yang realistis bagi tim di lapangan.",
+      "Pelatihan ditutup dengan latihan menghitung indikator keandalan sederhana untuk memantau hasilnya.",
+    ),
+    outcomes: [
+      "Menyusun daftar aset beserta tingkat kekritisannya",
+      "Menentukan jenis dan interval perawatan per aset",
+      "Membuat jadwal preventive maintenance mingguan dan bulanan",
+      "Memantau MTBF dan MTTR untuk evaluasi",
+    ],
+    modules: [
+      { title: "Dasar strategi perawatan", points: ["Corrective, preventive, predictive", "Analisis kekritisan aset"], durationMinutes: 120 },
+      { title: "Menyusun rencana perawatan", points: ["Interval berbasis waktu dan pemakaian", "Checklist kerja", "Suku cadang"], durationMinutes: 150 },
+      { title: "Evaluasi keandalan", points: ["MTBF dan MTTR", "Analisis akar masalah kerusakan berulang"], durationMinutes: 120 },
+    ],
+    audience: [
+      { role: "Supervisor maintenance", note: null },
+      { role: "Planner perawatan", note: null },
+      { role: "Teknisi senior", note: null },
+    ],
+    prerequisites: null,
+    facilities: null,
+    faq: [{ q: "Apakah perlu membawa data mesin?", a: "Disarankan membawa daftar mesin dan catatan kerusakan sederhana supaya latihan lebih dekat dengan kondisi pabrik." }],
+    duration: "3 hari",
+    method: "OFFLINE",
+    types: ["PUBLIC", "IN_HOUSE"],
+    priceText: "Rp5.200.000 per peserta",
+    showPrice: true,
+    categorySlug: "maintenance",
+  },
+  {
+    slug: "dasar-sistem-kelistrikan-industri",
+    title: "Dasar Sistem Kelistrikan Industri",
+    summary: "Pahami distribusi daya, proteksi, dan pemeriksaan rutin panel listrik di lingkungan pabrik.",
+    description: paragraphs(
+      "Pelatihan ini menjembatani teori listrik dengan kondisi nyata di pabrik: dari gardu, panel distribusi, sampai beban motor.",
+      "Setiap sesi memuat aspek keselamatan, karena sebagian besar kecelakaan listrik terjadi saat pekerjaan rutin.",
+    ),
+    outcomes: [
+      "Membaca diagram satu garis sistem distribusi",
+      "Memahami fungsi peralatan proteksi",
+      "Melakukan pemeriksaan rutin panel dengan aman",
+      "Menerapkan prosedur isolasi energi sebelum bekerja",
+    ],
+    modules: [
+      { title: "Distribusi daya industri", points: ["Trafo dan panel", "Diagram satu garis"], durationMinutes: 120 },
+      { title: "Proteksi dan pengukuran", points: ["MCB, MCCB, relay", "Alat ukur dan cara pakainya"], durationMinutes: 120 },
+      { title: "Keselamatan kerja listrik", points: ["Lock out tag out", "Alat pelindung diri"], durationMinutes: 90 },
+    ],
+    audience: [
+      { role: "Teknisi listrik", note: null },
+      { role: "Staf maintenance", note: "yang mulai menangani panel" },
+    ],
+    prerequisites: "Memahami dasar arus, tegangan, dan daya.",
+    facilities: null,
+    faq: [{ q: "Apakah ada praktik?", a: "Pada kelas offline tersedia sesi praktik dengan panel peraga. Kelas online memakai simulasi dan video." }],
+    duration: "2 hari",
+    method: "OFFLINE",
+    types: ["PUBLIC", "IN_HOUSE"],
+    priceText: "Rp4.500.000 per peserta",
+    showPrice: true,
+    categorySlug: "electrical",
+  },
+  {
+    slug: "manajemen-pengadaan-barang-dan-jasa",
+    title: "Manajemen Pengadaan Barang dan Jasa",
+    summary: "Kelola proses pengadaan dari kebutuhan, pemilihan pemasok, sampai evaluasi kinerja kontrak.",
+    description: paragraphs(
+      "Pengadaan yang rapi menghemat biaya sekaligus mengurangi risiko sengketa. Pelatihan ini membahas siklus pengadaan secara utuh dengan contoh dokumen yang bisa langsung dipakai.",
+    ),
+    outcomes: [
+      "Menyusun spesifikasi kebutuhan yang jelas",
+      "Membandingkan penawaran dengan kriteria yang adil",
+      "Menyusun poin penting dalam kontrak pengadaan",
+      "Mengevaluasi kinerja pemasok secara berkala",
+    ],
+    modules: [
+      { title: "Siklus pengadaan", points: ["Perencanaan kebutuhan", "Metode pemilihan pemasok"], durationMinutes: 120 },
+      { title: "Evaluasi dan kontrak", points: ["Matriks evaluasi penawaran", "Klausul kontrak penting"], durationMinutes: 150 },
+      { title: "Kinerja pemasok", points: ["Indikator kinerja", "Penanganan wanprestasi"], durationMinutes: 90 },
+    ],
+    audience: [
+      { role: "Staf procurement", note: null },
+      { role: "Kepala bagian pembelian", note: null },
+    ],
+    prerequisites: null,
+    facilities: null,
+    faq: [{ q: "Apakah membahas pengadaan pemerintah?", a: "Fokus utama pengadaan di perusahaan. Untuk instansi pemerintah, materi bisa disesuaikan dalam kelas in-house." }],
+    duration: "2 hari",
+    method: "HYBRID",
+    types: ["PUBLIC", "IN_HOUSE"],
+    priceText: "Rp4.300.000 per peserta",
+    showPrice: true,
+    categorySlug: "procurement",
+  },
+  {
+    slug: "kepemimpinan-untuk-supervisor-baru",
+    title: "Kepemimpinan untuk Supervisor Baru",
+    summary: "Bekal praktis bagi staf yang baru naik menjadi supervisor: memimpin bekas rekan kerja, membagi tugas, dan memberi umpan balik.",
+    description: paragraphs(
+      "Bulan-bulan pertama sebagai supervisor sering terasa paling berat. Pelatihan ini membahas situasi yang paling sering muncul dan cara menghadapinya dengan percaya diri.",
+      "Peserta berlatih lewat bermain peran: rapat pembagian tugas, percakapan umpan balik, dan menangani anggota tim yang kinerjanya menurun.",
+    ),
+    outcomes: [
+      "Memahami peran dan tanggung jawab supervisor",
+      "Membagi tugas sesuai kemampuan anggota tim",
+      "Memberi umpan balik yang spesifik dan membangun",
+      "Menangani konflik kecil sebelum membesar",
+    ],
+    modules: [
+      { title: "Dari staf menjadi pemimpin", points: ["Perubahan peran", "Membangun kepercayaan"], durationMinutes: 90 },
+      { title: "Mengelola pekerjaan tim", points: ["Delegasi", "Rapat singkat yang efektif"], durationMinutes: 120 },
+      { title: "Umpan balik dan coaching", points: ["Model umpan balik", "Percakapan coaching singkat"], durationMinutes: 120 },
+    ],
+    audience: [
+      { role: "Supervisor baru", note: "masa jabatan kurang dari 2 tahun" },
+      { role: "Calon supervisor", note: null },
+    ],
+    prerequisites: null,
+    facilities: null,
+    faq: [{ q: "Apakah cocok untuk semua industri?", a: "Ya. Studi kasus diambil dari kantor, pabrik, dan layanan pelanggan." }],
+    duration: "2 hari",
+    method: "OFFLINE",
+    types: ["PUBLIC", "IN_HOUSE"],
+    priceText: "Rp3.900.000 per peserta",
+    showPrice: true,
+    categorySlug: "leadership",
+  },
+  {
+    slug: "pengelolaan-arsip-dan-administrasi-kantor",
+    title: "Pengelolaan Arsip dan Administrasi Kantor",
+    summary: "Atur arsip fisik dan digital supaya dokumen penting mudah dicari, aman, dan siap saat diaudit.",
+    description: paragraphs(
+      "Dokumen yang tercecer membuang waktu dan membuka risiko. Peserta belajar menyusun klasifikasi arsip, aturan penamaan file, dan jadwal retensi yang sederhana.",
+    ),
+    outcomes: [
+      "Menyusun klasifikasi dan kode arsip",
+      "Menerapkan aturan penamaan file digital",
+      "Menentukan jadwal retensi dan pemusnahan arsip",
+      "Menyiapkan dokumen untuk keperluan audit",
+    ],
+    modules: [
+      { title: "Dasar kearsipan", points: ["Arsip aktif dan inaktif", "Klasifikasi"], durationMinutes: 90 },
+      { title: "Arsip digital", points: ["Struktur folder", "Penamaan file", "Hak akses"], durationMinutes: 120 },
+      { title: "Retensi dan audit", points: ["Jadwal retensi", "Berita acara pemusnahan"], durationMinutes: 90 },
+    ],
+    audience: [
+      { role: "Staf administrasi", note: null },
+      { role: "Sekretaris", note: null },
+      { role: "Petugas arsip", note: null },
+    ],
+    prerequisites: null,
+    facilities: null,
+    faq: [{ q: "Apakah membahas aplikasi tertentu?", a: "Prinsipnya bisa dipakai di aplikasi apa pun. Contoh latihan memakai folder bersama dan spreadsheet." }],
+    duration: "1 hari",
+    method: "ONLINE",
+    types: ["PUBLIC", "IN_HOUSE"],
+    priceText: "Rp1.950.000 per peserta",
+    showPrice: true,
+    categorySlug: "administrative",
+  },
+];
+
+// Id tetap supaya jadwal contoh bisa di-upsert (Schedule tidak punya kolom unik lain).
+// Seri 01xx untuk format konten Fase 2 revisi; id seri lama tidak dipakai lagi.
+export const schedules = [
+  {
+    id: "0199c3a0-0000-7000-8000-000000000101",
+    trainingSlug: "menyusun-kpi-tim-yang-bisa-diukur",
+    startDate: "2026-11-17",
+    endDate: "2026-11-18",
+    city: "Jakarta",
+    venue: "Ruang pelatihan, Jakarta Selatan",
+    method: "OFFLINE" as const,
+    price: 4_200_000,
+    status: "OPEN" as const,
+  },
+  {
+    id: "0199c3a0-0000-7000-8000-000000000102",
+    trainingSlug: "menyusun-kpi-tim-yang-bisa-diukur",
+    startDate: "2026-12-08",
+    endDate: "2026-12-09",
+    city: null,
+    venue: "Zoom",
+    method: "ONLINE" as const,
+    price: 3_600_000,
+    status: "OPEN" as const,
+  },
+  {
+    id: "0199c3a0-0000-7000-8000-000000000103",
+    trainingSlug: "negosiasi-b2b-yang-menjaga-hubungan",
+    startDate: "2026-11-24",
+    endDate: "2026-11-25",
+    city: "Surabaya",
+    venue: "Hotel mitra, Surabaya Pusat",
+    method: "OFFLINE" as const,
+    price: 3_900_000,
+    status: "FULL" as const,
+  },
+  {
+    id: "0199c3a0-0000-7000-8000-000000000104",
+    trainingSlug: "analisis-data-dengan-spreadsheet",
+    startDate: "2026-11-11",
+    endDate: "2026-11-12",
+    city: null,
+    venue: "Zoom",
+    method: "ONLINE" as const,
+    price: 2_750_000,
+    status: "OPEN" as const,
+  },
+  {
+    id: "0199c3a0-0000-7000-8000-000000000105",
+    trainingSlug: "audit-internal-berbasis-risiko",
+    startDate: "2026-11-03",
+    endDate: "2026-11-05",
+    city: "Jakarta",
+    venue: "Ruang pelatihan, Jakarta Pusat",
+    method: "OFFLINE" as const,
+    price: 5_500_000,
+    status: "OPEN" as const,
+  },
+  {
+    id: "0199c3a0-0000-7000-8000-000000000106",
+    trainingSlug: "perencanaan-preventive-maintenance",
+    startDate: "2026-11-10",
+    endDate: "2026-11-12",
+    city: "Bandung",
+    venue: "Hotel mitra, Bandung",
+    method: "OFFLINE" as const,
+    price: 5_200_000,
+    status: "OPEN" as const,
+  },
+  {
+    id: "0199c3a0-0000-7000-8000-000000000107",
+    trainingSlug: "dasar-sistem-kelistrikan-industri",
+    startDate: "2026-12-01",
+    endDate: "2026-12-02",
+    city: "Surabaya",
+    venue: "Ruang pelatihan, Surabaya",
+    method: "OFFLINE" as const,
+    price: 4_500_000,
+    status: "OPEN" as const,
+  },
+  {
+    id: "0199c3a0-0000-7000-8000-000000000108",
+    trainingSlug: "kepemimpinan-untuk-supervisor-baru",
+    startDate: "2026-11-19",
+    endDate: "2026-11-20",
+    city: "Yogyakarta",
+    venue: "Hotel mitra, Yogyakarta",
+    method: "OFFLINE" as const,
+    price: 3_900_000,
+    status: "OPEN" as const,
+  },
+];
+
