@@ -1,4 +1,6 @@
 // Seed data placeholder untuk development. Idempotent: aman dijalankan berulang.
+// `prisma db seed -- --minimal` (setup e2e): hanya admin, pengaturan, menu, katalog, dan halaman
+// profil; konten beranda & entitas Fase 3 dibuat sendiri oleh test.
 // Hanya MEMBUAT data yang belum ada; data yang sudah diubah admin tidak pernah ditimpa
 // (service `migrate` di compose menjalankan seed setiap `docker compose up`).
 // Semua teks di sini ditulis sendiri, bukan salinan dari website referensi.
@@ -7,6 +9,7 @@ import { getDb } from "../src/lib/db";
 import { parseSeedEnv } from "../src/lib/env";
 import { hashPassword } from "../src/lib/password";
 import { pageBlocksSchema } from "../src/lib/validators/page-blocks";
+import { PRIVACY_SLUG, seedContent, TERMS_SLUG } from "./seed-content";
 
 const db = getDb();
 
@@ -92,11 +95,15 @@ const settings: { key: string; value: Prisma.InputJsonValue }[] = [
   },
 ];
 
+// Menu default. Kontak dan Evaluasi menyusul saat halamannya ada (Fase 4).
 const navItems: { location: "HEADER" | "FOOTER"; label: string; href: string }[] = [
+  { location: "HEADER", label: "Beranda", href: "/" },
+  { location: "HEADER", label: "Profil", href: "/profil" },
+  { location: "HEADER", label: "Layanan", href: "/layanan" },
   { location: "HEADER", label: "Pelatihan", href: "/pelatihan" },
   { location: "HEADER", label: "Jadwal", href: "/jadwal" },
-  { location: "FOOTER", label: "Katalog pelatihan", href: "/pelatihan" },
-  { location: "FOOTER", label: "Jadwal training", href: "/jadwal" },
+  { location: "FOOTER", label: "Syarat & Ketentuan", href: `/${TERMS_SLUG}` },
+  { location: "FOOTER", label: "Kebijakan Privasi", href: `/${PRIVACY_SLUG}` },
 ];
 
 const categories = [
@@ -499,6 +506,7 @@ const schedules = [
 ];
 
 const PUBLISHED_AT = new Date("2026-10-01T00:00:00.000Z");
+const MINIMAL = process.argv.includes("--minimal");
 
 // Admin pertama dari ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME. Hanya dibuat kalau email belum ada;
 // password admin yang sudah ada tidak pernah ditimpa.
@@ -653,6 +661,7 @@ async function main() {
   if (catalogEmpty) await seedCatalog();
 
   const profileResult = await seedProfilePage();
+  const contentResult = MINIMAL ? null : await seedContent(PUBLISHED_AT);
 
   const catalogResult = catalogEmpty
     ? `dibuat (${categories.length} kategori, ${trainings.length} pelatihan, ${schedules.length} jadwal)`
@@ -661,6 +670,13 @@ async function main() {
     `Seed selesai: ${settings.length} key pengaturan dicek (yang ada tidak ditimpa), katalog contoh ${catalogResult}, ` +
       `halaman profil ${profileResult === "created" ? "dibuat" : "sudah ada"}, ` +
       `admin ${adminResult === "created" ? "dibuat" : "sudah ada"}.`,
+  );
+  console.info(
+    contentResult
+      ? `Konten contoh: ${Object.entries(contentResult)
+          .map(([name, value]) => `${name} ${value === "dilewati" ? "dilewati (sudah berisi)" : `${value} dibuat`}`)
+          .join(", ")}.`
+      : "Mode minimal: konten contoh Fase 3 dilewati.",
   );
 }
 
