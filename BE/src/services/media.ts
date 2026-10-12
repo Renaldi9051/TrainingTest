@@ -70,6 +70,18 @@ export function toMediaDto(media: Media): MediaDto {
   };
 }
 
+// Media relasi (logo, foto, gambar) yang masih aktif sebagai DTO; null kalau kosong/di Sampah.
+export function activeMediaDto(media: Media | null | undefined): MediaDto | null {
+  return media && media.deletedAt === null ? toMediaDto(media) : null;
+}
+
+// URL thumbnail (varian 320 kalau ada) untuk picker admin.
+export function thumbnailUrl(media: Media | null | undefined): string | null {
+  const dto = activeMediaDto(media);
+  if (!dto) return null;
+  return dto.variants?.["320"]?.url ?? dto.url;
+}
+
 // Gambar di respons publik: tanpa metadata admin (nama file asli, folder, ukuran file).
 export type PublicImage = Pick<MediaDto, "url" | "alt" | "width" | "height" | "mime" | "variants">;
 
@@ -272,7 +284,15 @@ export async function assertImageMedia(
   );
 }
 
-export type MediaRefCheck = { field: string; mediaId: string | null | undefined; kind: MediaKind };
+export type MediaRefCheck = {
+  field: string;
+  mediaId: string | null | undefined;
+  kind: MediaKind;
+  // Gambar yang tampil di publik tanpa teks pengganti lain wajib punya alt (PRD 6.3).
+  requireAlt?: boolean;
+};
+
+const ALT_REQUIRED_ERROR = "Gambar belum punya teks alt. Isi alt di media library dulu.";
 
 const MEDIA_KIND_ERROR: Record<MediaKind, string> = {
   image: "Gambar tidak ditemukan atau sudah dihapus.",
@@ -290,14 +310,15 @@ export async function assertMediaRefs(refs: MediaRefCheck[], db: MediaReader = g
   if (ids.length === 0) return;
   const found = await db.media.findMany({
     where: { id: { in: ids }, deletedAt: null },
-    select: { id: true, mime: true },
+    select: { id: true, mime: true, alt: true },
   });
-  const mimeById = new Map(found.map((row) => [row.id, row.mime]));
+  const byId = new Map(found.map((row) => [row.id, row]));
   const fields: Record<string, string[]> = {};
   for (const ref of refs) {
     if (!ref.mediaId) continue;
-    const mime = mimeById.get(ref.mediaId);
-    if (!mime || !matchesKind(mime, ref.kind)) fields[ref.field] = [MEDIA_KIND_ERROR[ref.kind]];
+    const media = byId.get(ref.mediaId);
+    if (!media || !matchesKind(media.mime, ref.kind)) fields[ref.field] = [MEDIA_KIND_ERROR[ref.kind]];
+    else if (ref.requireAlt && !media.alt?.trim()) fields[ref.field] = [ALT_REQUIRED_ERROR];
   }
   if (Object.keys(fields).length > 0) {
     throw new HttpError(422, "VALIDATION_ERROR", "Data tidak valid.", fields);
