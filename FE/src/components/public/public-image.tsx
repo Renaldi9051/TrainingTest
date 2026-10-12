@@ -8,6 +8,7 @@ type PublicImageProps = {
   className?: string;
   // Gambar foto di publik grayscale (DESIGN 2); hover-to-color diatur kartu lewat group-hover.
   grayscale?: boolean;
+  // Gambar utama di layar pertama (LCP): dimuat langsung dengan prioritas tinggi.
   priority?: boolean;
   fit?: "cover" | "contain";
 };
@@ -21,7 +22,9 @@ export function PublicImage({ image, sizes, className, grayscale = true, priorit
       alt={image.alt ?? ""}
       fill
       sizes={sizes}
-      priority={priority}
+      // Next 16: prop `priority` usang dan tidak lagi memberi fetchpriority; pakai eager + high.
+      loading={priority ? "eager" : undefined}
+      fetchPriority={priority ? "high" : undefined}
       unoptimized={image.mime === "image/svg+xml"}
       className={cn(
         "bg-bg-muted",
