@@ -18,6 +18,7 @@ import type {
 import type { ReorderInput, RestoreInput } from "@/lib/validators/common";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
+import { reorderResource } from "@/services/reorder";
 import { publicTrainingWhere } from "@/services/training-visibility";
 
 const ENTITY = "Category";
@@ -256,26 +257,9 @@ export async function restoreCategory(id: string, input: RestoreInput, userId: s
   return toDto(restored);
 }
 
-// Urutan semua kategori aktif. Daftar id harus lengkap.
+// Urutan semua kategori aktif. Daftar id harus lengkap (pola generik services/reorder.ts).
 export async function reorderCategories(input: ReorderInput, userId: string): Promise<void> {
-  const db = getDb();
-  const active = await db.category.findMany({ where: { deletedAt: null }, select: { id: true } });
-  const activeIds = new Set(active.map((row) => row.id));
-  if (activeIds.size !== input.ids.length || !input.ids.every((id) => activeIds.has(id))) {
-    throw new HttpError(422, "VALIDATION_ERROR", "Urutan harus berisi semua kategori aktif.", {
-      ids: ["Daftar kategori tidak lengkap atau berisi kategori yang sudah dihapus."],
-    });
-  }
-  await db.$transaction(async (tx) => {
-    for (const [order, id] of input.ids.entries()) {
-      await tx.category.update({ where: { id }, data: { order, updatedById: userId } });
-    }
-    await writeAudit(
-      { userId, action: AuditAction.REORDER, entity: ENTITY, diff: { ids: input.ids } },
-      tx,
-    );
-  });
-  await revalidateEntity({ entity: "CategoryOrder" });
+  await reorderResource("categories", input, userId);
 }
 
 // ===== Publik =====
