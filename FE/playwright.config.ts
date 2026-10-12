@@ -61,4 +61,6 @@ export default defineConfig({
   ],
   // Dijalankan setelah server siap: reset + seed training_e2e.
   globalSetup: "./e2e/global-setup.ts",
+  // Setelah semua test: hapus folder upload sementara server BE e2e.
+  globalTeardown: "./e2e/global-teardown.ts",
 });
