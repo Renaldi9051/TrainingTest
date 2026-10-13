@@ -115,9 +115,3 @@ export function whatsappServiceUrl(number: string, title: string): string {
   const message = `Halo, saya ingin konsultasi tentang layanan "${title}".`;
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
-
-// Sementara (sampai form inquiry Fase 4): permintaan penawaran in-house lewat WhatsApp.
-export function whatsappInHouseUrl(number: string, title: string): string {
-  const message = `Halo, kami ingin meminta penawaran pelatihan in-house "${title}" untuk tim kami. Mohon info selanjutnya.`;
-  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
-}

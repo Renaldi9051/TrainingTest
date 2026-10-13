@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PublicTrainingDetail } from "@/lib/api/types";
-import { courseJsonLd, scheduleEventJsonLd, whatsappInHouseUrl, whatsappTrainingUrl } from "@/lib/structured-data";
+import { courseJsonLd, scheduleEventJsonLd, whatsappTrainingUrl } from "@/lib/structured-data";
 
 const SITE = "https://contoh.id";
 
@@ -98,10 +98,5 @@ describe("whatsappTrainingUrl", () => {
     const url = new URL(whatsappTrainingUrl("6281200000000", "KPI & OKR"));
     expect(url.origin + url.pathname).toBe("https://wa.me/6281200000000");
     expect(url.searchParams.get("text")).toContain('"KPI & OKR"');
-  });
-
-  it("permintaan in-house berisi judul dan kata in-house", () => {
-    const text = new URL(whatsappInHouseUrl("6281200000000", "KPI")).searchParams.get("text") ?? "";
-    expect(text).toContain('in-house "KPI"');
   });
 });

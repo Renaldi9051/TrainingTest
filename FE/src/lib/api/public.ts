@@ -7,6 +7,7 @@ import type {
   PublicCatalogMeta,
   PublicCategory,
   PublicHome,
+  PublicMarketingContact,
   PublicMediaPartner,
   PublicNav,
   PublicPage,
@@ -35,6 +36,7 @@ export const Tag = {
   SERVICES: "services",
   PORTFOLIO: "portfolio",
   MEDIA_PARTNERS: "media-partners",
+  MARKETING: "marketing",
   category: (slug: string) => `category:${slug}`,
   training: (slug: string) => `training:${slug}`,
   page: (slug: string) => `page:${slug}`,
@@ -223,6 +225,14 @@ export async function getMediaPartners(): Promise<PublicMediaPartner[]> {
   cacheLife("content");
   cacheTag(Tag.MEDIA_PARTNERS);
   return getRequired<PublicMediaPartner[]>("/media-partners");
+}
+
+// Kontak marketing aktif (halaman /kontak, floating contact).
+export async function getMarketing(): Promise<PublicMarketingContact[]> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(Tag.MARKETING, Tag.MEDIA);
+  return getRequired<PublicMarketingContact[]>("/marketing");
 }
 
 export type PublicRedirect = { to: string; permanent: boolean };

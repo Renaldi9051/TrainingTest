@@ -69,7 +69,7 @@ export type InquiryInput = {
   company: string;
   email: string;
   phone: string;
-  trainingId: string | null;
+  trainingSlug: string | null;
   interest: string;
   message: string;
   source: InquirySource;

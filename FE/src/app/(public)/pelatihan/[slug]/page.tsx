@@ -12,6 +12,7 @@ import { RichTextHtml } from "@/components/public/rich-text-html";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { TrainingGrid } from "@/components/public/training-card";
 import { ReadingProgress } from "@/components/motion/reading-progress";
+import { InquiryDialog } from "@/components/public/inquiry-dialog";
 import { RollText } from "@/components/motion/roll-text";
 import { ScrollSpyToc } from "@/components/motion/scroll-spy-toc";
 import { ButtonArrow, buttonVariants, MAGNETIC } from "@/components/ui/button";
@@ -23,12 +24,8 @@ import type { PublicTrainingDetail } from "@/lib/api/types";
 import { getPublicEnv } from "@/lib/env";
 import { formatDateRange, formatRupiah } from "@/lib/format";
 import { METHOD_LABELS } from "@/lib/labels";
-import {
-  courseJsonLd,
-  scheduleEventJsonLd,
-  whatsappInHouseUrl,
-  whatsappTrainingUrl,
-} from "@/lib/structured-data";
+import { privacyPolicyHref } from "@/lib/privacy";
+import { courseJsonLd, scheduleEventJsonLd, whatsappTrainingUrl } from "@/lib/structured-data";
 import { cn } from "@/lib/utils";
 
 // Seluruh halaman harus statis (dari cache): slug yang belum di-prerender ditunggu sampai render
@@ -87,6 +84,7 @@ export async function generateMetadata({ params }: PageProps<"/pelatihan/[slug]"
 
 const PRICE_HIDDEN = "Hubungi marketing";
 const SCHEDULE_FLEXIBLE = "Jadwal menyesuaikan";
+const IN_HOUSE_LABEL = "Minta penawaran in-house";
 
 // Harga sesi termurah -> teks investasi -> "Hubungi marketing" (diputuskan BE lewat `investment`).
 function investmentText(training: PublicTrainingDetail): string {
@@ -106,7 +104,7 @@ type Section = { id: string; label: string; content: ReactNode };
 
 export default async function TrainingPage({ params }: PageProps<"/pelatihan/[slug]">) {
   const { slug } = await params;
-  const [loaded, settings] = await Promise.all([loadTraining(slug), getSettings()]);
+  const [loaded, settings, privacyHref] = await Promise.all([loadTraining(slug), getSettings(), privacyPolicyHref()]);
   if (!loaded) notFound();
   const { training, preview } = loaded;
   const siteUrl = getPublicEnv().NEXT_PUBLIC_SITE_URL;
@@ -114,10 +112,18 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
   const cta = whatsappNumber
     ? {
         chat: whatsappTrainingUrl(whatsappNumber, training.title),
-        // Sementara via WhatsApp; diganti form inquiry di Fase 4 (BACKLOG).
-        inHouse: whatsappInHouseUrl(whatsappNumber, training.title),
       }
     : null;
+  // Form inquiry (dialog) dengan pelatihan ini terisi; tombol utama kalau WhatsApp belum diatur.
+  const inquiryButton = (
+    <InquiryDialog
+      label={IN_HOUSE_LABEL}
+      training={{ slug: training.slug, title: training.title }}
+      siteName={settings.identity.name}
+      privacyHref={privacyHref}
+      variant={cta ? "secondary" : "primary"}
+    />
+  );
 
   // Bagian kosong tidak dirender dan tidak masuk daftar isi. #jadwal selalu tampil.
   const candidates: (Section | null)[] = [
@@ -131,7 +137,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
     training.audience.length > 0 || training.prerequisites
       ? { id: "peserta", label: "Peserta", content: <AudienceList training={training} /> }
       : null,
-    { id: "jadwal", label: "Jadwal & investasi", content: <ScheduleSection training={training} /> },
+    { id: "jadwal", label: "Jadwal & investasi", content: <ScheduleSection training={training} inquiry={inquiryButton} /> },
     training.facilities.length > 0
       ? { id: "fasilitas", label: "Fasilitas", content: <FacilityList facilities={training.facilities} /> }
       : null,
@@ -247,8 +253,8 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
                 <Eyebrow>Investasi</Eyebrow>
                 <p className="mt-2 text-body font-medium text-fg-strong">{investmentText(training)}</p>
               </div>
-              {cta ? (
-                <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3">
+                {cta ? (
                   <a
                     href={cta.chat}
                     target="_blank"
@@ -260,17 +266,9 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
                     <RollText>Chat WA</RollText>
                     <ButtonArrow />
                   </a>
-                  <a
-                    href={cta.inHouse}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={buttonVariants({ variant: "secondary", size: "lg" })}
-                    {...MAGNETIC}
-                  >
-                    <RollText>Minta penawaran in-house</RollText>
-                  </a>
-                </div>
-              ) : null}
+                ) : null}
+                {inquiryButton}
+              </div>
             </div>
           </aside>
         </Container>
@@ -413,7 +411,7 @@ function AudienceList({ training }: { training: PublicTrainingDetail }) {
   );
 }
 
-function ScheduleSection({ training }: { training: PublicTrainingDetail }) {
+function ScheduleSection({ training, inquiry }: { training: PublicTrainingDetail; inquiry: ReactNode }) {
   return (
     <div className="space-y-6">
       <p className="text-body text-fg">
@@ -427,6 +425,8 @@ function ScheduleSection({ training }: { training: PublicTrainingDetail }) {
         </p>
       )}
       {training.inHouseNote ? <p className="max-w-[65ch] text-small text-fg-muted">{training.inHouseNote}</p> : null}
+      {/* Layar kecil: panel samping tidak tampil, jadi tombol penawaran in-house ada di sini. */}
+      <div className="lg:hidden">{inquiry}</div>
       <Link href="/jadwal" className={`${buttonVariants({ variant: "ghost" })} gap-2`}>
         Semua jadwal pelatihan
         <ButtonArrow />
