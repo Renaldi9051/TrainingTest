@@ -15,7 +15,15 @@ import { Textarea } from "@/components/admin/ui/textarea";
 import { useScopedId } from "@/hooks/use-scoped-id";
 import { categoryOptionSource, resourceOptionSource, type OptionSource } from "@/lib/admin-resources";
 import type { Cta, HomeSectionType, Media } from "@/lib/api/types";
-import { ROTATING_WORDS_MAX, SELECTION_LIMITS, STATS_MAX, UPCOMING_LIMIT_MAX, type SelectionSectionType } from "@/lib/home-sections";
+import {
+  MARQUEE_ITEMS_MAX,
+  MARQUEE_ITEMS_MIN,
+  ROTATING_WORDS_MAX,
+  SELECTION_LIMITS,
+  STATS_MAX,
+  UPCOMING_LIMIT_MAX,
+  type SelectionSectionType,
+} from "@/lib/home-sections";
 
 // Nilai form builder: isi section berbeda per type, jadi field diakses lewat path "content.<field>".
 // Path yang sama dipakai error validasi form maupun error BE (content.items.1.label).
@@ -321,7 +329,7 @@ export function SectionFields({ type, media }: { type: HomeSectionType; media: R
             <div className="space-y-2">
               <p className="text-sm font-medium">Kata kunci berganti</p>
               <p className="text-small text-fg-muted">
-                Opsional, maks {ROTATING_WORDS_MAX}. Kata pertama tampil sebagai bagian headline; animasinya menyusul.
+                Opsional, maks {ROTATING_WORDS_MAX}. Kata pertama bagian dari headline; kata lain bergantian satu putaran (selesai maks. 5 detik), lalu kembali ke kata pertama.
               </p>
               <StringList
                 name="content.rotatingWords"
@@ -455,5 +463,70 @@ export function SectionFields({ type, media }: { type: HomeSectionType; media: R
           </Fieldset>
         </div>
       );
+    case "MARQUEE":
+      return <MarqueeFields />;
   }
+}
+
+// Teks berjalan: teks sendiri atau judul layanan tayang (sesuai urutan modul Layanan).
+function MarqueeFields() {
+  const sid = useScopedId("marquee");
+  const { control } = useFormContext<SectionFormValues>();
+  const source = useWatch({ control, name: "content.source" }) as "custom" | "services";
+  return (
+    <div className="space-y-6">
+      <Fieldset title="Isi" description="Teks besar bergerak mengikuti scroll, solid dan outline berselang-seling.">
+        <Controller
+          control={control}
+          name="content.source"
+          render={({ field }) => (
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Sumber teks</legend>
+              {(
+                [
+                  ["services", "Ambil dari judul layanan", "Judul layanan tayang sesuai urutan modul Layanan; ikut berubah saat layanan diubah."],
+                  ["custom", "Teks sendiri", `${MARQUEE_ITEMS_MIN}-${MARQUEE_ITEMS_MAX} teks pendek, mis. BNSP, In House, Public Training.`],
+                ] as const
+              ).map(([value, label, help]) => (
+                <label key={value} className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 has-checked:border-fg-strong">
+                  <input
+                    type="radio"
+                    name={sid("source")}
+                    checked={field.value === value}
+                    onChange={() => field.onChange(value)}
+                    className="mt-1 accent-[var(--fg-strong)]"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">{label}</span>
+                    <span className="block text-small text-fg-muted">{help}</span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          )}
+        />
+        {source === "custom" ? (
+          <StringList
+            name="content.items"
+            itemName="Teks"
+            addLabel="Tambah teks"
+            max={MARQUEE_ITEMS_MAX}
+            itemMax={40}
+            placeholder="Mis. Sertifikasi BNSP"
+          />
+        ) : (
+          <NumberField
+            name="content.limit"
+            label="Jumlah layanan"
+            min={MARQUEE_ITEMS_MIN}
+            max={MARQUEE_ITEMS_MAX}
+            description={`${MARQUEE_ITEMS_MIN}-${MARQUEE_ITEMS_MAX}.`}
+          />
+        )}
+      </Fieldset>
+      <Fieldset title="Aksesibilitas">
+        <TextField name="content.heading" label="Judul untuk pembaca layar" description="Tidak tampil di layar, mis. Bidang layanan." />
+      </Fieldset>
+    </div>
+  );
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Reveal } from "@/components/motion/reveal";
 import { CountUp, HeroWords, LineDraw } from "@/components/motion/reveal-parts";
+import { VelocityMarquee } from "@/components/motion/velocity-marquee";
 import { ChipLink } from "@/components/public/chip-link";
 import { ClientLogos } from "@/components/public/client-logos";
 import { PublicImage } from "@/components/public/public-image";
@@ -31,6 +32,7 @@ const FALLBACK_HEADINGS: Record<PublicHomeSection["type"], string> = {
   VISION_MISSION: "Visi dan misi",
   TESTIMONIALS: "Testimoni",
   CTA: "Hubungi kami",
+  MARQUEE: "Bidang layanan",
 };
 
 const HERO_IMAGE_SIZES = "(min-width: 1280px) 1232px, calc(100vw - 32px)";
@@ -147,6 +149,40 @@ function StatsSection({ section }: { section: Extract<PublicHomeSection, { type:
   );
 }
 
+// Teks besar berjalan mengikuti scroll (VelocityMarquee). Solid dan outline berselang-seling; salinan
+// kedua membalik pola supaya setiap item pernah tampil solid (juga kalau jumlahnya genap). Pembaca
+// layar: h2 sr-only + daftar teks sekali (salinan kedua aria-hidden). Reduced motion: teks dibungkus
+// ke beberapa baris, tanpa gerak.
+function MarqueeSection({ section }: { section: Extract<PublicHomeSection, { type: "MARQUEE" }> }) {
+  const titleId = `${section.id}-title`;
+  const list = (startOutline: boolean) => (
+    <ul className="flex motion-reduce:flex-wrap">
+      {section.items.map((item, index) => (
+        <li
+          key={`${index}-${item}`}
+          data-marquee-style={(index % 2 === 1) !== startOutline ? "outline" : "solid"}
+          className="marquee-text whitespace-nowrap pr-[0.3em]"
+        >
+          {item}
+          <span aria-hidden className="pl-[0.3em] text-fg-muted [-webkit-text-stroke:0]">
+            ·
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+  return (
+    <section aria-labelledby={titleId} className="py-16 md:py-24">
+      <h2 id={titleId} className="sr-only">
+        {section.heading || FALLBACK_HEADINGS.MARQUEE}
+      </h2>
+      <VelocityMarquee listClassName="motion-reduce:w-full motion-reduce:px-4" copy={list(true)}>
+        {list(false)}
+      </VelocityMarquee>
+    </section>
+  );
+}
+
 function CtaSection({ section }: { section: Extract<PublicHomeSection, { type: "CTA" }> }) {
   return (
     <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.CTA} intro={section.body} inverse>
@@ -221,6 +257,8 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
       );
     case "CTA":
       return <CtaSection section={section} />;
+    case "MARQUEE":
+      return <MarqueeSection section={section} />;
   }
 }
 

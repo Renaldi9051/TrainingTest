@@ -15,6 +15,7 @@ export const HOME_SECTION_TYPES = [
   "VISION_MISSION",
   "TESTIMONIALS",
   "CTA",
+  "MARQUEE",
 ] as const satisfies readonly HomeSectionType[];
 
 export const SINGLE_INSTANCE_TYPES = ["HERO", "CTA"] as const satisfies readonly HomeSectionType[];
@@ -30,6 +31,7 @@ export const HOME_SECTION_LABELS: Record<HomeSectionType, string> = {
   VISION_MISSION: "Visi & misi",
   TESTIMONIALS: "Testimoni",
   CTA: "CTA penutup",
+  MARQUEE: "Teks berjalan",
 };
 
 export const HOME_SECTION_DESCRIPTIONS: Record<HomeSectionType, string> = {
@@ -43,10 +45,13 @@ export const HOME_SECTION_DESCRIPTIONS: Record<HomeSectionType, string> = {
   VISION_MISSION: "Visi dan misi ringkas, dua kolom.",
   TESTIMONIALS: "Kutipan peserta atau klien.",
   CTA: "Blok hitam penutup dengan ajakan konsultasi.",
+  MARQUEE: "Teks besar yang bergerak mengikuti scroll, dari teks sendiri atau judul layanan.",
 };
 
 export const ROTATING_WORDS_MAX = 5;
 export const STATS_MAX = 6;
+export const MARQUEE_ITEMS_MIN = 2;
+export const MARQUEE_ITEMS_MAX = 12;
 
 // Batas jumlah item per section berbasis data (default, maksimal).
 export const SELECTION_LIMITS = {
@@ -104,6 +109,7 @@ export function defaultContent<K extends HomeSectionType>(type: K): HomeSectionC
     VISION_MISSION: { eyebrow: "", vision: "", mission: [""], motto: "" },
     TESTIMONIALS: { ...heading, intro: "", ...selection("TESTIMONIALS") },
     CTA: { eyebrow: "", heading: "", body: "", primaryCta: { label: "", href: "" }, secondaryCta: null },
+    MARQUEE: { heading: "", source: "services", items: [], limit: 6 },
   };
   return content[type];
 }
@@ -122,6 +128,10 @@ export function sectionSummary(section: Pick<HomeSection, "type" | "content">): 
       return text("vision").slice(0, 80);
     case "CTA":
       return text("heading");
+    case "MARQUEE":
+      return content.source === "services"
+        ? `Judul layanan, ${content.limit as number}`
+        : ((content.items as string[] | undefined) ?? []).join(" · ").slice(0, 80);
     case "UPCOMING_SCHEDULES":
       return text("heading") || `${content.limit as number} sesi terdekat`;
     default: {
@@ -241,6 +251,22 @@ export const HOME_CONTENT_FORM_SCHEMAS = {
     primaryCta: cta,
     secondaryCta: cta.nullable(),
   }),
+  MARQUEE: z
+    .object({
+      heading: optionalText("Judul untuk pembaca layar", 60),
+      source: z.enum(["custom", "services"]),
+      items: z.array(requiredText("Teks", 40)).max(MARQUEE_ITEMS_MAX, { error: `Teks maksimal ${MARQUEE_ITEMS_MAX}.` }),
+      limit: z
+        .number({ error: "Jumlah harus berupa angka." })
+        .int({ error: "Jumlah harus bilangan bulat." })
+        .min(MARQUEE_ITEMS_MIN, { error: `Jumlah minimal ${MARQUEE_ITEMS_MIN}.` })
+        .max(MARQUEE_ITEMS_MAX, { error: `Jumlah maksimal ${MARQUEE_ITEMS_MAX}.` }),
+    })
+    .superRefine((value, ctx) => {
+      if (value.source === "custom" && value.items.length < MARQUEE_ITEMS_MIN) {
+        ctx.addIssue({ code: "custom", path: ["items"], message: `Isi minimal ${MARQUEE_ITEMS_MIN} teks.` });
+      }
+    }),
 } satisfies Record<HomeSectionType, z.ZodType>;
 
 export function sectionFormSchema(type: HomeSectionType) {

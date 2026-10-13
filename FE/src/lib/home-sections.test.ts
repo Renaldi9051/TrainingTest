@@ -44,6 +44,16 @@ describe("validasi form", () => {
     expect(issues.every((issue) => issue.code === "too_small" || issue.code === "custom")).toBe(true);
   });
 
+  it("teks berjalan: dari judul layanan valid tanpa teks; teks sendiri minimal 2 (error di content.items)", () => {
+    const base = { title: "", visible: true };
+    expect(sectionFormSchema("MARQUEE").safeParse({ ...base, content: defaultContent("MARQUEE") }).success).toBe(true);
+    const custom = sectionFormSchema("MARQUEE").safeParse({
+      ...base,
+      content: { heading: "", source: "custom", items: ["BNSP"], limit: 6 },
+    });
+    expect(custom.error?.issues.map((issue) => issue.path.join("."))).toEqual(["content.items"]);
+  });
+
   it("error baris statistik memakai path content.items.N.field", () => {
     const result = sectionFormSchema("STATS").safeParse({
       title: "",

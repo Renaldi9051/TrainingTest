@@ -213,6 +213,20 @@
    components/motion/pointer.ts, tanpa bagian reduced motion: gabungkan dengan motion-safe:). */
 @custom-variant pointer-fine (@media (hover: hover) and (pointer: fine));
 
+/* Teks besar berjalan (section MARQUEE): solid dan outline berselang-seling, monokrom dari token.
+   Outline memakai -webkit-text-stroke (didukung semua browser modern); teks tetap teks biasa. */
+.marquee-text {
+  font-size: clamp(56px, 10vw, 136px);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+  color: var(--fg-strong);
+}
+.marquee-text[data-marquee-style="outline"] {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--fg-strong);
+}
+
 /* Mask kata untuk reveal judul (RevealText, HeroWords): kata naik dari balik garis. Padding bawah
    menjaga descender (g, j, y) tidak terpotong pada line-height rapat. */
 @utility reveal-mask {
