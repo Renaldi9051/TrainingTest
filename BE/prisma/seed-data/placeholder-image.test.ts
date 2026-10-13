@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { PLACEHOLDER_GRAYS, placeholderPng, placeholderSvg, prng } from "./placeholder-image";
-import { COVER_POOL_SIZE, plannedMediaCount } from "./seed-images";
+import { plannedMediaCount } from "./seed-images";
 
 describe("gambar placeholder", () => {
   it("deterministik: seed sama = SVG sama, seed beda = komposisi beda", () => {
@@ -32,10 +32,9 @@ describe("gambar placeholder", () => {
     }
   });
 
-  it("jumlah media: 1 per layanan, 2 per portofolio, pool sampul maks 8", () => {
+  it("jumlah media: 1 per layanan, 2 per portofolio", () => {
     const rows = (count: number) => Array.from({ length: count }, (_, index) => ({ id: String(index), title: `T${index}` }));
-    expect(plannedMediaCount({ services: rows(4), portfolio: rows(6), trainings: rows(330) })).toBe(4 + 12 + COVER_POOL_SIZE);
-    expect(plannedMediaCount({ services: [], portfolio: [], trainings: rows(3) })).toBe(3);
-    expect(plannedMediaCount({ services: [], portfolio: [], trainings: [] })).toBe(0);
+    expect(plannedMediaCount({ services: rows(4), portfolio: rows(6) })).toBe(4 + 12);
+    expect(plannedMediaCount({ services: [], portfolio: [] })).toBe(0);
   });
 });

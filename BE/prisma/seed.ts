@@ -10,7 +10,7 @@ import { getDb } from "../src/lib/db";
 import { parseSeedEnv } from "../src/lib/env";
 import { hashPassword } from "../src/lib/password";
 import { seedBulk } from "./seed-bulk";
-import { seedContent } from "./seed-content";
+import { type ContentSeedResult, seedContent } from "./seed-content";
 import { seedCovers } from "./seed-covers";
 import { buildProfileBlocks, buildSettings } from "./seed-data/build";
 import { writeCatalog } from "./seed-data/catalog-writer";
@@ -130,11 +130,12 @@ async function main() {
 
   const profileResult = await seedProfilePage();
   const contentResult = MINIMAL ? null : await seedContent(PUBLISHED_AT);
-  // Gambar placeholder hanya untuk data contoh yang baru dibuat di run ini (database baru), supaya
-  // gambar yang dihapus admin tidak muncul lagi di setiap `docker compose up`. Database yang sudah
-  // berisi: `npm run db:sync-content -- --only=images`. Mode minimal (e2e) tanpa gambar: test membuat
-  // gambarnya sendiri di folder upload e2e.
-  const imageResult = MINIMAL ? null : await seedImages(Boolean(catalog), contentResult);
+  // Gambar contoh hanya untuk data contoh yang baru dibuat di run ini (database baru), supaya gambar
+  // yang dihapus admin tidak muncul lagi di setiap `docker compose up`: placeholder untuk layanan &
+  // portofolio, JPG contoh untuk sampul pelatihan. Database yang sudah berisi:
+  // `npm run db:sync-content -- --only=images`. Mode minimal (e2e) tanpa gambar.
+  const imageResult = MINIMAL ? null : await seedImages(contentResult);
+  const coverResult = MINIMAL || !catalog ? null : await seedCovers();
   // Seed bulk mencetak ringkasannya sendiri.
   if (BULK) await seedBulk();
 
@@ -156,21 +157,25 @@ async function main() {
   if (imageResult) {
     console.info(
       imageResult.media > 0
-        ? `Gambar placeholder: ${imageResult.media} media (${imageResult.services} layanan, ${imageResult.portfolio} portofolio, ${imageResult.trainings} sampul pelatihan).`
+        ? `Gambar placeholder: ${imageResult.media} media (${imageResult.services} layanan, ${imageResult.portfolio} portofolio).`
         : "Gambar placeholder dilewati (tidak ada data contoh baru).",
+    );
+  }
+  if (coverResult !== null) {
+    console.info(
+      `Cover pelatihan: ${coverResult === "dilewati" ? "dilewati" : `${coverResult} dipasang`} (hanya pelatihan yang belum punya cover).`,
     );
   }
 }
 
-async function seedImages(catalogCreated: boolean, content: ContentSeedResult | null) {
+async function seedImages(content: ContentSeedResult | null) {
   const created = (name: string) => typeof content?.[name] === "number";
   const targets = await findImageTargets(db);
   const scoped = {
     services: created("layanan") ? targets.services : [],
     portfolio: created("portofolio") ? targets.portfolio : [],
-    trainings: catalogCreated ? targets.trainings : [],
   };
-  if (plannedMediaCount(scoped) === 0) return { services: 0, portfolio: 0, trainings: 0, media: 0 };
+  if (plannedMediaCount(scoped) === 0) return { services: 0, portfolio: 0, media: 0 };
   const admin = await db.user.findUniqueOrThrow({ where: { email: parseSeedEnv(process.env).ADMIN_EMAIL.toLowerCase() }, select: { id: true } });
   return seedPlaceholderImages(scoped, admin.id, db);
 }
