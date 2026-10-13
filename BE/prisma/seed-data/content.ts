@@ -189,6 +189,38 @@ export const mediaPartners = ["contoh-satu.id", "contoh-dua.id", "contoh-tiga.id
   url: `https://${domain}`,
 }));
 
+// Inquiry contoh (dummy, email example.com, nomor 0812-0000-00xx).
+export const sampleInquiries = [
+  {
+    name: "Rina Contoh",
+    company: "PT Contoh Agro",
+    email: "rina@example.com",
+    phone: "6281200000011",
+    source: "TRAINING_DETAIL" as const,
+    message: "Kami ingin pelatihan in-house untuk 12 orang di bulan depan.",
+    status: "NEW" as const,
+  },
+  {
+    name: "Bayu Contoh",
+    company: "CV Contoh Kreatif",
+    email: "bayu@example.com",
+    phone: null,
+    source: "CONTACT" as const,
+    interest: "Fotografi produk",
+    message: "Apakah ada kelas akhir pekan?",
+    status: "IN_PROGRESS" as const,
+  },
+  {
+    name: "Sari Contoh",
+    company: null,
+    email: "sari@example.com",
+    phone: "6281200000013",
+    source: "TRAINING_DETAIL" as const,
+    message: null,
+    status: "DONE" as const,
+  },
+];
+
 // ===== Menu =====
 
 export type SeedNavItem = { label: string; href: string; children?: { label: string; href: string }[] };

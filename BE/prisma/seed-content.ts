@@ -7,6 +7,8 @@
 // Database yang sudah berisi disamakan lewat scripts/sync-content-dev.ts.
 import { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
+import { CONSENT_VERSION } from "../src/lib/validators/inquiry";
+import { sampleInquiries } from "./seed-data/content";
 import {
   buildClients,
   buildHomeSections,
@@ -129,6 +131,28 @@ export async function seedContent(publishedAt: Date): Promise<ContentSeedResult>
         });
       }
       return rows.length;
+    },
+  );
+
+  // Inquiry contoh (data dummy) supaya modul Inquiry & dashboard tidak kosong di database baru.
+  result.inquiry = await ifEmpty(
+    () => db.inquiry.count(),
+    async () => {
+      const trainings = await db.training.findMany({
+        where: { deletedAt: null, status: "PUBLISHED" },
+        select: { id: true },
+        orderBy: { createdAt: "asc" },
+        take: 2,
+      });
+      await db.inquiry.createMany({
+        data: sampleInquiries.map((row, index) => ({
+          ...row,
+          trainingId: row.source === "TRAINING_DETAIL" ? (trainings[index % Math.max(trainings.length, 1)]?.id ?? null) : null,
+          consentAt: publishedAt,
+          consentVersion: CONSENT_VERSION,
+        })),
+      });
+      return sampleInquiries.length;
     },
   );
 
