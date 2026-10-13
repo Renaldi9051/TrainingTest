@@ -8,14 +8,14 @@ import { PublicImage } from "./public-image";
 export const CARD_IMAGE_SIZES = "(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw";
 
 // Kartu pelatihan DESIGN 7: gambar 4:3 grayscale -> label kategori mono -> judul h3 -> meta -> garis.
-// Hover: gambar zoom 1.03 dan kembali berwarna, judul bergaris bawah. Di grid: gambar wipe dari bawah
-// + zoom 1,15 -> 1 bersama kartunya.
+// Hover: gambar zoom 1.03 dan kembali berwarna, judul bergaris bawah, label "Lihat →" mengikuti kursor
+// (PointerEffects, hanya desktop). Di grid: gambar wipe dari bawah + zoom 1,15 -> 1 bersama kartunya.
 export function TrainingCard({ training, headingLevel = "h3" }: { training: PublicTrainingCard; headingLevel?: "h2" | "h3" }) {
   const Heading = headingLevel;
   const meta = [training.duration, training.method ? METHOD_LABELS[training.method] : null].filter(Boolean);
 
   return (
-    <article className="group relative flex h-full flex-col border-b border-border pb-6">
+    <article data-cursor-label="" className="group relative flex h-full flex-col border-b border-border pb-6">
       <RevealImage className="relative aspect-[4/3] overflow-hidden bg-bg-muted">
         {training.cover ? (
           <PublicImage

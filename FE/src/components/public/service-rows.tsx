@@ -3,10 +3,12 @@ import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
 import { LineDraw } from "@/components/motion/reveal-parts";
 import type { PublicServiceCard } from "@/lib/api/types";
+import { PublicImage } from "./public-image";
 
 // Baris layanan bernomor (DESIGN 7): nomor besar + judul di kiri, ringkasan di kanan, dipisah
-// garis. Masuk: garis digambar, baris dari kiri (stagger 40 ms). Hover: teks bergeser 8 px (gambar
-// mengikuti kursor menyusul di 4.1c).
+// garis. Masuk: garis digambar, baris dari kiri (stagger 40 ms). Hover: teks bergeser 8 px dan
+// (desktop, kalau layanan punya gambar) gambarnya mengikuti kursor di dalam baris (PointerEffects).
+// Gambar itu hiasan (aria-hidden) dan tidak dimuat di perangkat tanpa hover (display: none).
 // headingLevel: h2 kalau langsung di bawah h1 halaman (/layanan), h3 di bawah judul section.
 export function ServiceRows({ services, headingLevel = "h3" }: { services: PublicServiceCard[]; headingLevel?: "h2" | "h3" }) {
   const Heading = headingLevel;
@@ -15,7 +17,16 @@ export function ServiceRows({ services, headingLevel = "h3" }: { services: Publi
       <LineDraw />
       <ol data-reveal-children="item">
         {services.map((service, index) => (
-          <li key={service.slug} className="group relative border-b border-border">
+          <li key={service.slug} data-cursor-image={service.image ? "" : undefined} className="group relative border-b border-border">
+            {service.image ? (
+              <div
+                aria-hidden
+                data-cursor-follow=""
+                className="pointer-events-none absolute top-0 left-0 z-10 hidden aspect-[4/3] w-60 overflow-hidden bg-bg-muted opacity-0 transition-[opacity,transform] duration-300 ease-standard data-active:opacity-100 pointer-fine:motion-safe:block"
+              >
+                <PublicImage image={service.image} sizes="240px" />
+              </div>
+            ) : null}
             <div className="grid gap-3 py-8 transition-transform duration-150 ease-standard md:grid-cols-12 md:gap-6 md:py-10 motion-safe:group-hover:translate-x-2 motion-safe:group-focus-within:translate-x-2">
               <span aria-hidden className="font-mono text-[28px] leading-none text-fg-muted md:col-span-2 md:text-[40px]">
                 {String(index + 1).padStart(2, "0")}
