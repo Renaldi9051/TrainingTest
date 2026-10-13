@@ -11,6 +11,9 @@ import { loginViaApi, ORIGIN, runId } from "./helpers";
 const HEADERS = { Origin: ORIGIN };
 const MAX_PX = 6;
 const NOT_FOUND = "/halaman-uji-tidak-ada";
+// Menu header aktif tingkat atas: link biasa atau link label di split button submenu.
+const TOP_MENU_ACTIVE =
+  'nav[aria-label="Menu utama"] > ul > li > a[aria-current], nav[aria-label="Menu utama"] > ul > li > div > a[aria-current]';
 
 declare global {
   interface Window {
@@ -206,7 +209,7 @@ test.describe("efek kursor & indikator aktif", () => {
     const metode = '[role=group][aria-label="Metode"]';
     const pill = `${metode} [data-active-indicator]`;
     await expectIndicatorOn(page, pill, `${metode} [aria-current]`, "pill");
-    await expectIndicatorOn(page, 'nav[aria-label="Menu utama"] > [data-active-indicator]', 'nav[aria-label="Menu utama"] > ul > li > [aria-current]', "line");
+    await expectIndicatorOn(page, 'nav[aria-label="Menu utama"] > [data-active-indicator]', TOP_MENU_ACTIVE, "line");
     await page.waitForTimeout(500);
     expect(await indicatorAnimations(page)).toBe(0);
     // Setelah JS siap, latar chip aktif digantikan indikator (tanpa JS chip tetap hitam sendiri).
@@ -232,7 +235,7 @@ test.describe("efek kursor & indikator aktif", () => {
     // Menu header: pindah halaman (navigasi klien), garis bergeser ke menu baru.
     await page.getByRole("navigation", { name: "Menu utama" }).getByRole("link", { name: "Jadwal Training" }).click();
     await page.waitForURL(/\/jadwal$/);
-    await expectIndicatorOn(page, 'nav[aria-label="Menu utama"] > [data-active-indicator]', 'nav[aria-label="Menu utama"] > ul > li > [aria-current]', "line");
+    await expectIndicatorOn(page, 'nav[aria-label="Menu utama"] > [data-active-indicator]', TOP_MENU_ACTIVE, "line");
     expect(await indicatorAnimations(page)).toBe(3);
   });
 });
