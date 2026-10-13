@@ -10,7 +10,7 @@ import { createInquiry, exportInquiries, purgeExpiredInquiries } from "@/service
 import type { InquiryNotifier } from "@/services/inquiry-notify";
 
 const now = new Date("2026-10-13T03:00:00Z");
-const TRAINING = "0199b4d0-0000-7000-8000-0000000000a1";
+const TRAINING = "pilot-drone-dasar";
 let mock: MockDb;
 const notifier: InquiryNotifier & { notify: ReturnType<typeof vi.fn> } = { notify: vi.fn(async () => {}) };
 
@@ -88,9 +88,9 @@ describe("createInquiry", () => {
 
   it("pelatihan draf/tidak tayang: trainingId disimpan null", async () => {
     mock.training.findFirst.mockResolvedValue(null);
-    await createInquiry(input({ trainingId: TRAINING, source: "TRAINING_DETAIL" }), { ip: "5.5.5.5" }, now, limiters(), notifier);
+    await createInquiry(input({ trainingSlug: TRAINING, source: "TRAINING_DETAIL" }), { ip: "5.5.5.5" }, now, limiters(), notifier);
     const where = mock.training.findFirst.mock.calls[0][0].where;
-    expect(where).toMatchObject({ id: TRAINING, status: "PUBLISHED", deletedAt: null });
+    expect(where).toMatchObject({ slug: TRAINING, status: "PUBLISHED", deletedAt: null });
     expect(mock.inquiry.create.mock.calls[0][0].data.trainingId).toBeNull();
   });
 

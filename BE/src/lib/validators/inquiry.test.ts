@@ -10,7 +10,7 @@ describe("inquiryCreateSchema", () => {
       company: null,
       email: "rina@example.com",
       phone: null,
-      trainingId: null,
+      trainingSlug: null,
       interest: null,
       message: null,
       source: "CONTACT",
@@ -32,7 +32,7 @@ describe("inquiryCreateSchema", () => {
     ["nama 1 huruf", { ...base, name: "R" }, "name"],
     ["email salah", { ...base, email: "bukan-email" }, "email"],
     ["pesan > 2000", { ...base, message: "x".repeat(2001) }, "message"],
-    ["pelatihan bukan uuid", { ...base, trainingId: "abc" }, "trainingId"],
+    ["slug pelatihan > 200", { ...base, trainingSlug: "x".repeat(201) }, "trainingSlug"],
     ["sumber asing", { ...base, source: "SPAM" }, "source"],
   ])("ditolak: %s", (_label, input, path) => {
     const result = inquiryCreateSchema.safeParse(input);

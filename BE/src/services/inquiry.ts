@@ -90,7 +90,7 @@ function tooMany(retryAfterMs: number): HttpError {
 
 // Kiriman form publik. Honeypot terisi: dibalas seperti sukses tanpa menyimpan (bot tidak belajar).
 // Rate limit: 5 kiriman / 10 menit per IP, 3 / jam per email (in-memory, satu proses BE).
-// trainingId hanya disimpan kalau pelatihannya tayang; selain itu null (tanpa membocorkan draf).
+// Pelatihan (dari slug) hanya ditautkan kalau tayang; selain itu null (tanpa membocorkan draf).
 export async function createInquiry(
   input: InquiryCreateInput,
   meta: InquiryMeta,
@@ -108,8 +108,8 @@ export async function createInquiry(
   }
 
   const db = getDb();
-  const training = input.trainingId
-    ? await db.training.findFirst({ where: { id: input.trainingId, ...publicTrainingWhere(now) }, select: { id: true } })
+  const training = input.trainingSlug
+    ? await db.training.findFirst({ where: { slug: input.trainingSlug, ...publicTrainingWhere(now) }, select: { id: true } })
     : null;
 
   const row = await db.inquiry.create({

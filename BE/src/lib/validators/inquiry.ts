@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { listQuerySchema } from "@/lib/list-query";
-import { hasAnyField, idSchema, NO_CHANGES_ERROR, nullableText, optionalWhatsappSchema, requiredText } from "@/lib/validators/common";
+import { hasAnyField, NO_CHANGES_ERROR, nullableText, optionalWhatsappSchema, requiredText } from "@/lib/validators/common";
 
 // Inquiry (PRD 5.6, 5.9, 6.1). Form publik divalidasi di sini; FE hanya cek ringan (atribut HTML).
 
@@ -23,7 +23,9 @@ export const inquiryCreateSchema = z.object({
     .transform((value) => value.toLowerCase()),
   // Opsional; dinormalisasi ke format wa.me (62xxxxxxxxxx). Kosong disimpan null.
   phone: optionalWhatsappSchema.transform((value) => value || null),
-  trainingId: idSchema.nullable().default(null),
+  // Slug pelatihan publik (detail pelatihan, /kontak?pelatihan=). Bukan id: halaman publik tidak
+  // memegang id internal.
+  trainingSlug: z.string().trim().max(200).nullable().default(null).transform((value) => value || null),
   interest: nullableText("Pelatihan yang diminati", 200).default(null),
   message: nullableText("Pesan", 2000).default(null),
   source: z.enum(INQUIRY_SOURCES, { error: "Sumber tidak dikenal." }).default("CONTACT"),
