@@ -3,6 +3,7 @@ import Form from "next/form";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ChipLink } from "@/components/public/chip-link";
+import { ActiveIndicator } from "@/components/motion/active-indicator";
 import { Pagination } from "@/components/public/pagination";
 import { TrainingGrid } from "@/components/public/training-card";
 import { buttonVariants } from "@/components/ui/button";
@@ -39,7 +40,7 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
 
       <div className="mt-10 space-y-6 border-y border-border py-6">
         <CategoryFilter state={state} categories={categories} />
-        <FilterRow label="Metode">
+        <FilterRow label="Metode" single>
           <ChipLink href={catalogHref(state, { metode: null })} active={!state.metode}>
             Semua
           </ChipLink>
@@ -49,7 +50,7 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
             </ChipLink>
           ))}
         </FilterRow>
-        <FilterRow label="Tipe">
+        <FilterRow label="Tipe" single>
           <ChipLink href={catalogHref(state, { tipe: null })} active={!state.tipe}>
             Semua
           </ChipLink>
@@ -138,13 +139,20 @@ function SearchForm({ state }: { state: CatalogState }) {
   );
 }
 
-function FilterRow({ label, children }: { label: string; children: ReactNode }) {
+// single: filter pilih satu, chip aktif ditandai indikator yang bergeser (DESIGN 8.2).
+function FilterRow({ label, single, children }: { label: string; single?: boolean; children: ReactNode }) {
   return (
     <div role="group" aria-label={label} className="flex flex-col gap-3 md:flex-row md:items-start md:gap-6">
       <p aria-hidden className="w-24 shrink-0 pt-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
         {label}
       </p>
-      <div className="flex flex-wrap gap-2">{children}</div>
+      {single ? (
+        <ActiveIndicator variant="pill" className="flex flex-wrap gap-2">
+          {children}
+        </ActiveIndicator>
+      ) : (
+        <div className="flex flex-wrap gap-2">{children}</div>
+      )}
     </div>
   );
 }
@@ -203,20 +211,22 @@ function SortLinks({ state }: { state: CatalogState }) {
   return (
     <nav aria-label="Urutkan" className="flex items-center gap-4">
       <span className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">Urutkan</span>
-      <ul className="flex gap-4">
-        {options.map((option) => (
-          <li key={option.value}>
-            <Link
-              href={catalogHref(state, { urut: option.value })}
-              scroll={false}
-              aria-current={current === option.value ? "true" : undefined}
-              className="rounded-sm text-small text-fg-muted underline-offset-4 outline-none hover:text-fg-strong hover:underline focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 aria-[current=true]:text-fg-strong aria-[current=true]:underline"
-            >
-              {option.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <ActiveIndicator variant="line">
+        <ul className="flex gap-4">
+          {options.map((option) => (
+            <li key={option.value}>
+              <Link
+                href={catalogHref(state, { urut: option.value })}
+                scroll={false}
+                aria-current={current === option.value ? "true" : undefined}
+                className="rounded-sm text-small text-fg-muted underline-offset-4 outline-none hover:text-fg-strong hover:underline focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 aria-[current=true]:text-fg-strong aria-[current=true]:underline [[data-indicator-ready]_&]:aria-[current=true]:no-underline"
+              >
+                {option.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </ActiveIndicator>
     </nav>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import type { PublicNavItem } from "@/lib/api/types";
+import { IndicatorMark, useActiveIndicator } from "@/components/motion/active-indicator";
 import { cn } from "@/lib/utils";
 
 type HeaderNavProps = {
@@ -45,15 +46,22 @@ function NavLink({
   );
 }
 
-// Garis bawah memanjang dari kiri saat hover; menu aktif bergaris penuh.
+// Garis bawah memanjang dari kiri saat hover; menu aktif bergaris penuh. Di menu desktop, setelah
+// JS siap, garis menu aktif digantikan indikator yang bergeser antar menu (useActiveIndicator).
 const linkClass =
-  "relative rounded-sm py-1 text-small text-fg outline-none transition-colors duration-150 hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 aria-[current=page]:text-fg-strong after:absolute after:inset-x-0 after:-bottom-px after:h-px after:origin-left after:scale-x-0 after:bg-fg-strong after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100 aria-[current=page]:after:scale-x-100";
+  "relative rounded-sm py-1 text-small text-fg outline-none transition-colors duration-150 hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 aria-[current=page]:text-fg-strong after:absolute after:inset-x-0 after:-bottom-px after:h-px after:origin-left after:scale-x-0 after:bg-fg-strong after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100 aria-[current=page]:after:scale-x-100 [[data-indicator-ready]_&]:aria-[current=page]:after:scale-x-0";
+
+// Hanya menu tingkat atas (bukan link di panel dropdown).
+const TOP_LEVEL_ACTIVE = ":scope > ul > li > a[aria-current], :scope > ul > li > div > button[aria-current]";
 
 // Menu desktop (dropdown 1 level) dan menu mobile layar penuh. Semua bisa dipakai dengan keyboard.
 export function HeaderNav({ items, cta }: HeaderNavProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const mobileId = useId();
+  const desktopNavRef = useRef<HTMLElement>(null);
+  const indicatorRef = useRef<HTMLSpanElement>(null);
+  useActiveIndicator(desktopNavRef, indicatorRef, { variant: "line", selector: TOP_LEVEL_ACTIVE });
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -70,7 +78,8 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
 
   return (
     <>
-      <nav aria-label="Menu utama" className="hidden lg:block">
+      <nav ref={desktopNavRef} aria-label="Menu utama" className="relative hidden lg:block">
+        <IndicatorMark variant="line" ref={indicatorRef} />
         <ul className="flex items-center gap-6">
           {items.map((item) => (
             <li key={`${item.label}-${item.href}`}>

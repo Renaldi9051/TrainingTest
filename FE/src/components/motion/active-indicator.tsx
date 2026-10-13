@@ -1,0 +1,119 @@
+"use client";
+
+import { animate } from "motion/mini";
+import { type ReactNode, type RefObject, useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
+import { type Box, flipTransform, type IndicatorVariant, indicatorBox } from "./pointer";
+import { DURATION, EASE } from "./tokens";
+
+const DEFAULT_SELECTOR = "[aria-current]";
+
+// Indikator aktif yang bergeser (FLIP, hanya transform) ke elemen aktif baru (DESIGN.md 8.2).
+// Elemen aktif = elemen pertama di kontainer yang cocok `selector` dan terlihat. Saat muat pertama,
+// resize, atau font selesai dimuat indikator langsung diletakkan tanpa animasi; animasi hanya saat
+// elemen aktif berubah. Kontainer mendapat data-indicator-ready setelah indikator diletakkan, supaya
+// elemen aktif bisa melepas gaya aktifnya sendiri (tanpa JS gaya itu tetap tampil).
+export function useActiveIndicator(
+  containerRef: RefObject<HTMLElement | null>,
+  indicatorRef: RefObject<HTMLElement | null>,
+  { variant, selector = DEFAULT_SELECTOR }: { variant: IndicatorVariant; selector?: string },
+) {
+  const shown = useRef(false);
+  const animation = useRef<ReturnType<typeof animate> | null>(null);
+
+  const place = useEffectEvent((animated: boolean) => {
+    const root = containerRef.current;
+    const indicator = indicatorRef.current;
+    if (!root || !indicator) return;
+    const base = root.getBoundingClientRect();
+    const active = [...root.querySelectorAll<HTMLElement>(selector)].find((element) => element.getClientRects().length > 0);
+    if (!active || base.width === 0) {
+      animation.current?.stop();
+      indicator.style.opacity = "0";
+      shown.current = false;
+      return;
+    }
+    const rect = active.getBoundingClientRect();
+    const to = indicatorBox(variant, { left: rect.left - base.left, top: rect.top - base.top, width: rect.width, height: rect.height });
+    // Posisi tampak sekarang (termasuk animasi yang sedang berjalan), supaya klik beruntun mulus.
+    let from: Box | null = null;
+    if (shown.current) {
+      const current = indicator.getBoundingClientRect();
+      from = { left: current.left - base.left, top: current.top - base.top, width: current.width, height: current.height };
+    }
+    animation.current?.stop();
+    animation.current = null;
+    Object.assign(indicator.style, {
+      left: `${to.left}px`,
+      top: `${to.top}px`,
+      width: `${to.width}px`,
+      height: `${to.height}px`,
+      opacity: "1",
+      transform: "",
+    });
+    shown.current = true;
+    root.setAttribute("data-indicator-ready", "");
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const transform = animated && from && !reduced ? flipTransform(from, to) : null;
+    if (!transform) return;
+    animation.current = animate(indicator, { transform: [transform, "none"] }, { duration: DURATION.normal, ease: [...EASE] });
+  });
+
+  // Setiap render (state aktif bisa berubah lewat props/RSC atau pathname): sebelum paint.
+  useLayoutEffect(() => {
+    place(true);
+  });
+
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+    const observer = new ResizeObserver(() => place(false));
+    observer.observe(root);
+    void document.fonts?.ready.then(() => place(false));
+    return () => {
+      observer.disconnect();
+      animation.current?.stop();
+    };
+  }, [containerRef]);
+}
+
+const INDICATOR_CLASS = {
+  pill: "rounded-full bg-fg-strong",
+  line: "bg-fg-strong",
+} as const;
+
+// Elemen indikator (aria-hidden). Letakkan sebagai anak pertama kontainer yang `relative`.
+export function IndicatorMark({ variant, ref }: { variant: IndicatorVariant; ref: RefObject<HTMLSpanElement | null> }) {
+  return (
+    <span
+      ref={ref}
+      aria-hidden
+      data-active-indicator={variant}
+      className={cn("pointer-events-none absolute top-0 left-0 origin-top-left opacity-0", INDICATOR_CLASS[variant])}
+    />
+  );
+}
+
+// Kontainer dengan indikator aktif untuk anak yang dirender server (chip filter pilih satu, link urutan).
+export function ActiveIndicator({
+  variant,
+  className,
+  selector,
+  children,
+}: {
+  variant: IndicatorVariant;
+  className?: string;
+  selector?: string;
+  children: ReactNode;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLSpanElement>(null);
+  useActiveIndicator(containerRef, indicatorRef, { variant, selector });
+  return (
+    <div ref={containerRef} className={cn("relative", className)}>
+      <IndicatorMark variant={variant} ref={indicatorRef} />
+      {children}
+    </div>
+  );
+}
