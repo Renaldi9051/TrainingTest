@@ -51,8 +51,9 @@ function NavLink({
 const linkClass =
   "relative rounded-sm py-1 text-small text-fg outline-none transition-colors duration-150 hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 aria-[current=page]:text-fg-strong after:absolute after:inset-x-0 after:-bottom-px after:h-px after:origin-left after:scale-x-0 after:bg-fg-strong after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100 aria-[current=page]:after:scale-x-100 [[data-indicator-ready]_&]:aria-[current=page]:after:scale-x-0";
 
-// Hanya menu tingkat atas (bukan link di panel dropdown).
-const TOP_LEVEL_ACTIVE = ":scope > ul > li > a[aria-current], :scope > ul > li > div > button[aria-current]";
+// Hanya menu tingkat atas (bukan link di panel submenu). Menu dengan submenu: link label di
+// dalam split button.
+const TOP_LEVEL_ACTIVE = ":scope > ul > li > a[aria-current], :scope > ul > li > div > a[aria-current]";
 
 // Menu desktop (dropdown 1 level) dan menu mobile layar penuh. Semua bisa dipakai dengan keyboard.
 export function HeaderNav({ items, cta }: HeaderNavProps) {
@@ -165,6 +166,7 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const ref = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const active = isActive(pathname, item.href) || item.children.some((child) => isActive(pathname, child.href));
 
   useEffect(() => {
@@ -173,7 +175,10 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
       if (!ref.current?.contains(event.target as Node)) setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      // Fokus kembali ke tombol panah kalau fokus sedang di dalam submenu.
+      if (ref.current?.contains(document.activeElement)) toggleRef.current?.focus();
     };
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
@@ -186,20 +191,22 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
   return (
     <div
       ref={ref}
-      className="relative"
+      className="relative flex items-center gap-0.5"
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false);
       }}
     >
+      {/* Split button: label = link ke halaman induk, panah = buka/tutup submenu (area klik 24x24 px). */}
+      <NavLink item={item} pathname={pathname} onNavigate={() => setOpen(false)} className={cn(linkClass, active && "text-fg-strong")} />
       <button
+        ref={toggleRef}
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-current={active ? "page" : undefined}
+        aria-label={`Submenu ${item.label}`}
         onClick={() => setOpen((current) => !current)}
-        className={cn(linkClass, "inline-flex items-center gap-1")}
+        className="inline-flex size-6 items-center justify-center rounded-sm text-fg outline-none transition-colors duration-150 hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
       >
-        {item.label}
         <ChevronDownIcon
           className={cn("size-4 transition-transform duration-150", open && "rotate-180")}
           strokeWidth={1.5}
@@ -208,14 +215,6 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
       </button>
       <div id={panelId} hidden={!open} className="absolute top-full left-0 mt-3 min-w-56 border border-border bg-bg py-2">
         <ul>
-          <li>
-            <NavLink
-              item={{ ...item, label: `Semua ${item.label.toLowerCase()}` }}
-              pathname={pathname}
-              onNavigate={() => setOpen(false)}
-              className="block px-4 py-2 text-small text-fg-muted outline-none hover:bg-bg-subtle hover:text-fg-strong focus-visible:bg-bg-subtle"
-            />
-          </li>
           {item.children.map((child) => (
             <li key={`${child.label}-${child.href}`}>
               <NavLink
