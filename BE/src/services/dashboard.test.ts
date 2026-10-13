@@ -43,10 +43,10 @@ describe("trainingIssueWhere", () => {
 });
 
 describe("getDashboard", () => {
-  it("hitungan memakai hari & bulan WIB dan tanpa item di Sampah; slot inquiry/evaluasi null", async () => {
+  it("hitungan memakai hari & bulan WIB dan tanpa item di Sampah; slot inquiry terisi, evaluasi null", async () => {
     mock.training.count.mockResolvedValue(3);
     const dashboard = await getDashboard(now);
-    expect(dashboard.inquiries).toBeNull();
+    expect(dashboard.inquiries).toEqual({ new: 0, lastWeek: 0, latest: [] });
     expect(dashboard.evaluations).toBeNull();
     expect(dashboard.counts.trainings).toEqual({ published: 3, scheduled: 3, draft: 3 });
     for (const call of [...mock.training.count.mock.calls, ...mock.schedule.count.mock.calls, ...mock.category.count.mock.calls]) {

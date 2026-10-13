@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { revalidateEntity } from "@/lib/revalidate-map";
 import { appDateString } from "@/lib/time";
+import { purgeExpiredInquiries } from "@/services/inquiry";
 
 // Cache FE tidak tahu kapan `publishedAt` sebuah pelatihan tiba, dan tidak tahu kapan hari berganti
 // (sesi yang lewat harus tampil SELESAI). Scheduler ini me-revalidate tag terkait:
@@ -73,7 +74,10 @@ export function startPublishScheduler(): void {
     state.running = true;
     try {
       await revalidateDuePublications();
+      const previousDate = state.lastDate;
       state.lastDate = await revalidateOnDayChange(state.lastDate);
+      // Sekali per hari (dan saat server start): hapus permanen inquiry lewat masa simpan.
+      if (state.lastDate !== previousDate) await purgeExpiredInquiries();
     } catch (error) {
       console.warn("Scheduler publish gagal di putaran ini.", error);
     } finally {

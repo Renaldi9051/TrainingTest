@@ -2,6 +2,9 @@ import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { appDateString, appToday, monthRange } from "@/lib/time";
 import { TRAINING_ISSUES } from "@/lib/validators/training";
+import { inquirySummary } from "@/services/inquiry";
+
+type InquirySummary = Awaited<ReturnType<typeof inquirySummary>>;
 
 // Dashboard admin (PRD 6.1). Semua hitungan tanpa item di Sampah; tanggal memakai WIB (lib/time).
 
@@ -46,8 +49,8 @@ export type Dashboard = {
   counts: DashboardCounts;
   attention: AttentionGroup[];
   activity: ActivityItem[];
-  // Diisi setelah modul Inquiry & Evaluasi dibuat (Fase 4); null = modul belum ada.
-  inquiries: null;
+  inquiries: InquirySummary;
+  // Diisi setelah modul Evaluasi dibuat (Fase 4.3); null = modul belum ada.
   evaluations: null;
 };
 
@@ -83,7 +86,7 @@ const ISSUE_OF: Partial<Record<AttentionKey, TrainingIssue>> = {
 };
 
 // Entitas AuditLog -> model untuk cek "masih ada" (soft delete). Lainnya tidak ditautkan.
-const LINKABLE_ENTITIES = ["Training", "Category", "Service", "Page", "HomeSection", "PortfolioItem", "Client", "Testimonial", "MarketingContact", "Media"] as const;
+const LINKABLE_ENTITIES = ["Training", "Category", "Service", "Page", "HomeSection", "PortfolioItem", "Client", "Testimonial", "MarketingContact", "Media", "Inquiry"] as const;
 type LinkableEntity = (typeof LINKABLE_ENTITIES)[number];
 
 async function existingIds(entity: LinkableEntity, ids: string[]): Promise<Set<string>> {
@@ -102,6 +105,7 @@ async function existingIds(entity: LinkableEntity, ids: string[]): Promise<Set<s
     Testimonial: () => db.testimonial.findMany({ where, select }),
     MarketingContact: () => db.marketingContact.findMany({ where, select }),
     Media: () => db.media.findMany({ where, select }),
+    Inquiry: () => db.inquiry.findMany({ where, select }),
   }[entity]();
   return new Set(rows.map((row) => row.id));
 }
@@ -196,13 +200,15 @@ export async function getDashboard(now = new Date()): Promise<Dashboard> {
     trainingGroup("staleDraft", now),
     trainingGroup("publishedNoSummary", now),
     recentActivity(),
+    inquirySummary(now),
   ]);
-  const [noCover, coverNoAlt, staleDraft, noSummary, activity] = rest as [
+  const [noCover, coverNoAlt, staleDraft, noSummary, activity, inquiries] = rest as [
     AttentionGroup,
     AttentionGroup,
     AttentionGroup,
     AttentionGroup,
     ActivityItem[],
+    InquirySummary,
   ];
 
   return {
@@ -229,7 +235,7 @@ export async function getDashboard(now = new Date()): Promise<Dashboard> {
       { key: "serviceNoImage", count: serviceNoImageCount, items: serviceNoImageRows },
     ],
     activity,
-    inquiries: null,
+    inquiries,
     evaluations: null,
   };
 }
