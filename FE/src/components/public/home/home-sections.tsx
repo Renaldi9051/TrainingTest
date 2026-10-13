@@ -68,7 +68,6 @@ function SectionCta({ cta }: { cta: Cta | null }) {
 // opacity 0). Setelah navigasi klien, eyebrow dan subjudul ikut stagger masuk (PageEnter); h1 tetap
 // memakai animasi CSS-nya sendiri.
 function HeroSection({ section }: { section: Extract<PublicHomeSection, { type: "HERO" }> }) {
-  const word = section.rotatingWords[0];
   return (
     <section className="py-20 md:py-32" aria-labelledby={`${section.id}-title`}>
       <Container className="space-y-10 md:space-y-14">
@@ -78,8 +77,8 @@ function HeroSection({ section }: { section: Extract<PublicHomeSection, { type: 
             id={`${section.id}-title`}
             className="max-w-[16ch] text-[48px] leading-[0.95] font-semibold tracking-[-0.04em] text-fg-strong md:text-[88px]"
           >
-            {/* Kata kunci pertama ikut reveal; pergantian kata (RotatingWord) menyusul di 4.1d. */}
-            <HeroWords text={section.headline} accent={word} />
+            {/* Kata kunci berganti satu putaran (RotatingWord), lalu berhenti di kata pertama. */}
+            <HeroWords text={section.headline} accents={section.rotatingWords} />
           </h1>
           {section.subheadline ? (
             <p data-page-enter="" className="max-w-[65ch] text-body-lg text-fg-muted">{section.subheadline}</p>

@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { HERO_WORD_MS, heroWordStepMs } from "./tokens";
+import { RotatingWord } from "./rotating-word";
 
 // Bagian grup reveal yang dirender server (keadaan final). Dianimasikan oleh root <Reveal> terdekat;
 // tanpa root (atau tanpa JS / reduced motion) tampil apa adanya.
@@ -63,20 +64,28 @@ export function RevealImage({ className, children }: { className?: string; child
 
 // Headline hero: reveal per kata dengan CSS murni (keyframes langsung jalan tanpa menunggu JS),
 // hanya transform, total <= 500 ms. Reduced motion: tanpa animasi (lihat .hero-word di theme.css).
-export function HeroWords({ text, accent }: { text: string; accent?: string }) {
+// accents: kata kunci (abu) di akhir judul; lebih dari satu = berganti satu putaran (RotatingWord).
+export function HeroWords({ text, accents = [] }: { text: string; accents?: string[] }) {
   const words = splitWords(text);
-  const accentWords = accent ? splitWords(accent) : [];
-  const all = [...words, ...accentWords];
-  const style = { "--hero-step": `${heroWordStepMs(all.length)}ms`, "--hero-word": `${HERO_WORD_MS}ms` } as CSSProperties;
+  const rotating = accents.map((accent) => accent.trim()).filter(Boolean);
+  const count = words.length + (rotating.length > 0 ? 1 : 0);
+  const style = { "--hero-step": `${heroWordStepMs(count)}ms`, "--hero-word": `${HERO_WORD_MS}ms` } as CSSProperties;
   return (
     <span style={style}>
       <MaskedWords
-        words={all}
-        wordProps={(index) => ({
-          className: cn("hero-word inline-block", index >= words.length && "text-fg-muted"),
-          style: { "--i": index } as CSSProperties,
-        })}
+        words={words}
+        wordProps={(index) => ({ className: "hero-word inline-block", style: { "--i": index } as CSSProperties })}
       />
+      {rotating.length > 0 ? (
+        <span>
+          {words.length > 0 ? " " : null}
+          <span className="reveal-mask">
+            <span className="hero-word inline-block text-fg-muted" style={{ "--i": words.length } as CSSProperties}>
+              {rotating.length > 1 ? <RotatingWord words={rotating} /> : rotating[0]}
+            </span>
+          </span>
+        </span>
+      ) : null}
     </span>
   );
 }
