@@ -1,6 +1,8 @@
 import { SearchIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Reveal } from "@/components/motion/reveal";
+import { HeroWords, LineDraw } from "@/components/motion/reveal-parts";
 import { ChipLink } from "@/components/public/chip-link";
 import { ClientLogos } from "@/components/public/client-logos";
 import { PublicImage } from "@/components/public/public-image";
@@ -57,7 +59,9 @@ function SectionCta({ cta }: { cta: Cta | null }) {
   ) : null;
 }
 
-// Konten layar pertama: langsung terbaca tanpa reveal (DESIGN 8.3). Satu-satunya h1 beranda.
+// Konten layar pertama: langsung terbaca tanpa reveal scroll (DESIGN 8.3). Satu-satunya h1 beranda.
+// Hanya h1 yang bergerak: kata naik dengan CSS murni <= 500 ms (tanpa JS, tanpa opacity 0).
+// Subjudul, search, dan CTA tidak dianimasikan.
 function HeroSection({ section }: { section: Extract<PublicHomeSection, { type: "HERO" }> }) {
   const word = section.rotatingWords[0];
   return (
@@ -69,9 +73,8 @@ function HeroSection({ section }: { section: Extract<PublicHomeSection, { type: 
             id={`${section.id}-title`}
             className="max-w-[16ch] text-[48px] leading-[0.95] font-semibold tracking-[-0.04em] text-fg-strong md:text-[88px]"
           >
-            {section.headline}
-            {/* Kata kunci pertama; pergantian kata (RotatingWord) menyusul di Fase 4. */}
-            {word ? <> <span className="text-fg-muted">{word}</span></> : null}
+            {/* Kata kunci pertama ikut reveal; pergantian kata (RotatingWord) menyusul di 4.1d. */}
+            <HeroWords text={section.headline} accent={word} />
           </h1>
           {section.subheadline ? (
             <p className="max-w-[65ch] text-body-lg text-fg-muted">{section.subheadline}</p>
@@ -120,19 +123,22 @@ function HeroSection({ section }: { section: Extract<PublicHomeSection, { type: 
 function StatsSection({ section }: { section: Extract<PublicHomeSection, { type: "STATS" }> }) {
   return (
     <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.STATS}>
-      <dl className="grid grid-cols-2 border-t border-border md:grid-cols-3 lg:grid-cols-4">
-        {section.items.map((item, index) => (
-          <div key={index} className="space-y-2 border-b border-border py-8 pr-6">
-            {/* Counter berjalan menyusul di Fase 4; angka final tampil langsung. */}
-            <dd className="font-mono text-[36px] leading-none font-medium text-fg-strong md:text-[48px]">
-              {item.prefix}
-              {formatNumber(item.value)}
-              {item.suffix}
-            </dd>
-            <dt className="text-small text-fg-muted">{item.label}</dt>
-          </div>
-        ))}
-      </dl>
+      <Reveal>
+        <LineDraw />
+        <dl data-reveal-children="item" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {section.items.map((item, index) => (
+            <div key={index} className="space-y-2 border-b border-border py-8 pr-6">
+              {/* Counter berjalan menyusul di Fase 4; angka final tampil langsung. */}
+              <dd className="font-mono text-[36px] leading-none font-medium text-fg-strong md:text-[48px]">
+                {item.prefix}
+                {formatNumber(item.value)}
+                {item.suffix}
+              </dd>
+              <dt className="text-small text-fg-muted">{item.label}</dt>
+            </div>
+          ))}
+        </dl>
+      </Reveal>
     </PublicSection>
   );
 }
@@ -164,7 +170,7 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
     case "CATEGORIES":
       return (
         <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.CATEGORIES} intro={section.intro}>
-          <ul className="flex flex-wrap gap-2">
+          <Reveal as="ul" data-reveal-children="pop" className="flex flex-wrap gap-2">
             {section.items.map((category) => (
               <li key={category.slug}>
                 <ChipLink href={`/pelatihan/kategori/${category.slug}`} active={false} scroll>
@@ -173,7 +179,7 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
                 </ChipLink>
               </li>
             ))}
-          </ul>
+          </Reveal>
           <SectionCta cta={section.cta} />
         </PublicSection>
       );

@@ -1,5 +1,7 @@
 import { DownloadIcon } from "lucide-react";
 import { createElement } from "react";
+import { Reveal } from "@/components/motion/reveal";
+import { LineDraw, RevealImage } from "@/components/motion/reveal-parts";
 import { PublicImage } from "@/components/public/public-image";
 import { PublicSection } from "@/components/public/public-section";
 import { RichTextHtml } from "@/components/public/rich-text-html";
@@ -46,39 +48,45 @@ function Block({ block }: { block: PublicPageBlock }) {
     case "FEATURES":
       return (
         <PublicSection eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.FEATURES}>
-          <ul className="grid border-t border-border sm:grid-cols-2 lg:grid-cols-3">
-            {block.items.map((item, index) => (
-              <li key={index} className="space-y-3 border-b border-border py-8 sm:pr-6">
-                <FeatureIcon name={item.icon} />
-                <h3 className="text-[20px] leading-[1.25] font-medium text-fg-strong md:text-[24px]">{item.title}</h3>
-                {item.description ? <p className="max-w-[48ch] text-body text-fg-muted">{item.description}</p> : null}
-              </li>
-            ))}
-          </ul>
+          <Reveal>
+            <LineDraw />
+            <ul data-reveal-children="card" className="grid sm:grid-cols-2 lg:grid-cols-3">
+              {block.items.map((item, index) => (
+                <li key={index} className="space-y-3 border-b border-border py-8 sm:pr-6">
+                  <FeatureIcon name={item.icon} />
+                  <h3 className="text-[20px] leading-[1.25] font-medium text-fg-strong md:text-[24px]">{item.title}</h3>
+                  {item.description ? <p className="max-w-[48ch] text-body text-fg-muted">{item.description}</p> : null}
+                </li>
+              ))}
+            </ul>
+          </Reveal>
         </PublicSection>
       );
     case "LIST":
       return (
         <PublicSection eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.LIST}>
           {block.style === "chips" ? (
-            <ul className="flex flex-wrap gap-2">
+            <Reveal as="ul" data-reveal-children="pop" className="flex flex-wrap gap-2">
               {block.items.map((item, index) => (
                 <li key={index} className="inline-flex h-8 items-center rounded-full border border-border-strong px-3 text-small text-fg">
                   {item}
                 </li>
               ))}
-            </ul>
+            </Reveal>
           ) : (
-            <ul className="grid gap-x-6 border-t border-border sm:grid-cols-2">
-              {block.items.map((item, index) => (
-                <li key={index} className="flex gap-3 border-b border-border py-4 text-body text-fg">
-                  <span aria-hidden className="font-mono text-small text-fg-muted">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
+            <Reveal>
+              <LineDraw />
+              <ul data-reveal-children="item" className="grid gap-x-6 sm:grid-cols-2">
+                {block.items.map((item, index) => (
+                  <li key={index} className="flex gap-3 border-b border-border py-4 text-body text-fg">
+                    <span aria-hidden className="font-mono text-small text-fg-muted">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
           )}
         </PublicSection>
       );
@@ -91,9 +99,11 @@ function Block({ block }: { block: PublicPageBlock }) {
     case "IMAGE":
       return (
         <figure className="mx-auto w-full max-w-[1280px] space-y-3 px-4 py-10 sm:px-6 md:py-16">
-          <div className="relative aspect-video overflow-hidden bg-bg-muted">
-            <PublicImage image={block.image} sizes={BLOCK_IMAGE_SIZES} />
-          </div>
+          <Reveal>
+            <RevealImage className="relative aspect-video overflow-hidden bg-bg-muted">
+              <PublicImage image={block.image} sizes={BLOCK_IMAGE_SIZES} />
+            </RevealImage>
+          </Reveal>
           {block.caption ? <figcaption className="text-small text-fg-muted">{block.caption}</figcaption> : null}
         </figure>
       );
