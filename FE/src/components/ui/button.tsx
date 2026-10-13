@@ -1,13 +1,16 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { ArrowRightIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
+import { RollText } from "@/components/motion/roll-text";
 import { cn } from "@/lib/utils";
 
-// Tombol publik DESIGN.md 7. Animasi Motion (magnetic, roll text) menyusul di Fase 4.
+// Tombol publik DESIGN.md 7. Tombol CTA besar: tambahkan {...MAGNETIC} di elemennya dan `roll` di
+// ButtonContent (DESIGN.md 8.2; efeknya dari PointerEffects dan RollText).
 export const buttonVariants = cva(
   [
     "group/button relative inline-flex shrink-0 items-center justify-center gap-2 font-medium whitespace-nowrap",
-    "transition-[background-color,color,border-color] duration-150 ease-standard",
+    // transform: geser magnetic (inline style dari PointerEffects) kembali halus saat kursor pergi.
+    "transition-[background-color,color,border-color,transform] duration-150 ease-standard",
     "outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
@@ -64,10 +67,13 @@ export function ButtonArrow() {
   );
 }
 
-export function ButtonContent({ children, arrow }: { children: ReactNode; arrow?: boolean }) {
+// Penanda tombol CTA besar yang ikut kursor (maks 6 px). Dibaca PointerEffects.
+export const MAGNETIC = { "data-magnetic": "" } as const;
+
+export function ButtonContent({ children, arrow, roll }: { children: ReactNode; arrow?: boolean; roll?: boolean }) {
   return (
     <>
-      {children}
+      {roll && typeof children === "string" ? <RollText>{children}</RollText> : children}
       {arrow ? <ButtonArrow /> : null}
     </>
   );

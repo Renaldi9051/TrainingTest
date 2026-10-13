@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TrainingGrid } from "@/components/public/training-card";
-import { ButtonArrow, buttonVariants } from "@/components/ui/button";
+import { RollText } from "@/components/motion/roll-text";
+import { ButtonArrow, buttonVariants, MAGNETIC } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { getCatalog, getCategories, getCategory } from "@/lib/api/public";
@@ -90,8 +91,8 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
 
       <div className="mt-12 flex flex-wrap items-center gap-6 border-t border-border pt-8">
         {catalog.meta.total > catalog.items.length ? (
-          <Link href={filteredHref} className={buttonVariants({ variant: "primary", size: "lg" })}>
-            Lihat semua {formatNumber(catalog.meta.total)} pelatihan
+          <Link href={filteredHref} className={buttonVariants({ variant: "primary", size: "lg" })} {...MAGNETIC}>
+            <RollText>{`Lihat semua ${formatNumber(catalog.meta.total)} pelatihan`}</RollText>
             <ButtonArrow />
           </Link>
         ) : null}

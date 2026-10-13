@@ -11,7 +11,8 @@ import { PublicImage } from "@/components/public/public-image";
 import { RichTextHtml } from "@/components/public/rich-text-html";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { TrainingGrid } from "@/components/public/training-card";
-import { ButtonArrow, buttonVariants } from "@/components/ui/button";
+import { RollText } from "@/components/motion/roll-text";
+import { ButtonArrow, buttonVariants, MAGNETIC } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { getSettings, getTraining, getTrainingSlugs } from "@/lib/api/public";
@@ -250,9 +251,10 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
                     target="_blank"
                     rel="noopener noreferrer"
                     className={buttonVariants({ variant: "primary", size: "lg" })}
+                    {...MAGNETIC}
                   >
                     <MessageCircleIcon strokeWidth={1.5} aria-hidden />
-                    Chat WA
+                    <RollText>Chat WA</RollText>
                     <ButtonArrow />
                   </a>
                   <a
@@ -260,8 +262,9 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
                     target="_blank"
                     rel="noopener noreferrer"
                     className={buttonVariants({ variant: "secondary", size: "lg" })}
+                    {...MAGNETIC}
                   >
-                    Minta penawaran in-house
+                    <RollText>Minta penawaran in-house</RollText>
                   </a>
                 </div>
               ) : null}

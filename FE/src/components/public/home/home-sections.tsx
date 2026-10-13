@@ -12,7 +12,7 @@ import { ServiceRows } from "@/components/public/service-rows";
 import { TestimonialsScroller } from "@/components/public/testimonials-scroller";
 import { TrainingGrid } from "@/components/public/training-card";
 import { VisionMission } from "@/components/public/vision-mission";
-import { ButtonContent, buttonVariants } from "@/components/ui/button";
+import { ButtonContent, buttonVariants, MAGNETIC } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import type { Cta, PreviewHomeSection, PublicHomeSection } from "@/lib/api/types";
@@ -38,14 +38,18 @@ const HERO_IMAGE_SIZES = "(min-width: 1280px) 1232px, calc(100vw - 32px)";
 function CtaLink({ cta, variant, arrow }: { cta: Cta; variant: "primary" | "secondary" | "inverse" | "inverseOutline"; arrow?: boolean }) {
   const external = /^https:\/\//i.test(cta.href);
   const className = buttonVariants({ variant, size: "lg" });
-  const content = <ButtonContent arrow={arrow}>{cta.label}</ButtonContent>;
+  const content = (
+    <ButtonContent arrow={arrow} roll>
+      {cta.label}
+    </ButtonContent>
+  );
   return external ? (
-    <a href={cta.href} target="_blank" rel="noopener noreferrer" className={className}>
+    <a href={cta.href} target="_blank" rel="noopener noreferrer" className={className} {...MAGNETIC}>
       {content}
       <span className="sr-only"> (tab baru)</span>
     </a>
   ) : (
-    <Link href={cta.href} className={className}>
+    <Link href={cta.href} className={className} {...MAGNETIC}>
       {content}
     </Link>
   );

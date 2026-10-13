@@ -8,7 +8,8 @@ import { PublicImage } from "@/components/public/public-image";
 import { RichTextHtml } from "@/components/public/rich-text-html";
 import { ServiceRows } from "@/components/public/service-rows";
 import { SectionHeading } from "@/components/public/section-heading";
-import { buttonVariants } from "@/components/ui/button";
+import { RollText } from "@/components/motion/roll-text";
+import { buttonVariants, MAGNETIC } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { getRedirect, getServices, getService, getSettings, Tag } from "@/lib/api/public";
@@ -90,9 +91,15 @@ export default async function ServicePage({ params }: PageProps<"/layanan/[slug]
           </h1>
           {service.summary ? <p className="max-w-[65ch] text-body-lg text-fg-muted">{service.summary}</p> : null}
           {whatsapp ? (
-            <a href={whatsapp} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "primary", size: "lg" })}>
+            <a
+              href={whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: "primary", size: "lg" })}
+              {...MAGNETIC}
+            >
               <MessageCircleIcon aria-hidden strokeWidth={1.5} />
-              Konsultasi via WhatsApp
+              <RollText>Konsultasi via WhatsApp</RollText>
               <span className="sr-only"> (tab baru)</span>
             </a>
           ) : null}

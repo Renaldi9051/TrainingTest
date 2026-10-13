@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { RollText } from "@/components/motion/roll-text";
+import { buttonVariants, MAGNETIC } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 
@@ -14,11 +15,11 @@ export default function PublicNotFound() {
         Alamat yang Anda buka tidak ada atau sudah dipindahkan. Coba cari pelatihan dari katalog.
       </p>
       <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/pelatihan" className={buttonVariants({ variant: "primary", size: "lg" })}>
-          Lihat katalog pelatihan
+        <Link href="/pelatihan" className={buttonVariants({ variant: "primary", size: "lg" })} {...MAGNETIC}>
+          <RollText>Lihat katalog pelatihan</RollText>
         </Link>
-        <Link href="/" className={buttonVariants({ variant: "secondary", size: "lg" })}>
-          Ke beranda
+        <Link href="/" className={buttonVariants({ variant: "secondary", size: "lg" })} {...MAGNETIC}>
+          <RollText>Ke beranda</RollText>
         </Link>
       </div>
     </Container>

@@ -3,7 +3,8 @@ import { draftMode } from "next/headers";
 import Link from "next/link";
 import { HomeSectionView, PreviewSectionFrame } from "@/components/public/home/home-sections";
 import { PreviewBanner } from "@/components/public/preview-banner";
-import { buttonVariants } from "@/components/ui/button";
+import { RollText } from "@/components/motion/roll-text";
+import { buttonVariants, MAGNETIC } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { getHome, getSettings } from "@/lib/api/public";
 import { getHomePreview } from "@/lib/api/preview";
@@ -50,11 +51,11 @@ export default async function HomePage() {
           </h1>
           <p className="max-w-[65ch] text-body-lg text-fg-muted">Halaman beranda sedang disiapkan.</p>
           <div className="flex flex-wrap gap-3">
-            <Link href="/pelatihan" className={buttonVariants({ variant: "primary", size: "lg" })}>
-              Lihat pelatihan
+            <Link href="/pelatihan" className={buttonVariants({ variant: "primary", size: "lg" })} {...MAGNETIC}>
+              <RollText>Lihat pelatihan</RollText>
             </Link>
-            <Link href="/jadwal" className={buttonVariants({ variant: "secondary", size: "lg" })}>
-              Lihat jadwal
+            <Link href="/jadwal" className={buttonVariants({ variant: "secondary", size: "lg" })} {...MAGNETIC}>
+              <RollText>Lihat jadwal</RollText>
             </Link>
           </div>
         </Container>

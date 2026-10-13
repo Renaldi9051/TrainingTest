@@ -7,7 +7,8 @@ import { PublicSection } from "@/components/public/public-section";
 import { RichTextHtml } from "@/components/public/rich-text-html";
 import { ServiceRows } from "@/components/public/service-rows";
 import { VisionMission } from "@/components/public/vision-mission";
-import { buttonVariants } from "@/components/ui/button";
+import { RollText } from "@/components/motion/roll-text";
+import { buttonVariants, MAGNETIC } from "@/components/ui/button";
 import type { PublicPageBlock } from "@/lib/api/types";
 import { categoryIcon } from "@/lib/category-icons";
 import { formatBytes } from "@/lib/format";
@@ -110,9 +111,9 @@ function Block({ block }: { block: PublicPageBlock }) {
     case "DOWNLOAD":
       return (
         <PublicSection eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.DOWNLOAD} intro={block.description}>
-          <a href={block.file.url} download className={buttonVariants({ variant: "primary", size: "lg" })}>
+          <a href={block.file.url} download className={buttonVariants({ variant: "primary", size: "lg" })} {...MAGNETIC}>
             <DownloadIcon aria-hidden strokeWidth={1.5} />
-            {block.label}
+            <RollText>{block.label}</RollText>
             <span className="font-mono text-label text-inverse-fg/70">PDF · {formatBytes(block.file.size)}</span>
           </a>
         </PublicSection>
