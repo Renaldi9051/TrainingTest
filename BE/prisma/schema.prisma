@@ -74,6 +74,12 @@ enum InquiryStatus {
   DONE
 }
 
+// Asal inquiry: tombol di detail pelatihan atau form halaman /kontak.
+enum InquirySource {
+  TRAINING_DETAIL
+  CONTACT
+}
+
 enum EvaluationQuestionType {
   RATING
   TEXT
@@ -499,21 +505,27 @@ model Media {
 // ===== Inquiry & evaluasi =====
 
 model Inquiry {
-  id          String        @id @default(uuid(7)) @db.Uuid
-  name        String
-  company     String?
-  email       String
-  phone       String?
-  trainingId  String?       @db.Uuid
-  training    Training?     @relation(fields: [trainingId], references: [id], onDelete: SetNull)
-  message     String?
-  status      InquiryStatus @default(NEW)
-  note        String?
-  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
-  deletedAt   DateTime?     @db.Timestamptz(3)
-  updatedById String?       @db.Uuid
-  updatedBy   User?         @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  id             String        @id @default(uuid(7)) @db.Uuid
+  name           String
+  company        String?
+  email          String
+  phone          String?
+  trainingId     String?       @db.Uuid
+  training       Training?     @relation(fields: [trainingId], references: [id], onDelete: SetNull)
+  message        String?
+  // Pelatihan yang diminati sebagai teks bebas (form /kontak tanpa pilihan pelatihan).
+  interest       String?
+  source         InquirySource @default(CONTACT)
+  // Persetujuan pemrosesan data (UU PDP): waktu centang + versi teks persetujuan (di kode).
+  consentAt      DateTime?     @db.Timestamptz(3)
+  consentVersion String?
+  status         InquiryStatus @default(NEW)
+  note           String?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime      @updatedAt @db.Timestamptz(3)
+  deletedAt      DateTime?     @db.Timestamptz(3)
+  updatedById    String?       @db.Uuid
+  updatedBy      User?         @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
   @@index([trainingId])
