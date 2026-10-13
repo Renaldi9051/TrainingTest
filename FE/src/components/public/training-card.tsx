@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Reveal } from "@/components/motion/reveal";
 import { RevealImage } from "@/components/motion/reveal-parts";
+import { RevealRows } from "@/components/motion/reveal-rows";
 import type { PublicTrainingCard } from "@/lib/api/types";
 import { METHOD_LABELS } from "@/lib/labels";
 import { PublicImage } from "./public-image";
@@ -46,7 +46,7 @@ export function TrainingCard({ training, headingLevel = "h3" }: { training: Publ
 
 // headingLevel: h2 kalau grid langsung di bawah h1 halaman (katalog, landing kategori), h3 kalau
 // di bawah judul section (pelatihan terkait), supaya urutan heading tidak melompat.
-// Masuk: kartu naik bertahap (stagger 80 ms, kolom kanan +60 ms).
+// Masuk: kartu naik per baris visual saat barisnya masuk viewport (stagger 80 ms, kolom kanan +60 ms).
 export function TrainingGrid({
   trainings,
   headingLevel = "h3",
@@ -55,13 +55,13 @@ export function TrainingGrid({
   headingLevel?: "h2" | "h3";
 }) {
   return (
-    <Reveal as="ul" data-reveal-children="card" className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+    <RevealRows as="ul" kind="card" className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
       {trainings.map((training) => (
         <li key={training.slug}>
           <TrainingCard training={training} headingLevel={headingLevel} />
         </li>
       ))}
-    </Reveal>
+    </RevealRows>
   );
 }
 
