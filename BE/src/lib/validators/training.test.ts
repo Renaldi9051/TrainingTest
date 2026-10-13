@@ -92,6 +92,8 @@ describe("trainingBulkSchema", () => {
 describe("trainingListQuerySchema", () => {
   it("filter status termasuk SCHEDULED", () => {
     expect(trainingListQuerySchema.parse({ status: "SCHEDULED" }).status).toBe("SCHEDULED");
+    expect(trainingListQuerySchema.parse({ issue: "stale-draft" }).issue).toBe("stale-draft");
+    expect(trainingListQuerySchema.safeParse({ issue: "lain" }).success).toBe(false);
     expect(trainingListQuerySchema.parse({}).sort).toEqual({ field: "updatedAt", direction: "desc" });
   });
 });

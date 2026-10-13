@@ -32,6 +32,7 @@ import type { OptionsQuery } from "@/lib/validators/options";
 import { assertMediaRefs, getMediaMap, thumbnailUrl, toMediaDto, type MediaDto } from "@/services/media";
 import { withSelected, type OptionItem } from "@/services/options";
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
+import { trainingIssueWhere } from "@/services/dashboard";
 import { isPubliclyVisible } from "@/services/training-visibility";
 
 const ENTITY = "Training";
@@ -204,7 +205,8 @@ export async function listTrainings(
           : {};
   const where: Prisma.TrainingWhereInput = {
     deletedAt: null,
-    ...statusWhere,
+    // AND: filter status dan "perlu dibereskan" bisa sama-sama memakai field status.
+    AND: [statusWhere, query.issue ? trainingIssueWhere(query.issue, now) : {}],
     ...(query.method ? { method: query.method } : {}),
     ...(query.type ? { types: { has: query.type } } : {}),
     ...(query.categoryId ? { categories: { some: { categoryId: query.categoryId } } } : {}),

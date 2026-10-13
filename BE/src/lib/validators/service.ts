@@ -54,6 +54,7 @@ export const SERVICE_SORT_FIELDS = ["order", "title", "updatedAt", "createdAt"] 
 export const serviceListQuerySchema = listQuerySchema({
   sortFields: SERVICE_SORT_FIELDS,
   defaultSort: "order",
-  extra: { status: contentStatusFilter },
+  // issue=no-image: layanan tanpa gambar ("perlu dibereskan" di dashboard).
+  extra: { status: contentStatusFilter, issue: z.enum(["no-image"]).optional() },
 });
 export type ServiceListQuery = z.infer<typeof serviceListQuerySchema>;

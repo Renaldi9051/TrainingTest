@@ -121,6 +121,7 @@ export async function listServices(query: ServiceListQuery): Promise<{ items: Se
   const where: Prisma.ServiceWhereInput = {
     deletedAt: null,
     ...(query.status ? { status: query.status } : {}),
+    ...(query.issue === "no-image" ? { imageId: null } : {}),
     ...(query.q
       ? {
           OR: [

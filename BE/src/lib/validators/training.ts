@@ -109,6 +109,9 @@ export type TrainingUpdateInput = z.infer<typeof trainingUpdateSchema>;
 
 // Status publik turunan: SCHEDULED = PUBLISHED dengan publishedAt di masa depan.
 export const TRAINING_STATUS_FILTERS = ["DRAFT", "PUBLISHED", "SCHEDULED"] as const;
+// "Perlu dibereskan" dari dashboard (?issue=...): tanpa sampul, sampul tanpa alt, draft > 30 hari,
+// tayang tanpa ringkasan & SEO description.
+export const TRAINING_ISSUES = ["no-cover", "cover-no-alt", "stale-draft", "no-summary"] as const;
 
 export const TRAINING_SORT_FIELDS = ["title", "updatedAt", "createdAt", "publishedAt"] as const;
 
@@ -117,6 +120,7 @@ export const trainingListQuerySchema = listQuerySchema({
   defaultSort: "-updatedAt",
   extra: {
     status: z.enum(TRAINING_STATUS_FILTERS).optional(),
+    issue: z.enum(TRAINING_ISSUES).optional(),
     categoryId: idSchema.optional(),
     method: methodSchema.optional(),
     type: typeSchema.optional(),
