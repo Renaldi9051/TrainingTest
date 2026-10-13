@@ -56,6 +56,9 @@ export const ROTATE_INTERVAL_MS = 2200;
 // Tombol magnetic: geser maksimal (px).
 export const MAGNETIC_MAX_PX = 6;
 
+// Label "Lihat →" dan gambar layanan yang mengikuti kursor: jarak dari ujung kursor (px).
+export const CURSOR_OFFSET_PX = 16;
+
 // Headline hero: reveal per kata dengan CSS murni (tanpa menunggu JS), total <= 500 ms.
 export const HERO_WORD_MS = 400;
 export const HERO_TOTAL_MS = 500;

@@ -209,6 +209,10 @@
   }
 }
 
+/* Perangkat dengan kursor presisi yang bisa hover (sama dengan CAN_HOVER_QUERY di
+   components/motion/pointer.ts, tanpa bagian reduced motion: gabungkan dengan motion-safe:). */
+@custom-variant pointer-fine (@media (hover: hover) and (pointer: fine));
+
 /* Mask kata untuk reveal judul (RevealText, HeroWords): kata naik dari balik garis. Padding bawah
    menjaga descender (g, j, y) tidak terpotong pada line-height rapat. */
 @utility reveal-mask {

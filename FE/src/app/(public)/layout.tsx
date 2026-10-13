@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PointerEffects } from "@/components/motion/pointer-effects";
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { getSettings } from "@/lib/api/public";
@@ -38,6 +39,8 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
         {children}
       </main>
       <SiteFooter />
+      {/* Efek kursor (magnetic, label & gambar ikut kursor): satu listener untuk semua halaman publik. */}
+      <PointerEffects />
     </>
   );
 }
