@@ -130,14 +130,15 @@ export async function SiteFooter() {
         ) : null}
 
         {contact.mapEmbedUrl ? (
-          <div className="relative aspect-[16/7] overflow-hidden border border-inverse-fg/20 md:col-span-12">
-            {/* URL sudah divalidasi domainnya di BE; iframe dibuat di sini, bukan HTML dari CMS. */}
+          <div className="group/map relative aspect-[16/7] overflow-hidden border border-inverse-fg/20 md:col-span-12">
+            {/* URL sudah divalidasi domainnya di BE; iframe dibuat di sini, bukan HTML dari CMS.
+                Monokrom seperti foto (DESIGN 2); berwarna saat hover atau fokus di dalam peta. */}
             <iframe
               src={contact.mapEmbedUrl}
               title={`Peta lokasi ${identity.name}`}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              className="absolute inset-0 h-full w-full"
+              className="absolute inset-0 h-full w-full grayscale transition-[filter] duration-300 ease-standard group-hover/map:grayscale-0 group-focus-within/map:grayscale-0 motion-reduce:transition-none"
             />
           </div>
         ) : null}
