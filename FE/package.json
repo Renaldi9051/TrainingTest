@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "typecheck": "dotenv -e ../.env -- next typegen && tsc --noEmit",
     "test": "vitest run",
-    "check": "npm run lint && npm run typecheck && npm run test",
+    "check": "npm run check:utf8 && npm run lint && npm run typecheck && npm run test",
+    "check:utf8": "node scripts/check-utf8.mjs",
     "test:e2e": "playwright test",
     "test:e2e:prod": "dotenv -v E2E_PROD=1 -- playwright test",
     "size:js": "node scripts/js-size.mjs .next/verify"
