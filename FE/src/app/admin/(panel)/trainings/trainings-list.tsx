@@ -10,7 +10,7 @@ import {
   PencilIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BulkSelectionSummary } from "@/components/admin/bulk-selection-summary";
@@ -57,6 +57,7 @@ import type {
   TrainingBulkResult,
   TrainingListItem,
 } from "@/lib/api/types";
+import { isTrainingIssue, TRAINING_ISSUE_LABELS, TRAINING_ISSUES } from "@/lib/admin-issues";
 import { formatDateTime } from "@/lib/format";
 import { METHOD_LABELS } from "@/lib/labels";
 import { categoryKeys } from "../categories/category-form";
@@ -196,7 +197,16 @@ export function TrainingsList() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const q = useDeferredValue(search.trim());
-  const [status, setStatus] = useState<string>(ALL);
+  // Filter awal dari URL (tautan "Lihat semua" di dashboard): ?status=, ?issue=.
+  const searchParams = useSearchParams();
+  const [status, setStatus] = useState<string>(() => {
+    const value = searchParams.get("status");
+    return value && ["PUBLISHED", "SCHEDULED", "DRAFT"].includes(value) ? value : ALL;
+  });
+  const [issue, setIssue] = useState<string>(() => {
+    const value = searchParams.get("issue");
+    return isTrainingIssue(value) ? value : ALL;
+  });
   const [categoryId, setCategoryId] = useState<string>(ALL);
   const [method, setMethod] = useState<string>(ALL);
   const [sort, setSort] = useState<string>("-updatedAt");
@@ -206,13 +216,14 @@ export function TrainingsList() {
   const [targetCategory, setTargetCategory] = useState<string>("");
   const [bulkReport, setBulkReport] = useState<TrainingBulkResult | null>(null);
 
-  const params = useMemo(() => ({ q, status, categoryId, method, sort, page }), [q, status, categoryId, method, sort, page]);
+  const params = useMemo(() => ({ q, status, issue, categoryId, method, sort, page }), [q, status, issue, categoryId, method, sort, page]);
   const query = useQuery({
     queryKey: trainingKeys.list(params),
     queryFn: async () => {
       const search = new URLSearchParams({ page: String(page), pageSize: "20", sort });
       if (q) search.set("q", q);
       if (status !== ALL) search.set("status", status);
+      if (issue !== ALL) search.set("issue", issue);
       if (categoryId !== ALL) search.set("categoryId", categoryId);
       if (method !== ALL) search.set("method", method);
       return apiFetch<TrainingListItem[], PaginationMeta>(`/admin/trainings?${search}`);
@@ -256,7 +267,7 @@ export function TrainingsList() {
     onError: (error) => toast.error(errorMessage(error)),
   });
 
-  const filtered = Boolean(q) || status !== ALL || categoryId !== ALL || method !== ALL;
+  const filtered = Boolean(q) || status !== ALL || issue !== ALL || categoryId !== ALL || method !== ALL;
   const count = selectedIds.length;
   // Selection dikosongkan setiap ganti halaman/filter, jadi baris terpilih ada di data halaman ini.
   const selectedItems = (query.data?.data ?? EMPTY).filter((row) => selection[row.id]);
@@ -298,6 +309,19 @@ export function TrainingsList() {
                 <SelectItem value="PUBLISHED">Tayang</SelectItem>
                 <SelectItem value="SCHEDULED">Terjadwal</SelectItem>
                 <SelectItem value="DRAFT">Draf</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={issue} onValueChange={resetPage(setIssue)}>
+              <SelectTrigger className="w-52" aria-label="Filter perlu dibereskan">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Semua kelengkapan</SelectItem>
+                {TRAINING_ISSUES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {TRAINING_ISSUE_LABELS[value]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={categoryId} onValueChange={resetPage(setCategoryId)}>

@@ -37,11 +37,35 @@ export type AuthUserResponse = { user: AuthUser };
 
 // ===== Dashboard =====
 
-export type DashboardStats = {
-  trainings: number;
-  categories: number;
-  schedulesThisMonth: number;
-  media: number;
+// GET /api/admin/dashboard (BE/src/services/dashboard.ts).
+export type TrainingIssue = "no-cover" | "cover-no-alt" | "stale-draft" | "no-summary";
+export type AttentionKey =
+  | "trainingNoCover"
+  | "trainingCoverNoAlt"
+  | "staleDraft"
+  | "publishedNoSummary"
+  | "pastOpenSchedule"
+  | "serviceNoImage";
+export type Dashboard = {
+  counts: {
+    trainings: { published: number; scheduled: number; draft: number };
+    categories: number;
+    schedules: { thisMonth: number; next30Days: number; fullUpcoming: number };
+    publicWithoutUpcoming: number;
+  };
+  attention: { key: AttentionKey; count: number; items: { id: string; title: string; detail?: string }[] }[];
+  activity: {
+    id: string;
+    action: string;
+    entity: string;
+    entityId: string | null;
+    userName: string | null;
+    createdAt: string;
+    linkable: boolean;
+  }[];
+  // null sampai modul Inquiry/Evaluasi dibuat.
+  inquiries: null;
+  evaluations: null;
 };
 
 // ===== Media =====

@@ -2,6 +2,7 @@
 
 import { ArrowUpDownIcon, EyeIcon, LayoutListIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createDataTableColumns, type DataTableColumn } from "@/components/admin/data-table";
 import { MediaThumbnail } from "@/components/admin/media/media-thumbnail";
@@ -96,6 +97,9 @@ const ALL = "all";
 export function ServicesList() {
   const [reordering, setReordering] = useState(false);
   const [status, setStatus] = useState(ALL);
+  // ?issue=no-image dari dashboard: hanya layanan tanpa gambar.
+  const searchParams = useSearchParams();
+  const [issue, setIssue] = useState(() => (searchParams.get("issue") === "no-image" ? "no-image" : ALL));
 
   return (
     <div className="space-y-4">
@@ -124,18 +128,29 @@ export function ServicesList() {
           sorts={SORTS}
           searchPlaceholder="Cari judul atau slug"
           unit="layanan"
-          params={status === ALL ? undefined : { status }}
+          params={{ ...(status === ALL ? {} : { status }), ...(issue === ALL ? {} : { issue }) }}
           filters={
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-36" aria-label="Filter status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>Semua status</SelectItem>
-                <SelectItem value="PUBLISHED">Tayang</SelectItem>
-                <SelectItem value="DRAFT">Draf</SelectItem>
-              </SelectContent>
-            </Select>
+            <>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="w-36" aria-label="Filter status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Semua status</SelectItem>
+                  <SelectItem value="PUBLISHED">Tayang</SelectItem>
+                  <SelectItem value="DRAFT">Draf</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={issue} onValueChange={setIssue}>
+                <SelectTrigger className="w-44" aria-label="Filter gambar">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Semua gambar</SelectItem>
+                  <SelectItem value="no-image">Tanpa gambar</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
           }
           empty={{
             icon: LayoutListIcon,

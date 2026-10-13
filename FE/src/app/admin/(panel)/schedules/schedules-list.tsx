@@ -62,10 +62,17 @@ export function SchedulesList() {
 
   const [search, setSearch] = useState("");
   const q = useDeferredValue(search.trim());
-  const [period, setPeriod] = useState<string>("upcoming");
-  const [status, setStatus] = useState<string>(ALL);
+  // Filter awal dari URL (tautan dashboard): ?period=upcoming|past, ?status=; ?baru=1 membuka form tambah.
+  const [period, setPeriod] = useState<string>(() => {
+    const value = searchParams.get("period");
+    return value === "past" || value === "upcoming" ? value : "upcoming";
+  });
+  const [status, setStatus] = useState<string>(() => {
+    const value = searchParams.get("status");
+    return value && ["OPEN", "FULL", "COMPLETED"].includes(value) ? value : ALL;
+  });
   const [page, setPage] = useState(1);
-  const [dialog, setDialog] = useState<DialogState | null>(null);
+  const [dialog, setDialog] = useState<DialogState | null>(() => (searchParams.get("baru") === "1" ? { mode: "create" } : null));
   const [deleting, setDeleting] = useState<Schedule | null>(null);
 
   const training = useQuery({
