@@ -29,6 +29,14 @@ import { buildSchedules, categories, trainings } from "../prisma/seed-data/catal
 import { writeCatalog } from "../prisma/seed-data/catalog-writer";
 import { footerNav, headerNav, profilePage } from "../prisma/seed-data/content";
 import { createSeedNav } from "../prisma/seed-data/nav";
+import {
+  COVER_POOL_SIZE,
+  findImageTargets,
+  PLACEHOLDER_FOLDER,
+  plannedMediaCount,
+  PORTFOLIO_IMAGES_PER_ITEM,
+  seedPlaceholderImages,
+} from "../prisma/seed-data/seed-images";
 
 const TARGET_DATABASE = "training_dev";
 // training_e2e (database sekali pakai, di-reset setiap run e2e) boleh untuk menguji skrip ini.
@@ -283,7 +291,39 @@ const PARTIAL = {
   },
 } as const;
 
+// --only=images: pasang gambar placeholder ke layanan, portofolio, dan pelatihan yang BELUM punya
+// gambar (tidak menghapus atau mengganti apa pun). File ditulis ke UPLOAD_DIR lalu baris diperbarui.
+async function runImages(name: string) {
+  const targets = await findImageTargets(db);
+  const planned = plannedMediaCount(targets);
+  const pool = Math.min(COVER_POOL_SIZE, targets.trainings.length);
+  console.info(`${APPLY ? "Menjalankan" : "Rencana (dry run, belum ada yang diubah)"} gambar placeholder ${name}:\n`);
+  console.info(`  [tambah] ${planned} media di folder "${PLACEHOLDER_FOLDER}" (WebP + varian 320/768/1600 di UPLOAD_DIR)`);
+  console.info(`  [ubah]   ${targets.services.length} layanan tanpa gambar: ${targets.services.map((row) => row.title).join(", ") || "-"}`);
+  console.info(`  [ubah]   ${targets.portfolio.length} portofolio tanpa galeri (${PORTFOLIO_IMAGES_PER_ITEM} gambar per kegiatan): ${targets.portfolio.map((row) => row.title).join(", ") || "-"}`);
+  console.info(`  [ubah]   ${targets.trainings.length} pelatihan tanpa sampul, memakai ${pool} gambar sampul bergiliran`);
+  console.info("  [tetap]  baris yang sudah punya gambar dan semua media lain tidak disentuh");
+  if (!APPLY) return console.info("\nJalankan dengan --apply untuk menerapkan.");
+  if (planned === 0) return console.info("\nTidak ada yang perlu diisi.");
+  const admin = await db.user.findFirst({ where: { active: true }, orderBy: { createdAt: "asc" }, select: { id: true } });
+  if (!admin) throw new Error("Butuh minimal satu admin (jalankan seed).");
+  const result = await seedPlaceholderImages(targets, admin.id, db);
+  await writeAudit({
+    userId: null,
+    action: AuditAction.UPDATE,
+    entity: "ContentSync",
+    diff: { script: "scripts/sync-content-dev.ts", only: ["images"], ...result },
+  });
+  const ok = await revalidateTags([RevalidateTag.MEDIA, RevalidateTag.SERVICES, RevalidateTag.PORTFOLIO, RevalidateTag.TRAININGS, RevalidateTag.HOME]);
+  console.info(ok ? "Cache FE direvalidasi." : "Revalidate FE gagal (FE tidak menyala?). Data tetap tersimpan.");
+  console.info(`Selesai: ${result.media} media dibuat.`);
+}
+
 async function runPartial(name: string, keys: string[]) {
+  if (keys.includes("images")) {
+    if (keys.length > 1) throw new Error("--only=images dijalankan sendiri, tanpa tabel lain.");
+    return runImages(name);
+  }
   const unknown = keys.filter((key) => !(key in PARTIAL));
   if (unknown.length > 0) throw new Error(`--only tidak dikenal: ${unknown.join(", ")}. Pilihan: ${Object.keys(PARTIAL).join(", ")}.`);
   const selected = keys.map((key) => PARTIAL[key as keyof typeof PARTIAL]);
