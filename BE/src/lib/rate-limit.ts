@@ -52,8 +52,25 @@ export class MemoryRateLimiter implements RateLimiter {
 const LOGIN_MAX_FAILURES = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
+// Form inquiry publik: kiriman yang berhasil dihitung (recordFailure = "pakai satu jatah").
+export const INQUIRY_IP_MAX = 5;
+export const INQUIRY_IP_WINDOW_MS = 10 * 60 * 1000;
+export const INQUIRY_EMAIL_MAX = 3;
+export const INQUIRY_EMAIL_WINDOW_MS = 60 * 60 * 1000;
+
 // Disimpan di globalThis supaya tidak ter-reset saat `next dev` me-reload modul.
-const globalForLimiter = globalThis as typeof globalThis & { loginRateLimiter?: RateLimiter };
+const globalForLimiter = globalThis as typeof globalThis & {
+  loginRateLimiter?: RateLimiter;
+  inquiryRateLimiters?: { ip: RateLimiter; email: RateLimiter };
+};
+
+export function getInquiryRateLimiters(): { ip: RateLimiter; email: RateLimiter } {
+  globalForLimiter.inquiryRateLimiters ??= {
+    ip: new MemoryRateLimiter(INQUIRY_IP_MAX, INQUIRY_IP_WINDOW_MS),
+    email: new MemoryRateLimiter(INQUIRY_EMAIL_MAX, INQUIRY_EMAIL_WINDOW_MS),
+  };
+  return globalForLimiter.inquiryRateLimiters;
+}
 
 export function getLoginRateLimiter(): RateLimiter {
   globalForLimiter.loginRateLimiter ??= new MemoryRateLimiter(LOGIN_MAX_FAILURES, LOGIN_WINDOW_MS);

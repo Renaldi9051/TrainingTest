@@ -88,3 +88,21 @@ export function csvCell(value: string | number | null | undefined): string {
   const text = value === null || value === undefined ? "" : String(value);
   return /[",;\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
+
+// Awalan yang membuat Excel/Sheets menafsirkan sel sebagai formula (CSV/formula injection).
+const FORMULA_START = /^[=+\-@\t\r]/;
+
+// Sel ekspor untuk data dari pengunjung: selalu dikutip, "" digandakan, dan sel yang diawali
+// = + - @ TAB CR diberi awalan ' supaya ditampilkan sebagai teks, bukan dijalankan sebagai formula.
+export function safeCsvCell(value: string | number | null | undefined): string {
+  const text = value === null || value === undefined ? "" : String(value);
+  const guarded = FORMULA_START.test(text) ? `'${text}` : text;
+  return `"${guarded.replace(/"/g, '""')}"`;
+}
+
+// CSV ekspor untuk Excel: UTF-8 dengan BOM (huruf non-ASCII terbaca benar), pemisah titik koma
+// (Excel versi Indonesia), baris CRLF.
+export function toCsv(header: string[], rows: (string | number | null | undefined)[][], delimiter = ";"): string {
+  const line = (cells: (string | number | null | undefined)[]) => cells.map(safeCsvCell).join(delimiter);
+  return `\uFEFF${[line(header), ...rows.map(line)].join("\r\n")}\r\n`;
+}

@@ -37,6 +37,8 @@ export class HttpError extends Error {
     message: string,
     readonly fields?: FieldErrors,
     readonly details?: unknown,
+    // Header tambahan di respons error (mis. Retry-After untuk 429).
+    readonly headers?: Record<string, string>,
   ) {
     super(message);
     this.name = "HttpError";
@@ -54,7 +56,9 @@ export function zodFieldErrors(error: z.ZodError): FieldErrors {
 
 export function toErrorResponse(error: unknown) {
   if (error instanceof HttpError) {
-    return fail(error.status, error.code, error.message, error.fields, error.details);
+    const response = fail(error.status, error.code, error.message, error.fields, error.details);
+    for (const [name, value] of Object.entries(error.headers ?? {})) response.headers.set(name, value);
+    return response;
   }
   if (error instanceof z.ZodError) {
     return fail(422, "VALIDATION_ERROR", "Data tidak valid.", zodFieldErrors(error));

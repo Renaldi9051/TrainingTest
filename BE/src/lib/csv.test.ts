@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { csvCell, CsvError, parseCsv } from "@/lib/csv";
+import { csvCell, CsvError, parseCsv, safeCsvCell, toCsv } from "@/lib/csv";
 
 describe("parseCsv", () => {
   it("header lower-case, sel di-trim, baris kosong dilewati, nomor baris asli", () => {
@@ -32,5 +32,32 @@ describe("parseCsv", () => {
     expect(csvCell('Ruang "A", lt 2')).toBe('"Ruang ""A"", lt 2"');
     expect(csvCell(null)).toBe("");
     expect(csvCell(4500000)).toBe("4500000");
+  });
+});
+
+
+describe("toCsv / safeCsvCell (ekspor)", () => {
+  it("BOM UTF-8 di awal, pemisah titik koma, baris CRLF, semua sel dikutip", () => {
+    const csv = toCsv(["Nama", "Kota"], [["Ádé", "Yogyakarta"]]);
+    expect(csv.startsWith("\uFEFF")).toBe(true);
+    expect(csv).toBe('\uFEFF"Nama";"Kota"\r\n"Ádé";"Yogyakarta"\r\n');
+  });
+
+  it.each([
+    ["=1+1", `"'=1+1"`],
+    ["+62812", `"'+62812"`],
+    ["-2+3", `"'-2+3"`],
+    ["@SUM(A1)", `"'@SUM(A1)"`],
+    ["\tisi", `"'\tisi"`],
+    ["\risi", `"'\risi"`],
+    ['=HYPERLINK("http://x")', `"'=HYPERLINK(""http://x"")"`],
+  ])("formula injection: %j diberi awalan '", (input, expected) => {
+    expect(safeCsvCell(input)).toBe(expected);
+  });
+
+  it("nilai biasa, angka, dan kosong", () => {
+    expect(safeCsvCell("Rina; PT Contoh")).toBe('"Rina; PT Contoh"');
+    expect(safeCsvCell("6281234567890")).toBe('"6281234567890"');
+    expect(safeCsvCell(null)).toBe('""');
   });
 });

@@ -12,6 +12,7 @@ export const AuditAction = {
   DUPLICATE: "DUPLICATE",
   BULK: "BULK",
   IMPORT: "IMPORT",
+  EXPORT: "EXPORT",
 } as const;
 
 export type AuditActionName = (typeof AuditAction)[keyof typeof AuditAction];
