@@ -214,3 +214,65 @@ test.describe("reveal saat scroll: anchor & Back", () => {
     expect(await violations(page)).toEqual([]);
   });
 });
+
+declare global {
+  interface Window {
+    __rowObservers: Set<IntersectionObserver>;
+  }
+}
+
+// Grid & tabel panjang di-reveal per baris visual (RevealRows): baris di layar pertama tetap
+// terlihat, baris di bawahnya masuk saat discroll, dengan satu IntersectionObserver bersama.
+test.describe("reveal per baris: grid katalog & tabel jadwal", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await installRevealWatcher(page);
+    await page.addInitScript(() => {
+      window.__rowObservers = new Set();
+      const observe = IntersectionObserver.prototype.observe;
+      IntersectionObserver.prototype.observe = function (target: Element) {
+        // Hanya baris (anak langsung); link di dalam kartu punya observer prefetch milik Next.
+        if (target.parentElement?.matches("[data-reveal-rows]")) window.__rowObservers.add(this);
+        return observe.call(this, target);
+      };
+    });
+  });
+
+  // Baris (per posisi atas) yang item pertamanya sedang dalam keadaan awal (inline opacity 0).
+  const hiddenRowTops = (page: Page, selector: string) =>
+    page.evaluate((rowsSelector) => {
+      const items = [...document.querySelectorAll<HTMLElement>(`${rowsSelector} > *`)];
+      return [...new Set(items.filter((item) => item.style.opacity === "0").map((item) => Math.round(item.getBoundingClientRect().top + window.scrollY)))];
+    }, selector);
+
+  for (const { url, selector, perRow } of [
+    { url: "/pelatihan", selector: "[data-reveal-rows=card]", perRow: 3 },
+    { url: "/jadwal", selector: "[data-reveal-rows=item]", perRow: 1 },
+  ]) {
+    test(`${url}: baris di bawah layar tersembunyi lalu masuk saat discroll, satu observer bersama`, async ({ page }) => {
+      await page.goto(url);
+      await page.waitForTimeout(SETTLE_MS);
+      // Tidak ada yang tersembunyi di layar pertama (watcher), tapi ada baris di bawahnya yang menunggu.
+      expect(await violations(page)).toEqual([]);
+      const hidden = await hiddenRowTops(page, selector);
+      expect(hidden.length).toBeGreaterThan(1);
+      expect(Math.min(...hidden)).toBeGreaterThanOrEqual(800);
+      // Satu baris visual = jumlah kolom di breakpoint ini.
+      const firstHiddenRow = await page.evaluate(
+        ([rowsSelector, top]) =>
+          [...document.querySelectorAll<HTMLElement>(`${rowsSelector} > *`)].filter(
+            (item) => Math.round(item.getBoundingClientRect().top + window.scrollY) === top,
+          ).length,
+        [selector, Math.min(...hidden)] as const,
+      );
+      expect(firstHiddenRow).toBe(perRow);
+      expect(await page.evaluate(() => window.__rowObservers.size)).toBe(1);
+
+      // Scroll sampai baris tersembunyi pertama masuk: baris itu tampil, baris jauh di bawah masih menunggu.
+      await wheelTo(page, Math.min(...hidden) - 400);
+      const after = await hiddenRowTops(page, selector);
+      expect(after).not.toContain(Math.min(...hidden));
+      expect(after.length).toBeGreaterThan(0);
+    });
+  }
+});

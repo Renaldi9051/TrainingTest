@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Reveal } from "@/components/motion/reveal";
+import { RevealRows } from "@/components/motion/reveal-rows";
 import type { ScheduleStatus, TrainingMethod } from "@/lib/api/types";
 import { formatDateRange, formatRupiah } from "@/lib/format";
 import { METHOD_LABELS } from "@/lib/labels";
@@ -22,7 +22,8 @@ const STATUS_TEXT: Record<ScheduleStatus, string> = { OPEN: "DIBUKA", FULL: "PEN
 const PRICE_HIDDEN = "Hubungi marketing";
 
 // Tabel jadwal DESIGN 7: tanpa garis vertikal, header mono, baris hover --bg-subtle.
-// Di layar kecil tiap baris jadi blok bertumpuk (tanpa scroll horizontal). Masuk: baris dari kiri.
+// Di layar kecil tiap baris jadi blok bertumpuk (tanpa scroll horizontal). Masuk: baris dari kiri,
+// per baris saat barisnya masuk viewport (RevealRows).
 // showPrice false (atau harga kosong): tampil "Hubungi marketing".
 export function ScheduleTable({
   rows,
@@ -34,7 +35,7 @@ export function ScheduleTable({
   showTraining?: boolean;
 }) {
   return (
-    <Reveal as="table" className="w-full border-collapse text-left">
+    <table className="w-full border-collapse text-left">
       <caption className="sr-only">{caption}</caption>
       <thead className="hidden md:table-header-group">
         <tr className="border-b border-border-strong">
@@ -60,7 +61,7 @@ export function ScheduleTable({
           </th>
         </tr>
       </thead>
-      <tbody data-reveal-children="item">
+      <RevealRows as="tbody" kind="item">
         {rows.map((row) => (
           <tr
             key={row.id}
@@ -92,8 +93,8 @@ export function ScheduleTable({
             </td>
           </tr>
         ))}
-      </tbody>
-    </Reveal>
+      </RevealRows>
+    </table>
   );
 }
 

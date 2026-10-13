@@ -22,19 +22,19 @@ export type RevealGroup = {
 
 const FINAL = { opacity: "1", transform: "none", clipPath: "inset(0% 0% 0% 0%)" } as const;
 
-function applyFrom({ element, from }: RevealStep) {
+export function applyFrom({ element, from }: RevealStep) {
   if (from.opacity !== undefined) element.style.opacity = String(from.opacity);
   if (from.transform !== undefined) element.style.transform = from.transform;
   if (from.clipPath !== undefined) element.style.clipPath = from.clipPath;
 }
 
-function clear({ element, from }: RevealStep) {
+export function clear({ element, from }: RevealStep) {
   if (from.opacity !== undefined) element.style.removeProperty("opacity");
   if (from.transform !== undefined) element.style.removeProperty("transform");
   if (from.clipPath !== undefined) element.style.removeProperty("clip-path");
 }
 
-function play(step: RevealStep) {
+export function play(step: RevealStep) {
   const keyframes: Record<string, string[]> = {};
   if (step.from.opacity !== undefined) keyframes.opacity = [String(step.from.opacity), FINAL.opacity];
   if (step.from.transform !== undefined) keyframes.transform = [step.from.transform, FINAL.transform];
