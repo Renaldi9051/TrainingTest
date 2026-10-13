@@ -2,7 +2,8 @@
 // Dipanggil dari seed.ts kecuali mode --minimal (setup e2e).
 // Aturan sama dengan katalog: setiap entitas hanya diisi kalau tabelnya kosong sama sekali, termasuk
 // baris di Sampah, supaya data yang dihapus admin tidak muncul lagi di setiap `docker compose up`.
-// Tidak ada gambar: admin mengunggah foto & logo sendiri di media library.
+// Gambar placeholder dipasang seed.ts setelah ini (seed-data/seed-images.ts); foto & logo asli
+// diunggah admin sendiri di media library.
 // Database yang sudah berisi disamakan lewat scripts/sync-content-dev.ts.
 import { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
@@ -76,7 +77,7 @@ export async function seedContent(publishedAt: Date): Promise<ContentSeedResult>
   result.portofolio = await ifEmpty(
     () => db.portfolioItem.count(),
     async () => {
-      // Tanpa galeri: foto kegiatan diunggah admin sendiri.
+      // Galeri diisi gambar placeholder oleh seed.ts (seed-images.ts).
       const rows = buildPortfolio();
       await db.portfolioItem.createMany({
         data: rows.map((row, order) => ({

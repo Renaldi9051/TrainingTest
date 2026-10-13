@@ -198,7 +198,8 @@ async function storeOne(
 
 export async function uploadMedia(
   files: UploadInput[],
-  options: { folder: string | null; userId: string },
+  // revalidate false: pemanggil merevalidasi sendiri sekali di akhir (seed, skrip sinkronisasi).
+  options: { folder: string | null; userId: string; revalidate?: boolean },
   now = new Date(),
 ): Promise<{ created: MediaDto[]; failed: UploadFailure[] }> {
   const created: MediaDto[] = [];
@@ -214,7 +215,7 @@ export async function uploadMedia(
     }
   }
 
-  if (created.length > 0) await revalidateEntity({ entity: "Media" });
+  if (created.length > 0 && options.revalidate !== false) await revalidateEntity({ entity: "Media" });
   return { created, failed };
 }
 
