@@ -21,7 +21,7 @@ const STATUS_TEXT: Record<ScheduleStatus, string> = { OPEN: "DIBUKA", FULL: "PEN
 
 const PRICE_HIDDEN = "Hubungi marketing";
 
-// Tabel jadwal DESIGN 7: tanpa garis vertikal, header mono, baris hover --bg-subtle.
+// Tabel jadwal DESIGN 7: tanpa garis vertikal, header mono, baris hover --bg-subtle + geser 8 px.
 // Di layar kecil tiap baris jadi blok bertumpuk (tanpa scroll horizontal). Masuk: baris dari kiri,
 // per baris saat barisnya masuk viewport (RevealRows).
 // showPrice false (atau harga kosong): tampil "Hubungi marketing".
@@ -65,7 +65,7 @@ export function ScheduleTable({
         {rows.map((row) => (
           <tr
             key={row.id}
-            className="grid grid-cols-2 gap-x-4 gap-y-1 border-b border-border py-4 transition-colors duration-150 hover:bg-bg-subtle md:table-row md:py-0"
+            className="grid grid-cols-2 gap-x-4 gap-y-1 border-b border-border py-4 transition-[background-color,transform] duration-150 ease-standard hover:bg-bg-subtle motion-safe:hover:translate-x-2 motion-safe:focus-within:translate-x-2 md:table-row md:py-0"
           >
             <td className="col-span-2 font-medium text-fg-strong md:py-4 md:pr-4 md:whitespace-nowrap">
               {formatDateRange(row.startDate, row.endDate)}
