@@ -4,50 +4,34 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { focusOffset, nextSpeed, wrapOffset } from "./marquee-plan";
 
-type MarqueeState = "static" | "on";
-
 // Isi berjalan horizontal mengikuti kecepatan scroll (DESIGN.md 8.2), dipakai logo klien dan section
-// teks besar. Server merender satu salinan dalam tata letak statis (className list); setelah mount,
-// kalau gerak diizinkan dan kontainer tidak sedang terlihat di layar pertama (tanpa geser layout yang
-// terlihat), tata letak berganti ke satu baris (data-marquee="on") dan salinan kedua (aria-hidden,
-// inert) ditampilkan. Kelas baris diatur pemakai lewat varian group-data-[marquee=on]/marquee.
-// Diam tanpa scroll. Fokus keyboard di dalam marquee: berhenti dan elemen itu digeser ke layar.
-// Reduced motion / tanpa JS: tetap statis.
+// teks besar. Server selalu merender tata letak akhir: satu baris (overflow hidden) + salinan kedua
+// untuk putaran tanpa celah (aria-hidden, inert: tidak dibaca dua kali, tidak bisa difokus), jadi tidak
+// ada perubahan layout setelah load (CLS 0). JS hanya menggerakkan transform: diam tanpa scroll,
+// kecepatan & arah ikut scroll, juga kalau marquee sudah terlihat di layar pertama.
+// Reduced motion: lewat CSS saja (motion-reduce), isi dibungkus ke beberapa baris dan salinan kedua
+// disembunyikan; JS tidak berjalan. Fokus keyboard di dalam marquee: berhenti dan elemen itu digeser
+// ke layar. listClassName memakai varian motion-reduce: untuk tata letak statisnya.
 export function VelocityMarquee({
   children,
+  copy,
   className,
   listClassName,
-  as: List = "div",
-  initial = "static",
 }: {
   children: ReactNode;
+  // Isi salinan kedua (default sama dengan children), mis. pola solid/outline yang dibalik.
+  copy?: ReactNode;
   className?: string;
-  // Kelas daftar (statis + varian group-data-[marquee=on]/marquee:...).
   listClassName?: string;
-  as?: "div" | "ul";
-  // "on": tata letak satu baris sejak server (teks besar tanpa versi statis).
-  initial?: MarqueeState;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const copyRef = useRef<HTMLDivElement>(null);
 
-  // Diputuskan sekali setelah mount, langsung di DOM (tanpa render ulang).
   useEffect(() => {
     const root = rootRef.current;
     const track = trackRef.current;
-    const copy = copyRef.current;
-    if (!root || !track || !copy) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced || !("IntersectionObserver" in window)) {
-      root.dataset.marquee = "static";
-      return;
-    }
-    const rect = root.getBoundingClientRect();
-    // Tata letak statis yang sudah terlihat tidak diubah (CLS); isi baris (initial "on") boleh jalan.
-    if (initial === "static" && rect.bottom > 0 && rect.top < window.innerHeight) return;
-    root.dataset.marquee = "on";
-    copy.hidden = false;
+    if (!root || !track) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
     let x = 0;
     let speed = 0;
     let frame = 0;
@@ -68,14 +52,11 @@ export function VelocityMarquee({
       apply();
       if (inView) frame = requestAnimationFrame(tick);
     };
-    const start = () => {
-      if (!frame && inView && !paused) frame = requestAnimationFrame(tick);
-    };
     const onScroll = () => {
       const current = window.scrollY;
       pendingDelta += current - lastScroll;
       lastScroll = current;
-      start();
+      if (!frame && inView && !paused) frame = requestAnimationFrame(tick);
     };
     const observer = new IntersectionObserver(([entry]) => {
       inView = entry.isIntersecting;
@@ -115,19 +96,15 @@ export function VelocityMarquee({
       root.removeEventListener("focusin", onFocusIn);
       root.removeEventListener("focusout", onFocusOut);
       track.style.removeProperty("transform");
-      copy.hidden = true;
-      root.dataset.marquee = initial;
     };
-  }, [initial]);
+  }, []);
 
   return (
-    <div ref={rootRef} data-marquee={initial} className={cn("group/marquee overflow-hidden", className)}>
-      <div ref={trackRef} className="group-data-[marquee=on]/marquee:flex group-data-[marquee=on]/marquee:w-max">
-        <List className={listClassName}>{children}</List>
-        {/* Salinan kedua untuk putaran tanpa celah: tersembunyi sampai marquee berjalan, selalu
-            aria-hidden dan inert (tidak bisa difokus, tidak dibaca dua kali). */}
-        <div ref={copyRef} hidden aria-hidden inert className="contents">
-          <List className={listClassName}>{children}</List>
+    <div ref={rootRef} data-marquee="" className={cn("overflow-hidden", className)}>
+      <div ref={trackRef} className="flex w-max motion-reduce:w-auto motion-reduce:transform-none!">
+        <div className={cn("shrink-0 motion-reduce:shrink", listClassName)}>{children}</div>
+        <div aria-hidden inert data-marquee-copy="" className={cn("shrink-0 motion-reduce:hidden", listClassName)}>
+          {copy ?? children}
         </div>
       </div>
     </div>

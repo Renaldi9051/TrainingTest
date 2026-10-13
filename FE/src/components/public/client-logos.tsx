@@ -5,20 +5,19 @@ import { PublicImage } from "./public-image";
 
 const LOGO_SIZES = "(min-width: 1024px) 200px, (min-width: 640px) 25vw, 50vw";
 
-// Varian satu baris saat marquee berjalan (VelocityMarquee data-marquee="on").
-const ON = "group-data-[marquee=on]/marquee:";
 
 // Logo klien grayscale + opacity 60%, hover/fokus 100% (DESIGN 2). Tanpa logo: nama klien sebagai
 // wordmark mono. Masuk: logo membesar dari 0,92 bertahap. Gerak: satu baris yang berjalan mengikuti
-// scroll (VelocityMarquee); tanpa JS, reduced motion, atau kalau sudah terlihat saat dimuat: grid
-// statis. Fokus keyboard pada link logo menghentikan marquee dan menggeser logo itu ke layar.
+// scroll (VelocityMarquee), dirender server sebagai satu baris (tanpa perubahan layout). Reduced
+// motion: grid statis lewat CSS. Fokus keyboard pada link logo menghentikan marquee dan menggeser
+// logo itu ke layar.
 export function ClientLogos({ clients }: { clients: PublicClient[] }) {
   return (
-    <VelocityMarquee className="border-t border-l border-border">
+    <VelocityMarquee className="border-t border-l border-border" listClassName="motion-reduce:w-full">
       <Reveal
         as="ul"
         data-reveal-children="pop"
-        className={`grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 ${ON}flex ${ON}w-max`}
+        className="flex motion-reduce:grid motion-reduce:grid-cols-2 sm:motion-reduce:grid-cols-4 lg:motion-reduce:grid-cols-6"
       >
         {clients.map((client, index) => {
           const content = client.logo ? (
@@ -36,7 +35,7 @@ export function ClientLogos({ clients }: { clients: PublicClient[] }) {
           const box =
             "flex h-28 items-center justify-center border-r border-b border-border px-6 opacity-60 transition-opacity duration-150 ease-standard";
           return (
-            <li key={`${client.name}-${index}`} className={`${ON}w-56 ${ON}shrink-0`}>
+            <li key={`${client.name}-${index}`} className="w-56 shrink-0 motion-reduce:w-auto">
               {client.url ? (
                 <a
                   href={client.url}
