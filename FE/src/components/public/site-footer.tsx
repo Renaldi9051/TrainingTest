@@ -137,7 +137,7 @@ export async function SiteFooter() {
               title={`Peta lokasi ${identity.name}`}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              className="absolute inset-0 h-full w-full grayscale"
+              className="absolute inset-0 h-full w-full"
             />
           </div>
         ) : null}

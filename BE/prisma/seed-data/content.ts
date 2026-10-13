@@ -12,21 +12,18 @@ import { doc, h3, p, paragraphs, ul } from "./rich-text";
 // ===== Pengaturan (hanya key yang diatur di sini; key lain tetap dari seed.ts) =====
 
 export const contactSetting = {
-  phone: "021 0000 0000",
-  email: "info@example.com",
-  emailSecondary: "pendaftaran@example.com",
-  whatsapp: "6281200000001",
-  address: "Gedung Contoh Lt. 5\nJl. Contoh Raya No. 10, Jakarta Pusat 10110",
-  // Peta umum area Monas, Jakarta (bukan alamat referensi).
-  mapEmbedUrl:
-    "https://www.openstreetmap.org/export/embed.html?bbox=106.8166%2C-6.1830%2C106.8352%2C-6.1702&layer=mapnik",
+  phone: "+62 856-0060-4388",
+  email: "jogjacreativeproduction@gmail.com",
+  emailSecondary: "",
+  whatsapp: "6285600604388",
+  address: "PT Jogja Creative Production\nYogyakarta, Indonesia",
+  // Embed dari tautan https://maps.app.goo.gl/Cjfd8twNxHQNtWKh6 (koordinat tempatnya).
+  mapEmbedUrl: "https://maps.google.com/maps?q=-7.7304157,110.3609453&z=16&output=embed",
 };
 
 export const socialSetting = {
   links: [
-    { platform: "instagram" as const, label: "", url: "https://www.instagram.com/example" },
-    { platform: "facebook" as const, label: "", url: "https://www.facebook.com/example" },
-    { platform: "x" as const, label: "", url: "https://x.com/example" },
+    { platform: "instagram" as const, label: "", url: "https://www.instagram.com/idtc.drone" },
   ],
 };
 
@@ -184,10 +181,7 @@ export const marketing = ["Rina", "Dewi", "Andi", "Sari", "Budi"].map((name, ind
   defaultMessage: "Halo, saya ingin mendaftar pelatihan",
 }));
 
-export const mediaPartners = ["contoh-satu.id", "contoh-dua.id", "contoh-tiga.id"].map((domain) => ({
-  name: domain,
-  url: `https://${domain}`,
-}));
+export const mediaPartners = [{ name: "kagamadigi.id", url: "https://kagamadigi.id/" }];
 
 // ===== Menu =====
 
