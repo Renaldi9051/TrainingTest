@@ -26,6 +26,7 @@ export const HOME_SECTION_TYPES = [
   "VISION_MISSION",
   "TESTIMONIALS",
   "CTA",
+  "MARQUEE",
 ] as const satisfies readonly HomeSectionType[];
 
 // Type yang hanya boleh ada satu di antara section yang belum dihapus (juga dijaga partial
@@ -44,9 +45,15 @@ export const HOME_SECTION_LABELS: Record<HomeSectionType, string> = {
   VISION_MISSION: "Visi & misi",
   TESTIMONIALS: "Testimoni",
   CTA: "CTA penutup",
+  MARQUEE: "Teks berjalan",
 };
 
 export const ROTATING_WORDS_MAX = 5;
+export const MARQUEE_SOURCES = ["custom", "services"] as const;
+export const MARQUEE_ITEMS_MIN = 2;
+export const MARQUEE_ITEMS_MAX = 12;
+export const MARQUEE_ITEM_MAX = 40;
+export const MARQUEE_HEADING_MAX = 60;
 export const STATS_MAX = 6;
 
 const optionalCta = ctaSchema.nullable().default(null);
@@ -132,6 +139,29 @@ const ctaContent = z.object({
   secondaryCta: optionalCta,
 });
 
+// Teks besar berjalan (VelocityMarquee): teks sendiri, atau judul layanan yang tayang (urut sesuai
+// urutan layanan). heading hanya untuk pembaca layar (h2 sr-only).
+const marqueeContent = z
+  .object({
+    heading: plainText("Judul untuk pembaca layar", MARQUEE_HEADING_MAX),
+    source: z.enum(MARQUEE_SOURCES, { error: "Sumber teks tidak dikenal." }).default("custom"),
+    items: z
+      .array(requiredText("Teks", MARQUEE_ITEM_MAX))
+      .max(MARQUEE_ITEMS_MAX, { error: `Teks maksimal ${MARQUEE_ITEMS_MAX}.` })
+      .default([]),
+    limit: z
+      .number({ error: "Jumlah harus berupa angka." })
+      .int({ error: "Jumlah harus bilangan bulat." })
+      .min(MARQUEE_ITEMS_MIN, { error: `Jumlah minimal ${MARQUEE_ITEMS_MIN}.` })
+      .max(MARQUEE_ITEMS_MAX, { error: `Jumlah maksimal ${MARQUEE_ITEMS_MAX}.` })
+      .default(6),
+  })
+  .superRefine((value, ctx) => {
+    if (value.source === "custom" && value.items.length < MARQUEE_ITEMS_MIN) {
+      ctx.addIssue({ code: "custom", path: ["items"], message: `Isi minimal ${MARQUEE_ITEMS_MIN} teks.` });
+    }
+  });
+
 export const HOME_SECTION_CONTENT_SCHEMAS = {
   HERO: heroContent,
   STATS: statsContent,
@@ -143,6 +173,7 @@ export const HOME_SECTION_CONTENT_SCHEMAS = {
   VISION_MISSION: visionMissionContent,
   TESTIMONIALS: testimonialsContent,
   CTA: ctaContent,
+  MARQUEE: marqueeContent,
 } as const satisfies Record<HomeSectionType, z.ZodType>;
 
 export type HomeSectionContentMap = {
@@ -163,6 +194,7 @@ export const homeSectionContentSchema = z.discriminatedUnion(
     z.object({ type: z.literal("VISION_MISSION"), content: visionMissionContent }),
     z.object({ type: z.literal("TESTIMONIALS"), content: testimonialsContent }),
     z.object({ type: z.literal("CTA"), content: ctaContent }),
+    z.object({ type: z.literal("MARQUEE"), content: marqueeContent }),
   ],
   { error: "Tipe section tidak dikenal." },
 );
@@ -231,6 +263,7 @@ export function homeSectionMediaRefs(section: HomeSectionContent): TypedMediaRef
     case "VISION_MISSION":
     case "TESTIMONIALS":
     case "CTA":
+    case "MARQUEE":
       return [];
   }
 }

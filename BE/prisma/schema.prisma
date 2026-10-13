@@ -36,6 +36,8 @@ enum HomeSectionType {
   VISION_MISSION
   TESTIMONIALS
   CTA
+  // Teks besar berjalan mengikuti scroll (VelocityMarquee), Fase 4.1e.
+  MARQUEE
 }
 
 // PROFILE = halaman sistem /profil: hanya satu, tidak bisa dihapus, slug terkunci "profil".

@@ -22,7 +22,7 @@ import { assertMediaRefs, getMediaMap, toPublicImage, type MediaDto, type Public
 import { nextOrder } from "@/services/reorder";
 import { publicScheduleInclude, toPublicSchedule, type PublicSchedule } from "@/services/schedule";
 import { resolveSelections, type Selection } from "@/services/selection";
-import { resolveServiceSelections, type PublicServiceCard } from "@/services/service";
+import { publicServiceWhere, resolveServiceSelections, type PublicServiceCard } from "@/services/service";
 import { toPublicTestimonial, type PublicTestimonial } from "@/services/testimonial";
 import { cardInclude, toCard, type PublicTrainingCard } from "@/services/training-public";
 import { publicTrainingWhere } from "@/services/training-visibility";
@@ -256,7 +256,8 @@ export type PublicHomeSection =
   | (Base<"CLIENTS"> & Omit<C<"CLIENTS">, SelectionKeys> & { items: PublicClient[] })
   | (Base<"VISION_MISSION"> & C<"VISION_MISSION">)
   | (Base<"TESTIMONIALS"> & Omit<C<"TESTIMONIALS">, SelectionKeys> & { items: PublicTestimonial[] })
-  | (Base<"CTA"> & C<"CTA">);
+  | (Base<"CTA"> & C<"CTA">)
+  | (Base<"MARQUEE"> & { heading: string; items: string[] });
 
 // Pratinjau admin: semua section (termasuk yang disembunyikan) + penanda tampil & kosong.
 export type PreviewHomeSection = PublicHomeSection & {
@@ -301,8 +302,11 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
   const clients = selectionsOf(parsed, "CLIENTS");
   const testimonials = selectionsOf(parsed, "TESTIMONIALS");
   const scheduleLimit = Math.max(0, ...schedules.map((item) => item.content.limit));
+  const marquees = selectionsOf(parsed, "MARQUEE");
+  // Teks berjalan dari judul layanan: satu query untuk semua section (jumlah terbesar).
+  const marqueeServiceLimit = Math.max(0, ...marquees.filter((item) => item.content.source === "services").map((item) => item.content.limit));
 
-  const [serviceItems, categoryItems, trainingItems, scheduleRows, clientItems, testimonialItems, media] =
+  const [serviceItems, categoryItems, trainingItems, scheduleRows, clientItems, testimonialItems, media, serviceTitles] =
     await Promise.all([
       resolveServiceSelections(services.map((item) => item.content)),
       resolveSelections(
@@ -380,6 +384,14 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
         },
       ),
       getMediaMap(parsed.flatMap(({ section }) => homeSectionMediaRefs(section).map((ref) => ref.mediaId))),
+      marqueeServiceLimit
+        ? db.service.findMany({
+            where: publicServiceWhere,
+            select: { title: true },
+            orderBy: [{ order: "asc" }, { title: "asc" }],
+            take: marqueeServiceLimit,
+          })
+        : Promise.resolve([]),
     ]);
 
   const itemsFor = <T,>(list: { id: string }[], resolved: T[][]) =>
@@ -406,6 +418,11 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
         return { ...base, type: "VISION_MISSION", ...section.content, empty: false };
       case "CTA":
         return { ...base, type: "CTA", ...section.content, empty: false };
+      case "MARQUEE": {
+        const { heading, source, items: custom, limit } = section.content;
+        const items = source === "services" ? serviceTitles.slice(0, limit).map((row) => row.title) : custom;
+        return { ...base, type: "MARQUEE", heading, items, empty: items.length === 0 };
+      }
       case "SERVICES": {
         const items = serviceMap.get(row.id) ?? [];
         return { ...base, type: "SERVICES", ...omitSelection(section.content), items, empty: items.length === 0 };

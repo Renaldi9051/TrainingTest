@@ -420,6 +420,10 @@ export const homeSections = [
         { value: 2000, prefix: "", suffix: "+", label: "Jam terbang latihan" },
       ],
     },
+  },  {
+    // Teks besar berjalan mengikuti scroll (seperti blueprint, setelah statistik).
+    type: "MARQUEE",
+    content: { heading: "Bidang layanan", source: "services", items: [], limit: 6 },
   },
   {
     type: "CATEGORIES",

@@ -291,3 +291,34 @@ describe("publik & pratinjau", () => {
     ]);
   });
 });
+
+
+describe("resolveHomeSections: teks berjalan (MARQUEE)", () => {
+  it("teks sendiri dipakai apa adanya tanpa query", async () => {
+    const [marquee] = await resolveHomeSections([section("MARQUEE", { heading: "Bidang", source: "custom", items: ["BNSP", "In House"] })], now);
+    expect(marquee).toMatchObject({ type: "MARQUEE", heading: "Bidang", items: ["BNSP", "In House"], empty: false });
+    expect(queryCounts().service).toBe(0);
+  });
+
+  it("dari judul layanan: satu query layanan tayang (limit terbesar), urut sesuai urutan, dipotong per section", async () => {
+    mock.service.findMany.mockResolvedValue([{ title: "Top Training" }, { title: "TOT BNSP" }, { title: "Outbound" }]);
+    const sections = await resolveHomeSections(
+      [section("MARQUEE", { source: "services", limit: 2 }), section("MARQUEE", { source: "services", limit: 6 })],
+      now,
+    );
+    expect(mock.service.findMany).toHaveBeenCalledTimes(1);
+    const call = mock.service.findMany.mock.calls[0][0];
+    expect(call.where).toEqual({ deletedAt: null, status: "PUBLISHED" });
+    expect(call.take).toBe(6);
+    expect(sections.map((item) => (item.type === "MARQUEE" ? item.items : []))).toEqual([
+      ["Top Training", "TOT BNSP"],
+      ["Top Training", "TOT BNSP", "Outbound"],
+    ]);
+  });
+
+  it("belum ada layanan tayang: kosong (tidak dirender di publik)", async () => {
+    mock.service.findMany.mockResolvedValue([]);
+    const [marquee] = await resolveHomeSections([section("MARQUEE", { source: "services" })], now);
+    expect(marquee.empty).toBe(true);
+  });
+});

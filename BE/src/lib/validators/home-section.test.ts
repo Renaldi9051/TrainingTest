@@ -43,6 +43,7 @@ const FULL: Record<(typeof HOME_SECTION_TYPES)[number], unknown> = {
     primaryCta: { label: "Chat WhatsApp", href: "https://wa.me/6281234567890" },
     secondaryCta: { label: "Telepon", href: "tel:+62215550101" },
   },
+  MARQUEE: { heading: "Bidang pelatihan", source: "custom", items: ["BNSP", "In House", "Public Training"], limit: 6 },
 };
 
 describe("skema per type", () => {
@@ -71,6 +72,8 @@ describe("skema per type", () => {
       image: null,
     });
     expect(parseHomeSectionContent("UPCOMING_SCHEDULES", {})).toMatchObject({ limit: 5, cta: null });
+    // Dari judul layanan: tanpa teks sendiri tetap valid.
+    expect(parseHomeSectionContent("MARQUEE", { source: "services" })).toEqual({ heading: "", source: "services", items: [], limit: 6 });
   });
 
   it("type tidak dikenal ditolak", () => {
@@ -108,6 +111,11 @@ describe("validasi isi", () => {
     ["STATS angka negatif", "STATS", { items: [{ value: -1, label: "x" }] }, ["items", 0, "value"]],
     ["STATS > 6", "STATS", { items: Array.from({ length: 7 }, () => ({ value: 1, label: "x" })) }, ["items"]],
     ["SERVICES manual tanpa pilihan", "SERVICES", { mode: "manual", ids: [] }, ["ids"]],
+    ["MARQUEE teks sendiri < 2", "MARQUEE", { source: "custom", items: ["BNSP"] }, ["items"]],
+    ["MARQUEE teks > 40 karakter", "MARQUEE", { items: ["a", "x".repeat(41)] }, ["items", 1]],
+    ["MARQUEE teks > 12", "MARQUEE", { items: Array.from({ length: 13 }, (_, i) => `t${i}`) }, ["items"]],
+    ["MARQUEE jumlah layanan > 12", "MARQUEE", { source: "services", limit: 13 }, ["limit"]],
+    ["MARQUEE sumber asing", "MARQUEE", { source: "kategori" }, ["source"]],
     ["SERVICES id dobel", "SERVICES", { mode: "manual", ids: [ID_A, ID_A] }, ["ids"]],
     ["SERVICES limit > 8", "SERVICES", { limit: 9 }, ["limit"]],
     ["SERVICES limit pecahan", "SERVICES", { limit: 2.5 }, ["limit"]],

@@ -22,6 +22,7 @@ describe("data contoh", () => {
       "CLIENTS",
       "LATEST_TRAININGS",
       "STATS",
+      "MARQUEE",
       "CATEGORIES",
       "UPCOMING_SCHEDULES",
       "TESTIMONIALS",
