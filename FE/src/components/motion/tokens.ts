@@ -64,6 +64,13 @@ export const HERO_WORD_MS = 400;
 export const HERO_TOTAL_MS = 500;
 export const HERO_WORD_STEP_MS = 50;
 
+// Pergantian halaman (navigasi klien): header halaman stagger masuk, total <= 500 ms (DESIGN.md 8.3).
+export const PAGE_ENTER_MS = 360;
+export const PAGE_ENTER_TOTAL_MS = 500;
+export const PAGE_ENTER_STEP_MS = 60;
+// Geser masuk header (px).
+export const PAGE_ENTER_SHIFT_PX = 16;
+
 // Jeda total satu elemen dalam grup yang berbaris (stagger) + kolom.
 export function staggerDelay(index: number, step: number, column = 0): number {
   return Number((Math.min(index, STAGGER_CAP) * step + column * CARD_COLUMN_DELAY).toFixed(3));

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageEnter } from "@/components/motion/page-enter";
 import { PointerEffects } from "@/components/motion/pointer-effects";
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
@@ -41,6 +42,8 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
       <SiteFooter />
       {/* Efek kursor (magnetic, label & gambar ikut kursor): satu listener untuk semua halaman publik. */}
       <PointerEffects />
+      {/* Header halaman stagger masuk setelah navigasi klien (bukan muat penuh atau Back/Forward). */}
+      <PageEnter />
     </>
   );
 }

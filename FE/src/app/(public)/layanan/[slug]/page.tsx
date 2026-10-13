@@ -81,15 +81,15 @@ export default async function ServicePage({ params }: PageProps<"/layanan/[slug]
       {preview ? <PreviewBanner path={`/layanan/${service.slug}`} /> : null}
       <Container className="grid gap-10 pt-16 pb-12 md:pt-24 md:pb-16 lg:grid-cols-12 lg:gap-6">
         <div className="space-y-6 lg:col-span-7">
-          <Eyebrow>
+          <Eyebrow data-page-enter="">
             <Link href="/layanan" className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-fg-strong">
               Layanan
             </Link>
           </Eyebrow>
-          <h1 className="max-w-[20ch] text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
+          <h1 data-page-enter="" className="max-w-[20ch] text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
             {service.title}
           </h1>
-          {service.summary ? <p className="max-w-[65ch] text-body-lg text-fg-muted">{service.summary}</p> : null}
+          {service.summary ? <p data-page-enter="" className="max-w-[65ch] text-body-lg text-fg-muted">{service.summary}</p> : null}
           {whatsapp ? (
             <a
               href={whatsapp}

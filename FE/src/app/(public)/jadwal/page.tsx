@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 export default function SchedulePage({ searchParams }: PageProps<"/jadwal">) {
   return (
     <Container className="py-16 md:py-24">
-      <Eyebrow>Jadwal</Eyebrow>
-      <h1 className="mt-4 text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
+      <Eyebrow data-page-enter="">Jadwal</Eyebrow>
+      <h1 data-page-enter="" className="mt-4 text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
         Jadwal pelatihan
       </h1>
       <Suspense

@@ -20,8 +20,8 @@ export async function generateMetadata({ searchParams }: PageProps<"/pelatihan">
 export default function CatalogPage({ searchParams }: PageProps<"/pelatihan">) {
   return (
     <Container className="py-16 md:py-24">
-      <Eyebrow>Katalog</Eyebrow>
-      <h1 className="mt-4 text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
+      <Eyebrow data-page-enter="">Katalog</Eyebrow>
+      <h1 data-page-enter="" className="mt-4 text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
         Pelatihan
       </h1>
       {/* Filter dibaca dari URL saat request, jadi bagian ini di-stream di dalam Suspense. */}

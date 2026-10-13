@@ -64,15 +64,16 @@ function SectionCta({ cta }: { cta: Cta | null }) {
 }
 
 // Konten layar pertama: langsung terbaca tanpa reveal scroll (DESIGN 8.3). Satu-satunya h1 beranda.
-// Hanya h1 yang bergerak: kata naik dengan CSS murni <= 500 ms (tanpa JS, tanpa opacity 0).
-// Subjudul, search, dan CTA tidak dianimasikan.
+// Saat muat penuh hanya h1 yang bergerak: kata naik dengan CSS murni <= 500 ms (tanpa JS, tanpa
+// opacity 0). Setelah navigasi klien, eyebrow dan subjudul ikut stagger masuk (PageEnter); h1 tetap
+// memakai animasi CSS-nya sendiri.
 function HeroSection({ section }: { section: Extract<PublicHomeSection, { type: "HERO" }> }) {
   const word = section.rotatingWords[0];
   return (
     <section className="py-20 md:py-32" aria-labelledby={`${section.id}-title`}>
       <Container className="space-y-10 md:space-y-14">
         <div className="space-y-6">
-          {section.eyebrow ? <Eyebrow>{section.eyebrow}</Eyebrow> : null}
+          {section.eyebrow ? <Eyebrow data-page-enter="">{section.eyebrow}</Eyebrow> : null}
           <h1
             id={`${section.id}-title`}
             className="max-w-[16ch] text-[48px] leading-[0.95] font-semibold tracking-[-0.04em] text-fg-strong md:text-[88px]"
@@ -81,7 +82,7 @@ function HeroSection({ section }: { section: Extract<PublicHomeSection, { type: 
             <HeroWords text={section.headline} accent={word} />
           </h1>
           {section.subheadline ? (
-            <p className="max-w-[65ch] text-body-lg text-fg-muted">{section.subheadline}</p>
+            <p data-page-enter="" className="max-w-[65ch] text-body-lg text-fg-muted">{section.subheadline}</p>
           ) : null}
         </div>
 

@@ -162,7 +162,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
       <div className={cn(cta && "pb-24 lg:pb-0")}>
         <Container className="pt-10 md:pt-16">
           {training.categories.length > 0 ? (
-            <p className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
+            <p data-page-enter="" className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
               {training.categories.map((category) => (
                 <Link
                   key={category.slug}
@@ -174,13 +174,13 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
               ))}
             </p>
           ) : (
-            <Eyebrow>Pelatihan</Eyebrow>
+            <Eyebrow data-page-enter="">Pelatihan</Eyebrow>
           )}
-          <h1 className="mt-4 max-w-[22ch] text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
+          <h1 data-page-enter="" className="mt-4 max-w-[22ch] text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
             {training.title}
           </h1>
           {training.summary ? (
-            <p className="mt-6 max-w-[65ch] text-body-lg text-fg-muted">{training.summary}</p>
+            <p data-page-enter="" className="mt-6 max-w-[65ch] text-body-lg text-fg-muted">{training.summary}</p>
           ) : null}
 
           <dl className="mt-10 grid grid-cols-2 border-y border-border md:grid-cols-4" aria-label="Ringkasan pelatihan">

@@ -52,7 +52,7 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
 
   return (
     <Container className="py-16 md:py-24">
-      <nav aria-label="Breadcrumb">
+      <nav aria-label="Breadcrumb" data-page-enter="">
         <ol className="flex flex-wrap items-center gap-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
           <li>
             <Link href="/pelatihan" className="underline-offset-4 hover:text-fg-strong hover:underline">
@@ -65,11 +65,11 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
       </nav>
       <div className="mt-8 grid gap-8 border-b border-border pb-12 lg:grid-cols-12">
         <div className="lg:col-span-8">
-          <h1 className="text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
+          <h1 data-page-enter="" className="text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
             {category.name}
           </h1>
           {category.description ? (
-            <p className="mt-6 max-w-[65ch] text-body-lg text-fg-muted">{category.description}</p>
+            <p data-page-enter="" className="mt-6 max-w-[65ch] text-body-lg text-fg-muted">{category.description}</p>
           ) : null}
         </div>
         <div className="flex flex-col justify-end gap-2 lg:col-span-4 lg:items-end">
