@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Reveal } from "@/components/motion/reveal";
+import { RevealImage } from "@/components/motion/reveal-parts";
 import type { PublicTrainingCard } from "@/lib/api/types";
 import { METHOD_LABELS } from "@/lib/labels";
 import { PublicImage } from "./public-image";
@@ -6,14 +8,15 @@ import { PublicImage } from "./public-image";
 export const CARD_IMAGE_SIZES = "(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw";
 
 // Kartu pelatihan DESIGN 7: gambar 4:3 grayscale -> label kategori mono -> judul h3 -> meta -> garis.
-// Hover: gambar zoom 1.03 dan kembali berwarna, judul bergaris bawah.
+// Hover: gambar zoom 1.03 dan kembali berwarna, judul bergaris bawah. Di grid: gambar wipe dari bawah
+// + zoom 1,15 -> 1 bersama kartunya.
 export function TrainingCard({ training, headingLevel = "h3" }: { training: PublicTrainingCard; headingLevel?: "h2" | "h3" }) {
   const Heading = headingLevel;
   const meta = [training.duration, training.method ? METHOD_LABELS[training.method] : null].filter(Boolean);
 
   return (
     <article className="group relative flex h-full flex-col border-b border-border pb-6">
-      <div className="relative aspect-[4/3] overflow-hidden bg-bg-muted">
+      <RevealImage className="relative aspect-[4/3] overflow-hidden bg-bg-muted">
         {training.cover ? (
           <PublicImage
             image={training.cover}
@@ -21,7 +24,7 @@ export function TrainingCard({ training, headingLevel = "h3" }: { training: Publ
             className="transition-[transform,filter] duration-300 ease-standard group-hover:scale-[1.03] group-hover:grayscale-0 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
           />
         ) : null}
-      </div>
+      </RevealImage>
       {training.categories[0] ? (
         <p className="mt-5 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
           {training.categories.map((category) => category.name).join(" · ")}
@@ -43,6 +46,7 @@ export function TrainingCard({ training, headingLevel = "h3" }: { training: Publ
 
 // headingLevel: h2 kalau grid langsung di bawah h1 halaman (katalog, landing kategori), h3 kalau
 // di bawah judul section (pelatihan terkait), supaya urutan heading tidak melompat.
+// Masuk: kartu naik bertahap (stagger 80 ms, kolom kanan +60 ms).
 export function TrainingGrid({
   trainings,
   headingLevel = "h3",
@@ -51,13 +55,13 @@ export function TrainingGrid({
   headingLevel?: "h2" | "h3";
 }) {
   return (
-    <ul className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+    <Reveal as="ul" data-reveal-children="card" className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
       {trainings.map((training) => (
         <li key={training.slug}>
           <TrainingCard training={training} headingLevel={headingLevel} />
         </li>
       ))}
-    </ul>
+    </Reveal>
   );
 }
 

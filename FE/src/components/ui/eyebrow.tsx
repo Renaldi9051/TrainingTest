@@ -1,13 +1,16 @@
 import type { ComponentProps } from "react";
+import { ScrambleText } from "@/components/motion/reveal-parts";
 import { cn } from "@/lib/utils";
 
 type EyebrowProps = ComponentProps<"p"> & {
   // Nomor urut opsional, tampil sebagai "01 / LAYANAN".
   index?: string;
+  // Huruf di-scramble singkat saat grup reveal-nya masuk viewport (perlu root <Reveal>).
+  scramble?: boolean;
 };
 
-// Label mono kecil di atas judul section (DESIGN.md 3). Efek scramble menyusul di Fase 4.
-export function Eyebrow({ index, className, children, ...props }: EyebrowProps) {
+// Label mono kecil di atas judul section (DESIGN.md 3).
+export function Eyebrow({ index, scramble, className, children, ...props }: EyebrowProps) {
   return (
     <p
       className={cn(
@@ -22,7 +25,7 @@ export function Eyebrow({ index, className, children, ...props }: EyebrowProps) 
           <span aria-hidden> / </span>
         </>
       ) : null}
-      {children}
+      {scramble ? <ScrambleText>{children}</ScrambleText> : children}
     </p>
   );
 }

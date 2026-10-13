@@ -1,13 +1,15 @@
 import type { PublicClient } from "@/lib/api/types";
+import { Reveal } from "@/components/motion/reveal";
 import { PublicImage } from "./public-image";
 
 const LOGO_SIZES = "(min-width: 1024px) 200px, (min-width: 640px) 25vw, 50vw";
 
 // Logo klien grayscale + opacity 60%, hover/fokus 100% (DESIGN 2). Tanpa logo: nama klien sebagai
-// wordmark mono. Marquee berjalan menyusul di Fase 4 (VelocityMarquee); daftar ini tetap jadi isinya.
+// wordmark mono. Masuk: logo membesar dari 0,92 bertahap. Marquee berjalan menyusul di 4.1d
+// (VelocityMarquee); daftar ini tetap jadi isinya.
 export function ClientLogos({ clients }: { clients: PublicClient[] }) {
   return (
-    <ul className="grid grid-cols-2 border-t border-l border-border sm:grid-cols-4 lg:grid-cols-6">
+    <Reveal as="ul" data-reveal-children="pop" className="grid grid-cols-2 border-t border-l border-border sm:grid-cols-4 lg:grid-cols-6">
       {clients.map((client, index) => {
         const content = client.logo ? (
           <span className="relative block h-12 w-full">
@@ -41,6 +43,6 @@ export function ClientLogos({ clients }: { clients: PublicClient[] }) {
           </li>
         );
       })}
-    </ul>
+    </Reveal>
   );
 }
