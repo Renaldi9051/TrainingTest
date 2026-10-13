@@ -209,6 +209,30 @@
   }
 }
 
+/* Mask kata untuk reveal judul (RevealText, HeroWords): kata naik dari balik garis. Padding bawah
+   menjaga descender (g, j, y) tidak terpotong pada line-height rapat. */
+@utility reveal-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+
+/* Headline hero: CSS murni, mulai saat render pertama tanpa menunggu JS. Hanya transform (tanpa
+   opacity 0); durasi & jeda dari token (HeroWords). Reduced motion: tidak ada animasi. */
+@keyframes hero-word {
+  from {
+    transform: translateY(105%);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero-word {
+    animation: hero-word var(--hero-word, 400ms) var(--ease-standard) both;
+    animation-delay: calc(var(--i, 0) * var(--hero-step, 0ms));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

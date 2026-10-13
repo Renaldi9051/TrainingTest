@@ -27,6 +27,10 @@ export const STAGGER = {
 // Kartu di kolom kanan sedikit lebih lambat (blueprint: +60 ms per kolom).
 export const CARD_COLUMN_DELAY = 0.06;
 
+// Urutan stagger dibatasi supaya daftar panjang (jadwal, katalog) tidak menunggu lama: elemen ke-9
+// dan seterusnya masuk bersama elemen ke-8.
+export const STAGGER_CAP = 8;
+
 // Geser masuk daftar & kartu (px).
 export const REVEAL_SHIFT_PX = 16;
 
@@ -52,7 +56,19 @@ export const ROTATE_INTERVAL_MS = 2200;
 // Tombol magnetic: geser maksimal (px).
 export const MAGNETIC_MAX_PX = 6;
 
+// Headline hero: reveal per kata dengan CSS murni (tanpa menunggu JS), total <= 500 ms.
+export const HERO_WORD_MS = 400;
+export const HERO_TOTAL_MS = 500;
+export const HERO_WORD_STEP_MS = 50;
+
 // Jeda total satu elemen dalam grup yang berbaris (stagger) + kolom.
 export function staggerDelay(index: number, step: number, column = 0): number {
-  return Number((index * step + column * CARD_COLUMN_DELAY).toFixed(3));
+  return Number((Math.min(index, STAGGER_CAP) * step + column * CARD_COLUMN_DELAY).toFixed(3));
+}
+
+// Jeda antar kata hero (ms): 50 ms, dipadatkan kalau kata banyak supaya kata terakhir selesai
+// <= HERO_TOTAL_MS.
+export function heroWordStepMs(wordCount: number): number {
+  if (wordCount <= 1) return 0;
+  return Math.min(HERO_WORD_STEP_MS, Math.floor((HERO_TOTAL_MS - HERO_WORD_MS) / (wordCount - 1)));
 }
