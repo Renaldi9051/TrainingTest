@@ -109,7 +109,7 @@ export function useReveal<T extends HTMLElement>(ref: RefObject<T | null>, build
       observer.disconnect();
       // Dilepas sebelum selesai (navigasi, halaman disembunyikan): kembalikan ke keadaan final.
       if (state === "playing") {
-        animations.forEach((animation) => animation.stop());
+        animations.forEach((animation) => animation.cancel());
         cancelExtra?.();
       }
       if (state !== "final") steps.forEach(clear);

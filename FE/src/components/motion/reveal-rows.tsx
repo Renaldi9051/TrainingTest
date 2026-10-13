@@ -113,7 +113,7 @@ export function RevealRows({
       for (const row of rows) {
         row.items.forEach(unobserveOnce);
         // Dilepas sebelum selesai (navigasi, halaman disembunyikan): kembalikan ke keadaan final.
-        if (row.state === "playing") row.animations.forEach((animation) => animation.stop());
+        if (row.state === "playing") row.animations.forEach((animation) => animation.cancel());
         if (row.state !== "final") row.steps.forEach(clear);
       }
     };

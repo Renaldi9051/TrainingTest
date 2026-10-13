@@ -28,7 +28,7 @@ export function useActiveIndicator(
     const base = root.getBoundingClientRect();
     const active = [...root.querySelectorAll<HTMLElement>(selector)].find((element) => element.getClientRects().length > 0);
     if (!active || base.width === 0) {
-      animation.current?.stop();
+      animation.current?.cancel();
       indicator.style.opacity = "0";
       shown.current = false;
       return;
@@ -41,7 +41,7 @@ export function useActiveIndicator(
       const current = indicator.getBoundingClientRect();
       from = { left: current.left - base.left, top: current.top - base.top, width: current.width, height: current.height };
     }
-    animation.current?.stop();
+    animation.current?.cancel();
     animation.current = null;
     Object.assign(indicator.style, {
       left: `${to.left}px`,
@@ -73,7 +73,7 @@ export function useActiveIndicator(
     void document.fonts?.ready.then(() => place(false));
     return () => {
       observer.disconnect();
-      animation.current?.stop();
+      animation.current?.cancel();
     };
   }, [containerRef]);
 }
