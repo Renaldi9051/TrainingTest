@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
+import { ReadingProgress } from "@/components/motion/reading-progress";
 import { PageBlocks } from "@/components/public/page-blocks";
 import { PageIntro } from "@/components/public/page-intro";
 import { PreviewBanner } from "@/components/public/preview-banner";
@@ -60,6 +61,7 @@ export default async function StaticPage({ params }: PageProps<"/[slug]">) {
   return (
     <>
       {preview ? <PreviewBanner path={`/${page.slug}`} /> : null}
+      <ReadingProgress />
       <PageIntro title={page.title} />
       <PageBlocks blocks={page.blocks} />
     </>

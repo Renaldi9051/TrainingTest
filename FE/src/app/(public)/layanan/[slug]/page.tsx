@@ -8,6 +8,7 @@ import { PublicImage } from "@/components/public/public-image";
 import { RichTextHtml } from "@/components/public/rich-text-html";
 import { ServiceRows } from "@/components/public/service-rows";
 import { SectionHeading } from "@/components/public/section-heading";
+import { ReadingProgress } from "@/components/motion/reading-progress";
 import { RollText } from "@/components/motion/roll-text";
 import { buttonVariants, MAGNETIC } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -79,6 +80,7 @@ export default async function ServicePage({ params }: PageProps<"/layanan/[slug]
   return (
     <>
       {preview ? <PreviewBanner path={`/layanan/${service.slug}`} /> : null}
+      <ReadingProgress />
       <Container className="grid gap-10 pt-16 pb-12 md:pt-24 md:pb-16 lg:grid-cols-12 lg:gap-6">
         <div className="space-y-6 lg:col-span-7">
           <Eyebrow data-page-enter="">

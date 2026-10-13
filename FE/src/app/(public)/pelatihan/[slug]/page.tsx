@@ -11,7 +11,9 @@ import { PublicImage } from "@/components/public/public-image";
 import { RichTextHtml } from "@/components/public/rich-text-html";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { TrainingGrid } from "@/components/public/training-card";
+import { ReadingProgress } from "@/components/motion/reading-progress";
 import { RollText } from "@/components/motion/roll-text";
+import { ScrollSpyToc } from "@/components/motion/scroll-spy-toc";
 import { ButtonArrow, buttonVariants, MAGNETIC } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -147,6 +149,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
   return (
     <>
       {preview ? <PreviewBanner path={`/pelatihan/${training.slug}`} /> : null}
+      <ReadingProgress />
       <JsonLd
         data={[
           courseJsonLd(training, siteUrl, settings.identity.name),
@@ -320,21 +323,9 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
   );
 }
 
-function TocLinks({ sections, className }: { sections: Section[]; className?: string }) {
-  return (
-    <ol className={cn("space-y-2", className)}>
-      {sections.map((section) => (
-        <li key={section.id}>
-          <a
-            href={`#${section.id}`}
-            className="rounded-sm text-small text-fg-muted underline-offset-4 outline-none hover:text-fg-strong hover:underline focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
-          >
-            {section.label}
-          </a>
-        </li>
-      ))}
-    </ol>
-  );
+// Desktop: menandai bagian yang sedang dibaca (scroll-spy). Mobile (di dalam <details>): link saja.
+function TocLinks({ sections, className, spy = true }: { sections: Section[]; className?: string; spy?: boolean }) {
+  return <ScrollSpyToc sections={sections.map(({ id, label }) => ({ id, label }))} className={className} spy={spy} />;
 }
 
 function MobileToc({ sections }: { sections: Section[] }) {
@@ -349,7 +340,7 @@ function MobileToc({ sections }: { sections: Section[] }) {
         />
       </summary>
       <nav aria-label="Daftar isi (mobile)">
-        <TocLinks sections={sections} className="mt-3" />
+        <TocLinks sections={sections} className="mt-3" spy={false} />
       </nav>
     </details>
   );
