@@ -6,7 +6,7 @@ import path from "node:path";
 import { gzipSync } from "node:zlib";
 
 const distDir = process.argv[2] ?? ".next/verify";
-const PAGES = ["index", "pelatihan", "layanan", "profil", "jadwal"];
+const PAGES = ["index", "pelatihan", "layanan", "profil", "jadwal", "kontak"];
 
 const gzipSize = (file) => gzipSync(readFileSync(file), { level: 9 }).length;
 const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
@@ -22,6 +22,11 @@ function walk(dir) {
     return statSync(full).isDirectory() ? walk(full) : full.endsWith(".js") ? [full] : [];
   });
 }
+
+// Satu contoh detail pelatihan (prerender pertama di pelatihan/<slug>.html).
+const detailDir = path.join(distDir, "server", "app", "pelatihan");
+const detail = existsSync(detailDir) ? readdirSync(detailDir).find((name) => name.endsWith(".html")) : undefined;
+if (detail) PAGES.push(`pelatihan/${detail.slice(0, -".html".length)}`);
 
 const rows = [];
 for (const page of PAGES) {
