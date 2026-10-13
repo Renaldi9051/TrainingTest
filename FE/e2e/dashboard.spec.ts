@@ -36,7 +36,7 @@ test.describe("dashboard admin", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
     await expect(page.getByText("Pelatihan tayang")).toBeVisible();
     // Slot tanpa angka palsu.
-    await expect(page.getByText("Aktif setelah modul Inquiry dibuat.")).toBeVisible();
+    await expect(page.getByText("Inquiry baru")).toBeVisible();
     await expect(page.getByText("Aktif setelah modul Evaluasi dibuat.")).toBeVisible();
 
     const attention = page.getByRole("region", { name: "Perlu dibereskan" });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,10 +16,22 @@ import {
   SidebarRail,
 } from "@/components/admin/ui/sidebar";
 import { ADMIN_NAV, adminModuleHref, moduleFromPathname } from "@/lib/admin-nav";
+import { apiFetch } from "@/lib/api/client";
+
+// Jumlah inquiry baru (badge). Disegarkan tiap menit selama panel terbuka; inquiryKeys.count.
+function useNewInquiries(): number {
+  const { data } = useQuery({
+    queryKey: ["admin", "inquiries", "count"],
+    queryFn: async () => (await apiFetch<{ new: number }>("/admin/inquiries/count")).data.new,
+    refetchInterval: 60_000,
+  });
+  return data ?? 0;
+}
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const active = moduleFromPathname(pathname);
+  const newInquiries = useNewInquiries();
 
   return (
     <Sidebar collapsible="icon">
@@ -46,6 +59,12 @@ export function AdminSidebar() {
                         <Link href={adminModuleHref(adminModule)} aria-current={isActive ? "page" : undefined}>
                           <adminModule.icon strokeWidth={1.5} />
                           <span>{adminModule.label}</span>
+                          {adminModule.slug === "inquiries" && newInquiries > 0 ? (
+                            <span className="ml-auto rounded-full bg-fg-strong px-1.5 font-mono text-[10px] leading-4 text-inverse-fg tabular-nums group-data-[collapsible=icon]:hidden">
+                              {newInquiries}
+                              <span className="sr-only"> inquiry baru</span>
+                            </span>
+                          ) : null}
                           {adminModule.available ? null : (
                             <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.08em] text-fg-muted group-data-[collapsible=icon]:hidden">
                               Segera

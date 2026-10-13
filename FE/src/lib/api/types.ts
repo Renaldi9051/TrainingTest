@@ -39,6 +39,45 @@ export type AuthUserResponse = { user: AuthUser };
 
 // GET /api/admin/dashboard (BE/src/services/dashboard.ts).
 export type TrainingIssue = "no-cover" | "cover-no-alt" | "stale-draft" | "no-summary";
+// ===== Inquiry (BE/src/services/inquiry.ts) =====
+
+export type InquiryStatus = "NEW" | "IN_PROGRESS" | "DONE";
+export type InquirySource = "TRAINING_DETAIL" | "CONTACT";
+
+export type Inquiry = {
+  id: string;
+  name: string;
+  company: string | null;
+  email: string;
+  // Format wa.me (62xxxxxxxxxx) atau null.
+  phone: string | null;
+  training: { id: string; slug: string; title: string } | null;
+  interest: string | null;
+  message: string | null;
+  source: InquirySource;
+  consentAt: string | null;
+  consentVersion: string | null;
+  status: InquiryStatus;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// POST /api/public/inquiries (lihat BE/src/lib/validators/inquiry.ts).
+export type InquiryInput = {
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  trainingId: string | null;
+  interest: string;
+  message: string;
+  source: InquirySource;
+  consent: boolean;
+  // Honeypot: selalu kosong dari manusia.
+  website: string;
+};
+
 export type AttentionKey =
   | "trainingNoCover"
   | "trainingCoverNoAlt"
@@ -63,8 +102,8 @@ export type Dashboard = {
     createdAt: string;
     linkable: boolean;
   }[];
-  // null sampai modul Inquiry/Evaluasi dibuat.
-  inquiries: null;
+  inquiries: { new: number; lastWeek: number; latest: { id: string; name: string; training: string | null; createdAt: string }[] };
+  // null sampai modul Evaluasi dibuat (4.3).
   evaluations: null;
 };
 

@@ -71,7 +71,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: "Masuk",
     modules: [
-      { slug: "inquiries", label: "Inquiry", icon: InboxIcon, available: false },
+      { slug: "inquiries", label: "Inquiry", icon: InboxIcon, available: true },
       { slug: "evaluations", label: "Evaluasi", icon: ClipboardListIcon, available: false },
     ],
   },

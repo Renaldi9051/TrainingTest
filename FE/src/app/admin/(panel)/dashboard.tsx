@@ -88,19 +88,47 @@ function StatsGrid({ data }: { data: DashboardData | undefined }) {
   );
 }
 
-// Slot modul yang belum ada: tanpa angka palsu.
-function PendingModules() {
+// Inquiry baru (terisi) + slot Evaluasi yang belum ada (tanpa angka palsu).
+function IncomingModules({ data }: { data: DashboardData | undefined }) {
+  const inquiries = data?.inquiries;
   return (
     <dl className="grid grid-cols-1 border-t border-l border-border sm:grid-cols-2">
-      {[
-        ["Inquiry baru", "Aktif setelah modul Inquiry dibuat."],
-        ["Evaluasi baru", "Aktif setelah modul Evaluasi dibuat."],
-      ].map(([label, note]) => (
-        <div key={label} className="border-r border-b border-border p-5">
-          <dt className="font-mono text-label font-medium uppercase text-fg-muted">{label}</dt>
-          <dd className="mt-3 text-small text-fg-muted">{note}</dd>
-        </div>
-      ))}
+      <div className="space-y-3 border-r border-b border-border p-5">
+        <dt className="font-mono text-label font-medium uppercase text-fg-muted">Inquiry baru</dt>
+        <dd className="font-mono text-3xl font-medium tracking-tight text-fg-strong tabular-nums">
+          {inquiries ? (
+            <Link href="/admin/inquiries?status=NEW" className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-fg-strong">
+              {numberFormat.format(inquiries.new)}
+            </Link>
+          ) : (
+            <Skeleton className="h-9 w-16" aria-label="Memuat" />
+          )}
+        </dd>
+        {inquiries ? (
+          <dd className="space-y-2">
+            <p className="text-small text-fg-muted">{numberFormat.format(inquiries.lastWeek)} masuk dalam 7 hari terakhir</p>
+            {inquiries.latest.length > 0 ? (
+              <ul className="space-y-1">
+                {inquiries.latest.map((item) => (
+                  <li key={item.id} className="flex flex-wrap items-baseline justify-between gap-2 text-small">
+                    <Link href={`/admin/inquiries/${item.id}`} className="underline-offset-4 hover:underline">
+                      {item.name}
+                      {item.training ? <span className="text-fg-muted"> · {item.training}</span> : null}
+                    </Link>
+                    <time dateTime={item.createdAt} className="font-mono text-xs text-fg-muted">
+                      {relativeTime(item.createdAt)}
+                    </time>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </dd>
+        ) : null}
+      </div>
+      <div className="border-r border-b border-border p-5">
+        <dt className="font-mono text-label font-medium uppercase text-fg-muted">Evaluasi baru</dt>
+        <dd className="mt-3 text-small text-fg-muted">Aktif setelah modul Evaluasi dibuat.</dd>
+      </div>
     </dl>
   );
 }
@@ -216,7 +244,7 @@ export function Dashboard() {
       ) : (
         <>
           <StatsGrid data={data} />
-          <PendingModules />
+          <IncomingModules data={data} />
           <div className="grid gap-10 lg:grid-cols-2">
             <Panel title="Perlu dibereskan" description="Lima item pertama per jenis; buka daftar lengkap dengan Lihat semua.">
               {isPending ? <ListSkeleton /> : <Attention data={data} />}

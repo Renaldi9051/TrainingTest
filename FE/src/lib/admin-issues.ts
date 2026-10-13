@@ -66,6 +66,7 @@ export function activityHref(entity: string, id: string): string | null {
     Page: "/admin/pages",
     HomeSection: "/admin/home",
     PortfolioItem: "/admin/portfolio",
+    Inquiry: "/admin/inquiries",
   };
   const list: Record<string, string> = {
     Client: "/admin/clients",
@@ -98,6 +99,8 @@ export const ENTITY_LABELS: Record<string, string> = {
   Session: "sesi login",
   DayChange: "pergantian hari",
   ContentSync: "sinkronisasi konten",
+  Inquiry: "inquiry",
+  InquiryPurge: "inquiry kedaluwarsa",
 };
 
 export const ACTION_LABELS: Record<string, string> = {
@@ -109,6 +112,7 @@ export const ACTION_LABELS: Record<string, string> = {
   DUPLICATE: "menduplikasi",
   BULK: "mengubah massal",
   IMPORT: "mengimpor",
+  EXPORT: "mengekspor",
   LOGIN: "masuk",
   LOGOUT: "keluar",
 };

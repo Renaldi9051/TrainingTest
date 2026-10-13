@@ -9,7 +9,8 @@ export type AdminResource =
   | "portfolio"
   | "marketing"
   | "media-partners"
-  | "pages";
+  | "pages"
+  | "inquiries";
 
 export function resourceKeys(resource: AdminResource) {
   return {
