@@ -2,7 +2,7 @@ import { SearchIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Reveal } from "@/components/motion/reveal";
-import { HeroWords, LineDraw } from "@/components/motion/reveal-parts";
+import { CountUp, HeroWords, LineDraw } from "@/components/motion/reveal-parts";
 import { ChipLink } from "@/components/public/chip-link";
 import { ClientLogos } from "@/components/public/client-logos";
 import { PublicImage } from "@/components/public/public-image";
@@ -132,10 +132,10 @@ function StatsSection({ section }: { section: Extract<PublicHomeSection, { type:
         <dl data-reveal-children="item" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {section.items.map((item, index) => (
             <div key={index} className="space-y-2 border-b border-border py-8 pr-6">
-              {/* Counter berjalan menyusul di Fase 4; angka final tampil langsung. */}
+              {/* Counter berjalan saat grup masuk viewport (hanya kalau seluruhnya di bawah layar awal). */}
               <dd className="font-mono text-[36px] leading-none font-medium text-fg-strong md:text-[48px]">
                 {item.prefix}
-                {formatNumber(item.value)}
+                <CountUp value={item.value} display={formatNumber(item.value)} />
                 {item.suffix}
               </dd>
               <dt className="text-small text-fg-muted">{item.label}</dt>

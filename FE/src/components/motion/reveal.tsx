@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useRef } from "react";
+import { playCounter } from "./counter";
 import { planReveal, type RevealKind } from "./reveal-plan";
 import { playScramble } from "./scramble";
 import { type RevealGroup, useReveal } from "./use-reveal";
@@ -16,12 +17,12 @@ type RevealProps = {
 };
 
 function revealGroup(root: HTMLElement): RevealGroup {
-  const { elements, scramble } = planReveal(root);
-  if (scramble.length === 0) return { steps: elements };
+  const { elements, scramble, counters } = planReveal(root);
+  if (scramble.length === 0 && counters.length === 0) return { steps: elements };
   return {
     steps: elements,
     onPlay: () => {
-      const cancels = scramble.map(playScramble);
+      const cancels = [...scramble.map(playScramble), ...counters.map(playCounter)];
       return () => cancels.forEach((cancel) => cancel());
     },
   };
