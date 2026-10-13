@@ -24,8 +24,11 @@ COPY BE/ ./
 RUN npx prisma generate && npx next build
 
 # Sekali jalan: terapkan migrasi lalu seed (idempotent). Dipakai service `migrate`.
+# Seed memasang cover contoh ke volume uploads sebagai root, jadi pemiliknya dikembalikan ke user node
+# (user yang menjalankan service be) supaya upload admin berikutnya tetap bisa menulis.
 FROM build AS migrate
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed"]
+RUN mkdir -p /app/uploads
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && chown -R node:node /app/uploads"]
 
 FROM base AS runner
 ENV NODE_ENV=production \

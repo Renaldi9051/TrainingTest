@@ -11,6 +11,7 @@ import { parseSeedEnv } from "../src/lib/env";
 import { hashPassword } from "../src/lib/password";
 import { seedBulk } from "./seed-bulk";
 import { seedContent } from "./seed-content";
+import { seedCovers } from "./seed-covers";
 import { buildProfileBlocks, buildSettings } from "./seed-data/build";
 import { writeCatalog } from "./seed-data/catalog-writer";
 import { profilePage } from "./seed-data/content";
@@ -128,6 +129,7 @@ async function main() {
 
   const profileResult = await seedProfilePage();
   const contentResult = MINIMAL ? null : await seedContent(PUBLISHED_AT);
+  const coverResult = MINIMAL ? null : await seedCovers();
   // Seed bulk mencetak ringkasannya sendiri.
   if (BULK) await seedBulk();
 
@@ -146,6 +148,11 @@ async function main() {
           .join(", ")}.`
       : "Mode minimal: konten contoh Fase 3 dilewati.",
   );
+  if (coverResult !== null) {
+    console.info(
+      `Cover pelatihan: ${coverResult === "dilewati" ? "dilewati" : `${coverResult} dipasang`} (hanya pelatihan yang belum punya cover).`,
+    );
+  }
 }
 
 main()

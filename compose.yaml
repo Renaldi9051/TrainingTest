@@ -28,7 +28,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # Sekali jalan: prisma migrate deploy + seed (aman diulang), lalu berhenti.
+  # Sekali jalan: prisma migrate deploy + seed (aman diulang, termasuk cover contoh), lalu berhenti.
   # Seed membuat admin pertama dari ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME di .env (lewat env_file).
   migrate:
     build:
@@ -38,6 +38,10 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: *database-url
+      UPLOAD_DIR: /app/uploads
+    # Seed memasang cover pelatihan contoh ke volume uploads yang sama dengan be.
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy

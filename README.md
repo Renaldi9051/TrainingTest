@@ -40,6 +40,8 @@ docker compose up --build
 
 Buka http://localhost:3000. Urutannya otomatis: Postgres siap → `migrate` menerapkan migrasi + seed → BE sehat → FE. Seed hanya membuat yang belum ada: pengaturan yang sudah ada tidak ditimpa, dan katalog contoh hanya dibuat kalau katalog masih kosong.
 
+Seed juga memasang cover contoh dari `BE/prisma/seed-data/covers/<slug-pelatihan>.jpg` ke pelatihan dengan slug yang sama. Hanya pelatihan yang belum punya cover yang diisi, dan cover yang dilepas admin tidak dipasang lagi. Untuk mengganti gambar secara massal, timpa file JPG dengan nama yang sama (berlaku untuk database baru); untuk satu pelatihan, ganti lewat panel admin.
+
 Container berjalan dalam mode produksi. Selalu pakai `--build` setelah menarik atau mengubah kode, karena `docker compose up` tanpa `--build` memakai image lama, termasuk seed versi lama. Saat start, FE membuat halaman publik dari data BE dulu (sekitar 10–20 detik). Kalau langkah ini gagal, container FE berhenti dengan error dan dicoba lagi. Halaman tidak pernah disajikan dengan data kosong.
 
 - Berhenti: `Ctrl+C`, atau `docker compose down` kalau berjalan di background (`-d`). Data database tetap tersimpan di volume.
