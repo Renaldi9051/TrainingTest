@@ -1,17 +1,22 @@
-import { ROTATE_INTERVAL_MS, ROTATE_SWAP_MS, ROTATE_TOTAL_MS } from "./tokens";
+// Kata berganti di hero (DESIGN.md 8.2): berulang terus tiap ROTATE_INTERVAL_MS. Berhenti sementara
+// (di kata yang sedang tampil) saat dijeda lewat tombol, kursor di atas judul, tab tidak aktif, atau
+// hero di luar layar; lanjut dari kata itu. Fungsi murni, dites di Vitest.
 
-// Jadwal kata berganti di hero (DESIGN.md 8.2): satu putaran lalu berhenti di kata pertama, selesai
-// <= 5 s sejak halaman tampil; jeda dipadatkan kalau kata > 2. Fungsi murni, dites di Vitest.
+export type RotateBlockers = {
+  // Dijeda pengunjung lewat tombol Jeda (WCAG 2.2.2).
+  paused: boolean;
+  // Kursor di atas judul (sedang dibaca).
+  hovered: boolean;
+  // Tab tidak aktif.
+  hidden: boolean;
+  // Hero tidak terlihat di layar.
+  offscreen: boolean;
+};
 
-export type RotateStep = { at: number; from: number; to: number };
+export function nextRotateIndex(current: number, count: number): number {
+  return count > 0 ? (current + 1) % count : 0;
+}
 
-export function rotateSchedule(count: number): RotateStep[] {
-  if (count <= 1) return [];
-  // count pergantian (ke kata 2..n, lalu kembali ke kata 1); pergantian terakhir selesai <= total.
-  const interval = Math.min(ROTATE_INTERVAL_MS, Math.floor((ROTATE_TOTAL_MS - ROTATE_SWAP_MS) / count));
-  return Array.from({ length: count }, (_, index) => ({
-    at: interval * (index + 1),
-    from: index,
-    to: (index + 1) % count,
-  }));
+export function shouldRotate(count: number, blockers: RotateBlockers): boolean {
+  return count > 1 && !blockers.paused && !blockers.hovered && !blockers.hidden && !blockers.offscreen;
 }

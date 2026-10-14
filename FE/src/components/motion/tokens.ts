@@ -50,9 +50,9 @@ export const SCRAMBLE_MS = 300;
 // Counter statistik (ease-out cubic, seperti blueprint).
 export const COUNTER_MS = 900;
 
-// Kata berganti di hero: tiap 2,2 s, satu putaran, selesai <= 5 s sejak halaman tampil.
-export const ROTATE_INTERVAL_MS = 2200;
-export const ROTATE_TOTAL_MS = 5000;
+// Kata berganti di hero: tiap 3 s, terus berulang (bisa dijeda; berhenti saat hover/tab lain/di luar
+// layar). Pergantian sendiri 300 ms.
+export const ROTATE_INTERVAL_MS = 3000;
 export const ROTATE_SWAP_MS = 300;
 
 // Tombol magnetic: geser maksimal (px).
