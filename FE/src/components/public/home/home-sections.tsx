@@ -4,8 +4,6 @@ import type { ReactNode } from "react";
 import { Reveal } from "@/components/motion/reveal";
 import { HeroWords } from "@/components/motion/hero-words";
 import { CountUp, LineDraw } from "@/components/motion/reveal-parts";
-import { RotationProvider } from "@/components/motion/rotation-context";
-import { RotationToggle } from "@/components/motion/rotation-toggle";
 import { VelocityMarquee } from "@/components/motion/velocity-marquee";
 import { ChipLink } from "@/components/public/chip-link";
 import { ClientLogos } from "@/components/public/client-logos";
@@ -73,26 +71,22 @@ function SectionCta({ cta }: { cta: Cta | null }) {
 // opacity 0). Setelah navigasi klien, eyebrow dan subjudul ikut stagger masuk (PageEnter); h1 tetap
 // memakai animasi CSS-nya sendiri.
 function HeroSection({ section }: { section: Extract<PublicHomeSection, { type: "HERO" }> }) {
-  const rotates = section.rotatingWords.filter((word) => word.trim()).length > 1;
   return (
     <section className="py-20 md:py-32" aria-labelledby={`${section.id}-title`}>
       <Container className="space-y-10 md:space-y-14">
-        <RotationProvider>
-          <div className="space-y-6">
-            {section.eyebrow ? <Eyebrow data-page-enter="">{section.eyebrow}</Eyebrow> : null}
-            <h1
-              id={`${section.id}-title`}
-              className="max-w-[16ch] text-[48px] leading-[0.95] font-semibold tracking-[-0.04em] text-fg-strong md:text-[88px]"
-            >
-              {/* Kata kunci berganti terus tiap 3 s (RotatingWord); tombol jeda di luar h1. */}
-              <HeroWords text={section.headline} accents={section.rotatingWords} />
-            </h1>
-            {rotates ? <RotationToggle /> : null}
-            {section.subheadline ? (
-              <p data-page-enter="" className="max-w-[65ch] text-body-lg text-fg-muted">{section.subheadline}</p>
-            ) : null}
-          </div>
-        </RotationProvider>
+        <div className="space-y-6">
+          {section.eyebrow ? <Eyebrow data-page-enter="">{section.eyebrow}</Eyebrow> : null}
+          <h1
+            id={`${section.id}-title`}
+            className="max-w-[16ch] text-[48px] leading-[0.95] font-semibold tracking-[-0.04em] text-fg-strong md:text-[88px]"
+          >
+            {/* Kata kunci berganti terus tiap 2 s (RotatingWord). */}
+            <HeroWords text={section.headline} accents={section.rotatingWords} />
+          </h1>
+          {section.subheadline ? (
+            <p data-page-enter="" className="max-w-[65ch] text-body-lg text-fg-muted">{section.subheadline}</p>
+          ) : null}
+        </div>
 
         {section.showSearch ? (
           <form action="/pelatihan" method="get" role="search" className="max-w-2xl space-y-2">

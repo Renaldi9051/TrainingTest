@@ -114,48 +114,24 @@ test.describe("animasi 4.1e", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
   });
 
-  test("kata hero berganti terus tiap 3 s (kembali ke awal lalu lanjut); nama h1 utuh", async ({ page }) => {
+  test("kata hero berganti terus tiap 2 s tanpa jeda (juga saat kursor di judul); nama h1 utuh", async ({ page }) => {
     test.setTimeout(60_000);
     await page.goto("/");
     const h1 = page.getByRole("heading", { level: 1 });
     await expect(h1).toHaveAccessibleName(`[UJI] Tim belajar ${id} ${WORDS[0]}`);
     expect(await visibleWord(page)).toBe(0);
-    // Kursor dijauhkan dari judul (hover menahan pergantian).
-    await page.mouse.move(5, 795);
-    // Urutan kata yang tampil selama ~13 s: 0 -> 1 -> 2 -> 0 -> 1 (tidak berhenti setelah satu putaran).
+    // Tidak ada tombol jeda; kursor di atas judul tidak menahan pergantian.
+    await expect(page.getByRole("button", { name: /Jeda kata|Putar kata/ })).toHaveCount(0);
+    await h1.hover();
+    // Urutan kata yang tampil selama ~9 s: 0 -> 1 -> 2 -> 0 -> 1 (tidak berhenti setelah satu putaran).
     const sequence: number[] = [];
     const start = Date.now();
-    while (Date.now() - start < 13_000) {
+    while (Date.now() - start < 9_000) {
       const word = await visibleWord(page);
       if (word >= 0 && sequence.at(-1) !== word) sequence.push(word);
       await page.waitForTimeout(150);
     }
     expect(sequence.slice(0, 5)).toEqual([0, 1, 2, 0, 1]);
-  });
-
-  test("kata hero: tombol Jeda menahan, Putar melanjutkan; hover di judul menahan", async ({ page }) => {
-    test.setTimeout(60_000);
-    await page.goto("/");
-    await page.mouse.move(5, 795);
-    const toggle = page.getByRole("button", { name: "Jeda kata" });
-    await expect(toggle).toHaveAttribute("aria-pressed", "false");
-    await toggle.click();
-    const resume = page.getByRole("button", { name: "Putar kata" });
-    await expect(resume).toHaveAttribute("aria-pressed", "true");
-    await page.mouse.move(5, 795);
-    const held = await visibleWord(page);
-    await page.waitForTimeout(3_600);
-    expect(await visibleWord(page)).toBe(held);
-
-    await resume.click();
-    await page.mouse.move(5, 795);
-    await expect.poll(() => visibleWord(page), { timeout: 4_500 }).not.toBe(held);
-
-    // Kursor di atas judul: kata tidak berganti selama > 3 s.
-    await page.getByRole("heading", { level: 1 }).hover();
-    const hovered = await visibleWord(page);
-    await page.waitForTimeout(3_600);
-    expect(await visibleWord(page)).toBe(hovered);
   });
 
   test("counter berjalan di bawah layar awal, berakhir di angka final, tanpa layout shift", async ({ page }) => {
@@ -212,10 +188,8 @@ test.describe("animasi 4.1e", () => {
     const context = await browser.newContext({ ...devices["Desktop Chrome"], baseURL: ORIGIN, locale: "id-ID", reducedMotion: "reduce", viewport: { width: 1280, height: 800 } });
     const page = await context.newPage();
     await page.goto("/");
-    await page.waitForTimeout(3_600);
+    await page.waitForTimeout(2_600);
     expect(await visibleWord(page)).toBe(0);
-    // Tanpa gerak, tombol jeda tidak perlu.
-    await expect(page.getByRole("button", { name: "Jeda kata" })).toBeHidden();
     const counter = page.locator("[data-reveal-count='1200']");
     await counter.scrollIntoViewIfNeeded();
     await expect(counter).toHaveText("1.200");

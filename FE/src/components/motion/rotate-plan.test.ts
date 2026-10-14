@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { nextRotateIndex, shouldRotate, type RotateBlockers } from "./rotate-plan";
 import { ROTATE_INTERVAL_MS } from "./tokens";
 
-const free: RotateBlockers = { paused: false, hovered: false, hidden: false, offscreen: false };
+const free: RotateBlockers = { hidden: false, offscreen: false };
 
 describe("kata berganti di hero", () => {
-  it("tiap 3 detik", () => {
-    expect(ROTATE_INTERVAL_MS).toBe(3000);
+  it("tiap 2 detik", () => {
+    expect(ROTATE_INTERVAL_MS).toBe(2000);
   });
 
   it("berulang terus: setelah kata terakhir kembali ke kata pertama", () => {
@@ -16,10 +16,10 @@ describe("kata berganti di hero", () => {
     expect(nextRotateIndex(0, 0)).toBe(0);
   });
 
-  it("hanya berganti kalau kata > 1 dan tidak ada yang menahan", () => {
+  it("hanya berganti kalau kata > 1 dan sedang terlihat (tab aktif, hero di layar)", () => {
     expect(shouldRotate(3, free)).toBe(true);
     expect(shouldRotate(1, free)).toBe(false);
-    for (const key of ["paused", "hovered", "hidden", "offscreen"] as const) {
+    for (const key of ["hidden", "offscreen"] as const) {
       expect(shouldRotate(3, { ...free, [key]: true }), key).toBe(false);
     }
   });
