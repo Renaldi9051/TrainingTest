@@ -24,6 +24,7 @@ import {
 } from "@/components/admin/ui/dropdown-menu";
 import { Separator } from "@/components/admin/ui/separator";
 import { SidebarTrigger } from "@/components/admin/ui/sidebar";
+import { AdminSearch } from "@/components/admin/admin-search";
 import { moduleFromPathname } from "@/lib/admin-nav";
 import { apiFetch } from "@/lib/api/client";
 import type { AuthUser } from "@/lib/api/types";
@@ -65,6 +66,7 @@ export function AdminTopbar({ user }: { user: AuthUser }) {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
+      <AdminSearch />
       <UserMenu user={user} />
     </header>
   );
