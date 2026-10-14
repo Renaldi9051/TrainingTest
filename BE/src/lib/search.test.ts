@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { normalizeSearchText, searchTokens, toPrefixTsQuery } from "@/lib/search";
+import {
+  collectTextValues,
+  foldText,
+  likeContainsPattern,
+  matchSnippet,
+  normalizeSearchText,
+  searchTokens,
+  toPrefixTsQuery,
+} from "@/lib/search";
 
 describe("normalizeSearchText", () => {
   it("lower, buang diakritik dan tanda baca", () => {
@@ -22,5 +30,52 @@ describe("toPrefixTsQuery", () => {
     expect(toPrefixTsQuery("   ")).toBeNull();
     expect(searchTokens("a b c d e f g h i j")).toHaveLength(8);
     expect(searchTokens("x".repeat(100))[0]).toHaveLength(40);
+  });
+});
+
+describe("foldText & likeContainsPattern", () => {
+  it("huruf kecil tanpa aksen, tanda baca (email/nomor) tetap", () => {
+    expect(foldText("  Café  Bandung ")).toBe("cafe bandung");
+    expect(foldText("Info@Contoh.ID")).toBe("info@contoh.id");
+  });
+
+  it("wildcard pengguna di-escape supaya % dan _ dicari apa adanya", () => {
+    expect(likeContainsPattern("Diskon 50%")).toBe(String.raw`%diskon 50\%%`);
+    expect(likeContainsPattern("file_name")).toBe(String.raw`%file\_name%`);
+    expect(likeContainsPattern(String.raw`a\b`)).toBe(String.raw`%a\\b%`);
+  });
+});
+
+describe("collectTextValues", () => {
+  it("hanya nilai string konten: nama node rich text, attrs, id, href, enum, dan *Id dilewati", () => {
+    const blocks = [
+      {
+        id: "b1",
+        type: "RICH_TEXT",
+        heading: "Ketentuan umum",
+        body: {
+          type: "doc",
+          content: [{ type: "paragraph", content: [{ type: "text", text: "Isi paragraf", marks: [{ type: "link", attrs: { href: "/x" } }] }] }],
+        },
+      },
+      { type: "IMAGE", imageId: "m1", caption: "Foto kelas", style: "chips", items: ["Satu", "  "] },
+    ];
+    expect(collectTextValues(blocks)).toEqual(["Ketentuan umum", "Isi paragraf", "Foto kelas", "Satu"]);
+  });
+});
+
+describe("matchSnippet", () => {
+  it("null kalau tidak cocok; teks pendek utuh; teks panjang dipotong di sekitar kecocokan", () => {
+    expect(matchSnippet("Pelatihan pilot", "kamera")).toBeNull();
+    expect(matchSnippet("Pelatihan  pilot drone", "PILOT")).toBe("Pelatihan pilot drone");
+    const long = `${"awal ".repeat(30)}kata kunci di tengah${" akhir".repeat(30)}`;
+    const snippet = matchSnippet(long, "kunci", 40);
+    expect(snippet).toContain("kunci");
+    expect(snippet?.startsWith("…")).toBe(true);
+    expect(snippet?.endsWith("…")).toBe(true);
+  });
+
+  it("cocok tanpa memperhatikan aksen", () => {
+    expect(matchSnippet("Kafé di Jakarta", "kafe")).toBe("Kafé di Jakarta");
   });
 });

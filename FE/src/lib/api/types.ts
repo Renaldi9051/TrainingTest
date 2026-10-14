@@ -35,6 +35,38 @@ export type AuthUser = {
 
 export type AuthUserResponse = { user: AuthUser };
 
+// ===== Search global admin =====
+
+// GET /api/admin/search?q= (BE/src/services/admin-search.ts). Grup kosong tidak dikirim, maks 5 item.
+export type AdminSearchGroup =
+  | "trainings"
+  | "categories"
+  | "services"
+  | "pages"
+  | "home"
+  | "portfolio"
+  | "clients"
+  | "testimonials"
+  | "marketing"
+  | "mediaPartners"
+  | "media"
+  | "navigation"
+  | "settings";
+
+export type AdminSearchItem = {
+  id: string;
+  title: string;
+  meta: string | null;
+  status: "DRAFT" | "PUBLISHED" | null;
+  // Khusus pengaturan: id = key (mis. "site.contact"), field = properti di dalamnya (mis. "whatsapp").
+  field?: string;
+};
+
+export type AdminSearchResult = {
+  q: string;
+  groups: { group: AdminSearchGroup; items: AdminSearchItem[] }[];
+};
+
 // ===== Dashboard =====
 
 // GET /api/admin/dashboard (BE/src/services/dashboard.ts).
