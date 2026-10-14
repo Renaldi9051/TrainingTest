@@ -3,7 +3,7 @@ import { toCsv } from "@/lib/csv";
 import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
 import { listMeta, pagination, type ListMeta } from "@/lib/list-query";
-import { getInquiryRateLimiters, type RateLimiter } from "@/lib/rate-limit";
+import { getInquiryRateLimiters, ipRateLimitKey, type RateLimiter, type UnknownIpMode } from "@/lib/rate-limit";
 import { appDateString } from "@/lib/time";
 import {
   CONSENT_VERSION,
@@ -73,7 +73,7 @@ function toDto(row: InquiryRow): InquiryDto {
 
 // ===== Publik =====
 
-export type InquiryMeta = { ip: string };
+export type InquiryMeta = { ip: string; unknownIpMode?: UnknownIpMode };
 export type InquiryLimiters = { ip: RateLimiter; email: RateLimiter };
 
 function tooMany(retryAfterMs: number): HttpError {
@@ -100,10 +100,12 @@ export async function createInquiry(
 ): Promise<{ id: string | null }> {
   if (input.website.trim() !== "") return { id: null };
 
-  const ipKey = meta.ip;
+  // null: IP tak terbaca dalam mode "skip"; limit per IP dilewati, limit per email tetap berlaku.
+  const ipKey = ipRateLimitKey(meta.ip, meta.unknownIpMode ?? "shared");
   const emailKey = input.email;
   const nowMs = now.getTime();
-  for (const status of [limiters.ip.status(ipKey, nowMs), limiters.email.status(emailKey, nowMs)]) {
+  const statuses = [limiters.email.status(emailKey, nowMs), ...(ipKey === null ? [] : [limiters.ip.status(ipKey, nowMs)])];
+  for (const status of statuses) {
     if (status.blocked) throw tooMany(status.retryAfterMs);
   }
 
@@ -127,7 +129,7 @@ export async function createInquiry(
     },
     include,
   });
-  limiters.ip.recordFailure(ipKey, nowMs);
+  if (ipKey !== null) limiters.ip.recordFailure(ipKey, nowMs);
   limiters.email.recordFailure(emailKey, nowMs);
   // Di belakang: gagal kirim notifikasi tidak menggagalkan kiriman (inquiry sudah tersimpan).
   void notifier.notify(toDto(row)).catch((error: unknown) => console.warn("Notifikasi inquiry gagal.", error));

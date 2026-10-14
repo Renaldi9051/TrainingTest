@@ -15,6 +15,9 @@ const envSchema = z.object({
     .pipe(z.array(z.url({ protocol: /^https?$/ })).min(1)),
   // Jumlah proxy tepercaya yang menambah entri X-Forwarded-For (rewrite FE tidak menambah; lihat .env.example).
   TRUST_PROXY_HOPS: z.coerce.number().int().min(1).max(5).default(1),
+  // IP klien tidak terbaca (X-Forwarded-For kosong) di rate limit: "shared" = satu bucket bersama
+  // (fail-safe, default, wajib di produksi); "skip" = lewati limit per IP (hanya Docker/dev lokal).
+  RATE_LIMIT_UNKNOWN_IP: z.enum(["shared", "skip"], { error: "RATE_LIMIT_UNKNOWN_IP harus shared atau skip." }).default("shared"),
 });
 
 export type Env = z.infer<typeof envSchema>;

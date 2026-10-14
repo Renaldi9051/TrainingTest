@@ -55,8 +55,8 @@ describe("getClientIp", () => {
     expect(getClientIp(new Headers({ "x-forwarded-for": "203.0.113.9" }), 3)).toBe("203.0.113.9");
   });
 
-  it("jatuh ke x-real-ip lalu 'unknown'", () => {
-    expect(getClientIp(new Headers({ "x-real-ip": "198.51.100.1" }), 1)).toBe("198.51.100.1");
+  it("tanpa X-Forwarded-For: 'unknown'; X-Real-IP tidak dipercaya (bisa dikirim klien)", () => {
+    expect(getClientIp(new Headers({ "x-real-ip": "198.51.100.1" }), 1)).toBe("unknown");
     expect(getClientIp(new Headers(), 1)).toBe("unknown");
   });
 });

@@ -1,7 +1,8 @@
 import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
 import { burnPasswordCheck, verifyPassword } from "@/lib/password";
-import { getLoginRateLimiter, type RateLimiter } from "@/lib/rate-limit";
+import { getLoginRateLimiter, ipRateLimitKey, type RateLimiter, type UnknownIpMode } from "@/lib/rate-limit";
+import { UNKNOWN_IP } from "@/lib/request";
 import type { LoginInput } from "@/lib/validators/auth";
 import { AuditAction, writeAudit } from "@/services/audit";
 import { createSession, revokeSession, type SessionUser } from "@/services/session";
@@ -9,7 +10,7 @@ import { createSession, revokeSession, type SessionUser } from "@/services/sessi
 // Pesan sama untuk email tidak terdaftar, password salah, dan akun nonaktif.
 export const INVALID_CREDENTIALS_MESSAGE = "Email atau kata sandi salah.";
 
-type RequestMeta = { ip: string; userAgent: string | null };
+type RequestMeta = { ip: string; userAgent: string | null; unknownIpMode?: UnknownIpMode };
 
 export function loginRateLimitKey(ip: string, email: string): string {
   return `${ip}|${email.toLowerCase()}`;
@@ -20,7 +21,9 @@ export async function login(
   meta: RequestMeta,
   limiter: RateLimiter = getLoginRateLimiter(),
 ): Promise<{ user: SessionUser; token: string; expiresAt: Date }> {
-  const key = loginRateLimitKey(meta.ip, input.email);
+  // Key = IP + email. IP tak terbaca selalu jadi "unknown" (juga di mode "skip"): limit login tidak
+  // pernah dilewati, paling tidak berlaku per email, supaya tetap terlindung dari tebak kata sandi.
+  const key = loginRateLimitKey(ipRateLimitKey(meta.ip, meta.unknownIpMode ?? "shared") ?? UNKNOWN_IP, input.email);
   const limit = limiter.status(key);
   if (limit.blocked) {
     const minutes = Math.max(1, Math.ceil(limit.retryAfterMs / 60_000));

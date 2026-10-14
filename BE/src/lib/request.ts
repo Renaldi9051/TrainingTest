@@ -19,8 +19,12 @@ export function assertAllowedOrigin(
   }
 }
 
+// IP yang tidak terbaca (X-Forwarded-For kosong). Lihat ipRateLimitKey untuk perlakuannya di rate limit.
+export const UNKNOWN_IP = "unknown";
+
 // IP klien dari X-Forwarded-For. Tiap proxy menambahkan entri di kanan, jadi entri ke-N dari kanan
 // (N = jumlah proxy tepercaya) adalah IP yang dilihat proxy terluar. Entri di kirinya bisa dipalsukan.
+// X-Real-IP tidak dipakai: rewrite FE meneruskannya dari klien apa adanya, jadi bisa dipalsukan.
 export function getClientIp(headers: Headers, trustProxyHops: number): string {
   const forwarded = headers
     .get("x-forwarded-for")
@@ -31,5 +35,5 @@ export function getClientIp(headers: Headers, trustProxyHops: number): string {
   if (forwarded && forwarded.length > 0) {
     return forwarded[Math.max(0, forwarded.length - trustProxyHops)];
   }
-  return headers.get("x-real-ip")?.trim() || "unknown";
+  return UNKNOWN_IP;
 }

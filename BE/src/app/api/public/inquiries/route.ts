@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const POST = route(async (request) => {
   assertAllowedOrigin(request, getEnv().ALLOWED_ORIGINS);
   const input = inquiryCreateSchema.parse(await readJson(request));
-  const { ip } = requestMeta(request);
-  await createInquiry(input, { ip });
+  const { ip, unknownIpMode } = requestMeta(request);
+  await createInquiry(input, { ip, unknownIpMode });
   return ok({ received: true }, undefined, 201);
 });

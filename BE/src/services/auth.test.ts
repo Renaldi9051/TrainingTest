@@ -88,6 +88,16 @@ describe("login", () => {
 });
 
 describe("logout", () => {
+  it("IP tak terbaca, mode skip: login tetap dibatasi per email (tidak pernah dilewati)", async () => {
+    const limiter = freshLimiter();
+    mock.user.findUnique.mockResolvedValue(activeUser());
+    const anon = { ip: "unknown", userAgent: "vitest", unknownIpMode: "skip" } as const;
+    for (let i = 0; i < 5; i++) {
+      await expect(login({ email: "admin@example.com", password: "salah-salah-123" }, anon, limiter)).rejects.toMatchObject({ status: 401 });
+    }
+    await expect(login({ email: "admin@example.com", password: CORRECT }, anon, limiter)).rejects.toMatchObject({ status: 429 });
+  });
+
   it("menghapus sesi dan menulis audit LOGOUT", async () => {
     mock.session.findUnique.mockResolvedValue({ id: "s1", userId: "u1" });
     await logout("token", meta);

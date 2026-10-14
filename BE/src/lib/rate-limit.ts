@@ -1,4 +1,9 @@
+import { UNKNOWN_IP } from "@/lib/request";
+
 export type RateLimitStatus = { blocked: boolean; retryAfterMs: number };
+
+// Perlakuan IP yang tidak terbaca (RATE_LIMIT_UNKNOWN_IP di env).
+export type UnknownIpMode = "shared" | "skip";
 
 // Interface supaya implementasi in-memory bisa diganti (mis. Redis/Postgres) tanpa mengubah pemanggil.
 export interface RateLimiter {
@@ -62,7 +67,29 @@ export const INQUIRY_EMAIL_WINDOW_MS = 60 * 60 * 1000;
 const globalForLimiter = globalThis as typeof globalThis & {
   loginRateLimiter?: RateLimiter;
   inquiryRateLimiters?: { ip: RateLimiter; email: RateLimiter };
+  unknownIpWarned?: boolean;
 };
+
+// Peringatan sekali per proses: di produksi, IP tak terbaca berarti reverse proxy belum meneruskan
+// X-Forwarded-For (semua pengunjung berbagi satu bucket rate limit).
+export function warnUnknownIpOnce(): void {
+  if (globalForLimiter.unknownIpWarned) return;
+  globalForLimiter.unknownIpWarned = true;
+  console.warn(
+    "[rate-limit] IP klien tidak terbaca (X-Forwarded-For kosong): semua pengunjung tanpa IP berbagi satu " +
+      "bucket rate limit. Di produksi pastikan reverse proxy meneruskan X-Forwarded-For dan TRUST_PROXY_HOPS sesuai.",
+  );
+}
+
+// Key rate limit per IP untuk login, inquiry, dan search publik. IP tak terbaca: "shared" = satu
+// bucket bersama "unknown" (+ peringatan sekali); "skip" = null, limit per IP dilewati (limit lain,
+// mis. per email, tetap berlaku).
+export function ipRateLimitKey(ip: string, mode: UnknownIpMode, warn: () => void = warnUnknownIpOnce): string | null {
+  if (ip !== UNKNOWN_IP) return ip;
+  if (mode === "skip") return null;
+  warn();
+  return UNKNOWN_IP;
+}
 
 export function getInquiryRateLimiters(): { ip: RateLimiter; email: RateLimiter } {
   globalForLimiter.inquiryRateLimiters ??= {

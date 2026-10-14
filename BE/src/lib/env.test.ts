@@ -17,6 +17,7 @@ describe("parseEnv", () => {
       ...validEnv,
       ALLOWED_ORIGINS: ["http://localhost:3000"],
       TRUST_PROXY_HOPS: 1,
+      RATE_LIMIT_UNKNOWN_IP: "shared",
     });
   });
 
@@ -65,6 +66,12 @@ describe("parseEnv", () => {
   it("membaca TRUST_PROXY_HOPS sebagai angka", () => {
     expect(parseEnv({ ...validEnv, TRUST_PROXY_HOPS: "2" }).TRUST_PROXY_HOPS).toBe(2);
     expect(() => parseEnv({ ...validEnv, TRUST_PROXY_HOPS: "0" })).toThrow(/TRUST_PROXY_HOPS/);
+  });
+
+  it("RATE_LIMIT_UNKNOWN_IP: default shared, menerima skip, menolak nilai lain", () => {
+    expect(parseEnv(validEnv).RATE_LIMIT_UNKNOWN_IP).toBe("shared");
+    expect(parseEnv({ ...validEnv, RATE_LIMIT_UNKNOWN_IP: "skip" }).RATE_LIMIT_UNKNOWN_IP).toBe("skip");
+    expect(() => parseEnv({ ...validEnv, RATE_LIMIT_UNKNOWN_IP: "off" })).toThrow(/RATE_LIMIT_UNKNOWN_IP/);
   });
 });
 

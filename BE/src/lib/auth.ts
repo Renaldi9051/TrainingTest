@@ -29,6 +29,7 @@ export function requestMeta(request: NextRequest) {
   return {
     ip: getClientIp(request.headers, getEnv().TRUST_PROXY_HOPS),
     userAgent: request.headers.get("user-agent"),
+    unknownIpMode: getEnv().RATE_LIMIT_UNKNOWN_IP,
   };
 }
 

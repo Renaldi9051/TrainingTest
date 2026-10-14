@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { MemoryRateLimiter } from "@/lib/rate-limit";
+import { describe, expect, it, vi } from "vitest";
+import { ipRateLimitKey, MemoryRateLimiter, warnUnknownIpOnce } from "@/lib/rate-limit";
 
 const WINDOW = 15 * 60 * 1000;
 
@@ -34,5 +34,35 @@ describe("MemoryRateLimiter", () => {
     for (let i = 0; i < 5; i++) limiter.recordFailure("k", 0);
     limiter.reset("k");
     expect(limiter.status("k", 1).blocked).toBe(false);
+  });
+});
+
+describe("ipRateLimitKey (RATE_LIMIT_UNKNOWN_IP)", () => {
+  it("IP terbaca dipakai apa adanya di kedua mode, tanpa peringatan", () => {
+    const warn = vi.fn();
+    expect(ipRateLimitKey("203.0.113.9", "shared", warn)).toBe("203.0.113.9");
+    expect(ipRateLimitKey("203.0.113.9", "skip", warn)).toBe("203.0.113.9");
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("shared: IP tak terbaca masuk satu bucket bersama + peringatan", () => {
+    const warn = vi.fn();
+    expect(ipRateLimitKey("unknown", "shared", warn)).toBe("unknown");
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("skip: IP tak terbaca melewati limit per IP (null), tanpa peringatan", () => {
+    const warn = vi.fn();
+    expect(ipRateLimitKey("unknown", "skip", warn)).toBeNull();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("peringatan bawaan hanya sekali per proses", () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    warnUnknownIpOnce();
+    warnUnknownIpOnce();
+    ipRateLimitKey("unknown", "shared");
+    expect(spy.mock.calls.length).toBeLessThanOrEqual(1);
+    spy.mockRestore();
   });
 });

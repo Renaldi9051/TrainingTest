@@ -86,6 +86,21 @@ describe("createInquiry", () => {
     await expect(createInquiry(input(), { ip: "4.4.4.9" }, later, limit, notifier)).resolves.toBeTruthy();
   });
 
+  it("IP tak terbaca, mode shared (default): semua berbagi satu bucket IP", async () => {
+    const limit = limiters();
+    for (let i = 0; i < 5; i++) await createInquiry(input({ email: `anon${i}@example.com` }), { ip: "unknown" }, now, limit, notifier);
+    await expect(createInquiry(input({ email: "anon9@example.com" }), { ip: "unknown", unknownIpMode: "shared" }, now, limit, notifier)).rejects.toMatchObject({ status: 429 });
+  });
+
+  it("IP tak terbaca, mode skip: limit IP dilewati, limit per email tetap berlaku", async () => {
+    const limit = limiters();
+    const meta = { ip: "unknown", unknownIpMode: "skip" } as const;
+    for (let i = 0; i < 6; i++) await createInquiry(input({ email: `skip${i}@example.com` }), meta, now, limit, notifier);
+    expect(limit.ip.status("unknown", now.getTime()).blocked).toBe(false);
+    for (let i = 0; i < 3; i++) await createInquiry(input({ email: "sama@example.com" }), meta, now, limit, notifier);
+    await expect(createInquiry(input({ email: "sama@example.com" }), meta, now, limit, notifier)).rejects.toMatchObject({ status: 429 });
+  });
+
   it("pelatihan draf/tidak tayang: trainingId disimpan null", async () => {
     mock.training.findFirst.mockResolvedValue(null);
     await createInquiry(input({ trainingSlug: TRAINING, source: "TRAINING_DETAIL" }), { ip: "5.5.5.5" }, now, limiters(), notifier);

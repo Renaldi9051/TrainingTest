@@ -29,6 +29,8 @@ async function main() {
       PUBLIC_BASE_URL: E2E_FE_ORIGIN,
       FE_REVALIDATE_URL: `${E2E_FE_ORIGIN}/api/revalidate`,
       ALLOWED_ORIGINS: E2E_FE_ORIGIN,
+      // e2e menguji perilaku produksi, walau .env lokal memakai "skip" untuk Docker.
+      RATE_LIMIT_UNKNOWN_IP: "shared",
       E2E_SERVER: "1",
     },
   });
