@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import type { PublicNavItem } from "@/lib/api/types";
 import { IndicatorMark, useActiveIndicator } from "@/components/motion/active-indicator";
+import { OPEN_PUBLIC_SEARCH_EVENT } from "@/lib/public-search-event";
 import { cn } from "@/lib/utils";
 
 type HeaderNavProps = {
@@ -140,7 +141,14 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
           <div className="mt-6 flex flex-col gap-3">
             <Link
               href="/pelatihan"
-              onClick={() => setMobileOpen(false)}
+              // Dengan JS: tutup menu lalu buka palette search (SearchTrigger di header); tanpa JS ke katalog.
+              onClick={(event) => {
+                setMobileOpen(false);
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                window.dispatchEvent(new Event(OPEN_PUBLIC_SEARCH_EVENT));
+              }}
+              aria-haspopup="dialog"
               className="inline-flex h-12 items-center gap-2 rounded-md border border-border-strong px-4 text-body"
             >
               <SearchIcon className="size-5" strokeWidth={1.5} aria-hidden />

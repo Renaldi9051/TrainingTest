@@ -1,12 +1,12 @@
-import { SearchIcon } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { getNav, getSettings } from "@/lib/api/public";
 import { HeaderNav } from "./header-nav";
+import { SearchTrigger } from "./search-trigger";
 import { SiteLogo } from "./site-logo";
 
-// Search sementara mengarah ke katalog; command palette Ctrl/Cmd+K menyusul di Fase 4.
+// "Cari pelatihan" membuka command palette (Ctrl/Cmd+K); tanpa JS tetap link ke katalog.
 export async function SiteHeader() {
   const [settings, nav] = await Promise.all([getSettings(), getNav()]);
   const { ctaLabel, ctaHref } = settings.header;
@@ -24,13 +24,7 @@ export async function SiteHeader() {
         </Link>
         <HeaderNav items={nav.header} cta={cta} />
         <div className="ml-auto hidden items-center gap-6 lg:flex">
-          <Link
-            href="/pelatihan"
-            className="inline-flex items-center gap-2 rounded-sm text-small text-fg outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
-          >
-            <SearchIcon className="size-4" strokeWidth={1.5} aria-hidden />
-            Cari pelatihan
-          </Link>
+          <SearchTrigger className="inline-flex items-center gap-2 rounded-sm text-small text-fg outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2" />
           {cta ? (
             <Link href={cta.href} className={buttonVariants({ variant: "primary", size: "sm" })}>
               {cta.label}
