@@ -63,10 +63,16 @@ export const INQUIRY_IP_WINDOW_MS = 10 * 60 * 1000;
 export const INQUIRY_EMAIL_MAX = 3;
 export const INQUIRY_EMAIL_WINDOW_MS = 60 * 60 * 1000;
 
+// Search publik (palette Ctrl/Cmd+K): setiap permintaan dihitung. Ketikan wajar (debounce ~200 ms)
+// jauh di bawah batas ini; yang terkena hanya skrip/bot.
+export const PUBLIC_SEARCH_MAX = 60;
+export const PUBLIC_SEARCH_WINDOW_MS = 60 * 1000;
+
 // Disimpan di globalThis supaya tidak ter-reset saat `next dev` me-reload modul.
 const globalForLimiter = globalThis as typeof globalThis & {
   loginRateLimiter?: RateLimiter;
   inquiryRateLimiters?: { ip: RateLimiter; email: RateLimiter };
+  publicSearchRateLimiter?: RateLimiter;
   unknownIpWarned?: boolean;
 };
 
@@ -97,6 +103,11 @@ export function getInquiryRateLimiters(): { ip: RateLimiter; email: RateLimiter 
     email: new MemoryRateLimiter(INQUIRY_EMAIL_MAX, INQUIRY_EMAIL_WINDOW_MS),
   };
   return globalForLimiter.inquiryRateLimiters;
+}
+
+export function getPublicSearchRateLimiter(): RateLimiter {
+  globalForLimiter.publicSearchRateLimiter ??= new MemoryRateLimiter(PUBLIC_SEARCH_MAX, PUBLIC_SEARCH_WINDOW_MS);
+  return globalForLimiter.publicSearchRateLimiter;
 }
 
 export function getLoginRateLimiter(): RateLimiter {

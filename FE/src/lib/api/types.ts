@@ -35,6 +35,26 @@ export type AuthUser = {
 
 export type AuthUserResponse = { user: AuthUser };
 
+// ===== Search publik =====
+
+// GET /api/public/search?q= (BE/src/services/public-search.ts). Hanya konten yang tampil publik;
+// grup kosong tidak dikirim. Pelatihan maks 6, kategori & layanan maks 4.
+export type PublicSearchGroup = "trainings" | "categories" | "services";
+
+export type PublicSearchItem = {
+  slug: string;
+  title: string;
+  // Pelatihan: kategori utama; layanan: ringkasan; kategori: null.
+  meta: string | null;
+  // Khusus kategori: jumlah pelatihan yang tampil publik.
+  trainingCount?: number;
+};
+
+export type PublicSearchResult = {
+  q: string;
+  groups: { group: PublicSearchGroup; items: PublicSearchItem[] }[];
+};
+
 // ===== Search global admin =====
 
 // GET /api/admin/search?q= (BE/src/services/admin-search.ts). Grup kosong tidak dikirim, maks 5 item.

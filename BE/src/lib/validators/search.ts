@@ -13,3 +13,6 @@ export const adminSearchQuerySchema = z.object({
 });
 
 export type AdminSearchQuery = z.infer<typeof adminSearchQuerySchema>;
+
+// GET /api/public/search?q= (palette publik): aturan panjang sama dengan search admin.
+export const publicSearchQuerySchema = adminSearchQuerySchema;
