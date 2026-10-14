@@ -13,10 +13,10 @@ const cache = new Map<string, PublicSearchResult>();
 const CACHE_MAX = 50;
 
 // Palette search publik (dimuat lazy oleh SearchTrigger saat pertama dibuka): pelatihan, kategori,
-// layanan dari GET /api/public/search, debounce 200 ms, permintaan lama dibatalkan.
+// layanan dari GET /api/public/search, debounce 250 ms, permintaan lama dibatalkan.
 export default function PublicSearchPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [query, setQuery] = useState("");
-  const term = useDebouncedValue(query.trim(), 200);
+  const term = useDebouncedValue(query.trim(), 250);
   // Dinaikkan setiap hasil baru masuk cache (cache di luar state React).
   const [, setVersion] = useState(0);
   const [failedTerm, setFailedTerm] = useState<string | null>(null);
