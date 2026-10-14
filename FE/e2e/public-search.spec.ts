@@ -1,3 +1,5 @@
+import { mkdirSync } from "node:fs";
+import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { E2E_BE_ORIGIN } from "./e2e-env";
 import { createTraining, deleteTraining, loginViaApi, ORIGIN, runId, type CreatedTraining } from "./helpers";
@@ -57,9 +59,11 @@ test.describe("search publik", () => {
     await expect
       .poll(async () => {
         const response = await request.get(`/api/public/search?q=${token}`);
-        return ((await response.json()) as { data: { groups: { items: { title: string }[] }[] } }).data.groups.flatMap((group) => group.items.map((item) => item.title));
+        const { groups } = ((await response.json()) as { data: { groups: { group: string; items: { title: string }[] }[] } }).data;
+        // Pelatihan: hanya yang tayang. Kategori: hanya yang punya pelatihan tayang (bukan yang isinya draf).
+        return Object.fromEntries(groups.map((group) => [group.group, group.items.map((item) => item.title)]));
       })
-      .toEqual([`[UJI] Terbuka ${token}`]);
+      .toEqual({ trainings: [`[UJI] Terbuka ${token}`], categories: [mixedName] });
     const response = await request.get(`/api/public/search?q=${encodeURIComponent(`Rahasia ${token}`)}`);
     expect(response.status()).toBe(200);
     expect(response.headers()["cache-control"]).toBe("public, max-age=30, stale-while-revalidate=30");
@@ -75,7 +79,7 @@ test.describe("search publik", () => {
   test("kategori: jumlah hanya pelatihan tayang; kategori yang hanya berisi draf tidak muncul", async ({ request }) => {
     type Body = { data: { groups: { group: string; items: { title: string; trainingCount?: number }[] }[] } };
     const categories = async () => {
-      const response = await request.get(`/api/public/search?q=${encodeURIComponent(`Kategori ${token}`)}`);
+      const response = await request.get(`/api/public/search?q=${token}`);
       return ((await response.json()) as Body).data.groups.find((group) => group.group === "categories")?.items ?? [];
     };
     await expect.poll(categories).toEqual([{ slug: expect.any(String), title: mixedName, meta: null, trainingCount: 1 }]);
@@ -139,5 +143,19 @@ test.describe("search publik", () => {
     await mobileSearch.click();
     await expect(palette(page)).toBeVisible();
     await expect(page).toHaveURL(/\/$/);
+  });
+
+  test("screenshot palette 360/768/1280 px @screens", async ({ page }) => {
+    const dir = path.join(__dirname, "..", "test-results", "screens");
+    mkdirSync(dir, { recursive: true });
+    for (const width of [360, 768, 1280]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/");
+      if (width === 1280) await page.locator("header").first().screenshot({ path: path.join(dir, "search-header-1280.png") });
+      await openWith(page, () => page.keyboard.press("ControlOrMeta+K"));
+      await searchInput(page).fill(token);
+      await expect(palette(page).getByRole("option").first()).toBeVisible();
+      await page.screenshot({ path: path.join(dir, `search-palette-${width}.png`) });
+    }
   });
 });
