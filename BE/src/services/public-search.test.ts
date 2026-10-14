@@ -49,14 +49,20 @@ describe("publicSearch: hanya konten yang tampil publik", () => {
     expect(call?.values).toContain("pilot:* & drone:*");
   });
 
-  it("layanan: PUBLISHED dan tidak di Sampah; kategori: tidak di Sampah, jumlah hanya pelatihan publik", async () => {
+  it("layanan: PUBLISHED dan tidak di Sampah", async () => {
     await publicSearch("drone", meta, now, freshLimiter());
-    const services = callFor("Service");
-    expect(services?.sql).toContain(`s."deletedAt" IS NULL AND s."status" = 'PUBLISHED'`);
+    expect(callFor("Service")?.sql).toContain(`s."deletedAt" IS NULL AND s."status" = 'PUBLISHED'`);
+  });
+
+  it("kategori: tidak di Sampah; jumlah hanya pelatihan tayang; tanpa pelatihan tayang tidak tampil", async () => {
+    await publicSearch("drone", meta, now, freshLimiter());
     const categories = callFor("Category");
     expect(categories?.sql).toContain(`c."deletedAt" IS NULL`);
-    expect(categories?.sql).toContain(`t."status" = 'PUBLISHED'`);
+    // Subquery jumlah memakai aturan tayang yang sama dengan pelatihan (draf/terjadwal/Sampah tidak dihitung).
+    const countSubquery = categories?.sql.slice(categories.sql.indexOf("SELECT count(*)")) ?? "";
+    expect(countSubquery).toContain(`t."deletedAt" IS NULL AND t."status" = 'PUBLISHED' AND t."publishedAt" IS NOT NULL AND t."publishedAt" <= `);
     expect(categories?.values).toContain(now);
+    expect(categories?.sql).toContain(`WHERE matched."trainingCount" > 0`);
   });
 
   it("grup kosong tidak dikirim; item tanpa id/status", async () => {

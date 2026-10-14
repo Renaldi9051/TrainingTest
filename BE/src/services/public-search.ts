@@ -3,12 +3,13 @@ import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
 import { getPublicSearchRateLimiter, ipRateLimitKey, type RateLimiter, type UnknownIpMode } from "@/lib/rate-limit";
 import { likeContainsPattern, TYPO_SIMILARITY_THRESHOLD } from "@/lib/search";
-import { anyColumnLike, startsFirst, trainingTextSearch } from "@/lib/search-sql";
+import { anyColumnLike, startsFirst, startsWithText, trainingTextSearch } from "@/lib/search-sql";
 
 // Search publik untuk palette Ctrl/Cmd+K (DESIGN.md 7, PRD API /public/search): pelatihan, kategori,
 // layanan. Hanya yang tampil publik, aturan sama dengan katalog: pelatihan PUBLISHED, tidak di Sampah,
 // waktu tayang sudah lewat (draf & terjadwal tidak bocor); layanan PUBLISHED, tidak di Sampah;
-// kategori tidak di Sampah. Respons hanya slug, judul, dan keterangan (tanpa id/status).
+// kategori tidak di Sampah dan punya minimal satu pelatihan tayang (jumlahnya hanya menghitung
+// pelatihan tayang). Respons hanya slug, judul, dan keterangan (tanpa id/status).
 
 export const PUBLIC_SEARCH_LIMITS = { trainings: 6, categories: 4, services: 4 } as const;
 
@@ -52,13 +53,18 @@ async function searchTrainings(query: string, now: Date): Promise<PublicSearchIt
 }
 
 async function searchCategories(query: string, now: Date): Promise<PublicSearchItem[]> {
+  // Jumlah hanya pelatihan tayang; kategori tanpa pelatihan tayang (mis. hanya berisi draf) tidak tampil.
   const rows = await getDb().$queryRaw<{ slug: string; title: string; trainingCount: number }[]>`
-    SELECT c."slug", c."name" AS "title",
-      (SELECT count(*) FROM "TrainingCategory" tc JOIN "Training" t ON t."id" = tc."trainingId"
-        WHERE tc."categoryId" = c."id" AND ${publicTraining(now)})::int AS "trainingCount"
-    FROM "Category" c
-    WHERE c."deletedAt" IS NULL AND (${anyColumnLike(['c."name"', 'c."slug"', 'c."description"'], likeContainsPattern(query))})
-    ORDER BY ${startsFirst('c."name"', query)}, c."order" ASC, c."name" ASC
+    SELECT matched."slug", matched."title", matched."trainingCount"
+    FROM (
+      SELECT c."slug", c."name" AS "title", c."order", ${startsWithText('c."name"', query)} AS "starts",
+        (SELECT count(*) FROM "TrainingCategory" tc JOIN "Training" t ON t."id" = tc."trainingId"
+          WHERE tc."categoryId" = c."id" AND ${publicTraining(now)})::int AS "trainingCount"
+      FROM "Category" c
+      WHERE c."deletedAt" IS NULL AND (${anyColumnLike(['c."name"', 'c."slug"', 'c."description"'], likeContainsPattern(query))})
+    ) matched
+    WHERE matched."trainingCount" > 0
+    ORDER BY matched."starts" DESC, matched."order" ASC, matched."title" ASC
     LIMIT ${PUBLIC_SEARCH_LIMITS.categories}
   `;
   return rows.map((row) => ({ slug: row.slug, title: row.title, meta: null, trainingCount: row.trainingCount }));

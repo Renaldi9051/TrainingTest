@@ -15,10 +15,15 @@ export function anyColumnLike(columns: string[], pattern: string): Prisma.Sql {
   );
 }
 
+// Kolom diawali kata kunci (ekspresi boolean), tanpa aksen/huruf besar.
+export function startsWithText(column: string, query: string): Prisma.Sql {
+  const prefix = likeContainsPattern(query).slice(1);
+  return Prisma.sql`(public.immutable_unaccent(lower(${Prisma.raw(column)})) LIKE ${prefix} ESCAPE '\\')`;
+}
+
 // Urutan: judul yang diawali kata kunci tampil lebih dulu.
 export function startsFirst(column: string, query: string): Prisma.Sql {
-  const prefix = likeContainsPattern(query).slice(1);
-  return Prisma.sql`(public.immutable_unaccent(lower(${Prisma.raw(column)})) LIKE ${prefix} ESCAPE '\\') DESC`;
+  return Prisma.sql`${startsWithText(column, query)} DESC`;
 }
 
 // Pelatihan (alias t): full-text searchVector (judul, kategori, ringkasan, judul modul) + trigram judul

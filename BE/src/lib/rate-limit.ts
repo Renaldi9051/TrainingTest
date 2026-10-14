@@ -63,9 +63,10 @@ export const INQUIRY_IP_WINDOW_MS = 10 * 60 * 1000;
 export const INQUIRY_EMAIL_MAX = 3;
 export const INQUIRY_EMAIL_WINDOW_MS = 60 * 60 * 1000;
 
-// Search publik (palette Ctrl/Cmd+K): setiap permintaan dihitung. Ketikan wajar (debounce ~200 ms)
-// jauh di bawah batas ini; yang terkena hanya skrip/bot.
-export const PUBLIC_SEARCH_MAX = 60;
+// Search publik (palette Ctrl/Cmd+K): setiap permintaan dihitung. Batas longgar karena pengunjung
+// instansi sering berbagi satu IP (NAT); ketikan wajar (debounce 250 ms) jauh di bawahnya, yang terkena
+// hanya skrip/bot.
+export const PUBLIC_SEARCH_MAX = 300;
 export const PUBLIC_SEARCH_WINDOW_MS = 60 * 1000;
 
 // Disimpan di globalThis supaya tidak ter-reset saat `next dev` me-reload modul.
