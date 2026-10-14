@@ -10,6 +10,8 @@ type FormFieldProps = {
   description?: string;
   required?: boolean;
   className?: string;
+  // Penanda stabil untuk lompat + fokus dari search global (mis. "site.contact.whatsapp").
+  anchor?: string;
   // Satu elemen input; id, aria-invalid, dan aria-describedby dipasang otomatis.
   children: ReactNode;
 };
@@ -22,6 +24,7 @@ export function FormField({
   description,
   required,
   className,
+  anchor,
   children,
 }: FormFieldProps) {
   const descriptionId = description ? `${id}-description` : undefined;
@@ -29,7 +32,7 @@ export function FormField({
   const describedBy = [descriptionId, errorId].filter(Boolean).join(" ") || undefined;
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-2", className)} data-anchor={anchor}>
       <Label htmlFor={id}>
         {label}
         {required ? (

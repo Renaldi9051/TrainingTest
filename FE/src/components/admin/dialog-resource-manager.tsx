@@ -1,7 +1,10 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { ArrowUpDownIcon, PencilIcon, PlusIcon, Trash2Icon, type LucideIcon } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { createDataTableColumns, type DataTableColumn } from "@/components/admin/data-table";
 import { OptionRow } from "@/components/admin/option-row";
@@ -11,6 +14,7 @@ import { ResourceTable } from "@/components/admin/resource-table";
 import { Button } from "@/components/admin/ui/button";
 import { useDeleteWithUndo } from "@/hooks/use-delete-with-undo";
 import { loadReorderOptions, resourceKeys, type AdminResource } from "@/lib/admin-resources";
+import { apiFetch } from "@/lib/api/client";
 import type { OptionItem } from "@/lib/api/types";
 
 type DialogResourceManagerProps<TItem extends { id: string }> = {
@@ -37,7 +41,7 @@ type DialogState<TItem> = { item: TItem | null } | null;
 
 // Halaman admin untuk entitas sederhana yang diedit lewat dialog (klien, testimoni, kontak
 // marketing, media partner): tabel + mode urutkan + tambah/ubah di dialog + hapus dengan
-// konfirmasi dan "Urungkan" (pulihkan).
+// konfirmasi dan "Urungkan" (pulihkan). ?edit=<id> membuka dialog ubah item itu (search global).
 export function DialogResourceManager<TItem extends { id: string }>({
   resource,
   title,
@@ -136,6 +140,10 @@ export function DialogResourceManager<TItem extends { id: string }>({
       </div>
 
       {dialog ? renderDialog({ item: dialog.item, onClose: () => setDialog(null) }) : null}
+      {/* useSearchParams butuh Suspense. */}
+      <Suspense fallback={null}>
+        {dialog ? null : <EditFromUrl<TItem> resource={resource} nounTitle={nounTitle} renderDialog={renderDialog} />}
+      </Suspense>
 
       <ConfirmDialog
         open={deleting !== null}
@@ -152,4 +160,36 @@ export function DialogResourceManager<TItem extends { id: string }>({
       />
     </>
   );
+}
+
+// Dialog ubah untuk ?edit=<id>: item diambil per id (belum tentu ada di halaman tabel yang tampil).
+// Menutup dialog atau item yang tidak ditemukan menghapus parameter dari URL.
+function EditFromUrl<TItem extends { id: string }>({
+  resource,
+  nounTitle,
+  renderDialog,
+}: {
+  resource: AdminResource;
+  nounTitle: string;
+  renderDialog: DialogResourceManagerProps<TItem>["renderDialog"];
+}) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const editId = searchParams.get("edit");
+  const item = useQuery({
+    queryKey: [...resourceKeys(resource).detail(editId ?? ""), "edit"],
+    queryFn: async () => (await apiFetch<TItem>(`/admin/${resource}/${editId}`)).data,
+    enabled: Boolean(editId),
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!editId || !item.isError) return;
+    toast.error(`${nounTitle} tidak ditemukan atau sudah dihapus.`);
+    router.replace(pathname, { scroll: false });
+  }, [editId, item.isError, nounTitle, pathname, router]);
+
+  if (!editId || !item.data || item.data.id !== editId) return null;
+  return renderDialog({ item: item.data, onClose: () => router.replace(pathname, { scroll: false }) });
 }

@@ -36,20 +36,51 @@ import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { useScopedId } from "@/hooks/use-scoped-id";
 import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
 import type { AdminSettings, SettingKey, SettingValues, SocialPlatform } from "@/lib/api/types";
+import { FOCUS_ANCHOR_EVENT, focusAnchor } from "@/lib/anchor-focus";
 import { applyFieldErrors } from "@/lib/form-errors";
+import { parseSettingHash, settingAnchor, SETTING_TAB_LABELS } from "@/lib/settings-fields";
 import { FACILITIES_MAX, FACILITY_MAX, FAQ_A_MAX, FAQ_Q_MAX } from "@/lib/training-content";
 
 export const settingsKey = ["admin", "settings"] as const;
 
-const TABS: { key: SettingKey; label: string }[] = [
-  { key: "site.identity", label: "Identitas" },
-  { key: "site.header", label: "Header" },
-  { key: "site.contact", label: "Kontak" },
-  { key: "site.social", label: "Sosial media" },
-  { key: "site.footer", label: "Footer" },
-  { key: "training.defaults", label: "Pelatihan" },
-  { key: "seo.default", label: "SEO default" },
-];
+const TABS = (Object.keys(SETTING_TAB_LABELS) as SettingKey[]).map((key) => ({ key, label: SETTING_TAB_LABELS[key] }));
+
+// Lompat dari search global: #field-<key>.<field> membuka tab yang benar lalu memfokuskan field-nya.
+// Dibaca saat halaman dibuka dan saat palette menuju field lain di halaman ini (FOCUS_ANCHOR_EVENT).
+function useSettingAnchor(ready: boolean) {
+  const [tab, setTab] = useState<SettingKey>("site.identity");
+  const [pending, setPending] = useState<string | null>(null);
+
+  useEffect(() => {
+    const apply = (hash: string) => {
+      const target = parseSettingHash(hash);
+      if (!target) return;
+      setTab(target.key);
+      setPending(settingAnchor(target.key, target.field));
+    };
+    const frame = requestAnimationFrame(() => apply(window.location.hash));
+    const onEvent = (event: Event) => apply((event as CustomEvent<string>).detail);
+    const onHash = () => apply(window.location.hash);
+    window.addEventListener(FOCUS_ANCHOR_EVENT, onEvent);
+    window.addEventListener("hashchange", onHash);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener(FOCUS_ANCHOR_EVENT, onEvent);
+      window.removeEventListener("hashchange", onHash);
+    };
+  }, []);
+
+  // Fokus setelah data termuat dan tab tujuan tampil.
+  useEffect(() => {
+    if (!ready || !pending) return;
+    const frame = requestAnimationFrame(() => {
+      if (focusAnchor(pending)) setPending(null);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [ready, pending, tab]);
+
+  return [tab, setTab] as const;
+}
 
 export function SettingsForm() {
   const query = useQuery({
@@ -67,6 +98,7 @@ export function SettingsForm() {
     });
   }, []);
   useUnsavedChangesGuard(dirtyKeys.size > 0);
+  const [tab, setTab] = useSettingAnchor(query.isSuccess);
 
   if (query.isPending) {
     return (
@@ -93,7 +125,7 @@ export function SettingsForm() {
   const sectionProps = { media, onDirtyChange };
 
   return (
-    <Tabs defaultValue="site.identity">
+    <Tabs value={tab} onValueChange={(value) => setTab(value as SettingKey)}>
       <TabsList aria-label="Grup pengaturan">
         {TABS.map((tab) => (
           <TabsTrigger key={tab.key} value={tab.key}>
@@ -186,17 +218,21 @@ function SectionForm({
   onSubmit,
   children,
   saveBar,
+  anchor,
 }: {
   id: string;
   onSubmit: () => void;
   children: ReactNode;
   saveBar: ReactNode;
+  // Untuk section tanpa satu field utama (daftar sosial media): lompat ke elemen pertamanya.
+  anchor?: string;
 }) {
   return (
     <>
       <form
         id={id}
         noValidate
+        data-anchor={anchor}
         className="max-w-2xl space-y-6"
         onSubmit={(event) => {
           event.preventDefault();
@@ -234,7 +270,7 @@ function IdentitySection({ value, media, onDirtyChange }: SectionProps<"site.ide
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <FormField id={`${formId}-${name}`} label={label} description={description} error={fieldState.error?.message}>
+        <FormField id={`${formId}-${name}`} anchor={`site.identity.${name}`} label={label} description={description} error={fieldState.error?.message}>
           <MediaPicker
             value={field.value}
             onChange={field.onChange}
@@ -250,10 +286,10 @@ function IdentitySection({ value, media, onDirtyChange }: SectionProps<"site.ide
 
   return (
     <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
-      <FormField id={`${formId}-name`} label="Nama situs" required error={errors.name?.message}>
+      <FormField id={`${formId}-name`} anchor="site.identity.name" label="Nama situs" required error={errors.name?.message}>
         <Input {...register("name")} />
       </FormField>
-      <FormField id={`${formId}-tagline`} label="Tagline" error={errors.tagline?.message}>
+      <FormField id={`${formId}-tagline`} anchor="site.identity.tagline" label="Tagline" error={errors.tagline?.message}>
         <Input {...register("tagline")} />
       </FormField>
       <div className="grid gap-6 sm:grid-cols-2">
@@ -285,11 +321,11 @@ function HeaderSection({ value, onDirtyChange }: SectionProps<"site.header">) {
   return (
     <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
       <p className="text-small text-fg-muted">Tombol ajakan di kanan menu header. Kosongkan untuk menyembunyikan.</p>
-      <FormField id={`${formId}-label`} label="Label tombol" error={errors.ctaLabel?.message}>
+      <FormField id={`${formId}-label`} anchor="site.header.ctaLabel" label="Label tombol" error={errors.ctaLabel?.message}>
         <Input {...form.register("ctaLabel")} placeholder="Konsultasi gratis" />
       </FormField>
       <FormField
-        id={`${formId}-href`}
+        id={`${formId}-href`} anchor="site.header.ctaHref"
         label="Tautan tombol"
         description="Path internal (/jadwal) atau URL lengkap (https://...)."
         error={errors.ctaHref?.message}
@@ -327,11 +363,11 @@ function ContactSection({ value, onDirtyChange }: SectionProps<"site.contact">) 
   return (
     <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
       <div className="grid gap-6 sm:grid-cols-2">
-        <FormField id={`${formId}-phone`} label="Telepon" error={errors.phone?.message}>
+        <FormField id={`${formId}-phone`} anchor="site.contact.phone" label="Telepon" error={errors.phone?.message}>
           <Input type="tel" {...form.register("phone")} placeholder="+62 21 1234 5678" />
         </FormField>
         <FormField
-          id={`${formId}-whatsapp`}
+          id={`${formId}-whatsapp`} anchor="site.contact.whatsapp"
           label="WhatsApp"
           description="Dipakai tombol Chat WA. Disimpan dalam format 62..."
           error={errors.whatsapp?.message}
@@ -340,11 +376,11 @@ function ContactSection({ value, onDirtyChange }: SectionProps<"site.contact">) 
         </FormField>
       </div>
       <div className="grid gap-6 sm:grid-cols-2">
-        <FormField id={`${formId}-email`} label="Email" error={errors.email?.message}>
+        <FormField id={`${formId}-email`} anchor="site.contact.email" label="Email" error={errors.email?.message}>
           <Input type="email" {...form.register("email")} placeholder="halo@contoh.com" />
         </FormField>
         <FormField
-          id={`${formId}-email-secondary`}
+          id={`${formId}-email-secondary`} anchor="site.contact.emailSecondary"
           label="Email kedua"
           description="Opsional, mis. untuk pendaftaran."
           error={errors.emailSecondary?.message}
@@ -352,11 +388,11 @@ function ContactSection({ value, onDirtyChange }: SectionProps<"site.contact">) 
           <Input type="email" {...form.register("emailSecondary")} placeholder="daftar@contoh.com" />
         </FormField>
       </div>
-      <FormField id={`${formId}-address`} label="Alamat" error={errors.address?.message}>
+      <FormField id={`${formId}-address`} anchor="site.contact.address" label="Alamat" error={errors.address?.message}>
         <Textarea rows={3} {...form.register("address")} />
       </FormField>
       <FormField
-        id={`${formId}-map`}
+        id={`${formId}-map`} anchor="site.contact.mapEmbedUrl"
         label="URL embed peta"
         description="Google Maps: Bagikan → Sematkan peta → salin isi atribut src saja (https://www.google.com/maps/embed?...). OpenStreetMap juga didukung."
         error={errors.mapEmbedUrl?.message}
@@ -397,7 +433,7 @@ function SocialSection({ value, onDirtyChange }: SectionProps<"site.social">) {
   const errors = form.formState.errors;
 
   return (
-    <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
+    <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar} anchor="site.social.links">
       {fields.length === 0 ? (
         <p className="text-small text-fg-muted">Belum ada tautan sosial media.</p>
       ) : (
@@ -480,11 +516,11 @@ function FooterSection({ value, onDirtyChange }: SectionProps<"site.footer">) {
   const errors = form.formState.errors;
   return (
     <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
-      <FormField id={`${formId}-description`} label="Deskripsi singkat" error={errors.description?.message}>
+      <FormField id={`${formId}-description`} anchor="site.footer.description" label="Deskripsi singkat" error={errors.description?.message}>
         <Textarea rows={3} {...form.register("description")} />
       </FormField>
       <FormField
-        id={`${formId}-copyright`}
+        id={`${formId}-copyright`} anchor="site.footer.copyright"
         label="Teks hak cipta"
         description="Tahun ditambahkan otomatis, mis. © 2026 [teks ini]."
         error={errors.copyright?.message}
@@ -522,7 +558,7 @@ function TrainingDefaultsSection({ value, onDirtyChange }: SectionProps<"trainin
   return (
     <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
       <p className="text-small text-fg-muted">Dipakai di semua halaman detail pelatihan.</p>
-      <fieldset className="space-y-3">
+      <fieldset data-anchor="training.defaults.facilities" className="space-y-3">
         <legend className="text-sm font-medium">Fasilitas default</legend>
         <p className="text-small text-fg-muted">Tampil untuk pelatihan yang memakai fasilitas default.</p>
         <Controller
@@ -542,7 +578,7 @@ function TrainingDefaultsSection({ value, onDirtyChange }: SectionProps<"trainin
           )}
         />
       </fieldset>
-      <fieldset className="space-y-3 border-t border-border pt-6">
+      <fieldset data-anchor="training.defaults.faq" className="space-y-3 border-t border-border pt-6">
         <legend className="text-sm font-medium">FAQ umum</legend>
         <p className="text-small text-fg-muted">Tampil setelah FAQ khusus tiap pelatihan.</p>
         <Controller
@@ -554,7 +590,7 @@ function TrainingDefaultsSection({ value, onDirtyChange }: SectionProps<"trainin
         />
       </fieldset>
       <FormField
-        id={`${formId}-inhouse`}
+        id={`${formId}-inhouse`} anchor="training.defaults.inHouseNote"
         label="Catatan in-house"
         description="Tampil di bagian Jadwal & investasi, termasuk saat belum ada jadwal."
         error={errors.inHouseNote?.message}
@@ -562,7 +598,7 @@ function TrainingDefaultsSection({ value, onDirtyChange }: SectionProps<"trainin
         <Textarea rows={3} {...form.register("inHouseNote")} />
       </FormField>
       <FormField
-        id={`${formId}-disclaimer`}
+        id={`${formId}-disclaimer`} anchor="training.defaults.disclaimer"
         label="Disclaimer"
         description="Teks kecil di akhir halaman detail pelatihan."
         error={errors.disclaimer?.message}
@@ -607,7 +643,7 @@ function SeoFields({
   return (
     <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
       <FormField
-        id={`${formId}-template`}
+        id={`${formId}-template`} anchor="seo.default.titleTemplate"
         label="Template judul"
         description="%s diganti judul halaman. Contoh: %s | Nama Situs."
         error={errors.titleTemplate?.message}
@@ -615,7 +651,7 @@ function SeoFields({
         <Input {...form.register("titleTemplate")} />
       </FormField>
       <FormField
-        id={`${formId}-title`}
+        id={`${formId}-title`} anchor="seo.default.defaultTitle"
         label="Judul default"
         description="Dipakai di halaman yang tidak punya judul sendiri. Kosong = nama situs."
         error={errors.defaultTitle?.message}
@@ -623,7 +659,7 @@ function SeoFields({
         <Input {...form.register("defaultTitle")} />
       </FormField>
       <FormField
-        id={`${formId}-description`}
+        id={`${formId}-description`} anchor="seo.default.description"
         label="Deskripsi default"
         description={`${description.length}/160 karakter.`}
         error={errors.description?.message}
@@ -635,7 +671,7 @@ function SeoFields({
         name="ogImageId"
         render={({ field, fieldState }) => (
           <FormField
-            id={`${formId}-og`}
+            id={`${formId}-og`} anchor="seo.default.ogImageId"
             label="Gambar OG default"
             description="Tampil saat tautan dibagikan, kalau halaman tidak punya gambar sendiri. Ideal 1200×630."
             error={fieldState.error?.message}
