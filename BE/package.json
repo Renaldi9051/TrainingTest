@@ -25,7 +25,8 @@
     "db:seed:bulk": "dotenv -e ../.env -- prisma db seed -- --bulk",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "bench:search": "dotenv -e ../.env -- tsx scripts/bench-search.ts"
+    "bench:search": "dotenv -e ../.env -- tsx scripts/bench-search.ts",
+    "bench:search-admin": "dotenv -e ../.env -- tsx scripts/bench-admin-search.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",
