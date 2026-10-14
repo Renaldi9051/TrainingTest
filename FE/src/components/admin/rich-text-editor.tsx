@@ -1,6 +1,6 @@
 "use client";
 
-import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
+import { EditorContent, Extension, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
   BoldIcon,
@@ -40,8 +40,22 @@ type RichTextEditorProps = {
 
 // Ekstensi dibatasi sesuai allowlist rich text BE: paragraph, heading 2-3, bold, italic, list,
 // blockquote, link (http/https/mailto/tel), hard break. Node lain dimatikan.
-function createExtensions() {
+// Ctrl/Cmd+K di editor membuka popover tautan (bukan search global admin: shortcut yang ditangani
+// editor memanggil preventDefault, dan palette mengabaikan event yang sudah ditangani).
+function createExtensions(onLinkShortcut: () => void) {
+  const linkShortcut = Extension.create({
+    name: "linkShortcut",
+    addKeyboardShortcuts() {
+      return {
+        "Mod-k": () => {
+          onLinkShortcut();
+          return true;
+        },
+      };
+    },
+  });
   return [
+    linkShortcut,
     StarterKit.configure({
       code: false,
       codeBlock: false,
@@ -68,8 +82,10 @@ export function RichTextEditor({
   minHeight = 160,
   ...aria
 }: RichTextEditorProps) {
+  // Popover tautan dibuka dari tombol toolbar atau Ctrl/Cmd+K (setter state stabil, aman di ekstensi).
+  const [linkOpen, setLinkOpen] = useState(false);
   const editor = useEditor({
-    extensions: createExtensions(),
+    extensions: createExtensions(() => setLinkOpen(true)),
     content: value ?? EMPTY_DOC,
     // Next merender komponen client di server juga; editor baru dibuat di browser.
     immediatelyRender: false,
@@ -111,7 +127,7 @@ export function RichTextEditor({
       )}
       style={{ ["--editor-min-height" as string]: `${minHeight}px` }}
     >
-      {editor ? <Toolbar editor={editor} /> : <div className="h-10 border-b border-border" />}
+      {editor ? <Toolbar editor={editor} linkOpen={linkOpen} onLinkOpenChange={setLinkOpen} /> : <div className="h-10 border-b border-border" />}
       {editor ? (
         <EditorContent editor={editor} />
       ) : (
@@ -149,7 +165,15 @@ function ToolbarButton({ icon: Icon, label, active, disabled, onClick }: Toolbar
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({
+  editor,
+  linkOpen,
+  onLinkOpenChange,
+}: {
+  editor: Editor;
+  linkOpen: boolean;
+  onLinkOpenChange: (open: boolean) => void;
+}) {
   const state = useEditorState({
     editor,
     selector: ({ editor: current }) => ({
@@ -183,7 +207,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       <ToolbarButton icon={ListOrderedIcon} label="Daftar bernomor" active={state.orderedList} onClick={() => chain().toggleOrderedList().run()} />
       <ToolbarButton icon={QuoteIcon} label="Kutipan" active={state.blockquote} onClick={() => chain().toggleBlockquote().run()} />
       <Divider />
-      <LinkButton editor={editor} active={state.link} />
+      <LinkButton editor={editor} active={state.link} open={linkOpen} onOpenChange={onLinkOpenChange} />
       <ToolbarButton icon={UnlinkIcon} label="Hapus tautan" disabled={!state.link} onClick={() => chain().extendMarkRange("link").unsetLink().run()} />
       <Divider />
       <ToolbarButton icon={Undo2Icon} label="Urungkan" disabled={!state.canUndo} onClick={() => chain().undo().run()} />
@@ -196,19 +220,44 @@ function Divider() {
   return <span aria-hidden className="mx-1 h-5 w-px bg-border" />;
 }
 
-function LinkButton({ editor, active }: { editor: Editor; active: boolean }) {
-  const inputId = useId();
-  const [open, setOpen] = useState(false);
-  const [href, setHref] = useState("");
-  const [error, setError] = useState<string | null>(null);
+function LinkButton({
+  editor,
+  active,
+  open,
+  onOpenChange,
+}: {
+  editor: Editor;
+  active: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className={cn("size-8", active && "bg-bg-muted text-fg-strong")}
+          aria-label="Tautan"
+          title="Tautan (Ctrl/Cmd+K)"
+          aria-pressed={active}
+        >
+          <LinkIcon strokeWidth={1.5} aria-hidden />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-80">
+        {/* Dipasang ulang tiap kali popover dibuka: URL terisi dari tautan yang sedang dipilih. */}
+        <LinkForm editor={editor} active={active} onDone={() => onOpenChange(false)} />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
-  function onOpenChange(next: boolean) {
-    setOpen(next);
-    if (next) {
-      setHref((editor.getAttributes("link").href as string | undefined) ?? "");
-      setError(null);
-    }
-  }
+function LinkForm({ editor, active, onDone }: { editor: Editor; active: boolean; onDone: () => void }) {
+  const inputId = useId();
+  const [href, setHref] = useState(() => (editor.getAttributes("link").href as string | undefined) ?? "");
+  const [error, setError] = useState<string | null>(null);
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -224,49 +273,32 @@ function LinkButton({ editor, active }: { editor: Editor; active: boolean }) {
     } else {
       chain.setLink({ href: value }).run();
     }
-    setOpen(false);
+    onDone();
   }
 
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className={cn("size-8", active && "bg-bg-muted text-fg-strong")}
-          aria-label="Tautan"
-          title="Tautan"
-          aria-pressed={active}
-        >
-          <LinkIcon strokeWidth={1.5} aria-hidden />
+    // Bukan <form> karena editor biasanya berada di dalam form lain.
+    <div
+      className="space-y-2"
+      onKeyDown={(event) => {
+        if (event.key === "Enter") onSubmit(event);
+      }}
+    >
+      <Label htmlFor={inputId}>URL tautan</Label>
+      <Input
+        id={inputId}
+        value={href}
+        placeholder="https://contoh.com"
+        onChange={(event) => setHref(event.target.value)}
+        aria-invalid={error ? true : undefined}
+        autoFocus
+      />
+      {error ? <p className="text-small text-status-error">{error}</p> : null}
+      <div className="flex justify-end">
+        <Button type="button" size="sm" onClick={onSubmit}>
+          Pasang tautan
         </Button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-80">
-        {/* Bukan <form> karena editor biasanya berada di dalam form lain. */}
-        <div
-          className="space-y-2"
-          onKeyDown={(event) => {
-            if (event.key === "Enter") onSubmit(event);
-          }}
-        >
-          <Label htmlFor={inputId}>URL tautan</Label>
-          <Input
-            id={inputId}
-            value={href}
-            placeholder="https://contoh.com"
-            onChange={(event) => setHref(event.target.value)}
-            aria-invalid={error ? true : undefined}
-            autoFocus
-          />
-          {error ? <p className="text-small text-status-error">{error}</p> : null}
-          <div className="flex justify-end">
-            <Button type="button" size="sm" onClick={onSubmit}>
-              Pasang tautan
-            </Button>
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+      </div>
+    </div>
   );
 }
