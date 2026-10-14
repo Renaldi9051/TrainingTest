@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PublicTrainingDetail } from "@/lib/api/types";
-import { courseJsonLd, scheduleEventJsonLd, whatsappTrainingUrl } from "@/lib/structured-data";
+import { courseJsonLd, scheduleEventJsonLd } from "@/lib/structured-data";
 
 const SITE = "https://contoh.id";
 
@@ -90,13 +90,5 @@ describe("scheduleEventJsonLd", () => {
     expect(scheduleEventJsonLd({ ...base, method: "ONLINE", price: null }, SITE, "L").location).toMatchObject({
       "@type": "VirtualLocation",
     });
-  });
-});
-
-describe("whatsappTrainingUrl", () => {
-  it("pesan otomatis berisi judul pelatihan", () => {
-    const url = new URL(whatsappTrainingUrl("6281200000000", "KPI & OKR"));
-    expect(url.origin + url.pathname).toBe("https://wa.me/6281200000000");
-    expect(url.searchParams.get("text")).toContain('"KPI & OKR"');
   });
 });

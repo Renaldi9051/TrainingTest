@@ -12,21 +12,24 @@ import { RichTextHtml } from "@/components/public/rich-text-html";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { TrainingGrid } from "@/components/public/training-card";
 import { ReadingProgress } from "@/components/motion/reading-progress";
+import { ContactContext } from "@/components/public/contact-context";
+import { ContactPanelTrigger, contactsWithWhatsapp } from "@/components/public/floating-contact";
 import { InquiryDialog } from "@/components/public/inquiry-dialog";
 import { RollText } from "@/components/motion/roll-text";
 import { ScrollSpyToc } from "@/components/motion/scroll-spy-toc";
 import { ButtonArrow, buttonVariants, MAGNETIC } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { getSettings, getTraining, getTrainingSlugs } from "@/lib/api/public";
+import { getMarketing, getSettings, getTraining, getTrainingSlugs } from "@/lib/api/public";
 import { getTrainingPreview } from "@/lib/api/preview";
 import type { PublicTrainingDetail } from "@/lib/api/types";
 import { getPublicEnv } from "@/lib/env";
 import { formatDateRange, formatRupiah } from "@/lib/format";
 import { METHOD_LABELS } from "@/lib/labels";
 import { privacyPolicyHref } from "@/lib/privacy";
-import { courseJsonLd, scheduleEventJsonLd, whatsappTrainingUrl } from "@/lib/structured-data";
+import { courseJsonLd, scheduleEventJsonLd } from "@/lib/structured-data";
 import { cn } from "@/lib/utils";
+import { whatsappTrainingUrl } from "@/lib/whatsapp";
 
 // Seluruh halaman harus statis (dari cache): slug yang belum di-prerender ditunggu sampai render
 // lengkap sebelum respons dikirim, jadi slug yang tidak ada mendapat HTTP 404 sungguhan
@@ -104,7 +107,12 @@ type Section = { id: string; label: string; content: ReactNode };
 
 export default async function TrainingPage({ params }: PageProps<"/pelatihan/[slug]">) {
   const { slug } = await params;
-  const [loaded, settings, privacyHref] = await Promise.all([loadTraining(slug), getSettings(), privacyPolicyHref()]);
+  const [loaded, settings, privacyHref, marketing] = await Promise.all([
+    loadTraining(slug),
+    getSettings(),
+    privacyPolicyHref(),
+    getMarketing(),
+  ]);
   if (!loaded) notFound();
   const { training, preview } = loaded;
   const siteUrl = getPublicEnv().NEXT_PUBLIC_SITE_URL;
@@ -114,6 +122,9 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
         chat: whatsappTrainingUrl(whatsappNumber, training.title),
       }
     : null;
+  // Ada marketing: "Chat WA" di bar mobile membuka panel floating contact (pilih marketing, pesan
+  // berisi judul pelatihan) dan tombol bulat disembunyikan di mobile (data-contact-bar).
+  const marketingPanel = contactsWithWhatsapp(marketing).length > 0;
   // Form inquiry (dialog) dengan pelatihan ini terisi; tombol utama kalau WhatsApp belum diatur.
   const inquiryButton = (
     <InquiryDialog
@@ -156,6 +167,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
     <>
       {preview ? <PreviewBanner path={`/pelatihan/${training.slug}`} /> : null}
       <ReadingProgress />
+      <ContactContext topic={{ kind: "training", title: training.title }} bar={Boolean(cta) && marketingPanel} />
       <JsonLd
         data={[
           courseJsonLd(training, siteUrl, settings.identity.name),
@@ -297,7 +309,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
       </div>
 
       {cta ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg lg:hidden">
+        <div data-contact-bar={marketingPanel ? "" : undefined} className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg lg:hidden">
           <Container className="flex items-center gap-3 py-3">
             <div className="min-w-0 flex-1">
               <p className="truncate font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
@@ -305,15 +317,22 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
               </p>
               <p className="truncate text-small font-medium text-fg-strong">{investmentText(training)}</p>
             </div>
-            <a
-              href={cta.chat}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonVariants({ variant: "primary", size: "md" })}
-            >
-              <MessageCircleIcon strokeWidth={1.5} aria-hidden />
-              Chat WA
-            </a>
+            {marketingPanel ? (
+              <ContactPanelTrigger className={buttonVariants({ variant: "primary", size: "md" })}>
+                <MessageCircleIcon strokeWidth={1.5} aria-hidden />
+                Chat WA
+              </ContactPanelTrigger>
+            ) : (
+              <a
+                href={cta.chat}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({ variant: "primary", size: "md" })}
+              >
+                <MessageCircleIcon strokeWidth={1.5} aria-hidden />
+                Chat WA
+              </a>
+            )}
           </Container>
         </div>
       ) : null}

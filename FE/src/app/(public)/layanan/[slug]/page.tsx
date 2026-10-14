@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ContactContext } from "@/components/public/contact-context";
 import { PreviewBanner } from "@/components/public/preview-banner";
 import { PublicImage } from "@/components/public/public-image";
 import { RichTextHtml } from "@/components/public/rich-text-html";
@@ -18,7 +19,7 @@ import { getServicePreview } from "@/lib/api/preview";
 import type { PublicServiceDetail } from "@/lib/api/types";
 import { pageMetadata } from "@/lib/page-metadata";
 import { followRedirect } from "@/lib/public-redirect";
-import { whatsappServiceUrl } from "@/lib/structured-data";
+import { whatsappServiceUrl } from "@/lib/whatsapp";
 
 // Pola sama dengan detail pelatihan: halaman statis dari cache; slug baru setelah build dirender
 // saat diminta; slug yang tidak ada mendapat HTTP 404 sungguhan.
@@ -81,6 +82,7 @@ export default async function ServicePage({ params }: PageProps<"/layanan/[slug]
     <>
       {preview ? <PreviewBanner path={`/layanan/${service.slug}`} /> : null}
       <ReadingProgress />
+      <ContactContext topic={{ kind: "service", title: service.title }} />
       <Container className="grid gap-10 pt-16 pb-12 md:pt-24 md:pb-16 lg:grid-cols-12 lg:gap-6">
         <div className="space-y-6 lg:col-span-7">
           <Eyebrow data-page-enter="">

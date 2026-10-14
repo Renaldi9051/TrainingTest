@@ -5,3 +5,81 @@
 @source not "./admin";
 @source not "../components/admin";
 @import "./theme.css";
+
+/* Floating contact (components/public/floating-contact.tsx). Pembuka panel dirender dua kali:
+   <button popovertarget> dan tautan ke /kontak. Browser yang mendukung popover memakai tombol;
+   selain itu (atau html[data-popover="off"] dari FloatingContactSync) memakai tautan. */
+@supports selector(:popover-open) {
+  :root:not([data-popover="off"]) .popover-fallback {
+    display: none !important;
+  }
+}
+@supports not selector(:popover-open) {
+  .popover-trigger {
+    display: none !important;
+  }
+}
+:root[data-popover="off"] .popover-trigger {
+  display: none !important;
+}
+
+/* Mobile: halaman dengan bar CTA bawah (detail pelatihan) tidak menampilkan tombol bulat; tombol
+   "Chat WA" di bar membuka panel yang sama. Sebelum hidrasi dari :has(); setelahnya dari
+   html[data-contact-bar] (lib/contact-context.ts), karena halaman sebelumnya tetap ada di DOM
+   tersembunyi setelah navigasi klien. */
+@media (width < 64rem) {
+  :root:not([data-contact-bar]) body:has([data-contact-bar]) .floating-contact,
+  :root[data-contact-bar="on"] .floating-contact {
+    display: none;
+  }
+}
+
+/* Panel: sheet dari bawah di mobile, popover di atas tombol bulat di desktop. Hanya transform &
+   opacity; tanpa @starting-style panel langsung tampil. Reduced motion: transisi global 0.01ms. */
+.contact-panel {
+  inset: auto 0 0 0;
+  opacity: 0;
+  transform: translateY(100%);
+  transition:
+    opacity 300ms var(--ease-standard),
+    transform 300ms var(--ease-standard),
+    overlay 300ms allow-discrete,
+    display 300ms allow-discrete;
+}
+.contact-panel:popover-open {
+  opacity: 1;
+  transform: none;
+}
+@starting-style {
+  .contact-panel:popover-open {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+.contact-panel::backdrop {
+  opacity: 0;
+  transition:
+    opacity 300ms var(--ease-standard),
+    overlay 300ms allow-discrete,
+    display 300ms allow-discrete;
+}
+.contact-panel:popover-open::backdrop {
+  opacity: 1;
+}
+@starting-style {
+  .contact-panel:popover-open::backdrop {
+    opacity: 0;
+  }
+}
+@media (width >= 48rem) {
+  .contact-panel {
+    /* 24 px tepi + 56 px tombol + 16 px jarak. */
+    inset: auto 24px 96px auto;
+    transform: translateY(8px);
+  }
+  @starting-style {
+    .contact-panel:popover-open {
+      transform: translateY(8px);
+    }
+  }
+}

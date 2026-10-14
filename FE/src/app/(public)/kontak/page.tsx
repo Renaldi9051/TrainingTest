@@ -92,7 +92,8 @@ export default async function ContactPage() {
           </dl>
 
           {marketing.length > 0 ? (
-            <section aria-labelledby="marketing-title" className="space-y-4">
+            // Tujuan cadangan floating contact (browser tanpa Popover API): /kontak#tim-marketing.
+            <section id="tim-marketing" aria-labelledby="marketing-title" className="scroll-mt-24 space-y-4">
               <Eyebrow id="marketing-title">Tim marketing</Eyebrow>
               <ul className="divide-y divide-border border-y border-border">
                 {marketing.map((person, index) => (

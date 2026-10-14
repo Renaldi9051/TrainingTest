@@ -104,14 +104,3 @@ export function courseJsonLd(training: PublicTrainingDetail, siteUrl: string, pr
       : {}),
   };
 }
-
-// Pesan otomatis tombol WhatsApp di detail pelatihan.
-export function whatsappTrainingUrl(number: string, title: string): string {
-  const message = `Halo, saya tertarik dengan pelatihan "${title}". Mohon info jadwal dan investasinya.`;
-  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
-}
-
-export function whatsappServiceUrl(number: string, title: string): string {
-  const message = `Halo, saya ingin konsultasi tentang layanan "${title}".`;
-  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
-}

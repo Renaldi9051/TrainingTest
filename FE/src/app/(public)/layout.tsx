@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageEnter } from "@/components/motion/page-enter";
 import { PointerEffects } from "@/components/motion/pointer-effects";
+import { FloatingContact } from "@/components/public/floating-contact";
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { getSettings } from "@/lib/api/public";
@@ -40,6 +41,8 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
         {children}
       </main>
       <SiteFooter />
+      {/* Tombol bulat + panel daftar marketing (hanya kalau ada kontak marketing). */}
+      <FloatingContact />
       {/* Efek kursor (magnetic, label & gambar ikut kursor): satu listener untuk semua halaman publik. */}
       <PointerEffects />
       {/* Header halaman stagger masuk setelah navigasi klien (bukan muat penuh atau Back/Forward). */}
