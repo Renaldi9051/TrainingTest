@@ -1,14 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
-import {
-  collectTextValues,
-  foldText,
-  likeContainsPattern,
-  matchSnippet,
-  normalizeSearchText,
-  toPrefixTsQuery,
-  TYPO_SIMILARITY_THRESHOLD,
-} from "@/lib/search";
+import { collectTextValues, foldText, likeContainsPattern, matchSnippet, TYPO_SIMILARITY_THRESHOLD } from "@/lib/search";
+import { anyColumnLike, startsFirst, trainingTextSearch } from "@/lib/search-sql";
 
 // Search global admin (Ctrl/Cmd+K, PRD 6.1): semua konten termasuk draf, media, dan nilai pengaturan.
 // Item di Sampah (deletedAt) tidak ikut. Maks PER_GROUP hasil per grup; grup kosong tidak dikirim.
@@ -58,41 +51,15 @@ const toItem = (row: Row): AdminSearchItem => ({
   status: row.status ?? null,
 });
 
-// Kolom (nama tetap dari kode, bukan input) yang dicocokkan "mengandung" tanpa aksen/huruf besar.
-function anyColumnLike(columns: string[], pattern: string): Prisma.Sql {
-  return Prisma.join(
-    columns.map(
-      (column) =>
-        Prisma.sql`public.immutable_unaccent(lower(coalesce(${Prisma.raw(column)}, ''))) LIKE ${pattern} ESCAPE '\\'`,
-    ),
-    " OR ",
-  );
-}
-
-// Judul yang diawali kata kunci tampil lebih dulu, lalu yang terakhir diubah.
-function startsFirst(column: string, query: string): Prisma.Sql {
-  const prefix = `${likeContainsPattern(query).slice(1)}`;
-  return Prisma.sql`(public.immutable_unaccent(lower(${Prisma.raw(column)})) LIKE ${prefix} ESCAPE '\\') DESC`;
-}
-
 async function searchTrainings(query: string): Promise<AdminSearchItem[]> {
-  const tsQuery = toPrefixTsQuery(query);
-  const normalized = normalizeSearchText(query);
-  const pattern = likeContainsPattern(query);
-  const matches: Prisma.Sql[] = [anyColumnLike(['t."slug"'], pattern)];
-  if (tsQuery) matches.push(Prisma.sql`t."searchVector" @@ to_tsquery('public.simple_unaccent', ${tsQuery})`);
-  if (normalized) matches.push(Prisma.sql`${normalized} <% t."searchTitle"`);
-  const rank = tsQuery
-    ? Prisma.sql`ts_rank(t."searchVector", to_tsquery('public.simple_unaccent', ${tsQuery})) * 2 + word_similarity(${normalized}, t."searchTitle")`
-    : Prisma.sql`word_similarity(${normalized}, t."searchTitle")`;
-
+  const { match, rank } = trainingTextSearch(query);
   const rows = await getDb().$transaction(async (tx) => {
     // Ambang typo hanya untuk transaksi ini (SET LOCAL), sama dengan katalog publik.
     await tx.$executeRaw`SELECT set_config('pg_trgm.word_similarity_threshold', ${String(TYPO_SIMILARITY_THRESHOLD)}, true)`;
     return tx.$queryRaw<Row[]>`
       SELECT t."id", t."title", t."slug" AS "meta", t."status"::text AS "status"
       FROM "Training" t
-      WHERE t."deletedAt" IS NULL AND (${Prisma.join(matches, " OR ")})
+      WHERE t."deletedAt" IS NULL AND ${match}
       ORDER BY (${rank}) DESC, t."updatedAt" DESC, t."id" ASC
       LIMIT ${PER_GROUP}
     `;
