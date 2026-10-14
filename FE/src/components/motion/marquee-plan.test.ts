@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { focusOffset, MARQUEE_MAX_SPEED, nextSpeed, wrapOffset } from "./marquee-plan";
+import { focusOffset, MARQUEE_AUTO_SPEED, MARQUEE_MAX_SPEED, nextSpeed, wrapOffset } from "./marquee-plan";
 
 describe("nextSpeed", () => {
   it("diam tanpa scroll", () => {
@@ -22,6 +22,31 @@ describe("nextSpeed", () => {
     }
     expect(speed).toBe(0);
     expect(frames).toBeLessThan(120);
+  });
+});
+
+describe("nextSpeed dengan laju dasar (logo klien berjalan sendiri)", () => {
+  it("tanpa scroll tetap berjalan di laju dasar, ke kiri", () => {
+    expect(nextSpeed(MARQUEE_AUTO_SPEED, 0, MARQUEE_AUTO_SPEED)).toBe(MARQUEE_AUTO_SPEED);
+    expect(MARQUEE_AUTO_SPEED).toBeGreaterThan(0);
+  });
+
+  it("dari diam naik ke laju dasar; setelah scroll cepat atau ke atas kembali ke laju dasar", () => {
+    for (const start of [0, MARQUEE_MAX_SPEED, -MARQUEE_MAX_SPEED]) {
+      let speed = start;
+      let frames = 0;
+      while (speed !== MARQUEE_AUTO_SPEED && frames < 500) {
+        speed = nextSpeed(speed, 0, MARQUEE_AUTO_SPEED);
+        frames++;
+      }
+      expect(speed, String(start)).toBe(MARQUEE_AUTO_SPEED);
+      expect(frames).toBeLessThan(120);
+    }
+  });
+
+  it("scroll tetap mendorong dan menentukan arah", () => {
+    expect(nextSpeed(MARQUEE_AUTO_SPEED, 400, MARQUEE_AUTO_SPEED)).toBeGreaterThan(MARQUEE_AUTO_SPEED);
+    expect(nextSpeed(MARQUEE_AUTO_SPEED, -400, MARQUEE_AUTO_SPEED)).toBeLessThan(0);
   });
 });
 

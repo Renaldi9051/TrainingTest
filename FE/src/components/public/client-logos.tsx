@@ -1,5 +1,6 @@
 import type { PublicClient } from "@/lib/api/types";
 import { Reveal } from "@/components/motion/reveal";
+import { MARQUEE_AUTO_SPEED } from "@/components/motion/marquee-plan";
 import { VelocityMarquee } from "@/components/motion/velocity-marquee";
 import { PublicImage } from "./public-image";
 
@@ -7,13 +8,13 @@ const LOGO_SIZES = "(min-width: 1024px) 200px, (min-width: 640px) 25vw, 50vw";
 
 
 // Logo klien grayscale + opacity 60%, hover/fokus 100% (DESIGN 2). Tanpa logo: nama klien sebagai
-// wordmark mono. Masuk: logo membesar dari 0,92 bertahap. Gerak: satu baris yang berjalan mengikuti
-// scroll (VelocityMarquee), dirender server sebagai satu baris (tanpa perubahan layout). Reduced
-// motion: grid statis lewat CSS. Fokus keyboard pada link logo menghentikan marquee dan menggeser
-// logo itu ke layar.
+// wordmark mono. Masuk: logo membesar dari 0,92 bertahap. Gerak: satu baris yang berjalan sendiri
+// pelan, dipercepat/dibalik oleh scroll (VelocityMarquee), dirender server sebagai satu baris (tanpa
+// perubahan layout). Kursor di atas logo atau fokus keyboard menghentikannya (fokus juga menggeser logo
+// itu ke layar). Reduced motion: grid statis lewat CSS.
 export function ClientLogos({ clients }: { clients: PublicClient[] }) {
   return (
-    <VelocityMarquee className="border-t border-l border-border" listClassName="motion-reduce:w-full">
+    <VelocityMarquee className="border-t border-l border-border" listClassName="motion-reduce:w-full" autoSpeed={MARQUEE_AUTO_SPEED}>
       <Reveal
         as="ul"
         data-reveal-children="pop"

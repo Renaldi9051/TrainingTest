@@ -154,23 +154,26 @@ test.describe("animasi 4.1e", () => {
     expect(await cls(page)).toBe(0);
   });
 
-  test("marquee logo: diam tanpa scroll, bergerak ikut scroll, berhenti lagi; fokus logo menghentikan dan menampilkannya", async ({ page }) => {
+  test("marquee logo: berjalan sendiri tanpa scroll, berhenti saat kursor di atasnya; fokus logo menghentikan dan menampilkannya", async ({ page }) => {
     await page.goto("/");
     const marquee = logoMarquee(page);
     // Salinan kedua: aria-hidden + inert, dirender server (tanpa perubahan layout setelah load).
     await expect(marquee.locator("[data-marquee-copy][aria-hidden][inert]")).toHaveCount(1);
     await marquee.scrollIntoViewIfNeeded();
+    // Kursor jauh dari marquee; tanpa scroll tetap bergerak.
+    await page.mouse.move(5, 5);
     await page.waitForTimeout(1_500);
-    const resting = await trackTransform(page);
-    await page.waitForTimeout(500);
-    expect(await trackTransform(page)).toBe(resting);
+    const first = await trackTransform(page);
+    await expect.poll(() => trackTransform(page), { timeout: 3_000 }).not.toBe(first);
 
-    await wheel(page, 600);
-    await expect.poll(() => trackTransform(page)).not.toBe(resting);
-    await page.waitForTimeout(2_000);
-    const stopped = await trackTransform(page);
-    await page.waitForTimeout(500);
-    expect(await trackTransform(page)).toBe(stopped);
+    // Kursor di atas marquee: berhenti; kursor keluar: jalan lagi.
+    await marquee.hover();
+    await page.waitForTimeout(300);
+    const held = await trackTransform(page);
+    await page.waitForTimeout(800);
+    expect(await trackTransform(page)).toBe(held);
+    await page.mouse.move(5, 5);
+    await expect.poll(() => trackTransform(page), { timeout: 3_000 }).not.toBe(held);
 
     // Fokus logo terakhir (biasanya di luar layar): terlihat utuh di dalam marquee.
     const last = page.getByRole("link", { name: new RegExp(`Klien Delapan ${id}`) });
@@ -207,7 +210,7 @@ test.describe("animasi 4.1e", () => {
     await context.close();
   });
 
-  test("teks berjalan: teks sekali untuk pembaca layar, pola salinan kedua dibalik, bergerak ikut scroll", async ({ page }) => {
+  test("teks berjalan: teks sekali untuk pembaca layar, pola salinan kedua dibalik, diam tanpa scroll, bergerak ikut scroll", async ({ page }) => {
     await page.goto("/");
     const section = page.getByRole("region", { name: `[UJI] Bidang ${id}` });
     await expect(section.getByRole("listitem")).toHaveText(["BNSP·", "In House·", "Public Training·"]);
@@ -216,8 +219,11 @@ test.describe("animasi 4.1e", () => {
     expect(await styles("[data-marquee-copy] li")).toEqual(["outline", "solid", "outline"]);
     const track = section.locator("[data-marquee] > div");
     await section.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(2_000);
     const before = await track.evaluate((element) => (element as HTMLElement).style.transform);
+    // Berbeda dengan logo klien: section teks besar tidak berjalan sendiri.
+    await page.waitForTimeout(800);
+    expect(await track.evaluate((element) => (element as HTMLElement).style.transform)).toBe(before);
     await wheel(page, 500);
     await expect.poll(() => track.evaluate((element) => (element as HTMLElement).style.transform)).not.toBe(before);
   });
