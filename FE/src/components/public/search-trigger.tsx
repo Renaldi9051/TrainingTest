@@ -1,16 +1,17 @@
 "use client";
 
 import { SearchIcon } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore, type MouseEvent } from "react";
+import { lazy, Suspense, useEffect, useState, useSyncExternalStore, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { isPaletteShortcut } from "@/lib/command-palette";
 import { OPEN_PUBLIC_SEARCH_EVENT } from "@/lib/public-search-event";
 
 // Kode palette tidak masuk JS awal halaman: dimuat saat pertama dibuka (di-prefetch saat hover/fokus).
 const loadPalette = () => import("./public-search-palette");
-const PublicSearchPalette = dynamic(loadPalette, { ssr: false });
+// React.lazy (sudah ada di runtime React), bukan next/dynamic: lebih kecil di JS awal. Hanya dirender
+// di klien setelah dibuka, jadi tidak perlu ssr: false.
+const PublicSearchPalette = lazy(loadPalette);
 
 const subscribeNoop = () => () => {};
 const isApplePlatform = () => /Mac|iPhone|iPad/.test(navigator.platform);
@@ -73,7 +74,14 @@ export function SearchTrigger({ className }: { className?: string }) {
       </Link>
       {/* Portal ke body: tombol ini ada di kontainer header desktop yang disembunyikan di layar kecil,
           sedangkan dialog di dalam leluhur display:none tidak tampil (dibuka dari menu mobile). */}
-      {loaded ? createPortal(<PublicSearchPalette open={open} onOpenChange={setOpen} />, document.body) : null}
+      {loaded
+        ? createPortal(
+            <Suspense fallback={null}>
+              <PublicSearchPalette open={open} onOpenChange={setOpen} />
+            </Suspense>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
