@@ -15,6 +15,18 @@
   --fg-strong-hover: #262626;
   --inverse-bg: #0a0a0a;
   --inverse-fg: #fafafa;
+  /* v0.2 (DESIGN.md 2 & 6): garis grid latar, garis/grid di section terbalik, overlay foto hero. */
+  --grid-line: #f0f0f0;
+  --inverse-line: #262626;
+  --overlay: rgb(10 10 10 / 0.45);
+
+  /* Skala tipografi responsif (DESIGN.md 3): mobile di sini, desktop (md, 768 px) di bawah. Dipakai
+     utilitas text-mega/display/h1/h2/h3 lewat @theme inline, jadi satu kelas tanpa md:. */
+  --type-mega: 96px;
+  --type-display: 48px;
+  --type-h1: 36px;
+  --type-h2: 28px;
+  --type-h3: 20px;
 
   /* Warna status: HANYA untuk admin (DESIGN.md 2), kecil (teks/ikon/titik), bukan latar besar. */
   --status-error: #b91c1c;
@@ -52,6 +64,16 @@
   --sidebar-ring: var(--fg-strong);
 }
 
+@media (width >= 48rem) {
+  :root {
+    --type-mega: 200px;
+    --type-display: 88px;
+    --type-h1: 56px;
+    --type-h2: 40px;
+    --type-h3: 24px;
+  }
+}
+
 @theme inline {
   /* Matikan palet bawaan Tailwind supaya hanya token di bawah yang bisa dipakai. */
   --color-*: initial;
@@ -68,6 +90,9 @@
   --color-fg-strong-hover: var(--fg-strong-hover);
   --color-inverse-bg: var(--inverse-bg);
   --color-inverse-fg: var(--inverse-fg);
+  --color-grid-line: var(--grid-line);
+  --color-inverse-line: var(--inverse-line);
+  --color-overlay: var(--overlay);
   --color-white: var(--bg);
   --color-black: var(--fg-strong);
   --color-transparent: transparent;
@@ -128,8 +153,42 @@
   --text-body--line-height: 1.6;
   --text-body-lg: 18px;
   --text-body-lg--line-height: 1.6;
+  /* Judul (DESIGN.md 3): ukuran ikut breakpoint lewat --type-*; weight bawaan bisa ditimpa font-*. */
+  --text-mega: var(--type-mega);
+  --text-mega--line-height: 0.85;
+  --text-mega--letter-spacing: -0.04em;
+  --text-mega--font-weight: 700;
+  --text-display: var(--type-display);
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.04em;
+  --text-display--font-weight: 600;
+  --text-h1: var(--type-h1);
+  --text-h1--line-height: 1.05;
+  --text-h1--letter-spacing: -0.035em;
+  --text-h1--font-weight: 600;
+  --text-h2: var(--type-h2);
+  --text-h2--line-height: 1.1;
+  --text-h2--letter-spacing: -0.03em;
+  --text-h2--font-weight: 600;
+  --text-h3: var(--type-h3);
+  --text-h3--line-height: 1.25;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 500;
 
   --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Badge berputar (DESIGN.md 6.1 & 9.2): cincin 360 derajat per 20 s. Lapisan dalam berputar balik
+   40 s yang hanya berjalan saat hover, jadi putaran melambat jadi setengah tanpa melompat. */
+@theme {
+  --animate-badge-spin: badge-spin 20s linear infinite;
+  --animate-badge-counter: badge-spin 40s linear infinite reverse;
+
+  @keyframes badge-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 }
 
 @layer base {
