@@ -6,6 +6,7 @@ import { categories as demoCategories, trainings as demoTrainings } from "./seed
 import {
   referenceCategories,
   referenceMenuCategories,
+  hasReferenceTitle,
   referencePosts,
   referenceTraining,
 } from "./seed-data/reference-training";
@@ -50,7 +51,9 @@ export async function seedReferenceCatalog({ hideDemo = false }: { hideDemo?: bo
     })).map((item) => item.slug),
   );
   let trainingsCreated = 0;
-  for (const batch of batches(referencePosts.filter((post) => !existingTrainings.has(post.slug)))) {
+  // Post tanpa judul dilewati (validator admin juga menolak judul kosong).
+  const importable = referencePosts.filter((post) => !existingTrainings.has(post.slug) && hasReferenceTitle(post));
+  for (const batch of batches(importable)) {
     const data = batch.map((post) => {
       const item = referenceTraining(post);
       return {
