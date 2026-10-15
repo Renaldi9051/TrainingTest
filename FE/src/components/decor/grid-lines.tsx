@@ -5,7 +5,7 @@ const MOBILE_COLUMNS = 4;
 
 // Garis kolom grid tipis di latar halaman (DESIGN.md 6.1): 12 kolom desktop, 4 kolom mobile, lebar
 // dan padding sama dengan Container supaya konten menempel ke garis. Pasang di dalam elemen
-// `relative`; konten di atasnya perlu `relative` (z-index di atas garis).
+// `relative isolate` dengan className "-z-10": garis di belakang semua isi (layout publik).
 export function GridLines({
   decor = true,
   tone = "light",

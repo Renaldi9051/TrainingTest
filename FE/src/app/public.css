@@ -6,6 +6,73 @@
 @source not "../components/admin";
 @import "./theme.css";
 
+/* Header publik (components/public/site-header.tsx). Garis tombol "Cari" & hover ikut mode header. */
+.site-header {
+  --header-line: var(--border-strong);
+  --header-hover: var(--bg-subtle);
+}
+
+/* Di atas foto hero beranda (elemen [data-header-over], lib/hero-marker.ts; DESIGN.md 8.1): header
+   transparan berteks terang dan ikut tergulir bersama hero (bukan sticky), seperti mockup. Murni CSS,
+   jadi benar sejak render pertama dan tetap terbaca tanpa JS. */
+:root:has([data-header-over]) .site-header {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  background: transparent;
+  color: var(--inverse-fg);
+  border-color: color-mix(in srgb, var(--inverse-fg) 16%, transparent);
+  --header-line: color-mix(in srgb, var(--inverse-fg) 40%, transparent);
+  --header-hover: color-mix(in srgb, var(--inverse-fg) 12%, transparent);
+}
+:root:has([data-header-over]) .site-header .site-brand-light {
+  display: none;
+}
+:root:has([data-header-over]) .site-header .site-brand-dark {
+  display: flex;
+}
+:root:has([data-header-over]) .site-header .site-header-cta {
+  background: var(--inverse-fg);
+  color: var(--fg-strong);
+}
+:root:has([data-header-over]) .site-header .site-header-cta:hover {
+  background: var(--bg-muted);
+}
+
+/* Floating contact di halaman ber-hero: baru muncul setelah hero lewat (DESIGN.md 8.11, HeroWatch
+   menandai html[data-past-hero]), supaya tidak bertabrakan dengan badge berputar di hero. */
+.floating-contact {
+  transition:
+    opacity 300ms var(--ease-standard),
+    translate 300ms var(--ease-standard),
+    scale 300ms var(--ease-standard),
+    visibility 300ms allow-discrete;
+}
+:root:has([data-header-over]):not([data-past-hero]) .floating-contact {
+  opacity: 0;
+  translate: 0 16px;
+  scale: 0.9;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Overlay indeks A-Z (components/public/index-overlay.tsx): muncul/hilang 300 ms, hanya opacity. */
+.index-overlay {
+  opacity: 0;
+  transition:
+    opacity 300ms var(--ease-standard),
+    overlay 300ms allow-discrete,
+    display 300ms allow-discrete;
+}
+.index-overlay[open] {
+  opacity: 1;
+}
+@starting-style {
+  .index-overlay[open] {
+    opacity: 0;
+  }
+}
+
 /* Floating contact (components/public/floating-contact.tsx). Pembuka panel dirender dua kali:
    <button popovertarget> dan tautan ke /kontak. Browser yang mendukung popover memakai tombol;
    selain itu (atau html[data-popover="off"] dari FloatingContactSync) memakai tautan. */

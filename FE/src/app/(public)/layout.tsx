@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { GridLines } from "@/components/decor/grid-lines";
 import { PageEnter } from "@/components/motion/page-enter";
 import { PointerEffects } from "@/components/motion/pointer-effects";
 import { FloatingContact } from "@/components/public/floating-contact";
+import { HeroWatch } from "@/components/public/hero-watch";
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { getSettings } from "@/lib/api/public";
@@ -37,7 +39,10 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
         Lewati ke konten
       </a>
       <SiteHeader />
-      <main id="konten" className="flex-1">
+      {/* isolate: garis grid (z negatif) di belakang semua isi main, tapi di atas latar halaman;
+          section berlatar menutupinya seperti di mockup. */}
+      <main id="konten" className="relative isolate flex-1">
+        <GridLines className="-z-10" />
         {children}
       </main>
       <SiteFooter />
@@ -47,6 +52,8 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
       <PointerEffects />
       {/* Header halaman stagger masuk setelah navigasi klien (bukan muat penuh atau Back/Forward). */}
       <PageEnter />
+      {/* Floating contact di beranda baru muncul setelah hero lewat. */}
+      <HeroWatch />
     </>
   );
 }
