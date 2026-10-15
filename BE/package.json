@@ -23,6 +23,8 @@
     "db:reference:fetch": "node scripts/fetch-reference-catalog.mjs",
     "db:remove:evaluation": "dotenv -e ../.env -- tsx scripts/remove-evaluation.ts",
     "db:e2e:reset": "tsx scripts/e2e-db-reset.ts",
+    "db:e2e:blank-title": "tsx scripts/e2e-blank-title.ts",
+    "demo": "tsx scripts/demo.ts",
     "e2e:cleanup": "tsx scripts/e2e-uploads-cleanup.ts",
     "db:sync-content": "dotenv -e ../.env -- tsx scripts/sync-content-dev.ts",
     "db:seed:bulk": "dotenv -e ../.env -- prisma db seed -- --bulk",

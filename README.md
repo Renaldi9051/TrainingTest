@@ -75,6 +75,29 @@ curl http://localhost:3000/api/health
 # {"error":{"code":"DB_UNAVAILABLE",...}}  (HTTP 503 kalau database mati)
 ```
 
+### Menjalankan branch redesign untuk demo
+
+Untuk mendemokan branch `redesign-v02` tanpa menyentuh container Docker (`be`/`fe` di port
+3000/4000 tetap jalan dengan kode lamanya). Satu perintah menyalakan BE di port 4100 lalu FE di
+port 3100, memakai database dev (`DATABASE_URL` di `.env`). Alamat yang berbeda diberikan lewat env
+override di proses itu saja, jadi `.env` tidak diubah.
+
+```bash
+git switch redesign-v02
+cd BE
+npm install && (cd ../FE && npm install)
+npm run db:up            # kalau Postgres belum jalan
+npm run db:migrate       # sekali, kalau branch membawa migrasi baru (demo menolak jalan kalau belum)
+npm run demo             # http://localhost:3100 (admin: /admin/login), Ctrl+C untuk berhenti
+```
+
+- Port 3100/4100 sama dengan e2e: jangan jalankan bersamaan dengan `npm run test:e2e`. Demo menolak
+  jalan kalau port itu sedang dipakai.
+- Demo menolak database yang namanya mengandung `prod` atau `training_e2e`, dan tidak menjalankan
+  migrasi sendiri.
+- Data yang diubah lewat admin demo tersimpan di database dev yang sama dengan Docker.
+- Kalau terminal ditutup paksa (bukan Ctrl+C), cek tidak ada proses tertinggal di port 3100/4100.
+
 ## Panel admin
 
 Buka http://localhost:3000/admin/login dan masuk dengan `ADMIN_EMAIL` / `ADMIN_PASSWORD` dari `.env`. Seed hanya membuat admin kalau email tersebut belum ada; password admin yang sudah ada tidak ditimpa.
