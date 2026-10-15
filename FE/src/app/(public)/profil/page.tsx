@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
 import { PageBlocks } from "@/components/public/page-blocks";
-import { PageIntro } from "@/components/public/page-intro";
+import { PageHero } from "@/components/public/page-hero";
 import { PreviewBanner } from "@/components/public/preview-banner";
 import { getPage } from "@/lib/api/public";
 import { getPagePreview } from "@/lib/api/preview";
@@ -34,7 +34,7 @@ export default async function ProfilePage() {
   return (
     <>
       {preview ? <PreviewBanner path="/profil" /> : null}
-      <PageIntro title={page.title} />
+      <PageHero crumbs={[{ label: page.title }]} title={page.title} outline="Profil" />
       <PageBlocks blocks={page.blocks} />
     </>
   );

@@ -1,7 +1,7 @@
 import { MailIcon, MapPinIcon, MessageCircleIcon, PhoneIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { ContactInquiry } from "@/components/public/contact-inquiry";
-import { PageIntro } from "@/components/public/page-intro";
+import { PageHero } from "@/components/public/page-hero";
 import { PublicImage } from "@/components/public/public-image";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -24,8 +24,8 @@ export default async function ContactPage() {
 
   return (
     <>
-      <PageIntro eyebrow="Kontak" title="Hubungi kami" lead={identity.tagline || null} />
-      <Container className="grid gap-16 pb-20 md:pb-32 lg:grid-cols-12 lg:gap-12">
+      <PageHero crumbs={[{ label: "Kontak" }]} title="Hubungi kami" lead={identity.tagline || null} outline="Kontak" />
+      <Container className="grid gap-16 pt-12 pb-20 md:pt-16 md:pb-32 lg:grid-cols-12 lg:gap-12">
         <section aria-labelledby="form-title" className="space-y-6 lg:col-span-7">
           <h2 id="form-title" className="text-[28px] leading-[1.1] font-semibold tracking-[-0.03em] text-fg-strong md:text-[40px]">
             Kirim pesan

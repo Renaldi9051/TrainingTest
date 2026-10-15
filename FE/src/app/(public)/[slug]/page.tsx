@@ -3,7 +3,7 @@ import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
 import { ReadingProgress } from "@/components/motion/reading-progress";
 import { PageBlocks } from "@/components/public/page-blocks";
-import { PageIntro } from "@/components/public/page-intro";
+import { PageHero } from "@/components/public/page-hero";
 import { PreviewBanner } from "@/components/public/preview-banner";
 import { getPage, getPageRefs, getRedirect, Tag } from "@/lib/api/public";
 import { getPagePreview } from "@/lib/api/preview";
@@ -62,7 +62,7 @@ export default async function StaticPage({ params }: PageProps<"/[slug]">) {
     <>
       {preview ? <PreviewBanner path={`/${page.slug}`} /> : null}
       <ReadingProgress />
-      <PageIntro title={page.title} />
+      <PageHero crumbs={[{ label: page.title }]} title={page.title} />
       <PageBlocks blocks={page.blocks} />
     </>
   );

@@ -61,8 +61,15 @@ export function PageHero({
   children?: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-border pt-12 pb-12 md:pt-[72px] md:pb-16">
-      <OutlineText decor={decor} className="right-[-24px] bottom-[-0.12em] md:right-[-40px]">
+    // Mobile dengan outline: ruang bawah lebih tinggi supaya outline (96 px) tidak menimpa teks
+    // (DESIGN.md 6.2: tidak di belakang paragraf).
+    <section
+      className={cn(
+        "relative overflow-hidden border-b border-border pt-12 md:pt-18 md:pb-16",
+        outline?.trim() && decor ? "pb-24" : "pb-12",
+      )}
+    >
+      <OutlineText decor={decor} className="-right-6 bottom-[-0.12em] md:-right-10">
         {outline}
       </OutlineText>
       <Container className="relative">

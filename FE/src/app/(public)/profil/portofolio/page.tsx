@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Reveal } from "@/components/motion/reveal";
 import { RevealImage } from "@/components/motion/reveal-parts";
-import { PageIntro } from "@/components/public/page-intro";
+import { PageHero } from "@/components/public/page-hero";
 import { PublicImage } from "@/components/public/public-image";
 import { Container } from "@/components/ui/container";
 import { getPortfolio } from "@/lib/api/public";
@@ -19,8 +19,8 @@ export default async function PortfolioPage() {
   const items = await getPortfolio();
   return (
     <>
-      <PageIntro title="Portofolio" />
-      <Container className="pb-20 md:pb-32">
+      <PageHero crumbs={[{ label: "Profil", href: "/profil" }, { label: "Portofolio" }]} title="Portofolio" outline="Portofolio" />
+      <Container className="pt-12 pb-20 md:pt-16 md:pb-32">
         {items.length === 0 ? (
           <p className="border-t border-border pt-8 text-body text-fg-muted">Dokumentasi kegiatan sedang disiapkan.</p>
         ) : (
