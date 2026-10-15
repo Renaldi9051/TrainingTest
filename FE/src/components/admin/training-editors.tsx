@@ -204,14 +204,20 @@ export function AudienceEditor({ value, onChange, errors }: ListProps<AudienceIt
   );
 }
 
-export function FaqEditor({ value, onChange, errors, emptyText }: ListProps<FaqItem> & { emptyText?: string }) {
+export function FaqEditor({
+  value,
+  onChange,
+  errors,
+  emptyText,
+  max = FAQ_MAX,
+}: ListProps<FaqItem> & { emptyText?: string; max?: number }) {
   const baseId = useId();
   return (
     <ListEditor
       value={value}
       onChange={onChange}
       createItem={() => ({ q: "", a: "" })}
-      max={FAQ_MAX}
+      max={max}
       addLabel="Tambah pertanyaan"
       emptyText={emptyText ?? "Belum ada FAQ."}
       itemLabel={(item, index) => `FAQ ${index + 1}${item.q ? `: ${item.q}` : ""}`}

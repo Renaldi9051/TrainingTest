@@ -112,6 +112,7 @@ export function MarketingManager() {
 
 const schema = z.object({
   name: z.string().trim().min(1, { error: "Nama wajib diisi." }).max(120, { error: "Nama maksimal 120 karakter." }),
+  area: z.string().trim().max(60, { error: "Area maksimal 60 karakter." }),
   phone: z
     .string()
     .trim()
@@ -133,6 +134,7 @@ function MarketingDialog({ contact, onClose }: { contact: MarketingContact | nul
     resolver: zodResolver(schema),
     defaultValues: {
       name: contact?.name ?? "",
+      area: contact?.area ?? "",
       phone: contact ? formatPhone(contact.phone) : "",
       defaultMessage: contact?.defaultMessage ?? "",
       active: contact?.active ?? true,
@@ -143,7 +145,7 @@ function MarketingDialog({ contact, onClose }: { contact: MarketingContact | nul
 
   const save = useMutation({
     mutationFn: async (values: FormValues) => {
-      const body = { ...values, defaultMessage: values.defaultMessage || null };
+      const body = { ...values, area: values.area || null, defaultMessage: values.defaultMessage || null };
       return contact
         ? apiSend<MarketingContact>(`/admin/marketing/${contact.id}`, "PATCH", body)
         : apiSend<MarketingContact>("/admin/marketing", "POST", body);
@@ -170,6 +172,14 @@ function MarketingDialog({ contact, onClose }: { contact: MarketingContact | nul
       <form id={formId} noValidate className="space-y-4" onSubmit={form.handleSubmit((values) => save.mutate(values))}>
         <FormField id={id("name")} label="Nama" required error={errors.name?.message}>
           <Input {...form.register("name")} autoFocus />
+        </FormField>
+        <FormField
+          id={id("area")}
+          label="Area"
+          description="Wilayah atau segmen yang ditangani, mis. Instansi pemerintah. Opsional."
+          error={errors.area?.message}
+        >
+          <Input {...form.register("area")} />
         </FormField>
         <FormField
           id={id("phone")}

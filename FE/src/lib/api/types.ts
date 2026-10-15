@@ -222,6 +222,11 @@ export type SlugCheckResult = {
 
 export type SocialPlatform = "instagram" | "facebook" | "linkedin" | "youtube" | "tiktok" | "x" | "other";
 
+// Kepala halaman daftar (BE/src/lib/validators/settings.ts). Kosong per field = label lama.
+export type PageHeaderPage = "pelatihan" | "layanan" | "portofolio" | "jadwal" | "kontak";
+export type PageHeader = { eyebrow: string; heading: string; lead: string };
+export type ServicesProcess = { eyebrow: string; heading: string; steps: { title: string; description: string }[] };
+
 export type SettingValues = {
   "site.identity": {
     name: string;
@@ -253,6 +258,8 @@ export type SettingValues = {
     description: string;
     ogImageId: string | null;
   };
+  "page.headers": Record<PageHeaderPage, PageHeader>;
+  "services.process": ServicesProcess;
 };
 
 export type SettingKey = keyof SettingValues;
@@ -271,6 +278,8 @@ export type PublicSettings = {
   contact: SettingValues["site.contact"] & { whatsappUrl: string | null };
   social: SettingValues["site.social"];
   footer: SettingValues["site.footer"];
+  pageHeaders: SettingValues["page.headers"];
+  servicesProcess: ServicesProcess;
   seo: {
     titleTemplate: string;
     defaultTitle: string;
@@ -548,6 +557,7 @@ export type ServiceListItem = {
   id: string;
   slug: string;
   title: string;
+  tagline: string | null;
   icon: string | null;
   summary: string | null;
   image: Media | null;
@@ -556,9 +566,17 @@ export type ServiceListItem = {
   updatedAt: string;
 };
 
+export type ServiceBenefit = { icon: string | null; title: string; description: string };
+export type ServiceFaq = { q: string; a: string };
+// Pelatihan terkait (manual, urutan dijaga). null = section disembunyikan.
+export type ServiceTrainingSelection = { mode: "manual"; ids: string[] } | null;
+
 export type Service = ServiceListItem & {
   body: RichTextDoc | null;
   imageId: string | null;
+  benefits: ServiceBenefit[];
+  faqs: ServiceFaq[];
+  trainingSelection: ServiceTrainingSelection;
   seo: TrainingSeo;
   ogImage: Media | null;
   createdAt: string;
@@ -567,6 +585,7 @@ export type Service = ServiceListItem & {
 export type PublicServiceCard = {
   slug: string;
   title: string;
+  tagline: string | null;
   icon: string | null;
   summary: string | null;
   image: PublicImage | null;
@@ -574,6 +593,9 @@ export type PublicServiceCard = {
 
 export type PublicServiceDetail = PublicServiceCard & {
   bodyHtml: string | null;
+  benefits: ServiceBenefit[];
+  faqs: ServiceFaq[];
+  trainings: PublicTrainingCard[];
   seo: { title: string; description: string; ogImage: PublicImage | null };
   updatedAt: string;
 };
@@ -614,9 +636,13 @@ export type PublicTestimonial = {
   photo: PublicImage | null;
 };
 
+// Jenis kegiatan portofolio (chip filter ?jenis=). null = belum diisi.
+export type PortfolioActivityType = "FIELD" | "CLASSROOM" | "CERTIFICATION" | "OUTBOUND";
+
 export type PortfolioItem = {
   id: string;
   title: string;
+  activityType: PortfolioActivityType | null;
   // "YYYY-MM-DD"
   date: string | null;
   client: string | null;
@@ -630,6 +656,7 @@ export type PortfolioItem = {
 
 export type PublicPortfolioItem = {
   title: string;
+  activityType: PortfolioActivityType | null;
   date: string | null;
   client: string | null;
   description: string | null;
@@ -639,6 +666,7 @@ export type PublicPortfolioItem = {
 export type MarketingContact = {
   id: string;
   name: string;
+  area: string | null;
   // Format wa.me (62...).
   phone: string;
   defaultMessage: string | null;
@@ -652,6 +680,7 @@ export type MarketingContact = {
 
 export type PublicMarketingContact = {
   name: string;
+  area: string | null;
   phone: string;
   whatsappUrl: string | null;
   defaultMessage: string | null;

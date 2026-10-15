@@ -11,6 +11,10 @@ import { z } from "zod";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { FormField } from "@/components/admin/form-field";
 import { IconPicker } from "@/components/admin/icon-picker";
+import { ListEditor } from "@/components/admin/list-editor";
+import { OptionMultiPicker } from "@/components/admin/option-multi-picker";
+import { IconSelect } from "@/components/admin/page-blocks/block-fields";
+import { FaqEditor } from "@/components/admin/training-editors";
 import { MediaPicker } from "@/components/admin/media/media-picker";
 import { PreviewButton } from "@/components/admin/preview-button";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
@@ -25,7 +29,7 @@ import { Textarea } from "@/components/admin/ui/textarea";
 import { useDeleteWithUndo } from "@/hooks/use-delete-with-undo";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { useScopedId } from "@/hooks/use-scoped-id";
-import { resourceKeys } from "@/lib/admin-resources";
+import { resourceKeys, resourceOptionSource } from "@/lib/admin-resources";
 import { apiSend, errorMessage } from "@/lib/api/client";
 import type { RichTextDoc, Service } from "@/lib/api/types";
 import { applyFieldErrors } from "@/lib/form-errors";
@@ -37,14 +41,42 @@ export function servicePreviewHref(id: string) {
 }
 
 const SUMMARY_MAX = 300;
+// Sama dengan BE/src/lib/validators/service.ts.
+const TAGLINE_MAX = 120;
+const BENEFITS_MAX = 8;
+const FAQS_MAX = 12;
+const TRAININGS_MAX = 12;
+const trainingOptions = resourceOptionSource("trainings");
+
+const requiredItem = (label: string, max: number) =>
+  z
+    .string()
+    .trim()
+    .min(1, { error: `${label} wajib diisi.` })
+    .max(max, { error: `${label} maksimal ${max} karakter.` });
 
 const richText = z.custom<RichTextDoc | null>((value) => value === null || typeof value === "object");
 
 const schema = z.object({
   title: z.string().trim().min(1, { error: "Judul wajib diisi." }).max(200, { error: "Judul maksimal 200 karakter." }),
   slug: z.string().trim().max(120, { error: "Slug maksimal 120 karakter." }),
+  tagline: z.string().trim().max(TAGLINE_MAX, { error: `Tagline maksimal ${TAGLINE_MAX} karakter.` }),
   summary: z.string().trim().max(SUMMARY_MAX, { error: `Ringkasan maksimal ${SUMMARY_MAX} karakter.` }),
   body: richText,
+  benefits: z
+    .array(
+      z.object({
+        icon: z.string().nullable(),
+        title: requiredItem("Judul benefit", 80),
+        description: z.string().trim().max(300, { error: "Deskripsi benefit maksimal 300 karakter." }),
+      }),
+    )
+    .max(BENEFITS_MAX, { error: `Benefit maksimal ${BENEFITS_MAX} item.` }),
+  faqs: z
+    .array(z.object({ q: requiredItem("Pertanyaan", 200), a: requiredItem("Jawaban", 1000) }))
+    .max(FAQS_MAX, { error: `FAQ maksimal ${FAQS_MAX} item.` }),
+  // Disimpan sebagai trainingSelection { mode: "manual", ids }; kosong = section disembunyikan.
+  trainingIds: z.array(z.string()).max(TRAININGS_MAX, { error: `Pelatihan terkait maksimal ${TRAININGS_MAX}.` }),
   icon: z.string().nullable(),
   imageId: z.string().nullable(),
   status: z.enum(["DRAFT", "PUBLISHED"]),
@@ -64,8 +96,12 @@ function toFormValues(service: Service | null): FormValues {
   return {
     title: service?.title ?? "",
     slug: service?.slug ?? "",
+    tagline: service?.tagline ?? "",
     summary: service?.summary ?? "",
     body: service?.body ?? null,
+    benefits: service?.benefits ?? [],
+    faqs: service?.faqs ?? [],
+    trainingIds: service?.trainingSelection?.ids ?? [],
     icon: service?.icon ?? null,
     imageId: service?.imageId ?? null,
     status: service?.status ?? "DRAFT",
@@ -91,10 +127,13 @@ export function ServiceForm({ service }: { service: Service | null }) {
   const save = useMutation({
     mutationFn: async (values: FormValues) => {
       // Slug otomatis (belum diedit manual) tidak dikirim: BE membuat slug unik sendiri.
+      const { trainingIds, ...rest } = values;
       const body = {
-        ...values,
+        ...rest,
         slug: autoSlug && !service ? undefined : values.slug || undefined,
+        tagline: values.tagline || null,
         summary: values.summary || null,
+        trainingSelection: trainingIds.length > 0 ? { mode: "manual" as const, ids: trainingIds } : null,
       };
       return service
         ? (await apiSend<Service>(`/admin/services/${service.id}`, "PATCH", body)).data
@@ -160,6 +199,14 @@ export function ServiceForm({ service }: { service: Service | null }) {
             )}
           />
           <FormField
+            id={id("tagline")}
+            label="Tagline"
+            description="Label pendek di bawah judul, mis. Kelas khusus instansi. Kosong = tidak tampil."
+            error={errors.tagline?.message}
+          >
+            <Input {...form.register("tagline")} />
+          </FormField>
+          <FormField
             id={id("summary")}
             label="Ringkasan"
             description={`Tampil di daftar layanan dan beranda. ${summary.length}/${SUMMARY_MAX} karakter.`}
@@ -176,6 +223,73 @@ export function ServiceForm({ service }: { service: Service | null }) {
               </FormField>
             )}
           />
+
+          <ContentSection title="Benefit" description="Tampil sebagai grid di halaman detail. Kosong = bagian disembunyikan.">
+            {errors.benefits?.root?.message ? <p className="text-small text-status-error">{errors.benefits.root.message}</p> : null}
+            <Controller
+              control={form.control}
+              name="benefits"
+              render={({ field }) => (
+                <ListEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  createItem={() => ({ icon: null, title: "", description: "" })}
+                  max={BENEFITS_MAX}
+                  addLabel="Tambah benefit"
+                  emptyText="Belum ada benefit."
+                  itemLabel={(item, index) => `Benefit ${index + 1}${item.title ? `: ${item.title}` : ""}`}
+                  renderItem={({ item, index, update }) => (
+                    <div className="grid flex-1 gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+                      <FormField
+                        id={id(`benefit-${index}-title`)}
+                        label={`Judul benefit ${index + 1}`}
+                        required
+                        error={errors.benefits?.[index]?.title?.message}
+                      >
+                        <Input value={item.title} onChange={(event) => update({ ...item, title: event.target.value })} />
+                      </FormField>
+                      <IconSelect id={id(`benefit-${index}-icon`)} value={item.icon} onChange={(icon) => update({ ...item, icon })} />
+                      <FormField
+                        id={id(`benefit-${index}-description`)}
+                        label={`Deskripsi benefit ${index + 1}`}
+                        className="sm:col-span-2"
+                        error={errors.benefits?.[index]?.description?.message}
+                      >
+                        <Textarea rows={2} value={item.description} onChange={(event) => update({ ...item, description: event.target.value })} />
+                      </FormField>
+                    </div>
+                  )}
+                />
+              )}
+            />
+          </ContentSection>
+
+          <ContentSection title="Pelatihan terkait" description="Pilih manual, urutan sesuai pilihan. Kosong = bagian disembunyikan.">
+            <Controller
+              control={form.control}
+              name="trainingIds"
+              render={({ field }) => (
+                <OptionMultiPicker
+                  source={trainingOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                  max={TRAININGS_MAX}
+                  noun="pelatihan"
+                  error={errors.trainingIds?.message}
+                />
+              )}
+            />
+          </ContentSection>
+
+          <ContentSection title="FAQ" description="Pertanyaan umum untuk layanan ini. Kosong = bagian disembunyikan.">
+            <Controller
+              control={form.control}
+              name="faqs"
+              render={({ field }) => (
+                <FaqEditor value={field.value} onChange={field.onChange} errors={errors.faqs} max={FAQS_MAX} />
+              )}
+            />
+          </ContentSection>
         </div>
 
         <aside className="space-y-8 lg:border-l lg:border-border lg:pl-8">
@@ -276,6 +390,18 @@ export function ServiceForm({ service }: { service: Service | null }) {
         }
       />
     </>
+  );
+}
+
+function ContentSection({ title, description, children }: { title: string; description: string; children: ReactNode }) {
+  return (
+    <section className="space-y-3 border-t border-border pt-6">
+      <div>
+        <h2 className="text-sm font-medium">{title}</h2>
+        <p className="mt-1 text-small text-fg-muted">{description}</p>
+      </div>
+      {children}
+    </section>
   );
 }
 
