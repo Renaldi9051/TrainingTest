@@ -348,6 +348,8 @@ export type RichTextDoc = { type: "doc"; content: RichTextNode[] };
 
 export type TrainingMethod = "ONLINE" | "OFFLINE" | "HYBRID";
 export type TrainingType = "PUBLIC" | "IN_HOUSE";
+// null = belum diisi admin (label tingkat tidak ditampilkan).
+export type TrainingLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 export type ContentStatus = "DRAFT" | "PUBLISHED";
 // SCHEDULED = PUBLISHED dengan waktu publish di masa depan.
 export type TrainingPublicState = "DRAFT" | "SCHEDULED" | "PUBLISHED";
@@ -371,7 +373,8 @@ export type TrainingListItem = {
   updatedAt: string;
 };
 
-export type TrainingModule = { title: string; points: string[]; durationMinutes: number | null };
+// day: nomor hari silabus (HARI 01); null = modul tanpa pembagian hari.
+export type TrainingModule = { title: string; points: string[]; durationMinutes: number | null; day: number | null };
 export type AudienceItem = { role: string; note: string | null };
 export type FaqItem = { q: string; a: string };
 
@@ -386,6 +389,8 @@ export type Training = TrainingListItem & {
   facilities: string[] | null;
   faq: FaqItem[];
   duration: string | null;
+  level: TrainingLevel | null;
+  certificate: boolean | null;
   priceText: string | null;
   showPrice: boolean;
   coverId: string | null;
@@ -413,6 +418,7 @@ export type PublicTrainingCard = {
   duration: string | null;
   method: TrainingMethod | null;
   types: TrainingType[];
+  level: TrainingLevel | null;
   cover: PublicImage | null;
   categories: PublicCategoryRef[];
   publishedAt: string;
@@ -447,6 +453,8 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   faq: FaqItem[];
   inHouseNote: string | null;
   disclaimer: string | null;
+  // null = belum diisi admin (fakta "Sertifikat" tidak ditampilkan).
+  certificate: boolean | null;
   showPrice: boolean;
   priceText: string | null;
   investment: PublicInvestment;

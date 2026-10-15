@@ -3,6 +3,7 @@ import type {
   InquiryStatus,
   ScheduleStatus,
   TrainingMethod,
+  TrainingLevel,
   TrainingPublicState,
   TrainingType,
 } from "@/lib/api/types";
@@ -17,6 +18,12 @@ export const METHOD_LABELS: Record<TrainingMethod, string> = {
 export const TYPE_LABELS: Record<TrainingType, string> = {
   PUBLIC: "Public",
   IN_HOUSE: "In-house",
+};
+
+export const LEVEL_LABELS: Record<TrainingLevel, string> = {
+  BEGINNER: "Dasar",
+  INTERMEDIATE: "Menengah",
+  ADVANCED: "Lanjutan",
 };
 
 export const SCHEDULE_STATUS_LABELS: Record<ScheduleStatus, string> = {
