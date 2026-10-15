@@ -29,6 +29,8 @@ const detailRow = (extra: Record<string, unknown> = {}) => ({
   duration: "2 hari",
   method: "OFFLINE",
   types: ["PUBLIC"],
+  level: null,
+  certificate: null,
   priceText: "Rp4.500.000",
   showPrice: false,
   cover: null,
@@ -120,6 +122,20 @@ describe("getPublicTraining", () => {
     expect(detail?.faq.map((item) => item.q)).toEqual(["Khusus?", "Global?"]);
     expect(detail?.inHouseNote).toBe("Bisa in-house.");
     expect(detail?.disclaimer).toBeNull();
+  });
+
+  it("tingkat, sertifikat, dan hari modul: null kalau belum diisi; terkirim kalau diisi", async () => {
+    mock.training.findFirst.mockResolvedValue(detailRow());
+    const empty = await getPublicTraining("kpi", now);
+    expect(empty).toMatchObject({ level: null, certificate: null });
+    expect(empty?.modules).toEqual([{ title: "Modul 1", points: ["Poin"], durationMinutes: 90, day: null }]);
+
+    mock.training.findFirst.mockResolvedValue(
+      detailRow({ level: "ADVANCED", certificate: false, modules: [{ title: "Hari pertama", points: [], day: 1 }] }),
+    );
+    const filled = await getPublicTraining("kpi", now);
+    expect(filled).toMatchObject({ level: "ADVANCED", certificate: false });
+    expect(filled?.modules[0].day).toBe(1);
   });
 
   it("fasilitas khusus pelatihan menggantikan default", async () => {

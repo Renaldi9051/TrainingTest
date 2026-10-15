@@ -5,7 +5,7 @@ import { renderRichText } from "@/lib/rich-text";
 import { normalizeSearchText, toPrefixTsQuery, TYPO_SIMILARITY_THRESHOLD } from "@/lib/search";
 import { slugSchema } from "@/lib/slug";
 import { appToday, toDateString } from "@/lib/time";
-import type { PublicTrainingQuery } from "@/lib/validators/training";
+import type { PublicTrainingQuery, TrainingLevel } from "@/lib/validators/training";
 import { getMediaMap, toMediaDto, toPublicImage, type PublicImage } from "@/services/media";
 import { scheduleDisplayStatus, type PublicScheduleStatus } from "@/services/schedule-status";
 import {
@@ -32,6 +32,8 @@ export type PublicTrainingCard = {
   duration: string | null;
   method: string | null;
   types: string[];
+  // null = belum diisi admin; label tingkat tidak ditampilkan.
+  level: TrainingLevel | null;
   cover: PublicImage | null;
   categories: PublicCategoryRef[];
   publishedAt: Date;
@@ -66,6 +68,8 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   faq: FaqItem[];
   inHouseNote: string | null;
   disclaimer: string | null;
+  // null = belum diisi admin; fakta "Sertifikat" tidak ditampilkan.
+  certificate: boolean | null;
   showPrice: boolean;
   // null kalau showPrice false: harga tidak pernah dikirim ke publik.
   priceText: string | null;
@@ -95,6 +99,7 @@ export function toCard(row: CardRow): PublicTrainingCard {
     duration: row.duration,
     method: row.method,
     types: row.types,
+    level: row.level,
     cover: row.cover && row.cover.deletedAt === null ? toPublicImage(toMediaDto(row.cover)) : null,
     categories: row.categories
       .map((link) => link.category)
@@ -273,6 +278,7 @@ async function buildDetail(
     faq: [...readFaq(row.faq), ...defaults.faq],
     inHouseNote: defaults.inHouseNote || null,
     disclaimer: defaults.disclaimer || null,
+    certificate: row.certificate,
     showPrice: row.showPrice,
     priceText: row.showPrice ? row.priceText : null,
     investment: computeInvestment(row.showPrice, row.priceText, schedules),

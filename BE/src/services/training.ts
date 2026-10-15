@@ -14,6 +14,7 @@ import type { RestoreInput, SeoInput } from "@/lib/validators/common";
 import type {
   TrainingBulkInput,
   TrainingCreateInput,
+  TrainingLevel,
   TrainingListQuery,
   TrainingUpdateInput,
 } from "@/lib/validators/training";
@@ -51,6 +52,8 @@ const AUDIT_FIELDS = [
   "duration",
   "method",
   "types",
+  "level",
+  "certificate",
   "priceText",
   "showPrice",
   "coverId",
@@ -102,6 +105,8 @@ export type TrainingDto = TrainingListItem & {
   facilities: string[] | null;
   faq: FaqItem[];
   duration: string | null;
+  level: TrainingLevel | null;
+  certificate: boolean | null;
   priceText: string | null;
   showPrice: boolean;
   coverId: string | null;
@@ -166,6 +171,8 @@ async function toDto(row: TrainingRow, now = new Date()): Promise<TrainingDto> {
     facilities: readFacilities(row.facilities),
     faq: readFaq(row.faq),
     duration: row.duration,
+    level: row.level,
+    certificate: row.certificate,
     priceText: row.priceText,
     showPrice: row.showPrice,
     coverId: row.coverId,
@@ -329,6 +336,8 @@ export async function createTraining(
           duration: input.duration,
           method: input.method,
           types: input.types,
+          level: input.level,
+          certificate: input.certificate,
           priceText: input.priceText,
           showPrice: input.showPrice,
           coverId: input.coverId,
@@ -405,6 +414,8 @@ export async function updateTraining(
   if (input.duration !== undefined) data.duration = input.duration;
   if (input.method !== undefined) data.method = input.method;
   if (input.types !== undefined) data.types = input.types;
+  if (input.level !== undefined) data.level = input.level;
+  if (input.certificate !== undefined) data.certificate = input.certificate;
   if (input.priceText !== undefined) data.priceText = input.priceText;
   if (input.showPrice !== undefined) data.showPrice = input.showPrice;
   if (input.coverId !== undefined) data.coverId = input.coverId;
@@ -515,6 +526,8 @@ export async function duplicateTraining(id: string, userId: string): Promise<Tra
           duration: source.duration,
           method: source.method,
           types: source.types,
+          level: source.level,
+          certificate: source.certificate,
           priceText: source.priceText,
           showPrice: source.showPrice,
           coverId: source.coverId,
