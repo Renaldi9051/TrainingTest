@@ -98,7 +98,10 @@ test.describe("builder beranda", () => {
     // Elemen dekoratif bisa dimatikan per section; isi lain tidak berubah.
     await page.getByRole("switch", { name: "Elemen dekoratif" }).click();
     await page.getByRole("button", { name: "Simpan", exact: true }).click();
-    await toast(page, "Section disimpan");
+    // Toast simpan sebelumnya bisa masih tampil: tunggu data tersimpan, bukan toast.
+    await expect
+      .poll(async () => (await sections(page.request)).find((section) => section.type === "HERO")?.content?.decor)
+      .toBe(false);
     const heroNoDecor = (await sections(page.request)).find((section) => section.type === "HERO");
     expect(heroNoDecor?.content).toMatchObject({ decor: false, rotatingWords: ["jadwal", "judul"] });
 
