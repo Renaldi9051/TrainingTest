@@ -131,7 +131,7 @@ Dijalankan dari `BE/` atau `FE/`:
 | `npm run check` | BE/FE: lint + typecheck + test. Wajib lulus sebelum commit |
 | `npm run db:generate` | BE: generate Prisma Client |
 | `npm run db:migrate` | BE: `prisma migrate dev`. Perubahan skema: `npm run db:migrate -- --name <nama>` |
-| `npm run db:seed` | BE: isi data placeholder + admin pertama (hanya membuat yang belum ada, suntingan admin tidak ditimpa) |
+| `npm run db:seed` | BE: isi katalog referensi 5.831 pelatihan, kategori dan 77 submenu Pelatihan, serta admin pertama; aman dijalankan ulang |
 | `npm run db:seed:bulk` | BE, khusus dev: ~70 kategori + 1.200 pelatihan dummy + jadwal. Menolak jalan untuk database bernama `*prod*` |
 | `npm run bench:search` | BE: ukur latensi search katalog (p50/p95/p99) lewat HTTP ke BE yang sedang jalan. Target p95 < 300 ms |
 | `npm run db:studio` | BE: Prisma Studio |
@@ -139,20 +139,28 @@ Dijalankan dari `BE/` atau `FE/`:
 
 ## Katalog pelatihan dari referensi publik
 
-Katalog lokal dapat diisi dari snapshot metadata publik Diorama yang tersimpan di
+Seed standar mengisi katalog lokal dari snapshot metadata publik Diorama yang tersimpan di
 `BE/prisma/seed-data/reference-catalog.json` (14 Oktober 2026). Snapshot berisi judul,
 slug, tanggal, dan relasi kategori untuk 5.831 pelatihan. Naskah detail pada aplikasi
 ditulis ulang oleh `reference-training.ts`; halaman Finance & Treasury memiliki materi
 khusus. Jadwal, harga, foto, logo, dan informasi kontak milik situs referensi tidak
 diimpor. Sesuaikan informasi operasional tersebut di admin sebelum dipublikasikan.
 
+Setelah `git pull` pada database yang sudah ada, jalankan migrasi dan seed lagi dari
+`BE/`. `git pull` hanya memperbarui berkas; data di PostgreSQL tidak berubah sampai
+perintah seed dijalankan. Dengan Docker, `docker compose --env-file .env up -d --build`
+dari root proyek menjalankan migrasi dan seed melalui service `migrate`.
+
 ```powershell
 cd BE
-npm run db:seed:reference -- --hide-demo
+npx prisma migrate deploy
+npm run db:seed
 ```
 
-Perintah impor aman diulang: entri dengan slug yang sudah ada tidak ditimpa. Opsi
-`--hide-demo` menyembunyikan katalog contoh lama bila judulnya masih sama dengan seeder.
+Seed pertama melengkapi kategori, pelatihan, dan dropdown Pelatihan, serta
+menyembunyikan katalog contoh lama yang belum diedit. Seed berikutnya melewati impor
+besar agar data yang diubah atau dihapus admin tidak muncul kembali. Untuk impor
+manual setelah snapshot diperbarui, gunakan `npm run db:seed:reference -- --hide-demo`.
 Untuk memperbarui snapshot metadata dari API publik, jalankan
 `npm run db:reference:fetch`, tinjau perubahannya, lalu ulangi impor.
 

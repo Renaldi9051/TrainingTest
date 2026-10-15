@@ -1,4 +1,4 @@
-// Seed data placeholder untuk development. Idempotent: aman dijalankan berulang.
+// Seed utama: katalog referensi dan submenu Pelatihan, aman dijalankan berulang.
 // `prisma db seed -- --minimal` (setup e2e): hanya admin, pengaturan, menu, katalog, dan halaman
 // profil; konten beranda & entitas Fase 3 dibuat sendiri oleh test.
 // `prisma db seed -- --bulk` (khusus dev): ditambah ~1.200 pelatihan dummy untuk uji performa search.
@@ -9,6 +9,8 @@ import type { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
 import { parseSeedEnv } from "../src/lib/env";
 import { hashPassword } from "../src/lib/password";
+import { RevalidateTag, revalidateTags } from "../src/lib/revalidate";
+import { REFERENCE_SEED_KEY, seedReferenceCatalog } from "./seed-reference";
 import { seedBulk } from "./seed-bulk";
 import { type ContentSeedResult, seedContent } from "./seed-content";
 import { seedCovers } from "./seed-covers";
@@ -80,6 +82,7 @@ const settings: { key: string; value: Prisma.InputJsonValue }[] = [
 const PUBLISHED_AT = new Date("2026-10-01T00:00:00.000Z");
 const MINIMAL = process.argv.includes("--minimal");
 const BULK = process.argv.includes("--bulk");
+const USE_REFERENCE = !MINIMAL && !BULK;
 
 // Admin pertama dari ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME. Hanya dibuat kalau email belum ada;
 // password admin yang sudah ada tidak pernah ditimpa.
@@ -122,11 +125,16 @@ async function main() {
     await createSeedNav(db);
   }
 
-  // Katalog contoh (kategori, pelatihan, jadwal) hanya untuk database yang belum punya katalog sama
-  // sekali, termasuk yang di Sampah. Kalau dicek per slug, pelatihan contoh yang dihapus atau diganti
-  // slug-nya oleh admin akan muncul lagi di setiap `docker compose up`.
+  // Mode minimal/e2e dan bulk tetap memakai katalog contoh. Seed standar memakai katalog referensi.
+  // Marker mencegah impor 5.831 entri setiap startup dan menjaga suntingan/penghapusan admin.
   const catalogEmpty = (await db.category.count()) === 0 && (await db.training.count()) === 0;
-  const catalog = catalogEmpty ? await writeCatalog(db) : null;
+  const catalog = !USE_REFERENCE && catalogEmpty ? await writeCatalog(db) : null;
+  const referenceSeeded = USE_REFERENCE
+    ? await db.siteSetting.findUnique({ where: { key: REFERENCE_SEED_KEY }, select: { id: true } })
+    : null;
+  const reference = USE_REFERENCE && !referenceSeeded
+    ? await seedReferenceCatalog({ hideDemo: true })
+    : null;
 
   const profileResult = await seedProfilePage();
   const contentResult = MINIMAL ? null : await seedContent(PUBLISHED_AT);
@@ -141,12 +149,17 @@ async function main() {
 
   const catalogResult = catalog
     ? `dibuat (${catalog.categories} kategori, ${catalog.trainings} pelatihan, ${catalog.schedules} jadwal)`
-    : "dilewati (katalog sudah berisi)";
+    : USE_REFERENCE ? "digantikan katalog referensi" : "dilewati (katalog sudah berisi)";
   console.info(
     `Seed selesai: ${settings.length} key pengaturan dicek (yang ada tidak ditimpa), katalog contoh ${catalogResult}, ` +
       `halaman profil ${profileResult === "created" ? "dibuat" : "sudah ada"}, ` +
       `admin ${adminResult === "created" ? "dibuat" : "sudah ada"}.`,
   );
+  if (USE_REFERENCE) {
+    console.info(reference
+      ? `Katalog referensi: ${reference.categoriesCreated} kategori, ${reference.trainingsCreated} pelatihan, ${reference.linksCreated} tautan, ${reference.menuCreated} submenu baru.`
+      : "Katalog referensi sudah terpasang; perubahan admin dipertahankan.");
+  }
   console.info(
     contentResult
       ? `Konten contoh: ${Object.entries(contentResult)
@@ -165,6 +178,10 @@ async function main() {
     console.info(
       `Cover pelatihan: ${coverResult === "dilewati" ? "dilewati" : `${coverResult} dipasang`} (hanya pelatihan yang belum punya cover).`,
     );
+  }
+  // Bila FE sudah berjalan saat seed manual, tampilkan dropdown baru tanpa perlu restart.
+  if (reference && process.env.FE_REVALIDATE_URL && process.env.REVALIDATE_SECRET) {
+    await revalidateTags([RevalidateTag.NAV, RevalidateTag.CATEGORIES, RevalidateTag.TRAININGS, RevalidateTag.HOME]);
   }
 }
 
