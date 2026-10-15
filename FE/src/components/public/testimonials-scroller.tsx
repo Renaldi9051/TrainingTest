@@ -2,13 +2,23 @@
 
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useId, useRef } from "react";
+import { IndexNumber } from "@/components/decor/index-number";
 import type { PublicTestimonial } from "@/lib/api/types";
 import { PublicImage } from "./public-image";
 
 // Testimoni dalam baris scroll-snap horizontal, tanpa autoplay (DESIGN 8.3). Bisa dipakai dengan
 // keyboard: wilayah scroll bisa difokus (panah kiri/kanan menggulir) dan tombol Sebelumnya/
 // Berikutnya menggulir satu kartu. Gulir halus dimatikan untuk prefers-reduced-motion.
-export function TestimonialsScroller({ testimonials, label }: { testimonials: PublicTestimonial[]; label: string }) {
+// decor: nomor raksasa mono di atas tiap kutipan (DESIGN.md 13).
+export function TestimonialsScroller({
+  testimonials,
+  label,
+  decor = true,
+}: {
+  testimonials: PublicTestimonial[];
+  label: string;
+  decor?: boolean;
+}) {
   const listId = useId();
   const scroller = useRef<HTMLUListElement>(null);
 
@@ -35,6 +45,7 @@ export function TestimonialsScroller({ testimonials, label }: { testimonials: Pu
             className="w-[85%] shrink-0 snap-start border-t border-border pt-6 sm:w-[60%] lg:w-[calc((100%-48px)/3)]"
           >
             <figure className="flex h-full flex-col gap-6">
+              {decor ? <IndexNumber position={index + 1} /> : null}
               <blockquote className="text-body-lg text-fg">
                 <p>&ldquo;{testimonial.quote}&rdquo;</p>
               </blockquote>

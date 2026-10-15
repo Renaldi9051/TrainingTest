@@ -1,13 +1,19 @@
 import { SearchIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { DotPattern } from "@/components/decor/dot-pattern";
+import { GrainOverlay } from "@/components/decor/grain-overlay";
+import { OutlineText } from "@/components/decor/outline-text";
+import { PlusMarker } from "@/components/decor/plus-marker";
+import { RotatingBadge } from "@/components/decor/rotating-badge";
+import { HeroPauseButton } from "@/components/motion/hero-pause-button";
+import { HeroSlideshow } from "@/components/motion/hero-slideshow";
 import { Reveal } from "@/components/motion/reveal";
 import { HeroWords } from "@/components/motion/hero-words";
 import { CountUp, LineDraw } from "@/components/motion/reveal-parts";
 import { VelocityMarquee } from "@/components/motion/velocity-marquee";
 import { ChipLink } from "@/components/public/chip-link";
 import { ClientLogos } from "@/components/public/client-logos";
-import { PublicImage } from "@/components/public/public-image";
 import { PublicSection } from "@/components/public/public-section";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { ServiceRows } from "@/components/public/service-rows";
@@ -36,8 +42,6 @@ const FALLBACK_HEADINGS: Record<PublicHomeSection["type"], string> = {
   MARQUEE: "Bidang layanan",
 };
 
-const HERO_IMAGE_SIZES = "(min-width: 1280px) 1232px, calc(100vw - 32px)";
-
 function CtaLink({ cta, variant, arrow }: { cta: Cta; variant: "primary" | "secondary" | "inverse" | "inverseOutline"; arrow?: boolean }) {
   const external = /^https:\/\//i.test(cta.href);
   const className = buttonVariants({ variant, size: "lg" });
@@ -58,6 +62,22 @@ function CtaLink({ cta, variant, arrow }: { cta: Cta; variant: "primary" | "seco
   );
 }
 
+// Teks outline raksasa dari eyebrow section (CMS) tanpa nomor urut: "01 / Layanan" -> "Layanan".
+export function outlineLabel(eyebrow: string): string {
+  return eyebrow.replace(/^\s*\d+\s*\/\s*/, "").trim();
+}
+
+// Tanda + di keempat sudut sebuah blok (DESIGN.md 6.1). Induk relative.
+function CornerMarkers({ decor, inset = "-top-1.5" }: { decor: boolean; inset?: string }) {
+  if (!decor) return null;
+  return (
+    <>
+      <PlusMarker className={cn(inset, "-left-1.5")} />
+      <PlusMarker className={cn(inset, "-right-1.5")} />
+    </>
+  );
+}
+
 function SectionCta({ cta }: { cta: Cta | null }) {
   return cta ? (
     <div>
@@ -66,82 +86,147 @@ function SectionCta({ cta }: { cta: Cta | null }) {
   ) : null;
 }
 
-// Konten layar pertama: langsung terbaca tanpa reveal scroll (DESIGN 8.3). Satu-satunya h1 beranda.
-// Saat muat penuh hanya h1 yang bergerak: kata naik dengan CSS murni <= 500 ms (tanpa JS, tanpa
-// opacity 0). Setelah navigasi klien, eyebrow dan subjudul ikut stagger masuk (PageEnter); h1 tetap
-// memakai animasi CSS-nya sendiri.
-function HeroSection({ section }: { section: Extract<PublicHomeSection, { type: "HERO" }> }) {
+type HeroData = Extract<PublicHomeSection, { type: "HERO" }>;
+
+// Teks hero (eyebrow, h1, subjudul, search, CTA). Konten layar pertama: langsung terbaca tanpa reveal
+// scroll (DESIGN 9.3). Satu-satunya h1 beranda. Saat muat penuh hanya h1 yang bergerak: kata naik
+// dengan CSS murni <= 500 ms (tanpa JS, tanpa opacity 0). Setelah navigasi klien, eyebrow dan subjudul
+// ikut stagger masuk (PageEnter). inverse: di atas foto (teks terang).
+function HeroText({ section, inverse, aside }: { section: HeroData; inverse: boolean; aside?: ReactNode }) {
+  const muted = inverse ? "text-inverse-fg/85" : "text-fg-muted";
   return (
-    <section className="py-20 md:py-32" aria-labelledby={`${section.id}-title`}>
-      <Container className="space-y-10 md:space-y-14">
-        <div className="space-y-6">
-          {section.eyebrow ? <Eyebrow data-page-enter="">{section.eyebrow}</Eyebrow> : null}
-          <h1
-            id={`${section.id}-title`}
-            className="max-w-[16ch] text-[48px] leading-[0.95] font-semibold tracking-[-0.04em] text-fg-strong md:text-[88px]"
-          >
-            {/* Kata kunci berganti terus tiap 2 s (RotatingWord). */}
-            <HeroWords text={section.headline} accents={section.rotatingWords} />
-          </h1>
-          {section.subheadline ? (
-            <p data-page-enter="" className="max-w-[65ch] text-body-lg text-fg-muted">{section.subheadline}</p>
+    <div className="space-y-8 md:space-y-10">
+      <div className="space-y-5 md:space-y-6">
+        {section.eyebrow ? (
+          <Eyebrow data-page-enter="" className={muted}>
+            {section.eyebrow}
+          </Eyebrow>
+        ) : null}
+        <h1 id={`${section.id}-title`} className={cn("max-w-[16ch] text-display", inverse ? "text-inverse-fg" : "text-fg-strong")}>
+          {/* Kata kunci berganti tiap 2 s (RotatingWord), ikut tombol pause hero. */}
+          <HeroWords
+            text={section.headline}
+            accents={section.rotatingWords}
+            accentClassName={inverse ? "italic font-medium" : "text-fg-muted"}
+          />
+        </h1>
+        {section.subheadline ? (
+          <p data-page-enter="" className={cn("max-w-[52ch] text-body-lg", inverse ? "text-inverse-fg/90" : "text-fg-muted")}>
+            {section.subheadline}
+          </p>
+        ) : null}
+      </div>
+
+      {section.showSearch || section.primaryCta || section.secondaryCta || aside ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          {section.showSearch ? (
+            <form action="/pelatihan" method="get" role="search" className="w-full max-w-[460px] space-y-2">
+              <label htmlFor={`${section.id}-search`} className={cn("block font-mono text-label uppercase tracking-[0.08em]", muted)}>
+                Cari pelatihan
+              </label>
+              <div className={cn("flex h-14 items-center gap-2 rounded-md pr-1.5 pl-4", inverse ? "bg-bg text-fg" : "border border-border-strong bg-bg")}>
+                <SearchIcon aria-hidden strokeWidth={1.5} className="size-5 shrink-0 text-fg-muted" />
+                <input
+                  id={`${section.id}-search`}
+                  name="q"
+                  type="search"
+                  placeholder={section.searchPlaceholder || undefined}
+                  className="h-full min-w-0 flex-1 bg-transparent text-body text-fg outline-none placeholder:text-fg-subtle"
+                />
+                <button type="submit" className={cn(buttonVariants({ variant: "primary", size: "md" }), "h-11")}>
+                  Cari
+                </button>
+              </div>
+            </form>
           ) : null}
+          {section.primaryCta ? <CtaLink cta={section.primaryCta} variant={inverse ? "inverse" : "primary"} arrow /> : null}
+          {section.secondaryCta ? <CtaLink cta={section.secondaryCta} variant={inverse ? "inverseOutline" : "secondary"} /> : null}
+          {aside}
         </div>
+      ) : null}
+    </div>
+  );
+}
 
-        {section.showSearch ? (
-          <form action="/pelatihan" method="get" role="search" className="max-w-2xl space-y-2">
-            <label htmlFor={`${section.id}-search`} className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
-              Cari pelatihan
-            </label>
-            <div className="flex gap-2">
-              <input
-                id={`${section.id}-search`}
-                name="q"
-                type="search"
-                placeholder={section.searchPlaceholder || undefined}
-                className="h-12 min-w-0 flex-1 rounded-md border border-border-strong bg-bg px-4 text-body text-fg outline-none placeholder:text-fg-subtle focus-visible:border-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
-              />
-              <button type="submit" className={buttonVariants({ variant: "primary", size: "lg" })}>
-                <SearchIcon aria-hidden strokeWidth={1.5} />
-                <span className="sr-only sm:not-sr-only">Cari</span>
-              </button>
-            </div>
-          </form>
-        ) : null}
+function heroBadge(section: HeroData): { text: string; href: string } | null {
+  return section.showBadge && section.badgeText && section.badgeHref ? { text: section.badgeText, href: section.badgeHref } : null;
+}
 
-        {section.primaryCta || section.secondaryCta ? (
-          <div className="flex flex-wrap gap-3">
-            {section.primaryCta ? <CtaLink cta={section.primaryCta} variant="primary" arrow /> : null}
-            {section.secondaryCta ? <CtaLink cta={section.secondaryCta} variant="secondary" /> : null}
-          </div>
-        ) : null}
-
-        {section.image ? (
-          <div className="relative aspect-video overflow-hidden bg-bg-muted">
-            {/* Gambar di layar pertama: dimuat lebih dulu (LCP). */}
-            <PublicImage image={section.image} sizes={HERO_IMAGE_SIZES} priority />
-          </div>
-        ) : null}
+// Hero tanpa slide (DESIGN.md 8.1, keputusan pemilik): hero teks di latar putih, header tetap putih.
+// Decor tanpa gambar (maks 2): pola titik di belakang teks + tanda plus di sudut (atau badge berputar
+// kalau diaktifkan admin). Kata berganti tetap punya tombol pause.
+function TextHero({ section }: { section: HeroData }) {
+  const badge = heroBadge(section);
+  const words = section.rotatingWords.filter((word) => word.trim()).length;
+  return (
+    <section className="relative overflow-hidden py-20 md:py-32" aria-labelledby={`${section.id}-title`}>
+      <DotPattern decor={section.decor} />
+      <Container className="relative">
+        {badge ? (
+          <RotatingBadge decor={section.decor} href={badge.href} text={badge.text} tone="dark" className="right-4 bottom-0 sm:right-6" />
+        ) : (
+          <>
+            {/* Di atas blok teks (tidak menimpa eyebrow), segaris dengan tepi konten. */}
+            <PlusMarker decor={section.decor} className="-top-12 left-2.5 sm:left-4.5" />
+            <PlusMarker decor={section.decor} className="-top-12 right-2.5 sm:right-4.5" />
+          </>
+        )}
+        <HeroText
+          section={section}
+          inverse={false}
+          aside={words > 1 ? <HeroPauseButton subject="kata berganti" className="border-border-strong text-fg hover:bg-bg-subtle sm:ml-auto" /> : null}
+        />
       </Container>
     </section>
   );
 }
 
+function HeroSection({ section }: { section: HeroData }) {
+  if (section.slides.length === 0) return <TextHero section={section} />;
+  const full = section.layout === "fullbleed";
+  const text = <HeroText section={section} inverse={full} />;
+  return (
+    <HeroSlideshow
+      slides={section.slides}
+      intervalMs={section.intervalMs}
+      layout={section.layout}
+      photoStyle={section.photoStyle}
+      showViewfinder={section.showViewfinder}
+      decor={section.decor}
+      badge={heroBadge(section)}
+      hasRotatingWords={section.rotatingWords.filter((word) => word.trim()).length > 1}
+    >
+      {full ? <Container>{text}</Container> : text}
+    </HeroSlideshow>
+  );
+}
+
+// Statistik (DESIGN.md 8.6): angka besar mono dipisah garis vertikal, tanda + di sudut tiap angka,
+// counter berjalan saat masuk layar. Label HUD tidak dipakai: belum ada data CMS untuknya (6.2).
 function StatsSection({ section }: { section: Extract<PublicHomeSection, { type: "STATS" }> }) {
   return (
     <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.STATS}>
       <Reveal>
         <LineDraw />
-        <dl data-reveal-children="item" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <dl data-reveal-children="item" className="grid grid-cols-2 border-b border-border lg:grid-cols-4">
           {section.items.map((item, index) => (
-            <div key={index} className="space-y-2 border-b border-border py-8 pr-6">
+            <div
+              key={index}
+              className={cn(
+                "relative flex flex-col gap-3 px-4 pt-8 pb-7 md:px-6 md:pt-10",
+                index % 2 === 1 && "border-l border-border",
+                index >= 2 && "border-t border-border lg:border-t-0",
+                index % 4 !== 0 && "lg:border-l",
+              )}
+            >
+              {section.decor ? <PlusMarker className="-top-1.5 -left-1.5" /> : null}
               {/* Counter berjalan saat grup masuk viewport (hanya kalau seluruhnya di bawah layar awal). */}
-              <dd className="font-mono text-[36px] leading-none font-medium text-fg-strong md:text-[48px]">
+              <dd className="order-1 font-mono text-[40px] leading-none font-medium tracking-[-0.04em] text-fg-strong md:text-[64px]">
                 {item.prefix}
                 <CountUp value={item.value} display={formatNumber(item.value)} />
                 {item.suffix}
               </dd>
-              <dt className="text-small text-fg-muted">{item.label}</dt>
+              <dt className="order-2 text-body text-fg">{item.label}</dt>
             </div>
           ))}
         </dl>
@@ -184,14 +269,54 @@ function MarqueeSection({ section }: { section: Extract<PublicHomeSection, { typ
   );
 }
 
+// CTA penutup (DESIGN.md 8.9): section hitam + grain + teks outline (bergeser pelan). Badge berputar
+// tidak dipakai: belum ada teks badge di CMS untuk section ini.
 function CtaSection({ section }: { section: Extract<PublicHomeSection, { type: "CTA" }> }) {
   return (
-    <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.CTA} intro={section.body} inverse>
+    <PublicSection
+      eyebrow={section.eyebrow}
+      heading={section.heading}
+      fallbackHeading={FALLBACK_HEADINGS.CTA}
+      intro={section.body}
+      inverse
+      background={
+        section.decor ? (
+          <>
+            <GrainOverlay tone="inverse" />
+            <OutlineText tone="inverse" parallax className="-bottom-[0.12em] -left-6 md:-left-10">
+              {outlineLabel(section.eyebrow)}
+            </OutlineText>
+          </>
+        ) : null
+      }
+    >
       <div className="flex flex-wrap gap-3">
         <CtaLink cta={section.primaryCta} variant="inverse" arrow />
         {section.secondaryCta ? <CtaLink cta={section.secondaryCta} variant="inverseOutline" /> : null}
       </div>
     </PublicSection>
+  );
+}
+
+// Nama kategori berjalan sebagai pemisah setelah section Kategori (DESIGN.md 13), mengikuti kecepatan
+// scroll. Dekoratif: nama yang sama sudah ada sebagai chip, jadi disembunyikan dari pembaca layar.
+// Reduced motion: tidak ditampilkan (daftar statis tidak menambah informasi).
+function CategoryMarquee({ names }: { names: string[] }) {
+  if (names.length === 0) return null;
+  const list = (
+    <ul className="flex">
+      {names.map((name, index) => (
+        <li key={`${index}-${name}`} className="flex items-center whitespace-nowrap">
+          <span className="px-6 text-[40px] leading-none font-semibold tracking-[-0.03em] text-fg-strong md:px-7 md:text-[56px]">{name}</span>
+          <span className="text-[24px] text-fg-subtle md:text-[32px]">✦</span>
+        </li>
+      ))}
+    </ul>
+  );
+  return (
+    <div aria-hidden className="border-y border-border py-6 motion-reduce:hidden md:py-7">
+      <VelocityMarquee>{list}</VelocityMarquee>
+    </div>
   );
 }
 
@@ -202,16 +327,37 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
     case "STATS":
       return <StatsSection section={section} />;
     case "SERVICES":
+      // Nomor raksasa + teks outline (bergeser pelan) di belakang (DESIGN.md 8.5).
       return (
-        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.SERVICES} intro={section.intro}>
-          <ServiceRows services={section.items} />
+        <PublicSection
+          eyebrow={section.eyebrow}
+          heading={section.heading}
+          fallbackHeading={FALLBACK_HEADINGS.SERVICES}
+          intro={section.intro}
+          background={
+            // Kanan bawah, di samping tombol: tidak menimpa judul section yang panjang.
+            <OutlineText decor={section.decor} parallax className="-right-6 bottom-6 md:-right-16 md:bottom-10">
+              {outlineLabel(section.eyebrow)}
+            </OutlineText>
+          }
+        >
+          <ServiceRows services={section.items} decor={section.decor} />
           <SectionCta cta={section.cta} />
         </PublicSection>
       );
     case "CATEGORIES":
+      // Latar abu + pola titik, lalu nama kategori berjalan sebagai pemisah (DESIGN.md 8.7 & 13).
       return (
-        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.CATEGORIES} intro={section.intro}>
-          <Reveal as="ul" data-reveal-children="pop" className="flex flex-wrap gap-2">
+        <>
+          <PublicSection
+            eyebrow={section.eyebrow}
+            heading={section.heading}
+            fallbackHeading={FALLBACK_HEADINGS.CATEGORIES}
+            intro={section.intro}
+            className="bg-bg-subtle"
+            background={<DotPattern decor={section.decor} />}
+          >
+            <Reveal as="ul" data-reveal-children="pop" className="flex flex-wrap gap-2">
             {section.items.map((category) => (
               <li key={category.slug}>
                 <ChipLink href={`/pelatihan/kategori/${category.slug}`} active={false} scroll>
@@ -220,21 +366,28 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
                 </ChipLink>
               </li>
             ))}
-          </Reveal>
-          <SectionCta cta={section.cta} />
-        </PublicSection>
+            </Reveal>
+            <SectionCta cta={section.cta} />
+          </PublicSection>
+          {section.decor ? <CategoryMarquee names={section.items.map((category) => category.name)} /> : null}
+        </>
       );
     case "LATEST_TRAININGS":
       return (
         <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.LATEST_TRAININGS} intro={section.intro}>
-          <TrainingGrid trainings={section.items} />
+          {/* Tanda + di sudut grid (DESIGN.md 13). */}
+          <div className="relative">
+            <CornerMarkers decor={section.decor} inset="-top-5" />
+            <TrainingGrid trainings={section.items} />
+            <CornerMarkers decor={section.decor} inset="-bottom-5" />
+          </div>
           <SectionCta cta={section.cta} />
         </PublicSection>
       );
     case "UPCOMING_SCHEDULES":
       return (
         <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.UPCOMING_SCHEDULES} intro={section.intro}>
-          <ScheduleTable rows={section.items} caption={section.heading || FALLBACK_HEADINGS.UPCOMING_SCHEDULES} showTraining />
+          <ScheduleTable rows={section.items} caption={section.heading || FALLBACK_HEADINGS.UPCOMING_SCHEDULES} showTraining bigDate={section.decor} />
           <SectionCta cta={section.cta} />
         </PublicSection>
       );
@@ -246,14 +399,19 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
       );
     case "VISION_MISSION":
       return (
-        <PublicSection eyebrow={section.eyebrow} heading="" fallbackHeading={FALLBACK_HEADINGS.VISION_MISSION}>
-          <VisionMission vision={section.vision} mission={section.mission} motto={section.motto} />
+        // Kolase gambar (DESIGN.md 13) butuh gambar milik section ini; belum ada, jadi tanda + saja (aturan
+        // konten 6: tanpa placeholder).
+        <PublicSection eyebrow={section.eyebrow} heading="" fallbackHeading={FALLBACK_HEADINGS.VISION_MISSION} className="bg-bg-subtle">
+          <div className="relative">
+            <CornerMarkers decor={section.decor} />
+            <VisionMission vision={section.vision} mission={section.mission} motto={section.motto} />
+          </div>
         </PublicSection>
       );
     case "TESTIMONIALS":
       return (
         <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.TESTIMONIALS} intro={section.intro}>
-          <TestimonialsScroller testimonials={section.items} label={section.heading || FALLBACK_HEADINGS.TESTIMONIALS} />
+          <TestimonialsScroller testimonials={section.items} label={section.heading || FALLBACK_HEADINGS.TESTIMONIALS} decor={section.decor} />
         </PublicSection>
       );
     case "CTA":

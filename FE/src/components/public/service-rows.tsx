@@ -2,6 +2,7 @@ import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
 import { LineDraw } from "@/components/motion/reveal-parts";
+import { IndexNumber } from "@/components/decor/index-number";
 import type { PublicServiceCard } from "@/lib/api/types";
 import { PublicImage } from "./public-image";
 
@@ -10,7 +11,16 @@ import { PublicImage } from "./public-image";
 // (desktop, kalau layanan punya gambar) gambarnya mengikuti kursor di dalam baris (PointerEffects).
 // Gambar itu hiasan (aria-hidden) dan tidak dimuat di perangkat tanpa hover (display: none).
 // headingLevel: h2 kalau langsung di bawah h1 halaman (/layanan), h3 di bawah judul section.
-export function ServiceRows({ services, headingLevel = "h3" }: { services: PublicServiceCard[]; headingLevel?: "h2" | "h3" }) {
+// decor: nomor raksasa mono (IndexNumber, DESIGN.md 8.5); mati = nomor kecil abu.
+export function ServiceRows({
+  services,
+  headingLevel = "h3",
+  decor = true,
+}: {
+  services: PublicServiceCard[];
+  headingLevel?: "h2" | "h3";
+  decor?: boolean;
+}) {
   const Heading = headingLevel;
   return (
     <Reveal>
@@ -28,9 +38,13 @@ export function ServiceRows({ services, headingLevel = "h3" }: { services: Publi
               </div>
             ) : null}
             <div className="grid gap-3 py-8 transition-transform duration-150 ease-standard md:grid-cols-12 md:gap-6 md:py-10 motion-safe:group-hover:translate-x-2 motion-safe:group-focus-within:translate-x-2">
-              <span aria-hidden className="font-mono text-[28px] leading-none text-fg-muted md:col-span-2 md:text-[40px]">
-                {String(index + 1).padStart(2, "0")}
-              </span>
+              {decor ? (
+                <IndexNumber position={index + 1} className="md:col-span-2" />
+              ) : (
+                <span aria-hidden className="font-mono text-[28px] leading-none text-fg-muted md:col-span-2 md:text-[40px]">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+              )}
               <Heading className="text-[20px] leading-[1.25] font-medium text-fg-strong md:col-span-4 md:text-[24px]">
                 {/* Seluruh baris bisa diklik lewat pseudo-element, tapi tetap satu link untuk pembaca layar. */}
                 <Link

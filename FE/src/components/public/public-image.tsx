@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { CSSProperties } from "react";
 import type { PublicImage as PublicImageData } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -11,11 +12,13 @@ type PublicImageProps = {
   // Gambar utama di layar pertama (LCP): dimuat langsung dengan prioritas tinggi.
   priority?: boolean;
   fit?: "cover" | "contain";
+  // Mis. objectPosition dari titik fokus slide hero.
+  style?: CSSProperties;
 };
 
 // Gambar dari media library dalam kotak berukuran tetap (parent menentukan rasio).
 // Placeholder saat memuat: blok --bg-muted (bukan spinner).
-export function PublicImage({ image, sizes, className, grayscale = true, priority, fit = "cover" }: PublicImageProps) {
+export function PublicImage({ image, sizes, className, grayscale = true, priority, fit = "cover", style }: PublicImageProps) {
   return (
     <Image
       src={image.url}
@@ -26,6 +29,7 @@ export function PublicImage({ image, sizes, className, grayscale = true, priorit
       loading={priority ? "eager" : undefined}
       fetchPriority={priority ? "high" : undefined}
       unoptimized={image.mime === "image/svg+xml"}
+      style={style}
       className={cn(
         "bg-bg-muted",
         fit === "cover" ? "object-cover" : "object-contain",

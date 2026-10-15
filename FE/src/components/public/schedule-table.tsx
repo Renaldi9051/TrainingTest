@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { RevealRows } from "@/components/motion/reveal-rows";
 import type { ScheduleStatus, TrainingMethod } from "@/lib/api/types";
-import { formatDateRange, formatRupiah } from "@/lib/format";
+import { dateBadgeParts, formatDateRange, formatRupiah } from "@/lib/format";
 import { METHOD_LABELS } from "@/lib/labels";
 
 export type ScheduleRow = {
@@ -25,14 +25,18 @@ const PRICE_HIDDEN = "Hubungi marketing";
 // Di layar kecil tiap baris jadi blok bertumpuk (tanpa scroll horizontal). Masuk: baris dari kiri,
 // per baris saat barisnya masuk viewport (RevealRows).
 // showPrice false (atau harga kosong): tampil "Hubungi marketing".
+// bigDate: tanggal mulai besar (hari + bulan mono) di kolom kiri, rentang tanggal di bawahnya
+// (DESIGN.md 8.8 & 13, beranda).
 export function ScheduleTable({
   rows,
   caption,
   showTraining = false,
+  bigDate = false,
 }: {
   rows: ScheduleRow[];
   caption: string;
   showTraining?: boolean;
+  bigDate?: boolean;
 }) {
   return (
     <table className="w-full border-collapse text-left">
@@ -68,7 +72,7 @@ export function ScheduleTable({
             className="grid grid-cols-2 gap-x-4 gap-y-1 border-b border-border py-4 transition-[background-color,transform] duration-150 ease-standard hover:bg-bg-subtle motion-safe:hover:translate-x-2 motion-safe:focus-within:translate-x-2 md:table-row md:py-0"
           >
             <td className="col-span-2 font-medium text-fg-strong md:py-4 md:pr-4 md:whitespace-nowrap">
-              {formatDateRange(row.startDate, row.endDate)}
+              {bigDate ? <BigDate start={row.startDate} end={row.endDate} /> : formatDateRange(row.startDate, row.endDate)}
             </td>
             {showTraining && row.training ? (
               <td className="col-span-2 md:py-4 md:pr-4">
@@ -95,6 +99,22 @@ export function ScheduleTable({
         ))}
       </RevealRows>
     </table>
+  );
+}
+
+function BigDate({ start, end }: { start: string; end: string }) {
+  const { day, monthYear } = dateBadgeParts(start);
+  return (
+    <span className="flex flex-col gap-1">
+      <span aria-hidden className="text-[32px] leading-none font-semibold tracking-[-0.03em]">
+        {day}
+      </span>
+      <span aria-hidden className="font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted">
+        {monthYear}
+      </span>
+      {/* Rentang lengkap tetap dibaca pembaca layar dan tampil kecil. */}
+      <span className="text-small font-normal text-fg-muted">{formatDateRange(start, end)}</span>
+    </span>
   );
 }
 

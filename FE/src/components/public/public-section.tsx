@@ -13,18 +13,21 @@ type PublicSectionProps = {
   // Section terbalik (hitam). Maksimal dua per halaman: CTA penutup + footer (DESIGN 2).
   inverse?: boolean;
   className?: string;
+  // Elemen dekoratif di belakang isi (DESIGN.md 6): dirender sebelum isi, isi di atasnya.
+  background?: ReactNode;
   children: ReactNode;
 };
 
 // Kerangka section publik: jarak antar section 128 px desktop / 80 px mobile (DESIGN 4).
-export function PublicSection({ eyebrow, heading, fallbackHeading, intro, inverse, className, children }: PublicSectionProps) {
+export function PublicSection({ eyebrow, heading, fallbackHeading, intro, inverse, className, background, children }: PublicSectionProps) {
   const headingId = useId();
   return (
     <section
       aria-labelledby={headingId}
-      className={cn("py-20 md:py-32", inverse && "bg-inverse-bg text-inverse-fg", className)}
+      className={cn("py-20 md:py-32", background ? "relative overflow-hidden" : null, inverse && "bg-inverse-bg text-inverse-fg", className)}
     >
-      <Container className="space-y-10 md:space-y-14">
+      {background}
+      <Container className="relative space-y-10 md:space-y-14">
         {eyebrow || heading ? (
           <SectionHeading eyebrow={eyebrow} title={heading || undefined} id={heading ? headingId : undefined} inverse={inverse}>
             {intro ? (

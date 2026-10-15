@@ -754,6 +754,33 @@ export type HomeSectionType =
 export type Cta = { label: string; href: string };
 type SectionHeading = { eyebrow: string; heading: string };
 type SelectionConfig = { mode: SelectionMode; limit: number; ids: string[] };
+// Elemen dekoratif per section (DESIGN.md 6.2), default menyala.
+type Decor = { decor: boolean };
+
+export type HeroLayout = "fullbleed" | "split";
+export type HeroPhotoStyle = "color" | "grayscale";
+
+// Satu slide hero tersimpan. alt "" = memakai alt media; href "" = tanpa tautan.
+export type HeroSlide = {
+  mediaId: string;
+  alt: string;
+  caption: string;
+  href: string;
+  hudLabel: string;
+  focalX: number;
+  focalY: number;
+};
+
+// Slide hero di respons publik (GET /api/public/home).
+export type PublicHeroSlide = {
+  image: PublicImage;
+  alt: string;
+  caption: string;
+  href: string | null;
+  hudLabel: string;
+  focalX: number;
+  focalY: number;
+};
 
 // Isi section per type, sama dengan BE (BE/src/lib/validators/home-section.ts).
 export type HomeSectionContentMap = {
@@ -766,19 +793,28 @@ export type HomeSectionContentMap = {
     searchPlaceholder: string;
     primaryCta: Cta | null;
     secondaryCta: Cta | null;
-    image: MediaRef | null;
-  };
-  STATS: SectionHeading & { items: { value: number; prefix: string; suffix: string; label: string }[] };
-  SERVICES: SectionHeading & SelectionConfig & { intro: string; cta: Cta | null };
-  CATEGORIES: SectionHeading & SelectionConfig & { intro: string; cta: Cta | null };
-  LATEST_TRAININGS: SectionHeading & SelectionConfig & { intro: string; cta: Cta | null };
-  UPCOMING_SCHEDULES: SectionHeading & { intro: string; limit: number; cta: Cta | null };
-  CLIENTS: SectionHeading & SelectionConfig & { intro: string };
-  VISION_MISSION: { eyebrow: string; vision: string; mission: string[]; motto: string };
-  TESTIMONIALS: SectionHeading & SelectionConfig & { intro: string };
-  CTA: { eyebrow: string; heading: string; body: string; primaryCta: Cta; secondaryCta: Cta | null };
+    layout: HeroLayout;
+    // 4000-10000 ms.
+    intervalMs: number;
+    photoStyle: HeroPhotoStyle;
+    showViewfinder: boolean;
+    showBadge: boolean;
+    badgeText: string;
+    badgeHref: string;
+    // 0-6 slide; 0 = hero teks, 1 = foto statis, 2+ = slideshow.
+    slides: HeroSlide[];
+  } & Decor;
+  STATS: SectionHeading & Decor & { items: { value: number; prefix: string; suffix: string; label: string }[] };
+  SERVICES: SectionHeading & SelectionConfig & Decor & { intro: string; cta: Cta | null };
+  CATEGORIES: SectionHeading & SelectionConfig & Decor & { intro: string; cta: Cta | null };
+  LATEST_TRAININGS: SectionHeading & SelectionConfig & Decor & { intro: string; cta: Cta | null };
+  UPCOMING_SCHEDULES: SectionHeading & Decor & { intro: string; limit: number; cta: Cta | null };
+  CLIENTS: SectionHeading & SelectionConfig & Decor & { intro: string };
+  VISION_MISSION: Decor & { eyebrow: string; vision: string; mission: string[]; motto: string };
+  TESTIMONIALS: SectionHeading & SelectionConfig & Decor & { intro: string };
+  CTA: Decor & { eyebrow: string; heading: string; body: string; primaryCta: Cta; secondaryCta: Cta | null };
   // Teks berjalan: heading hanya untuk pembaca layar; source services = judul layanan tayang.
-  MARQUEE: { heading: string; source: "custom" | "services"; items: string[]; limit: number };
+  MARQUEE: Decor & { heading: string; source: "custom" | "services"; items: string[]; limit: number };
 };
 
 export type HomeSection = {
@@ -799,7 +835,7 @@ type Omit3<T> = Omit<T, "mode" | "limit" | "ids">;
 type PublicBase<K extends HomeSectionType> = { id: string; type: K };
 
 export type PublicHomeSection =
-  | (PublicBase<"HERO"> & Omit<HomeSectionContentMap["HERO"], "image"> & { image: PublicImage | null })
+  | (PublicBase<"HERO"> & Omit<HomeSectionContentMap["HERO"], "slides"> & { slides: PublicHeroSlide[] })
   | (PublicBase<"STATS"> & HomeSectionContentMap["STATS"])
   | (PublicBase<"SERVICES"> & Omit3<HomeSectionContentMap["SERVICES"]> & { items: PublicServiceCard[] })
   | (PublicBase<"CATEGORIES"> & Omit3<HomeSectionContentMap["CATEGORIES"]> & { items: PublicCategory[] })
@@ -809,7 +845,7 @@ export type PublicHomeSection =
   | (PublicBase<"VISION_MISSION"> & HomeSectionContentMap["VISION_MISSION"])
   | (PublicBase<"TESTIMONIALS"> & Omit3<HomeSectionContentMap["TESTIMONIALS"]> & { items: PublicTestimonial[] })
   | (PublicBase<"CTA"> & HomeSectionContentMap["CTA"])
-  | (PublicBase<"MARQUEE"> & { heading: string; items: string[] });
+  | (PublicBase<"MARQUEE"> & Decor & { heading: string; items: string[] });
 
 export type PublicHome = { sections: PublicHomeSection[] };
 

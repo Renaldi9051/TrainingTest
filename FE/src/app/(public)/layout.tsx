@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { GridLines } from "@/components/decor/grid-lines";
 import { PageEnter } from "@/components/motion/page-enter";
+import { ParallaxEffects } from "@/components/motion/parallax-effects";
 import { PointerEffects } from "@/components/motion/pointer-effects";
 import { FloatingContact } from "@/components/public/floating-contact";
-import { HeroWatch } from "@/components/public/hero-watch";
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { getSettings } from "@/lib/api/public";
@@ -52,8 +52,8 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
       <PointerEffects />
       {/* Header halaman stagger masuk setelah navigasi klien (bukan muat penuh atau Back/Forward). */}
       <PageEnter />
-      {/* Floating contact di beranda baru muncul setelah hero lewat. */}
-      <HeroWatch />
+      {/* Teks outline raksasa bergeser pelan mengikuti scroll (satu listener). */}
+      <ParallaxEffects />
     </>
   );
 }

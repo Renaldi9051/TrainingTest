@@ -8,8 +8,9 @@ import { HERO_WORD_MS, heroWordStepMs } from "./tokens";
 
 // Headline hero: reveal per kata dengan CSS murni (keyframes langsung jalan tanpa menunggu JS),
 // hanya transform, total <= 500 ms. Reduced motion: tanpa animasi (lihat .hero-word di theme.css).
-// accents: kata kunci (abu) di akhir judul; lebih dari satu = berganti terus tiap 2 s (RotatingWord).
-export function HeroWords({ text, accents = [] }: { text: string; accents?: string[] }) {
+// accents: kata kunci di akhir judul; lebih dari satu = berganti tiap 2 s (RotatingWord, ikut tombol
+// pause hero). accentClassName: gaya kata aksen (abu di latar putih, italic di atas foto).
+export function HeroWords({ text, accents = [], accentClassName = "text-fg-muted" }: { text: string; accents?: string[]; accentClassName?: string }) {
   const words = splitWords(text);
   const rotating = accents.map((accent) => accent.trim()).filter(Boolean);
   const count = words.length + (rotating.length > 0 ? 1 : 0);
@@ -24,7 +25,7 @@ export function HeroWords({ text, accents = [] }: { text: string; accents?: stri
         <span>
           {words.length > 0 ? " " : null}
           <span className="reveal-mask">
-            <span className="hero-word inline-block text-fg-muted" style={{ "--i": words.length } as CSSProperties}>
+            <span className={`hero-word inline-block ${accentClassName}`} style={{ "--i": words.length } as CSSProperties}>
               {rotating.length > 1 ? <RotatingWord words={rotating} /> : rotating[0]}
             </span>
           </span>
