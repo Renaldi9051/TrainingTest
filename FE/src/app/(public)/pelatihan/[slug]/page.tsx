@@ -25,6 +25,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { getMarketing, getSettings, getTraining } from "@/lib/api/public";
 import { getTrainingPreview } from "@/lib/api/preview";
 import type { PublicTrainingDetail } from "@/lib/api/types";
+import { displayTitle, isUntitled } from "@/lib/display-title";
 import { getPublicEnv } from "@/lib/env";
 import { APP_TIME_ZONE, dateBadgeParts, formatDateRange, formatRupiah } from "@/lib/format";
 import { LEVEL_LABELS, METHOD_LABELS, TYPE_LABELS } from "@/lib/labels";
@@ -67,16 +68,17 @@ export async function generateMetadata({ params }: PageProps<"/pelatihan/[slug]"
   const { training, preview } = loaded;
   const description = training.seo.description || training.summary || undefined;
   const image = training.seo.ogImage;
+  const title = training.seo.title || displayTitle(training.title);
   return {
-    title: training.seo.title || training.title,
+    title,
     description,
     alternates: { canonical: `/pelatihan/${training.slug}` },
     openGraph: {
       type: "website",
-      title: training.seo.title || training.title,
+      title,
       description,
       url: `/pelatihan/${training.slug}`,
-      images: image ? [{ url: image.url, alt: image.alt ?? training.title }] : undefined,
+      images: image ? [{ url: image.url, alt: image.alt ?? title }] : undefined,
     },
     ...(preview ? { robots: { index: false, follow: false } } : {}),
   };
@@ -129,9 +131,11 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
   ]);
   if (!loaded) notFound();
   const { training, preview } = loaded;
+  // Data lama bisa berjudul kosong: tampil label UI "Tanpa judul" (heading tidak kosong).
+  const title = displayTitle(training.title);
   const siteUrl = getPublicEnv().NEXT_PUBLIC_SITE_URL;
   const whatsappNumber = settings.contact.whatsapp;
-  const cta = whatsappNumber ? { chat: whatsappTrainingUrl(whatsappNumber, training.title) } : null;
+  const cta = whatsappNumber ? { chat: whatsappTrainingUrl(whatsappNumber, title) } : null;
   // Ada marketing: "Chat WA" (bar mobile & kartu samping) membuka panel floating contact (pilih
   // marketing, pesan berisi judul pelatihan); tombol bulat disembunyikan di mobile (data-contact-bar).
   const marketingPanel = contactsWithWhatsapp(marketing).length > 0;
@@ -198,14 +202,14 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
     <>
       {preview ? <PreviewBanner path={`/pelatihan/${training.slug}`} /> : null}
       <ReadingProgress />
-      <ContactContext topic={{ kind: "training", title: training.title }} bar={Boolean(cta) && marketingPanel} />
+      <ContactContext topic={{ kind: "training", title }} bar={Boolean(cta) && marketingPanel} />
       <JsonLd
         data={[
-          courseJsonLd(training, siteUrl, settings.identity.name),
+          courseJsonLd({ ...training, title }, siteUrl, settings.identity.name),
           ...training.schedules
             .filter((schedule) => schedule.status !== "COMPLETED")
             .map((schedule) =>
-              scheduleEventJsonLd({ ...schedule, title: training.title, slug: training.slug }, siteUrl, settings.identity.name),
+              scheduleEventJsonLd({ ...schedule, title, slug: training.slug }, siteUrl, settings.identity.name),
             ),
         ]}
       />
@@ -218,7 +222,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
               crumbs={[
                 { label: "Pelatihan", href: "/pelatihan" },
                 ...(primaryCategory ? [{ label: primaryCategory.name, href: `/pelatihan/kategori/${primaryCategory.slug}` }] : []),
-                { label: training.title },
+                { label: title },
               ]}
             />
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-end">
@@ -243,8 +247,11 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
                     ) : null}
                   </ul>
                 ) : null}
-                <h1 data-page-enter="" className="max-w-[24ch] text-h1 text-fg-strong">
-                  {training.title}
+                <h1
+                  data-page-enter=""
+                  className={cn("max-w-[24ch] text-h1", isUntitled(training.title) ? "text-fg-muted" : "text-fg-strong")}
+                >
+                  {title}
                 </h1>
               </div>
               {training.summary ? (
@@ -377,7 +384,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
                 siteName={settings.identity.name}
                 privacyHref={privacyHref}
                 source="TRAINING_DETAIL"
-                training={{ slug: training.slug, title: training.title }}
+                training={{ slug: training.slug, title }}
                 sessions={sessions}
               />
             </div>
@@ -524,7 +531,7 @@ function ScheduleSection({ training }: { training: PublicTrainingDetail }) {
         Investasi: <span className="font-medium text-fg-strong">{investmentText(training)}</span>
       </p>
       {training.schedules.length > 0 ? (
-        <ScheduleTable rows={training.schedules} caption={`Jadwal ${training.title}`} bigDate />
+        <ScheduleTable rows={training.schedules} caption={`Jadwal ${displayTitle(training.title)}`} bigDate />
       ) : (
         <p className="border-y border-border py-6 text-body text-fg-strong">
           {SCHEDULE_FLEXIBLE}. Belum ada sesi public yang dibuka.

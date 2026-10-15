@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
@@ -197,6 +198,34 @@ test.describe("halaman pelatihan v0.2", () => {
     await expect(page.getByRole("heading", { level: 1, name: withoutCover.title })).toBeVisible();
     await expect(page.locator("[data-training-cover]")).toHaveCount(0);
     await expect(page.locator("dl[aria-label='Fakta pelatihan']")).not.toContainText("Sertifikat");
+  });
+
+  // Data lama hasil impor bisa berjudul kosong (validator admin menolaknya, jadi judul dikosongkan
+  // langsung di training_e2e lewat script BE). Halaman tidak boleh crash atau punya heading kosong.
+  test("judul kosong (data lama): kartu dan detail tetap tampil, tanpa heading kosong", async ({ page }) => {
+    const request = page.request;
+    await loginViaApi(request);
+    const blank = await createTraining(request, { title: `[UJI] Akan dikosongkan ${id}`, categoryIds: [category.id], status: "PUBLISHED" });
+    try {
+      const result = spawnSync("npm", ["run", "db:e2e:blank-title", "--", blank.slug], {
+        cwd: path.resolve(__dirname, "../../BE"),
+        shell: true,
+        encoding: "utf8",
+      });
+      expect(result.status, result.stderr || result.stdout).toBe(0);
+
+      const response = await page.goto(`/pelatihan/${blank.slug}`);
+      expect(response?.status()).toBe(200);
+      await expect(page.getByRole("heading", { level: 1, name: "Tanpa judul" })).toBeVisible();
+      await expect(page.locator("h1, h2, h3").filter({ hasText: /^\s*$/ })).toHaveCount(0);
+
+      await page.goto(`/pelatihan/kategori/${category.slug}`);
+      const untitled = page.locator(`article[data-cursor-label]:has(a[href="/pelatihan/${blank.slug}"])`);
+      await expect(untitled.getByRole("link", { name: "Tanpa judul" })).toBeVisible();
+      await expect(page.locator("h1, h2, h3").filter({ hasText: /^\s*$/ })).toHaveCount(0);
+    } finally {
+      await deleteTraining(request, blank.id);
+    }
   });
 
   // Screenshot kondisi e2e (dengan sampul): beberapa pelatihan seed di kategori ini diberi foto uji

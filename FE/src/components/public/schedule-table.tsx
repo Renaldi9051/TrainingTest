@@ -2,6 +2,7 @@ import Link from "next/link";
 import { RevealRows } from "@/components/motion/reveal-rows";
 import type { ScheduleStatus, TrainingMethod } from "@/lib/api/types";
 import { dateBadgeParts, formatDateRange, formatRupiah } from "@/lib/format";
+import { displayTitle } from "@/lib/display-title";
 import { METHOD_LABELS } from "@/lib/labels";
 
 export type ScheduleRow = {
@@ -80,7 +81,7 @@ export function ScheduleTable({
                   href={`/pelatihan/${row.training.slug}`}
                   className="underline-offset-4 outline-none hover:underline focus-visible:underline"
                 >
-                  {row.training.title}
+                  {displayTitle(row.training.title)}
                 </Link>
               </td>
             ) : null}

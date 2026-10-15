@@ -3,6 +3,7 @@ import { RevealImage } from "@/components/motion/reveal-parts";
 import { RevealRows } from "@/components/motion/reveal-rows";
 import type { PublicTrainingCard } from "@/lib/api/types";
 import { Viewfinder } from "@/components/decor/viewfinder";
+import { displayTitle, isUntitled } from "@/lib/display-title";
 import { LEVEL_LABELS, METHOD_LABELS, TYPE_LABELS } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { PublicImage } from "./public-image";
@@ -65,13 +66,13 @@ export function TrainingCard({
       {labelText ? (
         <p className="mt-5 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{labelText}</p>
       ) : null}
-      <Heading className="mt-2 text-h3 text-fg-strong">
+      <Heading className={cn("mt-2 text-h3", isUntitled(training.title) ? "text-fg-muted" : "text-fg-strong")}>
         {/* Seluruh kartu bisa diklik lewat pseudo-element, tapi tetap satu link untuk pembaca layar. */}
         <Link
           href={`/pelatihan/${training.slug}`}
           className="underline-offset-4 outline-none group-hover:underline after:absolute after:inset-0 focus-visible:underline focus-visible:after:ring-2 focus-visible:after:ring-fg-strong focus-visible:after:ring-offset-4"
         >
-          {training.title}
+          {displayTitle(training.title)}
         </Link>
       </Heading>
       {meta.length > 0 ? <p className="mt-3 text-small text-fg-muted">{meta.join(" · ")}</p> : null}

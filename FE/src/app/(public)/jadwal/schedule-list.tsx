@@ -1,3 +1,4 @@
+import { displayTitle } from "@/lib/display-title";
 import Form from "next/form";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -79,7 +80,7 @@ export async function ScheduleList({ searchParams }: { searchParams: PageProps<"
           .filter((item) => item.status !== "COMPLETED")
           .map((item) =>
             scheduleEventJsonLd(
-              { ...item, title: item.training.title, slug: item.training.slug },
+              { ...item, title: displayTitle(item.training.title), slug: item.training.slug },
               siteUrl,
               settings.identity.name,
             ),
