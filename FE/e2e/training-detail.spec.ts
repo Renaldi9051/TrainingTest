@@ -36,7 +36,7 @@ test.describe("detail pelatihan terstruktur", () => {
     await expect(facts.filter({ hasText: "Hubungi marketing" })).toHaveCount(1);
 
     // Daftar isi (desktop): tanpa Deskripsi (kosong); #jadwal selalu ada.
-    const toc = page.getByRole("navigation", { name: "Daftar isi", exact: true });
+    const toc = page.getByRole("navigation", { name: "Isi pelatihan", exact: true });
     await expect(toc.getByRole("link")).toHaveText([
       "Hasil belajar",
       "Materi",

@@ -79,6 +79,20 @@ test.describe("screenshot interaksi shell @manual", () => {
     await page.waitForTimeout(400);
     await page.screenshot({ path: path.join(OUT, "overlay-360.png") });
   });
+
+  // Fase 4: overlay indeks kategori dari sidebar filter katalog (mobile: di dalam panel terlipat).
+  test("katalog: overlay indeks kategori A-Z", async ({ page }) => {
+    mkdirSync(OUT, { recursive: true });
+    for (const width of WIDTHS) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/pelatihan");
+      if (width < 1024) await page.locator("summary", { hasText: "Filter" }).click();
+      await page.getByRole("button", { name: "Indeks kategori A-Z" }).click();
+      await expect(page.getByRole("dialog", { name: "Indeks kategori / A-Z" })).toBeVisible();
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: path.join(OUT, `katalog-az-${width}.png`) });
+    }
+  });
 });
 
 test.describe("screenshot redesign @manual", () => {

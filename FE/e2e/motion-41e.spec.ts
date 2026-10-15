@@ -275,7 +275,7 @@ test.describe("animasi 4.1e", () => {
     await page.goto(`/pelatihan/${training.slug}`);
     const bar = page.locator("[data-reading-progress]");
     await expect.poll(() => bar.evaluate((element) => (element as HTMLElement).style.transform)).toBe("scaleX(0)");
-    const toc = page.getByRole("navigation", { name: "Daftar isi", exact: true });
+    const toc = page.getByRole("navigation", { name: "Isi pelatihan", exact: true });
     await expect(toc.locator("a[aria-current=location]")).toHaveCount(1);
 
     await page.locator("#materi").scrollIntoViewIfNeeded();
