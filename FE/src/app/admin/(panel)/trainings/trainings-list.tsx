@@ -14,6 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BulkSelectionSummary } from "@/components/admin/bulk-selection-summary";
+import { CategoryPicker } from "@/components/admin/category-picker";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import {
   createDataTableColumns,
@@ -207,7 +208,8 @@ export function TrainingsList() {
     const value = searchParams.get("issue");
     return isTrainingIssue(value) ? value : ALL;
   });
-  const [categoryId, setCategoryId] = useState<string>(ALL);
+  const [categoryOverride, setCategoryOverride] = useState<string | null>(null);
+  const categoryId = categoryOverride ?? searchParams.get("categoryId") ?? ALL;
   const [method, setMethod] = useState<string>(ALL);
   const [sort, setSort] = useState<string>("-updatedAt");
   const [page, setPage] = useState(1);
@@ -324,19 +326,14 @@ export function TrainingsList() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={categoryId} onValueChange={resetPage(setCategoryId)}>
-              <SelectTrigger className="w-44" aria-label="Filter kategori">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>Semua kategori</SelectItem>
-                {(categories.data ?? []).map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategoryPicker
+              options={categories.data ?? []}
+              value={categoryId}
+              onChange={resetPage(setCategoryOverride)}
+              label="Filter kategori"
+              emptyValue={ALL}
+              emptyLabel="Semua kategori"
+            />
             <Select value={method} onValueChange={resetPage(setMethod)}>
               <SelectTrigger className="w-32" aria-label="Filter metode">
                 <SelectValue />
@@ -448,18 +445,13 @@ export function TrainingsList() {
         {selectionSummary}
         <div className="space-y-2">
           <Label htmlFor={sid("category")}>Kategori pengganti</Label>
-          <Select value={targetCategory} onValueChange={setTargetCategory}>
-            <SelectTrigger id={sid("category")} className="w-full">
-              <SelectValue placeholder="Pilih kategori" />
-            </SelectTrigger>
-            <SelectContent>
-              {(categories.data ?? []).map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CategoryPicker
+            id={sid("category")}
+            options={categories.data ?? []}
+            value={targetCategory}
+            onChange={setTargetCategory}
+            label="Kategori pengganti"
+          />
         </div>
       </ConfirmDialog>
 

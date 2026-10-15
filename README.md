@@ -136,3 +136,28 @@ Dijalankan dari `BE/` atau `FE/`:
 | `npm run bench:search` | BE: ukur latensi search katalog (p50/p95/p99) lewat HTTP ke BE yang sedang jalan. Target p95 < 300 ms |
 | `npm run db:studio` | BE: Prisma Studio |
 | `npm run test:e2e` | FE: Playwright. Tidak memakai `training_dev`: menyalakan BE (:4100) dan FE (:3100) khusus e2e dengan database `training_e2e` (`DATABASE_URL_E2E`), yang di-drop, dimigrasi, dan di-seed ulang di awal setiap run. Bisa jalan bersamaan dengan `npm run dev`. Butuh container Postgres (`npm run db:up`). Sekali saja: `npx playwright install chromium` |
+
+## Katalog pelatihan dari referensi publik
+
+Katalog lokal dapat diisi dari snapshot metadata publik Diorama yang tersimpan di
+`BE/prisma/seed-data/reference-catalog.json` (14 Oktober 2026). Snapshot berisi judul,
+slug, tanggal, dan relasi kategori untuk 5.831 pelatihan. Naskah detail pada aplikasi
+ditulis ulang oleh `reference-training.ts`; halaman Finance & Treasury memiliki materi
+khusus. Jadwal, harga, foto, logo, dan informasi kontak milik situs referensi tidak
+diimpor. Sesuaikan informasi operasional tersebut di admin sebelum dipublikasikan.
+
+```powershell
+cd BE
+npm run db:seed:reference -- --hide-demo
+```
+
+Perintah impor aman diulang: entri dengan slug yang sudah ada tidak ditimpa. Opsi
+`--hide-demo` menyembunyikan katalog contoh lama bila judulnya masih sama dengan seeder.
+Untuk memperbarui snapshot metadata dari API publik, jalankan
+`npm run db:reference:fetch`, tinjau perubahannya, lalu ulangi impor.
+
+Fitur dan kategori Evaluasi lama sudah dihapus. Pada database yang pernah memakai
+versi sebelumnya, jalankan migrasi lalu `npm run db:remove:evaluation` dari `BE/`.
+Perintah pembersihan lokal ini melepas kategori dari pelatihan yang terhubung,
+menyembunyikan kategori/menu lama, dan merapikan teks halaman contoh tanpa
+menghapus pelatihannya. Aman diulang.

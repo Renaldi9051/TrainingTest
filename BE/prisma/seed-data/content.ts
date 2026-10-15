@@ -235,8 +235,6 @@ export const headerNav: SeedNavItem[] = [
   },
   { label: "Pelatihan", href: "/pelatihan" },
   { label: "Jadwal Training", href: "/jadwal" },
-  // Halaman evaluasi dibuat di Fase 4; sampai saat itu 404.
-  { label: "Evaluasi", href: "/evaluasi" },
 ];
 
 // Halaman statis yang ditautkan menu footer "Bantuan".
@@ -286,11 +284,11 @@ export const staticPages = [
     body: doc(
       p(legalNote),
       h3("Data yang kami kumpulkan"),
-      p("Nama, nama instansi, jabatan, alamat email, dan nomor telepon yang Anda isi saat mendaftar, bertanya, atau mengisi evaluasi pelatihan."),
+      p("Nama, nama instansi, jabatan, alamat email, dan nomor telepon yang Anda isi saat mendaftar atau bertanya tentang pelatihan."),
       h3("Penggunaan data"),
       ul(
         "Memproses pendaftaran dan mengirim informasi pelaksanaan pelatihan.",
-        "Menyiapkan sertifikat dan laporan evaluasi untuk instansi pengirim.",
+        "Menyiapkan sertifikat keikutsertaan untuk peserta dan instansi pengirim.",
         "Mengirim informasi jadwal baru bila Anda menyetujuinya.",
       ),
       h3("Penyimpanan dan keamanan"),
@@ -349,7 +347,7 @@ export const profilePage = {
         { title: "Berbasis proyek", description: "Kelas kreatif menghasilkan karya yang langsung masuk portofolio.", icon: "camera" },
         { title: "Pilihan format", description: "Kelas public, in-house, online, atau hybrid.", icon: "laptop" },
         { title: "Jadwal rutin", description: "Kelas public terjadwal setiap bulan di beberapa kota.", icon: "presentation" },
-        { title: "Sertifikat & evaluasi", description: "Sertifikat keikutsertaan dan laporan evaluasi untuk instansi.", icon: "award" },
+        { title: "Sertifikat keikutsertaan", description: "Sertifikat digital bagi peserta yang mengikuti seluruh sesi.", icon: "award" },
       ],
     },
     {

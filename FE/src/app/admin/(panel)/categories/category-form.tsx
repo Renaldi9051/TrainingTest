@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2Icon } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -151,7 +152,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
           <FormField
             id={sid("description")}
             label="Deskripsi"
-            description="Tampil di halaman kategori publik."
+            description="Dipakai sebagai deskripsi halaman kategori untuk mesin pencari."
             error={errors.description?.message}
           >
             <Textarea rows={5} {...form.register("description")} />
@@ -159,6 +160,9 @@ export function CategoryForm({ category }: { category: Category | null }) {
         </div>
 
         <aside className="space-y-8 lg:border-l lg:border-border lg:pl-8">
+          <p className="text-small text-fg-muted">
+            Kategori baru langsung tersedia untuk pelatihan. Untuk menampilkannya di dropdown Pelatihan, tambahkan submenu di <Link href="/admin/navigation" className="underline-offset-4 hover:underline">Navigasi</Link>.
+          </p>
           <Controller
             control={form.control}
             name="featured"

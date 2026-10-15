@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { createTraining, deleteTraining, firstCategory, loginViaApi, ORIGIN, runId, type CreatedTraining } from "./helpers";
 
 // Dashboard admin (PRD 6.1): angka, "Perlu dibereskan" dengan tautan edit & "Lihat semua" ke daftar
-// terfilter, aktivitas terakhir, dan slot Inquiry/Evaluasi tanpa angka palsu.
+// terfilter, aktivitas terakhir, dan ringkasan Inquiry.
 
 const HEADERS = { Origin: ORIGIN };
 
@@ -30,14 +30,13 @@ test.describe("dashboard admin", () => {
     if (training) await deleteTraining(request, training.id);
   });
 
-  test("angka, perlu dibereskan, aktivitas, pintasan, dan slot modul yang belum ada", async ({ page }) => {
+  test("angka, perlu dibereskan, aktivitas, pintasan, dan ringkasan Inquiry", async ({ page }) => {
     await loginViaApi(page.request);
     await page.goto("/admin");
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
     await expect(page.getByText("Pelatihan tayang")).toBeVisible();
-    // Slot tanpa angka palsu.
     await expect(page.getByText("Inquiry baru")).toBeVisible();
-    await expect(page.getByText("Aktif setelah modul Evaluasi dibuat.")).toBeVisible();
+    await expect(page.getByText("Evaluasi baru")).toHaveCount(0);
 
     const attention = page.getByRole("region", { name: "Perlu dibereskan" });
     // Jadwal lewat masih Dibuka: satu-satunya di database e2e, jadi tampil di lima teratas.

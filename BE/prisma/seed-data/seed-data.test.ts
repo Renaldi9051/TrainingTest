@@ -100,7 +100,6 @@ describe("data contoh", () => {
       ["Layanan", "/layanan"],
       ["Pelatihan", "/pelatihan"],
       ["Jadwal Training", "/jadwal"],
-      ["Evaluasi", "/evaluasi"],
     ]);
     expect(content.headerNav[1].children).toEqual([{ label: "Portofolio", href: "/profil/portofolio" }]);
     expect(content.headerNav[2].children?.map((child) => child.href)).toEqual(

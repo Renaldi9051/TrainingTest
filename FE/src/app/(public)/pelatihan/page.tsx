@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { TrainingGridSkeleton } from "@/components/public/training-card";
 import { Container } from "@/components/ui/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { getSettings } from "@/lib/api/public";
 import { catalogCanonical, parseCatalogState } from "@/lib/catalog-url";
 import { Catalog } from "./catalog";
@@ -19,16 +18,17 @@ export async function generateMetadata({ searchParams }: PageProps<"/pelatihan">
 
 export default function CatalogPage({ searchParams }: PageProps<"/pelatihan">) {
   return (
-    <Container className="py-16 md:py-24">
-      <Eyebrow data-page-enter="">Katalog</Eyebrow>
-      <h1 data-page-enter="" className="mt-4 text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
-        Pelatihan
-      </h1>
+    <>
+      <div className="relative flex min-h-56 items-center justify-center overflow-hidden bg-[#0b417f] text-white after:absolute after:inset-x-0 after:bottom-0 after:h-8 after:origin-bottom-left after:skew-y-[1.4deg] after:bg-white/40">
+        <h1 data-page-enter="" className="relative z-10 px-4 text-center text-[30px] font-bold uppercase">Semua Pelatihan</h1>
+      </div>
+      <Container className="py-16 md:py-20">
       {/* Filter dibaca dari URL saat request, jadi bagian ini di-stream di dalam Suspense. */}
       <Suspense fallback={<CatalogSkeleton />}>
         <Catalog searchParams={searchParams} />
       </Suspense>
-    </Container>
+      </Container>
+    </>
   );
 }
 

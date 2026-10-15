@@ -1,40 +1,17 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TrainingGrid } from "@/components/public/training-card";
-import { RollText } from "@/components/motion/roll-text";
-import { ButtonArrow, buttonVariants, MAGNETIC } from "@/components/ui/button";
+import { Pagination } from "@/components/public/pagination";
 import { Container } from "@/components/ui/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { getCatalog, getCategories, getCategory } from "@/lib/api/public";
-import { formatNumber } from "@/lib/format";
+import { getCatalog, getCategory } from "@/lib/api/public";
 
-// Landing kategori statis (opsi A): deskripsi + 24 pelatihan terbaru. Filter & paginasi lengkap
-// ada di /pelatihan?kategori=<slug>. Statis penuh supaya slug tak dikenal = HTTP 404 sungguhan.
-export const ensureStatic = "navigation";
+// Paginasi kategori dibaca dari query string, sehingga rute dirender sesuai permintaan.
 export const instant = false;
-
-const BUILD_PLACEHOLDER = "__placeholder";
-const LANDING_SIZE = 24;
-
-export async function generateStaticParams() {
-  try {
-    const categories = await getCategories();
-    const slugs = categories.filter((category) => category.trainingCount > 0).map((category) => category.slug);
-    if (slugs.length > 0) return slugs.map((slug) => ({ slug }));
-  } catch {
-    // BE tidak terjangkau saat build: halaman dibuat saat diminta pertama kali.
-  }
-  return [{ slug: BUILD_PLACEHOLDER }];
-}
-
-async function loadCategory(slug: string) {
-  return slug === BUILD_PLACEHOLDER ? null : getCategory(slug);
-}
+const LANDING_SIZE = 10;
 
 export async function generateMetadata({ params }: PageProps<"/pelatihan/kategori/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const category = await loadCategory(slug);
+  const category = await getCategory(slug);
   if (!category) return { title: "Kategori tidak ditemukan" };
   return {
     title: `Pelatihan ${category.name}`,
@@ -43,64 +20,33 @@ export async function generateMetadata({ params }: PageProps<"/pelatihan/kategor
   };
 }
 
-export default async function CategoryPage({ params }: PageProps<"/pelatihan/kategori/[slug]">) {
+export default async function CategoryPage({ params, searchParams }: PageProps<"/pelatihan/kategori/[slug]">) {
   const { slug } = await params;
-  const category = await loadCategory(slug);
+  const rawPage = Number.parseInt((await searchParams).hal?.toString() ?? "1", 10);
+  const page = Number.isFinite(rawPage) && rawPage > 1 ? Math.min(rawPage, 1000) : 1;
+  const category = await getCategory(slug);
   if (!category) notFound();
-  const catalog = await getCatalog({ kategori: [category.slug], per: LANDING_SIZE });
-  const filteredHref = `/pelatihan?kategori=${category.slug}`;
-
+  const catalog = await getCatalog({ kategori: [category.slug], hal: page, per: LANDING_SIZE });
   return (
-    <Container className="py-16 md:py-24">
-      <nav aria-label="Breadcrumb" data-page-enter="">
-        <ol className="flex flex-wrap items-center gap-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
-          <li>
-            <Link href="/pelatihan" className="underline-offset-4 hover:text-fg-strong hover:underline">
-              Pelatihan
-            </Link>
-          </li>
-          <li aria-hidden>/</li>
-          <li aria-current="page">Kategori</li>
-        </ol>
-      </nav>
-      <div className="mt-8 grid gap-8 border-b border-border pb-12 lg:grid-cols-12">
-        <div className="lg:col-span-8">
-          <h1 data-page-enter="" className="text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
-            {category.name}
-          </h1>
-          {category.description ? (
-            <p data-page-enter="" className="mt-6 max-w-[65ch] text-body-lg text-fg-muted">{category.description}</p>
-          ) : null}
+    <>
+      <div className="relative flex min-h-56 items-center justify-center overflow-hidden bg-[#0b417f] text-white after:absolute after:inset-x-0 after:bottom-0 after:h-8 after:origin-bottom-left after:skew-y-[1.4deg] after:bg-white/40">
+        <h1 data-page-enter="" className="relative z-10 px-4 text-center text-[30px] font-bold">Category: {category.name}</h1>
+      </div>
+      <Container className="py-16 md:py-20">
+        <div>
+          {catalog.items.length > 0 ? (
+            <TrainingGrid trainings={catalog.items} headingLevel="h2" variant="reference-category" />
+          ) : (
+            <div className="py-12">
+              <p className="text-[24px] leading-[1.25] font-medium text-fg-strong">Belum ada pelatihan di kategori ini</p>
+              <p className="mt-3 text-body text-fg-muted">Lihat kategori lain di katalog.</p>
+            </div>
+          )}
         </div>
-        <div className="flex flex-col justify-end gap-2 lg:col-span-4 lg:items-end">
-          <Eyebrow>Jumlah pelatihan</Eyebrow>
-          <p className="font-mono text-[40px] leading-none text-fg-strong">{formatNumber(category.trainingCount)}</p>
+        <div className="mt-10">
+          <Pagination meta={catalog.meta} hrefFor={(number) => number === 1 ? `/pelatihan/kategori/${category.slug}` : `/pelatihan/kategori/${category.slug}?hal=${number}`} />
         </div>
-      </div>
-
-      <div className="mt-12">
-        {catalog.items.length > 0 ? (
-          <TrainingGrid trainings={catalog.items} headingLevel="h2" />
-        ) : (
-          <div className="py-12">
-            <p className="text-[24px] leading-[1.25] font-medium text-fg-strong">Belum ada pelatihan di kategori ini</p>
-            <p className="mt-3 text-body text-fg-muted">Lihat kategori lain di katalog.</p>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-12 flex flex-wrap items-center gap-6 border-t border-border pt-8">
-        {catalog.meta.total > catalog.items.length ? (
-          <Link href={filteredHref} className={buttonVariants({ variant: "primary", size: "lg" })} {...MAGNETIC}>
-            <RollText>{`Lihat semua ${formatNumber(catalog.meta.total)} pelatihan`}</RollText>
-            <ButtonArrow />
-          </Link>
-        ) : null}
-        <Link href={filteredHref} className={`${buttonVariants({ variant: "ghost" })} gap-2`}>
-          Cari dan saring di kategori ini
-          <ButtonArrow />
-        </Link>
-      </div>
-    </Container>
+      </Container>
+    </>
   );
 }

@@ -205,7 +205,7 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
       }}
     >
       {/* Split button: label = link ke halaman induk, panah = buka/tutup submenu (area klik 24x24 px). */}
-      <NavLink item={item} pathname={pathname} onNavigate={() => setOpen(false)} className={cn(linkClass, active && "text-fg-strong")} />
+      <NavLink item={item} pathname={pathname} onNavigate={() => setOpen(false)} className={cn(linkClass, active && (item.href === "/pelatihan" ? "!text-[#0b417f]" : "text-fg-strong"))} />
       <button
         ref={toggleRef}
         type="button"
@@ -221,7 +221,7 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
           aria-hidden
         />
       </button>
-      <div id={panelId} hidden={!open} className="absolute top-full left-0 mt-3 min-w-56 border border-border bg-bg py-2">
+      <div id={panelId} hidden={!open} className="absolute top-full left-0 z-50 max-h-[75vh] w-[320px] overflow-y-auto rounded-2xl bg-white py-2 shadow-[0_3px_18px_rgb(0_0_0_/_0.18)]">
         <ul>
           {item.children.map((child) => (
             <li key={`${child.label}-${child.href}`}>
@@ -229,7 +229,7 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
                 item={child}
                 pathname={pathname}
                 onNavigate={() => setOpen(false)}
-                className="block px-4 py-2 text-small text-fg outline-none hover:bg-bg-subtle hover:text-fg-strong focus-visible:bg-bg-subtle aria-[current=page]:font-medium"
+                className="block px-8 py-4 text-[16px] text-[#151515] outline-none hover:bg-[#f3f6fa] hover:text-[#0b417f] focus-visible:bg-[#f3f6fa] aria-[current=page]:font-semibold"
               />
             </li>
           ))}

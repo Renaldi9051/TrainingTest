@@ -155,8 +155,6 @@ export type Dashboard = {
     linkable: boolean;
   }[];
   inquiries: { new: number; lastWeek: number; latest: { id: string; name: string; training: string | null; createdAt: string }[] };
-  // null sampai modul Evaluasi dibuat (4.3).
-  evaluations: null;
 };
 
 // ===== Media =====

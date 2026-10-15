@@ -80,11 +80,6 @@ enum InquirySource {
   CONTACT
 }
 
-enum EvaluationQuestionType {
-  RATING
-  TEXT
-}
-
 // PERMANENT = HTTP 301, TEMPORARY = HTTP 302.
 enum RedirectCode {
   PERMANENT
@@ -122,7 +117,6 @@ model User {
   updatedMediaPartners       MediaPartner[]
   updatedMedia               Media[]
   updatedInquiries           Inquiry[]
-  updatedEvaluationQuestions EvaluationQuestion[]
   updatedRedirects           Redirect[]
 }
 
@@ -356,7 +350,6 @@ model Schedule {
   updatedById String?        @db.Uuid
   updatedBy   User?          @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 
-  evaluationResponses EvaluationResponse[]
 
   @@index([trainingId])
   @@index([startDate])
@@ -502,7 +495,7 @@ model Media {
   @@index([deletedAt])
 }
 
-// ===== Inquiry & evaluasi =====
+// ===== Inquiry =====
 
 model Inquiry {
   id             String        @id @default(uuid(7)) @db.Uuid
@@ -529,39 +522,6 @@ model Inquiry {
 
   @@index([status, createdAt])
   @@index([trainingId])
-  @@index([deletedAt])
-}
-
-model EvaluationQuestion {
-  id          String                 @id @default(uuid(7)) @db.Uuid
-  label       String
-  type        EvaluationQuestionType
-  order       Int                    @default(0)
-  active      Boolean                @default(true)
-  createdAt   DateTime               @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime               @updatedAt @db.Timestamptz(3)
-  deletedAt   DateTime?              @db.Timestamptz(3)
-  updatedById String?                @db.Uuid
-  updatedBy   User?                  @relation(fields: [updatedById], references: [id], onDelete: SetNull)
-
-  @@index([order])
-  @@index([deletedAt])
-}
-
-model EvaluationResponse {
-  id         String    @id @default(uuid(7)) @db.Uuid
-  scheduleId String    @db.Uuid
-  schedule   Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
-  name       String
-  company    String?
-  email      String?
-  // Jawaban per pertanyaan, divalidasi Zod di BE.
-  answers    Json
-  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
-  deletedAt  DateTime? @db.Timestamptz(3)
-
-  @@index([scheduleId])
-  @@index([createdAt])
   @@index([deletedAt])
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ArrowUpDownIcon, FolderTreeIcon, PencilIcon, StarIcon } from "lucide-react";
+import { ArrowUpDownIcon, ExternalLinkIcon, FolderTreeIcon, PencilIcon, StarIcon } from "lucide-react";
 import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
 import {
@@ -64,7 +64,11 @@ const columns: DataTableColumn<Category>[] = columnHelper.columns([
   }),
   columnHelper.accessor("trainingCount", {
     header: "Pelatihan",
-    cell: ({ getValue }) => <span className="font-mono">{formatNumber(getValue())}</span>,
+    cell: ({ row, getValue }) => (
+      <Link href={`/admin/trainings?categoryId=${row.original.id}`} className="font-mono underline-offset-4 hover:underline" aria-label={`Lihat ${getValue()} pelatihan kategori ${row.original.name}`}>
+        {formatNumber(getValue())}
+      </Link>
+    ),
   }),
   columnHelper.accessor("updatedAt", {
     header: "Diperbarui",
@@ -74,11 +78,18 @@ const columns: DataTableColumn<Category>[] = columnHelper.columns([
     id: "actions",
     header: () => <span className="sr-only">Aksi</span>,
     cell: ({ row }) => (
-      <Button variant="ghost" size="icon-sm" asChild>
-        <Link href={`/admin/categories/${row.original.id}`} aria-label={`Ubah ${row.original.name}`}>
-          <PencilIcon strokeWidth={1.5} aria-hidden />
-        </Link>
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="icon-sm" asChild>
+          <a href={`/pelatihan/kategori/${row.original.slug}`} target="_blank" rel="noreferrer" aria-label={`Lihat ${row.original.name} di situs`}>
+            <ExternalLinkIcon strokeWidth={1.5} aria-hidden />
+          </a>
+        </Button>
+        <Button variant="ghost" size="icon-sm" asChild>
+          <Link href={`/admin/categories/${row.original.id}`} aria-label={`Ubah ${row.original.name}`}>
+            <PencilIcon strokeWidth={1.5} aria-hidden />
+          </Link>
+        </Button>
+      </div>
     ),
   }),
 ]);

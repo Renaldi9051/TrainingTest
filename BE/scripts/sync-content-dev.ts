@@ -83,7 +83,6 @@ async function plan() {
   add("Katalog baru", "tambah", `${buildSchedules(appDateString()).length} jadwal dalam 6 bulan ke depan`);
 
   // Relasi lain yang ikut terdampak.
-  add("Relasi terdampak", catalog.evaluations > 0 ? "hapus" : "tetap", `${catalog.evaluations} respons evaluasi pada jadwal lama${catalog.evaluations > 0 ? " (MENGHALANGI penghapusan jadwal: FK Restrict)" : ""}`);
   add("Relasi terdampak", catalog.inquiries > 0 ? "ubah" : "tetap", `${catalog.inquiries} inquiry yang menautkan pelatihan lama (kolom pelatihan menjadi kosong)`);
   add("Relasi terdampak", catalog.redirects > 0 ? "hapus" : "tetap", `${catalog.redirects} redirect /pelatihan/... (tujuannya tidak ada lagi)`);
   add("Relasi terdampak", "tetap", `${catalog.coverMedia} media sampul pelatihan lama tetap di media library (tidak lagi dipakai)`);
@@ -137,7 +136,6 @@ async function catalogImpact() {
     schedules: schedulesCount,
     schedulesTrash,
     trainingCategories: await db.trainingCategory.count(),
-    evaluations: await db.evaluationResponse.count(),
     inquiries: await db.inquiry.count({ where: { trainingId: { not: null } } }),
     redirects: await db.redirect.count({ where: CATALOG_REDIRECTS }),
     coverMedia: (await db.training.findMany({ where: { coverId: { not: null } }, distinct: ["coverId"], select: { coverId: true } })).length,
@@ -150,10 +148,6 @@ async function catalogImpact() {
 }
 
 async function apply(result: Awaited<ReturnType<typeof plan>>) {
-  // Respons evaluasi adalah data peserta: tidak dihapus diam-diam. Hentikan dan minta keputusan.
-  if (result.catalog.evaluations > 0) {
-    throw new Error(`Ada ${result.catalog.evaluations} respons evaluasi pada jadwal lama. Sinkronisasi dibatalkan; tidak ada yang diubah.`);
-  }
   const settings = buildSettings();
   await db.$transaction(
     async (tx) => {

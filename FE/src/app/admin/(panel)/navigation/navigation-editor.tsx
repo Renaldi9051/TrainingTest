@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLinkIcon, MenuIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { ChevronDownIcon, ExternalLinkIcon, MenuIcon, PencilIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -159,22 +159,13 @@ export function NavigationEditor() {
                         }
                       />
                       {item.children.length > 0 ? (
-                        <div className="pb-3 pl-10">
-                          <SortableList
-                            items={item.children}
-                            itemLabel={(child) => child.label}
-                            disabled={reorder.isPending}
-                            onReorder={(ids) => applyOrder(location.key, item.id, ids)}
-                            renderItem={(child, childHandle) => (
-                              <NavRow
-                                item={child}
-                                handle={childHandle}
-                                onEdit={() => setDialog({ mode: "edit", item: child })}
-                                onDelete={() => setDeleting(child)}
-                              />
-                            )}
-                          />
-                        </div>
+                        <NavChildren
+                          parent={item}
+                          reorderPending={reorder.isPending}
+                          onReorder={(ids) => applyOrder(location.key, item.id, ids)}
+                          onEdit={(child) => setDialog({ mode: "edit", item: child })}
+                          onDelete={setDeleting}
+                        />
                       ) : null}
                     </div>
                   )}
@@ -208,6 +199,61 @@ export function NavigationEditor() {
         onConfirm={() => deleting && remove.mutate(deleting)}
       />
     </>
+  );
+}
+
+function NavChildren({
+  parent,
+  reorderPending,
+  onReorder,
+  onEdit,
+  onDelete,
+}: {
+  parent: NavItem;
+  reorderPending: boolean;
+  onReorder: (ids: string[]) => void;
+  onEdit: (item: NavItem) => void;
+  onDelete: (item: NavItem) => void;
+}) {
+  const [open, setOpen] = useState(parent.children.length <= 12);
+  const [search, setSearch] = useState("");
+  const term = search.trim().toLocaleLowerCase("id-ID");
+  const matches = term
+    ? parent.children.filter((child) => `${child.label} ${child.href}`.toLocaleLowerCase("id-ID").includes(term))
+    : parent.children;
+
+  return (
+    <div className="pb-3 pl-10">
+      <button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)} className="flex items-center gap-2 rounded-sm py-1 text-small font-medium text-fg-muted hover:text-fg-strong">
+        <ChevronDownIcon className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        {parent.children.length} submenu {parent.label}
+      </button>
+      {open ? (
+        <div className="mt-2 space-y-2">
+          {parent.children.length > 12 ? (
+            <div className="relative max-w-sm">
+              <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted" aria-hidden />
+              <Input type="search" aria-label={`Cari submenu ${parent.label}`} placeholder="Cari nama atau tautan submenu" value={search} onChange={(event) => setSearch(event.target.value)} className="pl-9" />
+            </div>
+          ) : null}
+          {term ? (
+            <div className="space-y-1">
+              <p className="text-xs text-fg-muted">{matches.length} dari {parent.children.length} submenu. Kosongkan pencarian untuk mengubah urutan.</p>
+              {matches.map((child) => <NavRow key={child.id} item={child} handle={null} onEdit={() => onEdit(child)} onDelete={() => onDelete(child)} />)}
+              {matches.length === 0 ? <p className="py-3 text-small text-fg-muted">Submenu tidak ditemukan.</p> : null}
+            </div>
+          ) : (
+            <SortableList
+              items={parent.children}
+              itemLabel={(child) => child.label}
+              disabled={reorderPending}
+              onReorder={onReorder}
+              renderItem={(child, handle) => <NavRow item={child} handle={handle} onEdit={() => onEdit(child)} onDelete={() => onDelete(child)} />}
+            />
+          )}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

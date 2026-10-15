@@ -50,8 +50,6 @@ export type Dashboard = {
   attention: AttentionGroup[];
   activity: ActivityItem[];
   inquiries: InquirySummary;
-  // Diisi setelah modul Evaluasi dibuat (Fase 4.3); null = modul belum ada.
-  evaluations: null;
 };
 
 // Filter "perlu dibereskan" pelatihan, dipakai dashboard dan daftar admin (?issue=...).
@@ -236,6 +234,5 @@ export async function getDashboard(now = new Date()): Promise<Dashboard> {
     ],
     activity,
     inquiries,
-    evaluations: null,
   };
 }

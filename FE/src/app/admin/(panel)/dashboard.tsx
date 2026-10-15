@@ -88,11 +88,11 @@ function StatsGrid({ data }: { data: DashboardData | undefined }) {
   );
 }
 
-// Inquiry baru (terisi) + slot Evaluasi yang belum ada (tanpa angka palsu).
+// Ringkasan inquiry yang baru masuk.
 function IncomingModules({ data }: { data: DashboardData | undefined }) {
   const inquiries = data?.inquiries;
   return (
-    <dl className="grid grid-cols-1 border-t border-l border-border sm:grid-cols-2">
+    <dl className="border-t border-l border-border">
       <div className="space-y-3 border-r border-b border-border p-5">
         <dt className="font-mono text-label font-medium uppercase text-fg-muted">Inquiry baru</dt>
         <dd className="font-mono text-3xl font-medium tracking-tight text-fg-strong tabular-nums">
@@ -124,10 +124,6 @@ function IncomingModules({ data }: { data: DashboardData | undefined }) {
             ) : null}
           </dd>
         ) : null}
-      </div>
-      <div className="border-r border-b border-border p-5">
-        <dt className="font-mono text-label font-medium uppercase text-fg-muted">Evaluasi baru</dt>
-        <dd className="mt-3 text-small text-fg-muted">Aktif setelah modul Evaluasi dibuat.</dd>
       </div>
     </dl>
   );

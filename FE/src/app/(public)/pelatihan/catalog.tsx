@@ -31,16 +31,17 @@ const VISIBLE_CATEGORIES = 12;
 
 export async function Catalog({ searchParams }: { searchParams: PageProps<"/pelatihan">["searchParams"] }) {
   const state = parseCatalogState(await searchParams);
-  const [catalog, categories] = await Promise.all([getCatalog(toCatalogParams(state)), getCategories()]);
+  const [catalog, categories] = await Promise.all([getCatalog(toCatalogParams(state, 15)), getCategories()]);
   const { items, meta } = catalog;
 
   return (
-    <div className="mt-10">
-      <SearchForm state={state} />
-
-      <div className="mt-10 space-y-6 border-y border-border py-6">
-        <CategoryFilter state={state} categories={categories} />
-        <FilterRow label="Metode" single>
+    <div>
+      <details className="mb-10 rounded-xl border border-[#dce4ed] bg-white px-5 py-4" open={hasFilters(state) || state.hal > 1}>
+        <summary className="cursor-pointer text-[15px] font-semibold text-[#0b417f]">Cari dan saring pelatihan</summary>
+        <div className="mt-6"><SearchForm state={state} /></div>
+        <div className="mt-6 space-y-6 border-t border-border pt-6">
+          <CategoryFilter state={state} categories={categories} />
+          <FilterRow label="Metode" single>
           <ChipLink href={catalogHref(state, { metode: null })} active={!state.metode}>
             Semua
           </ChipLink>
@@ -49,8 +50,8 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
               {METHOD_TEXT[method]}
             </ChipLink>
           ))}
-        </FilterRow>
-        <FilterRow label="Tipe" single>
+          </FilterRow>
+          <FilterRow label="Tipe" single>
           <ChipLink href={catalogHref(state, { tipe: null })} active={!state.tipe}>
             Semua
           </ChipLink>
@@ -59,8 +60,9 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
               {TYPE_TEXT[type]}
             </ChipLink>
           ))}
-        </FilterRow>
-      </div>
+          </FilterRow>
+        </div>
+      </details>
 
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-small text-fg-muted" role="status">
@@ -77,7 +79,7 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
 
       <div className="mt-8">
         {items.length > 0 ? (
-          <TrainingGrid trainings={items} headingLevel="h2" />
+          <TrainingGrid trainings={items} headingLevel="h2" variant="reference" />
         ) : (
           <div className="border-t border-border py-16">
             <p className="text-[24px] leading-[1.25] font-medium text-fg-strong">Tidak ada pelatihan yang cocok</p>

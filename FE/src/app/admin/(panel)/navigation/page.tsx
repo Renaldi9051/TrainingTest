@@ -9,7 +9,7 @@ export default function NavigationPage() {
     <>
       <PageHeader
         title="Navigasi"
-        description="Menu header dan footer. Seret ikon grip untuk mengubah urutan; submenu maksimal 1 tingkat."
+        description="Menu header dan footer. Buka submenu Pelatihan untuk mencari atau mengubah kategori; seret grip untuk mengubah urutan."
       />
       <NavigationEditor />
     </>

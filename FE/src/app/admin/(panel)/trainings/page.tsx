@@ -12,7 +12,7 @@ export default function TrainingsPage() {
     <>
       <PageHeader
         title="Pelatihan"
-        description="Katalog pelatihan. Hanya pelatihan berstatus tayang yang muncul di situs."
+        description="Kelola judul, materi, kategori, dan publikasi katalog. Buka pratinjau untuk memeriksa halaman detail."
         actions={
           <Button asChild>
             <Link href="/admin/trainings/new">

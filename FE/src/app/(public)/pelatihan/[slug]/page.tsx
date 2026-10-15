@@ -1,4 +1,4 @@
-import { ChevronDownIcon, MessageCircleIcon } from "lucide-react";
+import { MessageCircleIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import Link from "next/link";
@@ -15,12 +15,11 @@ import { ReadingProgress } from "@/components/motion/reading-progress";
 import { ContactContext } from "@/components/public/contact-context";
 import { ContactPanelTrigger, contactsWithWhatsapp } from "@/components/public/floating-contact";
 import { InquiryDialog } from "@/components/public/inquiry-dialog";
-import { RollText } from "@/components/motion/roll-text";
 import { ScrollSpyToc } from "@/components/motion/scroll-spy-toc";
-import { ButtonArrow, buttonVariants, MAGNETIC } from "@/components/ui/button";
+import { ButtonArrow, buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { getMarketing, getSettings, getTraining, getTrainingSlugs } from "@/lib/api/public";
+import { getMarketing, getSettings, getTraining } from "@/lib/api/public";
 import { getTrainingPreview } from "@/lib/api/preview";
 import type { PublicTrainingDetail } from "@/lib/api/types";
 import { getPublicEnv } from "@/lib/env";
@@ -39,16 +38,11 @@ export const ensureStatic = "navigation";
 // membuat 404 bisa dikirim sebelum streaming); validasi instant dimatikan untuk segmen ini.
 export const instant = false;
 
-// Slug yang tidak pernah valid dipakai kalau BE belum bisa dihubungi saat build (wajib >= 1 param).
+// Slug yang tidak pernah valid memenuhi syarat build. Ribuan halaman detail dibuat saat pertama
+// kali diminta, lalu di-cache; proses startup tidak membanjiri koneksi database.
 const BUILD_PLACEHOLDER = "__placeholder";
 
 export async function generateStaticParams() {
-  try {
-    const slugs = await getTrainingSlugs(50);
-    if (slugs.length > 0) return slugs.map((slug) => ({ slug }));
-  } catch {
-    // BE tidak terjangkau saat build: halaman dibuat saat diminta pertama kali.
-  }
   return [{ slug: BUILD_PLACEHOLDER }];
 }
 
@@ -180,107 +174,71 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
       />
 
       {/* Ruang di bawah untuk bar CTA mobile. */}
-      <div className={cn(cta && "pb-24 lg:pb-0")}>
-        <Container className="pt-10 md:pt-16">
-          {training.categories.length > 0 ? (
-            <p data-page-enter="" className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
-              {training.categories.map((category) => (
-                <Link
-                  key={category.slug}
-                  href={`/pelatihan/kategori/${category.slug}`}
-                  className="underline-offset-4 hover:text-fg-strong hover:underline"
-                >
-                  {category.name}
-                </Link>
+      <div className={cn("bg-[#fafafa]", cta && "pb-24 lg:pb-0")}>
+        <Container className="grid gap-8 pt-12 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <article className="min-w-0 rounded-2xl bg-white p-6 shadow-[0_2px_12px_rgb(0_0_0_/_0.12)] md:p-8">
+            <div className="relative mb-6 flex aspect-video items-center justify-center overflow-hidden bg-[#0b417f] text-center text-white">
+              {training.cover ? (
+                <PublicImage image={training.cover} sizes="(min-width: 1024px) 800px, 100vw" grayscale={false} priority />
+              ) : (
+                <span className="max-w-[24ch] px-8 text-[24px] font-bold uppercase md:text-[36px]">{training.title}</span>
+              )}
+            </div>
+            <h1 data-page-enter="" className="text-[25px] leading-[1.2] font-bold text-[#111] uppercase md:text-[30px]">{training.title}</h1>
+            {training.categories.length > 0 ? (
+              <p className="mt-3 flex flex-wrap gap-2 text-[13px] text-[#0b417f]">
+                {training.categories.map((category) => (
+                  <Link key={category.slug} href={`/pelatihan/kategori/${category.slug}`} className="underline-offset-4 hover:underline">{category.name}</Link>
+                ))}
+              </p>
+            ) : null}
+            {training.summary ? <p className="mt-5 text-[16px] leading-relaxed text-[#555]">{training.summary}</p> : null}
+            <details open className="mt-6 rounded-2xl border-2 border-[#191919]">
+              <summary className="cursor-pointer px-5 py-4 text-[17px] font-semibold">Daftar Isi</summary>
+              <nav aria-label="Daftar isi" className="border-t border-[#191919] px-5 py-4">
+                <TocLinks sections={sections} spy={false} />
+              </nav>
+            </details>
+            <dl className="mt-8 grid grid-cols-2 gap-4 border-y border-border py-5" aria-label="Ringkasan pelatihan">
+              {facts.map((fact) => (
+                <div key={fact.label}>
+                  <dt className="text-[12px] font-semibold text-[#777] uppercase">{fact.label}</dt>
+                  <dd className="mt-1 text-[14px] font-medium text-[#111]">{fact.value}</dd>
+                </div>
               ))}
-            </p>
-          ) : (
-            <Eyebrow data-page-enter="">Pelatihan</Eyebrow>
-          )}
-          <h1 data-page-enter="" className="mt-4 max-w-[22ch] text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
-            {training.title}
-          </h1>
-          {training.summary ? (
-            <p data-page-enter="" className="mt-6 max-w-[65ch] text-body-lg text-fg-muted">{training.summary}</p>
-          ) : null}
-
-          <dl className="mt-10 grid grid-cols-2 border-y border-border md:grid-cols-4" aria-label="Ringkasan pelatihan">
-            {facts.map((fact, index) => (
-              <div
-                key={fact.label}
-                className={cn(
-                  "py-4 pr-4",
-                  index % 2 === 1 && "border-l border-border pl-4",
-                  index >= 2 && "border-t border-border md:border-t-0",
-                  index > 0 && "md:border-l md:pl-4",
-                )}
-              >
-                <dt className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{fact.label}</dt>
-                <dd className="mt-2 font-mono text-small text-fg-strong">{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <MobileToc sections={sections} />
-
-          {training.cover ? (
-            <div className="relative mt-10 aspect-video overflow-hidden bg-bg-muted">
-              <PublicImage image={training.cover} sizes="(min-width: 1280px) 1232px, 100vw" priority />
+            </dl>
+            <div className="mt-10 space-y-12">
+              {sections.map((section) => (
+                <section key={section.id} id={section.id} aria-labelledby={`${section.id}-title`} className="scroll-mt-24">
+                  <h2 id={`${section.id}-title`} className="mb-5 text-[23px] font-bold text-[#111]">{section.label}</h2>
+                  {section.content}
+                </section>
+              ))}
             </div>
-          ) : null}
-        </Container>
-
-        <Container className="mt-12 grid gap-12 md:mt-20 lg:grid-cols-[180px_minmax(0,1fr)_260px] xl:grid-cols-[200px_minmax(0,1fr)_300px]">
-          <nav aria-label="Daftar isi" className="hidden lg:block">
-            <div className="sticky top-24">
-              <Eyebrow>Daftar isi</Eyebrow>
-              <TocLinks sections={sections} className="mt-4" />
+          </article>
+          <aside aria-label="Pencarian dan kontak" className="space-y-8">
+            <div>
+              <h2 className="border-b-4 border-[#111] pb-2 text-[18px] font-semibold">Pencarian</h2>
+              <form action="/pelatihan" role="search" className="mt-7 flex overflow-hidden rounded-xl border-2 border-[#0b417f]">
+                <label htmlFor="detail-search" className="sr-only">Cari pelatihan</label>
+                <input id="detail-search" type="search" name="q" className="min-w-0 flex-1 px-4 py-3 outline-none" />
+                <button type="submit" className="bg-[#0b417f] px-5 text-white" aria-label="Cari pelatihan">⌕</button>
+              </form>
             </div>
-          </nav>
-
-          <div className="min-w-0 space-y-16">
-            {sections.map((section, index) => (
-              <section
-                key={section.id}
-                id={section.id}
-                aria-labelledby={`${section.id}-title`}
-                className="scroll-mt-24 border-t border-border pt-8"
-              >
-                <Eyebrow index={String(index + 1).padStart(2, "0")}>{section.label}</Eyebrow>
-                <h2 id={`${section.id}-title`} className="sr-only">
-                  {section.label}
-                </h2>
-                <div className="mt-6">{section.content}</div>
-              </section>
-            ))}
-          </div>
-
-          <aside aria-label="Daftar & konsultasi" className="hidden lg:block">
-            <div className="sticky top-24 space-y-6 border-t border-fg-strong pt-6">
-              <div>
-                <Eyebrow>Jadwal terdekat</Eyebrow>
-                <p className="mt-2 text-body font-medium text-fg-strong">{nextScheduleText(training)}</p>
+            <div>
+              <h2 className="border-b-4 border-[#111] pb-2 text-[18px] font-semibold">Kontak Kami</h2>
+              <div className="mt-7 space-y-4">
+                {contactsWithWhatsapp(marketing).map((person) => (
+                  <div key={person.name} className="rounded-2xl bg-white p-6 text-center shadow-[0_2px_12px_rgb(0_0_0_/_0.14)]">
+                    <p className="text-[18px] font-semibold text-[#111]">{person.name}</p>
+                    <p className="mt-1 text-[13px] text-[#888]">Konsultasi pelatihan</p>
+                    <a href={person.whatsappUrl} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0b417f] px-5 py-2 text-[14px] font-semibold text-white">
+                      <MessageCircleIcon className="size-4" aria-hidden /> WhatsApp {person.phone}
+                    </a>
+                  </div>
+                ))}
               </div>
-              <div>
-                <Eyebrow>Investasi</Eyebrow>
-                <p className="mt-2 text-body font-medium text-fg-strong">{investmentText(training)}</p>
-              </div>
-              <div className="flex flex-col gap-3">
-                {cta ? (
-                  <a
-                    href={cta.chat}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={buttonVariants({ variant: "primary", size: "lg" })}
-                    {...MAGNETIC}
-                  >
-                    <MessageCircleIcon strokeWidth={1.5} aria-hidden />
-                    <RollText>Chat WA</RollText>
-                    <ButtonArrow />
-                  </a>
-                ) : null}
-                {inquiryButton}
-              </div>
+              <div className="mt-5">{inquiryButton}</div>
             </div>
           </aside>
         </Container>
@@ -343,24 +301,6 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
 // Desktop: menandai bagian yang sedang dibaca (scroll-spy). Mobile (di dalam <details>): link saja.
 function TocLinks({ sections, className, spy = true }: { sections: Section[]; className?: string; spy?: boolean }) {
   return <ScrollSpyToc sections={sections.map(({ id, label }) => ({ id, label }))} className={className} spy={spy} />;
-}
-
-function MobileToc({ sections }: { sections: Section[] }) {
-  return (
-    <details className="group mt-6 border-b border-border pb-4 lg:hidden">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-2 outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
-        <span className="font-mono text-label uppercase tracking-[0.08em] text-fg-strong">Daftar isi</span>
-        <ChevronDownIcon
-          className="size-4 text-fg-muted transition-transform duration-150 group-open:rotate-180"
-          strokeWidth={1.5}
-          aria-hidden
-        />
-      </summary>
-      <nav aria-label="Daftar isi (mobile)">
-        <TocLinks sections={sections} className="mt-3" spy={false} />
-      </nav>
-    </details>
-  );
 }
 
 function OutcomeList({ outcomes }: { outcomes: string[] }) {
