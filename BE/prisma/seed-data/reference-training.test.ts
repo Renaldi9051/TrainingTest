@@ -1,10 +1,30 @@
 import { describe, expect, it } from "vitest";
 import { slugSchema } from "../../src/lib/slug";
-import { referenceCategories, referenceMenuCategories, referencePosts, referenceTraining } from "./reference-training";
+import {
+  POSTS_PER_CATEGORY,
+  referenceCategories,
+  referenceMenuCategories,
+  referencePosts,
+  referenceSnapshotSlugs,
+  referenceTraining,
+} from "./reference-training";
 
 describe("snapshot katalog referensi", () => {
-  it("memuat seluruh judul publik dengan slug unik dan kategori yang dapat dibuka", () => {
-    expect(referencePosts).toHaveLength(5831);
+  it("memilih paling banyak 10 pelatihan per kategori tanpa menghilangkan kategori", () => {
+    expect(referenceSnapshotSlugs).toHaveLength(5831);
+    const perCategory = new Map<string, number>();
+    for (const post of referencePosts) {
+      for (const slug of referenceTraining(post).categorySlugs) perCategory.set(slug, (perCategory.get(slug) ?? 0) + 1);
+    }
+    expect(perCategory.size).toBe(referenceCategories.length);
+    expect(Math.max(...perCategory.values())).toBe(POSTS_PER_CATEGORY);
+    expect(referencePosts.length).toBeLessThan(1000);
+    for (const category of referenceCategories) {
+      expect(perCategory.get(category.slug) ?? 0, category.slug).toBeGreaterThan(0);
+    }
+  });
+
+  it("memuat judul terpilih dengan slug unik dan kategori yang dapat dibuka", () => {
     expect(referenceCategories.length).toBeGreaterThan(300);
     expect(new Set(referencePosts.map((post) => post.slug)).size).toBe(referencePosts.length);
     const categories = new Set(referenceCategories.map((item) => item.slug));
