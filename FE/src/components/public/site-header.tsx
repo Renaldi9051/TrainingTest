@@ -10,11 +10,13 @@ import { SearchTrigger } from "./search-trigger";
 import { SiteLogo } from "./site-logo";
 
 // Logo dari pengaturan; selama belum diisi: tanda viewfinder + nama situs (warna ikut header).
+// Nama selalu satu baris: sedikit lebih kecil di mobile, ellipsis kalau tetap tidak muat (nama
+// lengkap tetap dari aria-label link dan title).
 function HeaderBrand({ logo, name, className }: { logo: PublicImage | null; name: string; className: string }) {
   return (
-    <span className={cn("items-center gap-2.5", className)}>
+    <span className={cn("min-w-0 items-center gap-2.5", className)}>
       {logo ? null : <BrandMark />}
-      <SiteLogo logo={logo} name={name} />
+      <SiteLogo logo={logo} name={name} nameClassName="min-w-0 truncate text-[15px] sm:text-body" />
     </span>
   );
 }
@@ -35,6 +37,7 @@ export async function SiteHeader() {
           href="/"
           className="flex min-w-0 shrink items-center rounded-sm text-current outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2"
           aria-label={`${identity.name}, ke beranda`}
+          title={identity.name}
         >
           <HeaderBrand logo={identity.logoLight} name={identity.name} className="site-brand-light flex" />
           <HeaderBrand logo={identity.logoDark} name={identity.name} className="site-brand-dark hidden" />

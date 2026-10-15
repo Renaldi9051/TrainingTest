@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 import { IndicatorMark, useActiveIndicator } from "./active-indicator";
 import { activeSection } from "./scroll-plan";
 
-// Jarak garis baca dari atas viewport: header (64 px) + scroll-mt-24 bagian (96 px) + sedikit ruang.
-const READING_LINE_PX = 120;
+// Jarak garis baca dari atas viewport: header (72 px) + scroll-mt-24 bagian (96 px) - sedikit ruang.
+const READING_LINE_PX = 128;
 
 // Daftar isi yang menandai bagian yang sedang dibaca (aria-current="location") dan menggeser garis
 // indikator ke sana (useActiveIndicator, FLIP). Link tetap anchor biasa (keyboard, tanpa JS).
