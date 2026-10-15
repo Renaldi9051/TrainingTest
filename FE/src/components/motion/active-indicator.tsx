@@ -84,13 +84,22 @@ const INDICATOR_CLASS = {
 } as const;
 
 // Elemen indikator (aria-hidden). Letakkan sebagai anak pertama kontainer yang `relative`.
-export function IndicatorMark({ variant, ref }: { variant: IndicatorVariant; ref: RefObject<HTMLSpanElement | null> }) {
+// className: mis. "bg-current" supaya warnanya ikut teks induk (header di atas foto hero).
+export function IndicatorMark({
+  variant,
+  ref,
+  className,
+}: {
+  variant: IndicatorVariant;
+  ref: RefObject<HTMLSpanElement | null>;
+  className?: string;
+}) {
   return (
     <span
       ref={ref}
       aria-hidden
       data-active-indicator={variant}
-      className={cn("pointer-events-none absolute top-0 left-0 origin-top-left opacity-0", INDICATOR_CLASS[variant])}
+      className={cn("pointer-events-none absolute top-0 left-0 origin-top-left opacity-0", INDICATOR_CLASS[variant], className)}
     />
   );
 }
