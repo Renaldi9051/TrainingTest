@@ -209,7 +209,8 @@ export async function getServices(): Promise<PublicServiceCard[]> {
 export async function getService(slug: string): Promise<PublicServiceDetail | null> {
   "use cache";
   cacheLife("content");
-  cacheTag(Tag.service(slug), Tag.SERVICES, Tag.MEDIA);
+  // TRAININGS: pelatihan terkait ikut berubah saat pelatihan diubah, ditayangkan, atau dihapus.
+  cacheTag(Tag.service(slug), Tag.SERVICES, Tag.TRAININGS, Tag.MEDIA);
   return (await getJson<PublicServiceDetail>(`/services/${encodeURIComponent(slug)}`))?.data ?? null;
 }
 

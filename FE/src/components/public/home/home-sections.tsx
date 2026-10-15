@@ -1,3 +1,4 @@
+import { outlineLabel } from "@/lib/outline-label";
 import { SearchIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -62,10 +63,6 @@ function CtaLink({ cta, variant, arrow }: { cta: Cta; variant: "primary" | "seco
   );
 }
 
-// Teks outline raksasa dari eyebrow section (CMS) tanpa nomor urut: "01 / Layanan" -> "Layanan".
-export function outlineLabel(eyebrow: string): string {
-  return eyebrow.replace(/^\s*\d+\s*\/\s*/, "").trim();
-}
 
 // Tanda + di keempat sudut sebuah blok (DESIGN.md 6.1). Induk relative.
 function CornerMarkers({ decor, inset = "-top-1.5" }: { decor: boolean; inset?: string }) {

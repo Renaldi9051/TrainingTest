@@ -45,15 +45,21 @@ export function ServiceRows({
                   {String(index + 1).padStart(2, "0")}
                 </span>
               )}
-              <Heading className="text-[20px] leading-[1.25] font-medium text-fg-strong md:col-span-4 md:text-[24px]">
-                {/* Seluruh baris bisa diklik lewat pseudo-element, tapi tetap satu link untuk pembaca layar. */}
-                <Link
-                  href={`/layanan/${service.slug}`}
-                  className="underline-offset-4 outline-none after:absolute after:inset-0 group-hover:underline focus-visible:underline focus-visible:after:ring-2 focus-visible:after:ring-fg-strong focus-visible:after:ring-offset-2"
-                >
-                  {service.title}
-                </Link>
-              </Heading>
+              <div className="md:col-span-4">
+                <Heading className="text-[20px] leading-[1.25] font-medium text-fg-strong md:text-[24px]">
+                  {/* Seluruh baris bisa diklik lewat pseudo-element, tapi tetap satu link untuk pembaca layar. */}
+                  <Link
+                    href={`/layanan/${service.slug}`}
+                    className="underline-offset-4 outline-none after:absolute after:inset-0 group-hover:underline focus-visible:underline focus-visible:after:ring-2 focus-visible:after:ring-fg-strong focus-visible:after:ring-offset-2"
+                  >
+                    {service.title}
+                  </Link>
+                </Heading>
+                {/* Tagline (opsional, CMS): label mono di bawah judul. */}
+                {service.tagline ? (
+                  <p className="mt-2.5 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{service.tagline}</p>
+                ) : null}
+              </div>
               <p className="max-w-[65ch] text-body text-fg-muted md:col-span-5">{service.summary}</p>
               <ArrowRightIcon
                 aria-hidden
