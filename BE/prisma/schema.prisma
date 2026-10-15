@@ -69,6 +69,14 @@ enum TrainingLevel {
   ADVANCED
 }
 
+// Jenis kegiatan portofolio (chip filter /profil/portofolio). null = belum diisi, tidak ikut filter.
+enum PortfolioActivityType {
+  FIELD
+  CLASSROOM
+  CERTIFICATION
+  OUTBOUND
+}
+
 enum ScheduleStatus {
   OPEN
   FULL
@@ -228,9 +236,17 @@ model Service {
   id          String        @id @default(uuid(7)) @db.Uuid
   slug        String
   title       String
+  // Label mono di bawah judul. null = tidak tampil.
+  tagline     String?
   icon        String?
   summary     String?
   body        Json?
+  // { icon, title, description }[]; kosong = section benefit disembunyikan.
+  benefits    Json          @default("[]")
+  // { q, a }[]; kosong = section FAQ disembunyikan.
+  faqs        Json          @default("[]")
+  // Pelatihan terkait: { mode: "manual", ids } (maks 12); null = section tidak tampil.
+  trainingSelection Json?
   imageId     String?       @db.Uuid
   image       Media?        @relation(fields: [imageId], references: [id], onDelete: SetNull)
   order       Int           @default(0)
@@ -411,6 +427,7 @@ model Testimonial {
 model PortfolioItem {
   id          String    @id @default(uuid(7)) @db.Uuid
   title       String
+  activityType PortfolioActivityType?
   date        DateTime? @db.Date
   client      String?
   description String?
@@ -444,6 +461,8 @@ model PortfolioImage {
 model MarketingContact {
   id             String    @id @default(uuid(7)) @db.Uuid
   name           String
+  // Wilayah/segmen yang ditangani (mis. "Instansi pemerintah"). null = tidak tampil.
+  area           String?
   photoId        String?   @db.Uuid
   photo          Media?    @relation(fields: [photoId], references: [id], onDelete: SetNull)
   phone          String

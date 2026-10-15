@@ -127,3 +127,34 @@ describe("parseStoredSetting & default", () => {
     expect(settingMediaIds("site.footer", { description: "x" })).toEqual({});
   });
 });
+
+describe("page.headers", () => {
+  it("belum ada di DB: semua halaman kosong (FE memakai label lama)", () => {
+    const value = parseStoredSetting("page.headers", undefined);
+    expect(value.layanan).toEqual({ eyebrow: "", heading: "", lead: "" });
+    expect(Object.keys(value).sort()).toEqual(["jadwal", "kontak", "layanan", "pelatihan", "portofolio"]);
+  });
+
+  it("isi sebagian dirapikan; batas panjang per field", () => {
+    const value = settingSchemas["page.headers"].parse({ layanan: { heading: "  Pilih format kerja sama " } });
+    expect(value.layanan).toEqual({ eyebrow: "", heading: "Pilih format kerja sama", lead: "" });
+    expect(value.portofolio.heading).toBe("");
+    expect(settingSchemas["page.headers"].safeParse({ layanan: { lead: "a".repeat(301) } }).success).toBe(false);
+  });
+});
+
+describe("services.process", () => {
+  it("default kosong; langkah wajib berjudul, maks 6", () => {
+    expect(parseStoredSetting("services.process", undefined)).toEqual({ eyebrow: "", heading: "", steps: [] });
+    const step = { title: "Konsultasi", description: "Kami pelajari kebutuhan tim Anda." };
+    expect(settingSchemas["services.process"].parse({ steps: [step] }).steps).toEqual([step]);
+    expect(settingSchemas["services.process"].safeParse({ steps: [{ title: " " }] }).success).toBe(false);
+    expect(settingSchemas["services.process"].safeParse({ steps: Array.from({ length: 7 }, () => step) }).success).toBe(false);
+  });
+
+  it("nilai settings lama tetap terbaca identik setelah key baru ditambah", () => {
+    expect(SETTING_KEYS).toContain("page.headers");
+    expect(SETTING_KEYS).toContain("services.process");
+    for (const key of SETTING_KEYS) expect(parseStoredSetting(key, SETTING_DEFAULTS[key])).toEqual(SETTING_DEFAULTS[key]);
+  });
+});

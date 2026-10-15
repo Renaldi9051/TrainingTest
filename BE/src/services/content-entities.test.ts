@@ -159,7 +159,7 @@ describe("endpoint publik tidak membawa field internal", () => {
     ]);
     const [entry] = await listPublicMarketing();
     expect(mock.marketingContact.findMany.mock.calls[0][0].where).toEqual({ deletedAt: null, active: true });
-    expect(Object.keys(entry).sort()).toEqual(["defaultMessage", "name", "phone", "photo", "whatsappUrl"]);
+    expect(Object.keys(entry).sort()).toEqual(["area", "defaultMessage", "name", "phone", "photo", "whatsappUrl"]);
     expect(entry.whatsappUrl).toBe("https://wa.me/6281234567890?text=Halo%2C%20saya%20ingin%20bertanya");
     for (const field of INTERNAL_FIELDS) expect(entry).not.toHaveProperty(field);
   });
@@ -196,7 +196,7 @@ describe("revalidate per entitas", () => {
       photoId: null,
       photo: null,
     });
-    await createMarketing({ name: "Sari", phone: "6281234567890", photoId: null, defaultMessage: null, active: true }, "u1");
+    await createMarketing({ name: "Sari", area: null, phone: "6281234567890", photoId: null, defaultMessage: null, active: true }, "u1");
     expect(revalidate).toHaveBeenLastCalledWith(["marketing"]);
 
     mock.mediaPartner.findFirst.mockResolvedValue({ ...base, name: "A", url: null });

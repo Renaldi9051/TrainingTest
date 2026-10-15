@@ -12,6 +12,8 @@ import {
 // Kontak marketing (panel floating contact Fase 4, halaman kontak). Nomor disimpan format wa.me.
 const marketingFields = {
   name: requiredText("Nama", 120),
+  // Wilayah/segmen yang ditangani (mis. "Instansi pemerintah"). Kosong = tidak tampil.
+  area: nullableText("Area", 60),
   photoId: idSchema.nullable(),
   phone: whatsappSchema,
   defaultMessage: nullableText("Pesan default", 300),
@@ -20,6 +22,7 @@ const marketingFields = {
 
 export const marketingCreateSchema = z.object({
   ...marketingFields,
+  area: marketingFields.area.default(null),
   photoId: marketingFields.photoId.default(null),
   defaultMessage: marketingFields.defaultMessage.default(null),
   active: marketingFields.active.default(true),
@@ -29,6 +32,7 @@ export type MarketingCreateInput = z.infer<typeof marketingCreateSchema>;
 export const marketingUpdateSchema = z
   .object({
     name: marketingFields.name.optional(),
+    area: marketingFields.area,
     photoId: marketingFields.photoId.optional(),
     phone: marketingFields.phone.optional(),
     defaultMessage: marketingFields.defaultMessage,

@@ -10,6 +10,9 @@ import {
 import { dateStringSchema } from "@/lib/validators/schedule";
 
 export const PORTFOLIO_IMAGES_MAX = 30;
+// Jenis kegiatan (chip filter publik ?jenis=). null = belum diisi.
+export const PORTFOLIO_ACTIVITY_TYPES = ["FIELD", "CLASSROOM", "CERTIFICATION", "OUTBOUND"] as const;
+export type PortfolioActivityType = (typeof PORTFOLIO_ACTIVITY_TYPES)[number];
 
 // Galeri disimpan di tabel PortfolioImage (urutan = urutan imageIds), bukan array JSON.
 const imageIdsSchema = z
@@ -19,6 +22,7 @@ const imageIdsSchema = z
 
 const portfolioFields = {
   title: requiredText("Judul", 200),
+  activityType: z.enum(PORTFOLIO_ACTIVITY_TYPES, { error: "Jenis kegiatan tidak dikenal." }).nullable(),
   date: dateStringSchema.nullable(),
   client: nullableText("Klien", 120),
   description: nullableText("Deskripsi", 1000),
@@ -27,6 +31,7 @@ const portfolioFields = {
 
 export const portfolioCreateSchema = z.object({
   ...portfolioFields,
+  activityType: portfolioFields.activityType.default(null),
   date: portfolioFields.date.default(null),
   client: portfolioFields.client.default(null),
   description: portfolioFields.description.default(null),
@@ -37,6 +42,7 @@ export type PortfolioCreateInput = z.infer<typeof portfolioCreateSchema>;
 export const portfolioUpdateSchema = z
   .object({
     title: portfolioFields.title.optional(),
+    activityType: portfolioFields.activityType.optional(),
     date: portfolioFields.date.optional(),
     client: portfolioFields.client,
     description: portfolioFields.description,

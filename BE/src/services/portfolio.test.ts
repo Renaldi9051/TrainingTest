@@ -57,6 +57,7 @@ beforeEach(() => {
 });
 
 const input = (imageIds: string[]) => ({
+  activityType: null,
   title: "Workshop KPI 2026",
   date: "2026-03-01",
   client: "PT Contoh",
@@ -135,7 +136,7 @@ describe("publik", () => {
     mock.portfolioItem.findMany.mockResolvedValue([item([media(img(1)), media(img(2), { deletedAt: new Date() })])]);
     const [entry] = await listPublicPortfolio();
     expect(mock.portfolioItem.findMany.mock.calls[0][0].where).toEqual({ deletedAt: null });
-    expect(Object.keys(entry).sort()).toEqual(["client", "date", "description", "images", "title"]);
+    expect(Object.keys(entry).sort()).toEqual(["activityType", "client", "date", "description", "images", "title"]);
     expect(entry.date).toBe("2026-03-01");
     expect(entry.images).toHaveLength(1);
     expect(Object.keys(entry.images[0]).sort()).toEqual(["alt", "height", "mime", "url", "variants", "width"]);
