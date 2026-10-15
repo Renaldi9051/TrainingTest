@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { HomeSectionType } from "@/generated/prisma/client";
-import { mediaRefObjectSchema, type TypedMediaRef } from "@/lib/media-refs";
-import { ctaSchema, nullableText, plainText, requiredText } from "@/lib/validators/common";
+import { type TypedMediaRef } from "@/lib/media-refs";
+import { contentHrefSchema, ctaSchema, idSchema, nullableText, plainText, requiredText } from "@/lib/validators/common";
 import {
   headingFields,
   INTRO_MAX,
@@ -55,11 +55,53 @@ export const MARQUEE_ITEMS_MAX = 12;
 export const MARQUEE_ITEM_MAX = 40;
 export const MARQUEE_HEADING_MAX = 60;
 export const STATS_MAX = 6;
+export const HERO_SLIDES_MAX = 6;
+export const HERO_INTERVAL_MIN_MS = 4000;
+export const HERO_INTERVAL_MAX_MS = 10000;
+export const HERO_INTERVAL_DEFAULT_MS = 6000;
+export const HERO_LAYOUTS = ["fullbleed", "split"] as const;
+export const HERO_PHOTO_STYLES = ["color", "grayscale"] as const;
 
 const optionalCta = ctaSchema.nullable().default(null);
 const intro = plainText("Pengantar", INTRO_MAX);
 
-const heroContent = z.object({
+// Elemen dekoratif per section (DESIGN.md 6.2), bisa dimatikan admin. Data lama tanpa field ini =
+// menyala.
+const decor = z.boolean({ error: "Nilai elemen dekoratif tidak valid." }).default(true);
+
+// Tautan opsional: "" = tanpa tautan.
+const optionalContentHref = z.string().trim().default("").pipe(z.union([z.literal(""), contentHrefSchema]));
+
+const focal = (label: string) =>
+  z
+    .number({ error: `${label} harus berupa angka.` })
+    .min(0, { error: `${label} minimal 0.` })
+    .max(100, { error: `${label} maksimal 100.` })
+    .default(50);
+
+// Satu slide hero (DESIGN.md 8.1). alt "" = memakai alt gambar di media library.
+const heroSlideSchema = z.object({
+  mediaId: idSchema,
+  alt: plainText("Alt slide", 200),
+  caption: plainText("Keterangan", 80),
+  href: optionalContentHref,
+  hudLabel: plainText("Label HUD", 40),
+  // Titik fokus gambar (object-position) dalam persen.
+  focalX: focal("Titik fokus horizontal"),
+  focalY: focal("Titik fokus vertikal"),
+});
+export type HeroSlide = z.infer<typeof heroSlideSchema>;
+
+// Data hero lama { image: { mediaId } | null } dibaca sebagai slides[0] / tanpa slide. Data di DB
+// tidak ditulis ulang sampai admin menyimpan section ini.
+export function legacyHeroToSlides(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value) || "slides" in value) return value;
+  const { image, ...rest } = value as Record<string, unknown> & { image?: unknown };
+  const mediaId = image && typeof image === "object" && "mediaId" in image ? image.mediaId : undefined;
+  return { ...rest, slides: mediaId ? [{ mediaId }] : [] };
+}
+
+const heroFields = z.object({
   eyebrow: headingFields.eyebrow,
   headline: requiredText("Headline", 120),
   // Kata kunci yang berganti di headline (RotatingWord, Fase 4). Kosong = headline statis.
@@ -72,11 +114,48 @@ const heroContent = z.object({
   searchPlaceholder: plainText("Placeholder pencarian", 80),
   primaryCta: optionalCta,
   secondaryCta: optionalCta,
-  image: mediaRefObjectSchema.nullable().default(null),
+  layout: z.enum(HERO_LAYOUTS, { error: "Layout hero tidak dikenal." }).default("fullbleed"),
+  intervalMs: z
+    .number({ error: "Interval harus berupa angka." })
+    .int({ error: "Interval harus bilangan bulat." })
+    .min(HERO_INTERVAL_MIN_MS, { error: "Interval minimal 4 detik." })
+    .max(HERO_INTERVAL_MAX_MS, { error: "Interval maksimal 10 detik." })
+    .default(HERO_INTERVAL_DEFAULT_MS),
+  photoStyle: z.enum(HERO_PHOTO_STYLES, { error: "Gaya foto tidak dikenal." }).default("color"),
+  showViewfinder: z.boolean().default(true),
+  // Badge berputar: teksnya konten, jadi default mati sampai admin mengisinya.
+  showBadge: z.boolean().default(false),
+  badgeText: plainText("Teks badge", 60),
+  badgeHref: optionalContentHref,
+  slides: z
+    .array(heroSlideSchema)
+    .max(HERO_SLIDES_MAX, { error: `Slide maksimal ${HERO_SLIDES_MAX}.` })
+    .default([]),
+  decor,
 });
+
+const heroContent = z.preprocess(
+  legacyHeroToSlides,
+  heroFields.superRefine((value, ctx) => {
+    if (value.showBadge && !value.badgeText) {
+      ctx.addIssue({ code: "custom", path: ["badgeText"], message: "Isi teks badge, atau matikan badge." });
+    }
+    if (value.showBadge && !value.badgeHref) {
+      ctx.addIssue({ code: "custom", path: ["badgeHref"], message: "Isi tautan badge, atau matikan badge." });
+    }
+    const seen = new Set<string>();
+    value.slides.forEach((slide, index) => {
+      if (seen.has(slide.mediaId)) {
+        ctx.addIssue({ code: "custom", path: ["slides", index, "mediaId"], message: "Gambar ini sudah dipakai di slide lain." });
+      }
+      seen.add(slide.mediaId);
+    });
+  }),
+);
 
 const statsContent = z.object({
   ...headingFields,
+  decor,
   items: z
     .array(
       z.object({
@@ -95,17 +174,17 @@ const statsContent = z.object({
 });
 
 const servicesContent = z
-  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 4, maxLimit: 8 }), cta: optionalCta })
+  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 4, maxLimit: 8 }), cta: optionalCta, decor })
   .superRefine(requireManualIds);
 
 // auto = kategori unggulan (featured) yang punya pelatihan publik, urut sesuai urutan kategori.
 const categoriesContent = z
-  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 12, maxLimit: 24 }), cta: optionalCta })
+  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 12, maxLimit: 24 }), cta: optionalCta, decor })
   .superRefine(requireManualIds);
 
 // auto = pelatihan publik dengan publishedAt terbaru.
 const latestTrainingsContent = z
-  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 6, maxLimit: 12 }), cta: optionalCta })
+  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 6, maxLimit: 12 }), cta: optionalCta, decor })
   .superRefine(requireManualIds);
 
 // Selalu otomatis: sesi DIBUKA terdekat mulai hari ini (WIB) dari pelatihan publik.
@@ -119,17 +198,18 @@ const upcomingSchedulesContent = z.object({
     .max(10, { error: "Jumlah maksimal 10." })
     .default(5),
   cta: optionalCta,
+  decor,
 });
 
 const clientsContent = z
-  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 24, maxLimit: 48 }) })
+  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 24, maxLimit: 48 }), decor })
   .superRefine(requireManualIds);
 
 const testimonialsContent = z
-  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 6, maxLimit: 12 }) })
+  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 6, maxLimit: 12 }), decor })
   .superRefine(requireManualIds);
 
-const visionMissionContent = z.object(visionMissionFields);
+const visionMissionContent = z.object({ ...visionMissionFields, decor });
 
 const ctaContent = z.object({
   eyebrow: headingFields.eyebrow,
@@ -137,6 +217,7 @@ const ctaContent = z.object({
   body: plainText("Isi", 400),
   primaryCta: ctaSchema,
   secondaryCta: optionalCta,
+  decor,
 });
 
 // Teks besar berjalan (VelocityMarquee): teks sendiri, atau judul layanan yang tayang (urut sesuai
@@ -155,6 +236,7 @@ const marqueeContent = z
       .min(MARQUEE_ITEMS_MIN, { error: `Jumlah minimal ${MARQUEE_ITEMS_MIN}.` })
       .max(MARQUEE_ITEMS_MAX, { error: `Jumlah maksimal ${MARQUEE_ITEMS_MAX}.` })
       .default(6),
+    decor,
   })
   .superRefine((value, ctx) => {
     if (value.source === "custom" && value.items.length < MARQUEE_ITEMS_MIN) {
@@ -250,10 +332,14 @@ export function safeParseHomeSectionContent<T extends HomeSectionType>(
 // Harus selalu sama dengan collectMediaRefs (dijaga test).
 export function homeSectionMediaRefs(section: HomeSectionContent): TypedMediaRef[] {
   switch (section.type) {
+    // Alt slide kosong = alt dari media library dipakai, jadi media itu wajib punya alt.
     case "HERO":
-      return section.content.image
-        ? [{ path: "image", mediaId: section.content.image.mediaId, kind: "image", requireAlt: true }]
-        : [];
+      return section.content.slides.map((slide, index) => ({
+        path: `slides.${index}`,
+        mediaId: slide.mediaId,
+        kind: "image",
+        requireAlt: slide.alt === "",
+      }));
     case "STATS":
     case "SERVICES":
     case "CATEGORIES":

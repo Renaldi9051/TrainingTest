@@ -246,8 +246,20 @@ type C<K extends HomeSectionType> = HomeSectionContentMap[K];
 type SelectionKeys = "mode" | "limit" | "ids";
 type Base<K extends HomeSectionType> = { id: string; type: K };
 
+// Slide hero yang sudah di-resolve: gambar (URL + varian), alt (slide, atau alt media kalau kosong),
+// tautan null kalau kosong. Slide dengan media terhapus/bukan gambar dibuang.
+export type PublicHeroSlide = {
+  image: PublicImage;
+  alt: string;
+  caption: string;
+  href: string | null;
+  hudLabel: string;
+  focalX: number;
+  focalY: number;
+};
+
 export type PublicHomeSection =
-  | (Base<"HERO"> & Omit<C<"HERO">, "image"> & { image: PublicImage | null })
+  | (Base<"HERO"> & Omit<C<"HERO">, "slides"> & { slides: PublicHeroSlide[] })
   | (Base<"STATS"> & C<"STATS">)
   | (Base<"SERVICES"> & Omit<C<"SERVICES">, SelectionKeys> & { items: PublicServiceCard[] })
   | (Base<"CATEGORIES"> & Omit<C<"CATEGORIES">, SelectionKeys> & { items: PublicCategory[] })
@@ -407,10 +419,24 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
     const base = { id: row.id, visible: row.visible };
     switch (section.type) {
       case "HERO": {
-        const { image, ...rest } = section.content;
-        const media_ = image ? media.get(image.mediaId) : undefined;
-        const publicImage = media_?.mime.startsWith("image/") ? toPublicImage(media_) : null;
-        return { ...base, type: "HERO", ...rest, image: publicImage, empty: false };
+        const { slides, ...rest } = section.content;
+        const resolved = slides.flatMap((slide): PublicHeroSlide[] => {
+          const item = media.get(slide.mediaId);
+          const image = item?.mime.startsWith("image/") ? toPublicImage(item) : null;
+          if (!image) return [];
+          return [
+            {
+              image,
+              alt: slide.alt || image.alt || "",
+              caption: slide.caption,
+              href: slide.href || null,
+              hudLabel: slide.hudLabel,
+              focalX: slide.focalX,
+              focalY: slide.focalY,
+            },
+          ];
+        });
+        return { ...base, type: "HERO", ...rest, slides: resolved, empty: false };
       }
       case "STATS":
         return { ...base, type: "STATS", ...section.content, empty: false };
