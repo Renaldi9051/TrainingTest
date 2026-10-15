@@ -120,18 +120,28 @@ test.describe("katalog & detail pelatihan", () => {
     });
     created.push(training);
 
+    // Dari kolom cari di kepala katalog.
     await page.goto("/pelatihan");
     await page.getByRole("searchbox", { name: "Cari pelatihan" }).fill(word);
     await page.getByRole("button", { name: "Cari", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`q=${word}`));
     await expect(page.getByRole("link", { name: training.title })).toBeVisible();
     await expect(page.getByRole("status").filter({ hasText: "pelatihan" })).toContainText("1");
+
+    // Dari kolom cari di beranda/header (GET /pelatihan?q=), hasil sama dan kata kunci terisi.
+    await page.goto(`/pelatihan?q=${word}`);
+    await expect(page.getByRole("link", { name: training.title })).toBeVisible();
+    await expect(page.getByRole("searchbox", { name: "Cari pelatihan" })).toHaveValue(word);
   });
 
-  test("filter tersimpan di URL dan bisa dibuka ulang", async ({ page, context }) => {
+  // Keputusan pemilik 15 Okt 2026: katalog tetap memakai sidebar filter (desain v0.2), kategori
+  // dibatasi 10 teratas + "Tampilkan semua"; menu Pelatihan di header tetap jalan pintas ke kategori.
+  test("filter sidebar (kategori, metode) dan urutan tersimpan di URL dan bisa dibuka ulang", async ({ page, context }) => {
     await page.goto("/pelatihan");
-    // Chip ke-2 di grup Kategori (chip pertama = "Semua").
-    const categoryChip = page.getByRole("group", { name: "Kategori" }).getByRole("link").nth(1);
+    // Link ke-2 di grup Kategori (link pertama = "Semua kategori"); paling banyak 10 kategori + Semua.
+    const categoryLinks = page.getByRole("group", { name: "Kategori" }).getByRole("link");
+    expect(await categoryLinks.count()).toBeLessThanOrEqual(11);
+    const categoryChip = categoryLinks.nth(1);
     const categoryHref = (await categoryChip.getAttribute("href")) ?? "";
     const categorySlug = new URLSearchParams(categoryHref.split("?")[1]).get("kategori") ?? "";
     // Nama tanpa angka jumlah di ujung (jumlah bisa berubah karena test lain).
@@ -143,7 +153,7 @@ test.describe("katalog & detail pelatihan", () => {
     await page.getByRole("navigation", { name: "Urutkan" }).getByRole("link", { name: "A-Z" }).click();
     await expect(page).toHaveURL(/urut=az/);
 
-    // URL yang sama dibuka di tab baru: filter yang sama aktif.
+    // URL yang sama dibuka di tab baru: filter dan urutan yang sama aktif.
     const url = page.url();
     expect(url).toContain(`kategori=${categorySlug}&metode=offline&urut=az`);
     const reopened = await context.newPage();

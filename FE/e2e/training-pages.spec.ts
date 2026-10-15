@@ -118,9 +118,9 @@ test.describe("halaman pelatihan v0.2", () => {
     await expect(page.getByRole("link", { name: "Reset filter" })).toHaveAttribute("href", "/pelatihan");
   });
 
-  test("katalog: Indeks kategori A-Z membuka overlay, saringan ketik, pilihan menambah filter", async ({ page }) => {
+  test("katalog: Tampilkan semua (indeks A-Z) membuka overlay, saringan ketik, pilihan menambah filter", async ({ page }) => {
     await page.goto("/pelatihan");
-    await page.getByRole("button", { name: "Indeks kategori A-Z" }).click();
+    await page.getByRole("button", { name: /^Tampilkan semua kategori/ }).click();
     const overlay = page.getByRole("dialog", { name: "Indeks kategori / A-Z" });
     await expect(overlay).toBeVisible();
     await overlay.getByLabel("Saring kategori").fill(category.name);
@@ -268,7 +268,7 @@ test.describe("halaman pelatihan v0.2", () => {
         ["katalog-filter", `/pelatihan?kategori=${category.slug}&metode=offline`, async () => {}],
         ["katalog-kosong", `/pelatihan?q=tidakadasamasekali${id}`, async () => {}],
         ["katalog-az", "/pelatihan", async (p) => {
-          await p.getByRole("button", { name: "Indeks kategori A-Z" }).click();
+          await p.getByRole("button", { name: /^Tampilkan semua kategori/ }).click();
           await expect(p.getByRole("dialog", { name: "Indeks kategori / A-Z" })).toBeVisible();
           await p.waitForTimeout(400);
         }],

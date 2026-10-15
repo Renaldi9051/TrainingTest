@@ -10,7 +10,7 @@ import { getDb } from "../src/lib/db";
 import { parseSeedEnv } from "../src/lib/env";
 import { hashPassword } from "../src/lib/password";
 import { RevalidateTag, revalidateTags } from "../src/lib/revalidate";
-import { REFERENCE_SEED_KEY, seedReferenceCatalog } from "./seed-reference";
+import { REFERENCE_SEED_KEY, REFERENCE_SEED_VERSION, seedReferenceCatalog } from "./seed-reference";
 import { seedBulk } from "./seed-bulk";
 import { type ContentSeedResult, seedContent } from "./seed-content";
 import { seedCovers } from "./seed-covers";
@@ -126,13 +126,14 @@ async function main() {
   }
 
   // Mode minimal/e2e dan bulk tetap memakai katalog contoh. Seed standar memakai katalog referensi.
-  // Marker mencegah impor 5.831 entri setiap startup dan menjaga suntingan/penghapusan admin.
+  // Marker versi mencegah impor ulang setiap startup dan menjaga suntingan/penghapusan admin; versi baru
+  // menjalankan seed sekali lagi (membuat yang kurang, merapikan yang tidak lagi dipakai).
   const catalogEmpty = (await db.category.count()) === 0 && (await db.training.count()) === 0;
   const catalog = !USE_REFERENCE && catalogEmpty ? await writeCatalog(db) : null;
   const referenceSeeded = USE_REFERENCE
-    ? await db.siteSetting.findUnique({ where: { key: REFERENCE_SEED_KEY }, select: { id: true } })
+    ? await db.siteSetting.findUnique({ where: { key: REFERENCE_SEED_KEY }, select: { value: true } })
     : null;
-  const reference = USE_REFERENCE && !referenceSeeded
+  const reference = USE_REFERENCE && referenceSeeded?.value !== REFERENCE_SEED_VERSION
     ? await seedReferenceCatalog({ hideDemo: true })
     : null;
 
@@ -157,7 +158,7 @@ async function main() {
   );
   if (USE_REFERENCE) {
     console.info(reference
-      ? `Katalog referensi: ${reference.categoriesCreated} kategori, ${reference.trainingsCreated} pelatihan, ${reference.linksCreated} tautan, ${reference.menuCreated} submenu baru.`
+      ? `Katalog referensi: ${reference.categoriesCreated} kategori, ${reference.trainingsCreated} pelatihan, ${reference.linksCreated} tautan, ${reference.menuCreated} submenu baru; dirapikan ${reference.trainingsHidden} pelatihan ke Sampah dan ${reference.linksRemoved} tautan kategori dilepas.`
       : "Katalog referensi sudah terpasang; perubahan admin dipertahankan.");
   }
   console.info(

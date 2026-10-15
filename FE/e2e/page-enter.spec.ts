@@ -63,10 +63,12 @@ test.describe("pergantian halaman: header stagger masuk", () => {
     expect((await enter(page)).count).toBe(0);
   });
 
-  test("ganti filter di katalog (query saja): header tidak beranimasi", async ({ page }) => {
+  test("ganti filter atau urutan di katalog (query saja): header tidak beranimasi", async ({ page }) => {
     await page.goto("/pelatihan");
     await page.getByRole("group", { name: "Metode" }).getByRole("link", { name: "Online" }).click();
     await page.waitForURL(/metode=online/);
+    await page.getByRole("navigation", { name: "Urutkan" }).getByRole("link", { name: "A-Z" }).click();
+    await page.waitForURL(/urut=az/);
     await page.waitForTimeout(600);
     expect((await enter(page)).count).toBe(0);
   });

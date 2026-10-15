@@ -8,11 +8,13 @@ import {
   referenceMenuCategories,
   hasReferenceTitle,
   referencePosts,
+  referenceSnapshotSlugs,
   referenceTraining,
 } from "./seed-data/reference-training";
 
 export const REFERENCE_SEED_KEY = "seed.referenceCatalog.version";
-const REFERENCE_SEED_VERSION = "2026-10-14";
+// Naikkan versi ini setiap isi katalog berubah: seed dijalankan lagi sekali untuk database yang markernya lama.
+export const REFERENCE_SEED_VERSION = "2026-10-15-10-per-kategori";
 const batchSize = 100;
 const batches = <T>(items: T[], size = batchSize) =>
   Array.from({ length: Math.ceil(items.length / size) }, (_, index) => items.slice(index * size, (index + 1) * size));
@@ -98,6 +100,32 @@ export async function seedReferenceCatalog({ hideDemo = false }: { hideDemo?: bo
     linksCreated += (await db.trainingCategory.createMany({ data: batch, skipDuplicates: true })).count;
   }
 
+  // Merapikan database yang sudah berisi katalog lengkap versi lama. Hanya baris yang belum disentuh
+  // admin (updatedById kosong): pelatihan yang tidak lagi dipilih masuk Sampah, dan tautan kategori yang
+  // tidak lagi dipakai dilepas, supaya tiap kategori kembali berisi paling banyak 10 pelatihan.
+  const selectedSlugs = new Set(referencePosts.map((post) => post.slug));
+  let trainingsHidden = 0;
+  for (const batch of batches(referenceSnapshotSlugs.filter((slug) => !selectedSlugs.has(slug)), 500)) {
+    trainingsHidden += (
+      await db.training.updateMany({
+        where: { slug: { in: batch }, deletedAt: null, updatedById: null },
+        data: { deletedAt: startedAt },
+      })
+    ).count;
+  }
+  const wantedLinks = new Set(links.map((link) => `${link.trainingId}:${link.categoryId}`));
+  let linksRemoved = 0;
+  for (const batch of batches([...trainingIds.values()], 500)) {
+    const existing = await db.trainingCategory.findMany({
+      where: { trainingId: { in: batch } },
+      select: { trainingId: true, categoryId: true },
+    });
+    const stale = existing.filter((link) => !wantedLinks.has(`${link.trainingId}:${link.categoryId}`));
+    for (const part of batches(stale, 200)) {
+      linksRemoved += (await db.trainingCategory.deleteMany({ where: { OR: part } })).count;
+    }
+  }
+
   let menu = await db.navItem.findFirst({
     where: { location: "HEADER", href: "/pelatihan", parentId: null, deletedAt: null },
     select: { id: true },
@@ -151,5 +179,5 @@ export async function seedReferenceCatalog({ hideDemo = false }: { hideDemo?: bo
     create: { key: REFERENCE_SEED_KEY, value: REFERENCE_SEED_VERSION },
     update: { value: REFERENCE_SEED_VERSION },
   });
-  return { categoriesCreated, trainingsCreated, linksCreated, menuCreated };
+  return { categoriesCreated, trainingsCreated, linksCreated, menuCreated, trainingsHidden, linksRemoved };
 }

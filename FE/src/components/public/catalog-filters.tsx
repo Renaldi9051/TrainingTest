@@ -56,7 +56,7 @@ export function FilterDisclosure({
   );
 }
 
-// Tombol "Indeks kategori A-Z": overlay layar penuh (sama dengan menu header) berisi semua kategori
+// Tombol "Tampilkan semua": overlay indeks A-Z layar penuh (sama dengan menu header) berisi semua kategori
 // yang punya pelatihan. Di katalog tautannya menambah/melepas filter kategori.
 export function CategoryIndexButton({ items }: { items: IndexItem[] }) {
   const [open, setOpen] = useState(false);
@@ -67,7 +67,9 @@ export function CategoryIndexButton({ items }: { items: IndexItem[] }) {
         onClick={() => setOpen(true)}
         className="mt-3 inline-flex h-8 w-full items-center justify-center rounded-md border border-border-strong px-3 text-small text-fg outline-none transition-colors duration-150 ease-standard hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
       >
-        Indeks kategori A-Z
+        Tampilkan semua
+        <span className="sr-only"> kategori</span>
+        <span className="ml-1.5 font-mono text-label text-fg-muted">({items.length})</span>
       </button>
       <IndexOverlay open={open} onClose={() => setOpen(false)} items={items} />
     </>

@@ -1,17 +1,33 @@
 import { describe, expect, it } from "vitest";
 import { slugSchema } from "../../src/lib/slug";
 import { trainingCreateSchema } from "../../src/lib/validators/training";
+import snapshot from "./reference-catalog.json";
 import {
   hasReferenceTitle,
+  POSTS_PER_CATEGORY,
   referenceCategories,
   referenceMenuCategories,
   referencePosts,
+  referenceSnapshotSlugs,
   referenceTraining,
 } from "./reference-training";
 
 describe("snapshot katalog referensi", () => {
-  it("memuat seluruh judul publik dengan slug unik dan kategori yang dapat dibuka", () => {
-    expect(referencePosts).toHaveLength(5831);
+  it("memilih paling banyak 10 pelatihan per kategori tanpa menghilangkan kategori", () => {
+    expect(referenceSnapshotSlugs).toHaveLength(5831);
+    const perCategory = new Map<string, number>();
+    for (const post of referencePosts) {
+      for (const slug of referenceTraining(post).categorySlugs) perCategory.set(slug, (perCategory.get(slug) ?? 0) + 1);
+    }
+    expect(perCategory.size).toBe(referenceCategories.length);
+    expect(Math.max(...perCategory.values())).toBe(POSTS_PER_CATEGORY);
+    expect(referencePosts.length).toBeLessThan(1000);
+    for (const category of referenceCategories) {
+      expect(perCategory.get(category.slug) ?? 0, category.slug).toBeGreaterThan(0);
+    }
+  });
+
+  it("memuat judul terpilih dengan slug unik dan kategori yang dapat dibuka", () => {
     expect(referenceCategories.length).toBeGreaterThan(300);
     expect(new Set(referencePosts.map((post) => post.slug)).size).toBe(referencePosts.length);
     const categories = new Set(referenceCategories.map((item) => item.slug));
@@ -27,9 +43,11 @@ describe("snapshot katalog referensi", () => {
   });
 
   it("post tanpa judul tidak diimpor; yang lain lolos aturan judul admin", () => {
-    const skipped = referencePosts.filter((post) => !hasReferenceTitle(post)).map((post) => post.slug);
-    expect(skipped).toHaveLength(10);
-    expect(skipped).toContain("51634-2");
+    const untitled = snapshot.posts.filter((post) => !hasReferenceTitle(post)).map((post) => post.slug);
+    expect(untitled).toHaveLength(10);
+    expect(untitled).toContain("51634-2");
+    // Seed melewati post tanpa judul (seed-reference.ts); pilihan 10 per kategori juga tidak memuatnya.
+    expect(referencePosts.filter((post) => !hasReferenceTitle(post))).toEqual([]);
     expect(hasReferenceTitle({ title: "  <b> </b> " })).toBe(false);
     expect(hasReferenceTitle({ title: "Training KPI" })).toBe(true);
     // Validator admin menolak judul kosong / spasi saja.

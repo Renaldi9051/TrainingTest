@@ -87,7 +87,7 @@ test.describe("screenshot interaksi shell @manual", () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/pelatihan");
       if (width < 1024) await page.locator("summary", { hasText: "Filter" }).click();
-      await page.getByRole("button", { name: "Indeks kategori A-Z" }).click();
+      await page.getByRole("button", { name: /^Tampilkan semua kategori/ }).click();
       await expect(page.getByRole("dialog", { name: "Indeks kategori / A-Z" })).toBeVisible();
       await page.waitForTimeout(400);
       await page.screenshot({ path: path.join(OUT, `katalog-az-${width}.png`) });

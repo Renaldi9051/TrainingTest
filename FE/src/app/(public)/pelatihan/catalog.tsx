@@ -29,8 +29,9 @@ const METHOD_TEXT: Record<(typeof METHOD_PARAMS)[number], string> = {
   hybrid: "Hybrid",
 };
 const TYPE_TEXT: Record<(typeof TYPE_PARAMS)[number], string> = { public: "Public", "in-house": "In-house" };
-// Kategori di sidebar; sisanya lewat overlay Indeks A-Z (DESIGN 8.10 / PRD 5.2).
-const VISIBLE_CATEGORIES = 8;
+// Kategori di sidebar (10 teratas, keputusan pemilik 15 Okt); sisanya lewat "Tampilkan semua" yang
+// membuka overlay indeks A-Z (PRD 5.2).
+const VISIBLE_CATEGORIES = 10;
 // 15 per halaman (keputusan sebelumnya, pas untuk 3 kolom).
 const PAGE_SIZE = 15;
 

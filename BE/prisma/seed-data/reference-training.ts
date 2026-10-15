@@ -165,15 +165,62 @@ export function referenceTraining(post: ReferencePost) {
   };
 }
 
+// Setiap kategori diwakili paling banyak 10 pelatihan (kategori yang di sumbernya lebih sedikit tetap
+// memakai semua yang ada). Kategori diproses dari yang paling kecil; tiap kategori memilih pelatihan yang
+// sudah terpilih lebih dulu (supaya jumlah pelatihan tetap kecil), lalu yang terbaru. Pelatihan hanya
+// ditautkan ke kategori yang memilihnya, jadi kategori besar seperti Management tidak membengkak.
+// Hasilnya deterministik dan hanya bergantung pada snapshot.
+export const POSTS_PER_CATEGORY = 10;
+// Dua artikel ini dipakai tes dan punya naskah khusus, jadi selalu terpilih di kategorinya.
+const pinnedSlugs = new Set(["training-finance-treasury-management", "training-evaluasi-etika-dan-kepatuhan"]);
+
+function selectPostsPerCategory(posts: ReferencePost[]): ReferencePost[] {
+  const knownIds = new Set(snapshot.categories.map((category) => category.id));
+  const excludedIds = new Set(snapshot.categories.filter((category) => excludedCategorySlugs.has(category.slug)).map((category) => category.id));
+  const usable = posts.map((post) => ({
+    post,
+    categoryIds: [...new Set(post.categoryIds)].filter((id) => knownIds.has(id) && !excludedIds.has(id)),
+  }));
+  const byCategory = new Map<number, typeof usable>();
+  for (const item of usable) {
+    for (const id of item.categoryIds) byCategory.set(id, [...(byCategory.get(id) ?? []), item]);
+  }
+  const linked = new Map<string, Set<number>>();
+  const order = [...byCategory.entries()].sort((a, b) => a[1].length - b[1].length || a[0] - b[0]);
+  for (const [categoryId, candidates] of order) {
+    const ranked = [...candidates].sort(
+      (a, b) =>
+        Number(pinnedSlugs.has(b.post.slug)) - Number(pinnedSlugs.has(a.post.slug)) ||
+        Number(linked.has(b.post.slug)) - Number(linked.has(a.post.slug)) ||
+        b.post.date.localeCompare(a.post.date) ||
+        a.post.slug.localeCompare(b.post.slug),
+    );
+    for (const { post } of ranked.slice(0, POSTS_PER_CATEGORY)) {
+      linked.set(post.slug, (linked.get(post.slug) ?? new Set<number>()).add(categoryId));
+    }
+  }
+  return posts.flatMap((post) => {
+    const ids = linked.get(post.slug);
+    return ids ? [{ ...post, categoryIds: post.categoryIds.filter((id) => ids.has(id)) }] : [];
+  });
+}
+
 // Validator aplikasi membatasi slug menjadi 120 karakter; 15 slug sumber lebih panjang.
-const usedSlugs = new Set<string>();
-export const referencePosts = snapshot.posts.map((post) => {
-  const base = post.slug.slice(0, 120).replace(/-+$/g, "");
-  let slug = base;
-  for (let suffix = 2; usedSlugs.has(slug); suffix += 1) slug = `${base.slice(0, 120 - String(suffix).length - 1).replace(/-+$/g, "")}-${suffix}`;
-  usedSlugs.add(slug);
-  return { ...post, slug };
-});
+function withUniqueSlugs(posts: ReferencePost[]) {
+  const usedSlugs = new Set<string>();
+  return posts.map((post) => {
+    const base = post.slug.slice(0, 120).replace(/-+$/g, "");
+    let slug = base;
+    for (let suffix = 2; usedSlugs.has(slug); suffix += 1) slug = `${base.slice(0, 120 - String(suffix).length - 1).replace(/-+$/g, "")}-${suffix}`;
+    usedSlugs.add(slug);
+    return { ...post, slug };
+  });
+}
+
+export const referencePosts = withUniqueSlugs(selectPostsPerCategory(snapshot.posts));
+// Seluruh slug snapshot (termasuk yang tidak dipilih): dipakai untuk merapikan database yang sudah
+// terlanjur berisi katalog lengkap versi sebelumnya.
+export const referenceSnapshotSlugs = withUniqueSlugs(snapshot.posts).map((post) => post.slug);
 export const referenceSnapshotDate = snapshot.fetchedAt;
 
 // Seed menulis lewat createMany (tanpa validator admin), jadi aturan judul admin dicek di sini:

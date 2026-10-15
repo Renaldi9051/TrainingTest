@@ -7,7 +7,7 @@ const db = getDb();
 
 seedReferenceCatalog({ hideDemo: process.argv.includes("--hide-demo") })
   .then(async (result) => {
-    console.info(`Impor selesai: ${result.categoriesCreated} kategori, ${result.trainingsCreated} pelatihan, ${result.linksCreated} tautan kategori, ${result.menuCreated} submenu baru.`);
+    console.info(`Impor selesai: ${result.categoriesCreated} kategori, ${result.trainingsCreated} pelatihan, ${result.linksCreated} tautan kategori, ${result.menuCreated} submenu baru; ${result.trainingsHidden} pelatihan ke Sampah, ${result.linksRemoved} tautan dilepas.`);
     await revalidateTags([RevalidateTag.NAV, RevalidateTag.CATEGORIES, RevalidateTag.TRAININGS, RevalidateTag.HOME]);
   })
   .catch((error) => {
