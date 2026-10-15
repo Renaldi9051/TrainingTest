@@ -108,6 +108,14 @@ test.describe("screenshot redesign @manual", () => {
         }
         await page.waitForTimeout(1_500);
         await page.screenshot({ path: path.join(OUT, `${name}-${width}-penuh.png`), fullPage: true });
+        // SCREENS_SECTIONS=1: juga satu gambar per section (lebih mudah diperiksa daripada halaman penuh).
+        if (process.env.SCREENS_SECTIONS === "1") {
+          const sections = page.locator("main > section, main > div > section, main > div > div[aria-hidden]");
+          const total = await sections.count();
+          for (let index = 0; index < total; index += 1) {
+            await sections.nth(index).screenshot({ path: path.join(OUT, `${name}-${width}-section-${String(index + 1).padStart(2, "0")}.png`) });
+          }
+        }
       }
     });
   }

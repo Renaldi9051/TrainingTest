@@ -75,22 +75,32 @@ test.describe("builder beranda", () => {
     await page.getByRole("textbox", { name: "Kata kunci 2", exact: true }).fill("jadwal");
     await moveUp(page, "Kata kunci 2");
 
-    // Error BE content.image: gambar hero tanpa alt ditolak dan ditampilkan di field gambar.
-    await page.locator("button", { hasText: "Pilih gambar" }).first().click();
+    // Slide dari media library. Error BE content.slides.0: gambar tanpa alt (alt slide juga kosong)
+    // ditolak dan ditampilkan di baris slide itu.
+    await page.getByRole("button", { name: "Tambah slide" }).click();
     const picker = page.getByRole("dialog");
     await picker.getByRole("searchbox").fill(`hero-tanpa-alt-${id}`);
     await picker.getByRole("button", { name: `Pilih ${imageNoAlt}`, exact: true }).click();
     await picker.getByRole("button", { name: "Pakai gambar ini" }).click();
+    await expect(page.getByText("Isi alt slide, atau isi alt gambar di media library.")).toBeVisible();
     await page.getByRole("button", { name: "Simpan", exact: true }).click();
     const altError = page.getByText("Gambar belum punya teks alt. Isi alt di media library dulu.");
     await expect(altError).toBeVisible();
     await expect(altError).toBeInViewport();
-    await page.locator("button", { hasText: "Lepas" }).first().click();
+    await page.getByRole("button", { name: "Lepas slide 01" }).click();
     await page.getByRole("button", { name: "Simpan", exact: true }).click();
     await page.waitForURL(/\/admin\/home\/[0-9a-f-]{36}$/);
     await toast(page, "Section disimpan");
     const hero = (await sections(page.request)).find((section) => section.type === "HERO");
     expect(hero?.content?.rotatingWords).toEqual(["jadwal", "judul"]);
+    expect(hero?.content).toMatchObject({ slides: [], decor: true, intervalMs: 6000, layout: "fullbleed" });
+
+    // Elemen dekoratif bisa dimatikan per section; isi lain tidak berubah.
+    await page.getByRole("switch", { name: "Elemen dekoratif" }).click();
+    await page.getByRole("button", { name: "Simpan", exact: true }).click();
+    await toast(page, "Section disimpan");
+    const heroNoDecor = (await sections(page.request)).find((section) => section.type === "HERO");
+    expect(heroNoDecor?.content).toMatchObject({ decor: false, rotatingWords: ["jadwal", "judul"] });
 
     // HERO tidak bisa ditambah lagi: item menu nonaktif dengan alasan (teks + tooltip).
     await page.goto("/admin/home");
