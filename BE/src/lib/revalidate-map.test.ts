@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const revalidate = vi.hoisted(() => vi.fn<(tags: string[]) => Promise<boolean>>(async () => true));
 vi.mock("@/lib/revalidate", async (importOriginal) => ({
@@ -6,7 +6,7 @@ vi.mock("@/lib/revalidate", async (importOriginal) => ({
   revalidateTags: revalidate,
 }));
 
-import { revalidateEntity, tagsForEvent, withRevalidateBatch } from "@/lib/revalidate-map";
+import { revalidateEntity, SLUG_CHANGE_FOLLOW_UP_MS, tagsForEvent, withRevalidateBatch } from "@/lib/revalidate-map";
 
 beforeEach(() => {
   revalidate.mockReset();
@@ -158,5 +158,48 @@ describe("withRevalidateBatch", () => {
     ]);
     expect(revalidate).toHaveBeenCalledTimes(2);
     expect(revalidate.mock.calls.map(([tags]) => tags)).toEqual(expect.arrayContaining([["nav"], ["media"]]));
+  });
+});
+
+// Ganti slug: render yang sudah berjalan saat mutasi bisa tersimpan sebagai cache segar setelah
+// revalidate pertama; tag event itu dikirim sekali lagi setelah jeda.
+describe("revalidate susulan saat slug berubah", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("slug lama + baru: dikirim langsung, lalu sekali lagi setelah jeda", async () => {
+    await revalidateEntity({ entity: "Service", slugs: ["baru", "lama"] });
+    const expected = ["services", "home", "pages", "service:baru", "service:lama"];
+    expect(revalidate).toHaveBeenCalledTimes(1);
+    expect(revalidate).toHaveBeenLastCalledWith(expected);
+    await vi.advanceTimersByTimeAsync(SLUG_CHANGE_FOLLOW_UP_MS - 1);
+    expect(revalidate).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(revalidate).toHaveBeenCalledTimes(2);
+    expect(revalidate).toHaveBeenLastCalledWith(expected);
+  });
+
+  it("slug tidak berubah (satu slug, atau slug lama = baru): tanpa susulan", async () => {
+    await revalidateEntity({ entity: "Training", slugs: ["a", null] });
+    await revalidateEntity({ entity: "Page", slugs: ["b", "b"] });
+    await revalidateEntity({ entity: "Nav" });
+    await vi.advanceTimersByTimeAsync(SLUG_CHANGE_FOLLOW_UP_MS * 2);
+    expect(revalidate).toHaveBeenCalledTimes(3);
+  });
+
+  it("di dalam batch: susulan hanya untuk event yang mengganti slug, sekali setelah batch", async () => {
+    await withRevalidateBatch(async () => {
+      await revalidateEntity({ entity: "Category", slugs: ["kategori-baru", "kategori-lama"] });
+      await revalidateEntity({ entity: "Nav" });
+    });
+    expect(revalidate).toHaveBeenCalledTimes(1);
+    expect(revalidate).toHaveBeenLastCalledWith(["categories", "trainings", "home", "category:kategori-baru", "category:kategori-lama", "nav"]);
+    await vi.advanceTimersByTimeAsync(SLUG_CHANGE_FOLLOW_UP_MS);
+    expect(revalidate).toHaveBeenCalledTimes(2);
+    expect(revalidate).toHaveBeenLastCalledWith(["categories", "trainings", "home", "category:kategori-baru", "category:kategori-lama"]);
   });
 });
