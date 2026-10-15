@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateBadgeParts, formatDateRange, fromWibInputValue, toWibInputValue } from "@/lib/format";
+import { dateBadgeParts, formatDateRange, fromWibInputValue, monthParam, toWibInputValue } from "@/lib/format";
 
 describe("waktu publish WIB", () => {
   it("ISO <-> datetime-local dibaca sebagai WIB", () => {
@@ -24,5 +24,13 @@ describe("dateBadgeParts", () => {
   it("hari dua digit + bulan singkat uppercase dan tahun", () => {
     expect(dateBadgeParts("2026-11-03")).toEqual({ day: "03", monthYear: "NOV 2026" });
     expect(dateBadgeParts("2026-12-31")).toEqual({ day: "31", monthYear: "DES 2026" });
+  });
+});
+
+describe("monthParam", () => {
+  it("bulan berjalan menurut WIB, bukan UTC", () => {
+    expect(monthParam(new Date("2026-10-15T05:00:00Z"))).toBe("2026-10");
+    // 31 Okt 20:00 UTC = 1 Nov 03:00 WIB.
+    expect(monthParam(new Date("2026-10-31T20:00:00Z"))).toBe("2026-11");
   });
 });

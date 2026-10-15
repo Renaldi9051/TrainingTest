@@ -184,3 +184,12 @@
     animation-play-state: paused;
   }
 }
+
+/* Panel filter katalog (components/public/catalog-filters.tsx): di desktop selalu terbuka sebagai
+   sidebar, juga sebelum hydrate (browser yang mendukung ::details-content). */
+@media (min-width: 64rem) {
+  .filter-disclosure::details-content {
+    content-visibility: visible;
+    display: contents;
+  }
+}

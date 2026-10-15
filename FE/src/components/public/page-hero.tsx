@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { DotPattern } from "@/components/decor/dot-pattern";
 import { OutlineText } from "@/components/decor/outline-text";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -8,7 +9,7 @@ import { cn } from "@/lib/utils";
 export type Crumb = { label: string; href?: string };
 
 // Breadcrumb mono (DESIGN.md 3 label): Beranda / ... / halaman ini. Item terakhir = halaman aktif.
-function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
+export function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
   const all: Crumb[] = [{ label: "Beranda", href: "/" }, ...crumbs];
   return (
     <nav aria-label="Breadcrumb" data-page-enter="" className="mb-8 md:mb-10">
@@ -42,13 +43,18 @@ function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
 // teks outline raksasa opsional di belakang, garis bawah. Langsung terbaca tanpa reveal (layar
 // pertama); stagger masuk hanya setelah navigasi klien (PageEnter, elemen data-page-enter).
 // crumbs: induk setelah Beranda + halaman ini (label terakhir biasanya = judul).
+// aside: isi kolom kanan (mis. kotak cari katalog); lead lalu pindah ke bawah judul.
+// dots: pola titik di latar (DESIGN.md 6.1, satu section per halaman).
 export function PageHero({
   crumbs,
   eyebrow,
   title,
   lead,
   outline,
+  aside,
+  dots = false,
   decor = true,
+  className,
   children,
 }: {
   crumbs: Crumb[];
@@ -57,7 +63,10 @@ export function PageHero({
   lead?: string | null;
   // Teks outline raksasa (dari CMS/label halaman). Kosong = tanpa outline.
   outline?: string | null;
+  aside?: ReactNode;
+  dots?: boolean;
   decor?: boolean;
+  className?: string;
   children?: ReactNode;
 }) {
   return (
@@ -67,26 +76,44 @@ export function PageHero({
       className={cn(
         "relative overflow-hidden border-b border-border pt-12 md:pt-18 md:pb-16",
         outline?.trim() && decor ? "pb-24" : "pb-12",
+        className,
       )}
     >
+      {dots ? <DotPattern decor={decor} /> : null}
       <OutlineText decor={decor} className="-right-6 bottom-[-0.12em] md:-right-10">
         {outline}
       </OutlineText>
-      <Container className="relative">
+      <Container className="relative z-[1]">
         <Breadcrumb crumbs={crumbs} />
         {eyebrow ? (
           <Eyebrow data-page-enter="" className="mb-4">
             {eyebrow}
           </Eyebrow>
         ) : null}
-        <div className="grid gap-6 md:grid-cols-12 md:items-end md:gap-6">
-          <h1
-            data-page-enter=""
-            className={cn("max-w-[20ch] text-h1 text-fg-strong", lead ? "md:col-span-8" : "md:col-span-10")}
-          >
-            {title}
-          </h1>
-          {lead ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:items-end md:gap-6">
+          {aside ? (
+            <>
+              <div className="md:col-span-7">
+                <h1 data-page-enter="" className="max-w-[20ch] text-h1 text-fg-strong">
+                  {title}
+                </h1>
+                {lead ? (
+                  <p data-page-enter="" className="mt-4 max-w-[65ch] text-body-lg text-fg-muted">
+                    {lead}
+                  </p>
+                ) : null}
+              </div>
+              <div className="md:col-span-5 lg:col-span-5 lg:col-start-8">{aside}</div>
+            </>
+          ) : (
+            <h1
+              data-page-enter=""
+              className={cn("max-w-[20ch] text-h1 text-fg-strong", lead ? "md:col-span-8" : "md:col-span-10")}
+            >
+              {title}
+            </h1>
+          )}
+          {lead && !aside ? (
             <p data-page-enter="" className="max-w-[65ch] text-body-lg text-fg-muted md:col-span-4 md:col-start-9 lg:col-span-3 lg:col-start-10">
               {lead}
             </p>

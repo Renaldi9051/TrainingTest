@@ -63,6 +63,11 @@ export function formatDateRange(start: string, end: string): string {
   return `${day(s)} ${month(s)} ${year(s)} - ${day(e)} ${month(e)} ${year(e)}`;
 }
 
+// Bulan berjalan di WIB untuk parameter ?bulan= (mis. "2026-10").
+export function monthParam(now: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: APP_TIME_ZONE, year: "numeric", month: "2-digit" }).format(now);
+}
+
 // Tanggal besar di tabel jadwal (DESIGN.md 8.8): "2026-11-12" -> { day: "12", monthYear: "NOV 2026" }.
 export function dateBadgeParts(date: string): { day: string; monthYear: string } {
   const value = new Date(`${date}T00:00:00Z`);

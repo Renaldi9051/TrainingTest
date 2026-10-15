@@ -6,9 +6,11 @@ import { type FormEvent, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError, apiFetch } from "@/lib/api/client";
 import type { InquiryInput, InquirySource } from "@/lib/api/types";
+import { type InquirySession, messageWithSession } from "@/lib/inquiry-session";
 
 // Teks persetujuan pemrosesan data (UU PDP). Kalau diubah, naikkan CONSENT_VERSION di
 // BE/src/lib/validators/inquiry.ts supaya tercatat teks versi mana yang disetujui.
@@ -21,6 +23,7 @@ const FIELD_ORDER: Field[] = ["name", "company", "email", "phone", "interest", "
 
 export type InquiryTraining = { slug: string; title: string };
 
+
 // Form inquiry publik (detail pelatihan & /kontak). Validasi utama di BE (Zod); di sini hanya atribut
 // HTML. Error per field dari BE ditampilkan di bawah field-nya, fokus pindah ke field pertama yang
 // salah. Honeypot "website" tersembunyi dari manusia dan pembaca layar.
@@ -29,6 +32,7 @@ export function InquiryForm({
   privacyHref,
   source,
   training: initialTraining,
+  sessions = [],
   onSent,
 }: {
   siteName: string;
@@ -36,6 +40,7 @@ export function InquiryForm({
   privacyHref: string | null;
   source: InquirySource;
   training: InquiryTraining | null;
+  sessions?: InquirySession[];
   onSent?: () => void;
 }) {
   const id = useId();
@@ -58,7 +63,10 @@ export function InquiryForm({
       phone: text("phone"),
       trainingSlug: training?.slug ?? null,
       interest: training ? "" : text("interest"),
-      message: text("message"),
+      message: messageWithSession(
+        text("message"),
+        training ? sessions.find((session) => session.id === text("session")) : undefined,
+      ),
       source,
       consent: data.get("consent") === "on",
       website: text("website"),
@@ -94,12 +102,18 @@ export function InquiryForm({
 
   if (sent) {
     return (
-      <div role="status" className="space-y-3 border-t border-fg-strong pt-6">
-        <p className="flex items-center gap-2 text-[20px] leading-[1.3] font-medium text-fg-strong">
-          <CheckIcon aria-hidden strokeWidth={1.5} className="size-5" />
-          Terima kasih, pesan terkirim.
-        </p>
-        <p className="text-body text-fg-muted">Tim kami akan menghubungi Anda lewat email atau WhatsApp.</p>
+      <div className="border border-fg-strong bg-bg p-6 md:p-10">
+        <div role="status" className="space-y-3">
+          <p className="font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-strong">Terkirim</p>
+          <p className="flex items-center gap-2 text-h3 text-fg-strong">
+            <CheckIcon aria-hidden strokeWidth={1.5} className="size-5 shrink-0" />
+            Terima kasih, pesan terkirim.
+          </p>
+          <p className="text-body text-fg-muted">Tim kami akan menghubungi Anda lewat email atau WhatsApp.</p>
+        </div>
+        <Button type="button" variant="secondary" className="mt-6" onClick={() => setSent(false)}>
+          Kirim pesan lain
+        </Button>
       </div>
     );
   }
@@ -161,6 +175,19 @@ export function InquiryForm({
         )}
       </div>
       {training ? null : textField("interest", "Pelatihan yang diminati (opsional)", { maxLength: 200 })}
+      {training && sessions.length > 0 ? (
+        <div className="space-y-2">
+          <Label htmlFor={fieldId("session")}>Sesi (opsional)</Label>
+          <Select id={fieldId("session")} name="session" defaultValue="">
+            <option value="">Belum menentukan</option>
+            {sessions.map((session) => (
+              <option key={session.id} value={session.id}>
+                {session.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+      ) : null}
       <div className="space-y-2">
         <Label htmlFor={fieldId("message")}>Pesan (opsional)</Label>
         <Textarea
