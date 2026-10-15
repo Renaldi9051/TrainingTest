@@ -193,49 +193,37 @@ test.describe("efek kursor & indikator aktif", () => {
     expect(await cta.locator("[data-roll] > span").first().evaluate((element) => getComputedStyle(element).translate)).toBe("none");
     await expect(page.locator("[data-cursor-label-float]")).toHaveCount(0);
 
-    // Indikator tetap pindah ke chip baru, tapi tanpa animasi.
+    // Indikator tetap pindah ke urutan baru, tapi tanpa animasi.
     await page.goto("/pelatihan");
-    const group = page.getByRole("group", { name: "Metode" });
-    await group.getByRole("link", { name: "Online" }).click();
-    await page.waitForURL(/metode=online/);
-    await expectIndicatorOn(page, '[role=group][aria-label="Metode"] [data-active-indicator]', '[role=group][aria-label="Metode"] [aria-current]', "pill");
+    await page.getByRole("navigation", { name: "Urutkan" }).getByRole("link", { name: "A-Z" }).click();
+    await page.waitForURL(/urut=az/);
+    await expectIndicatorOn(page, 'nav[aria-label="Urutkan"] [data-active-indicator]', 'nav[aria-label="Urutkan"] [aria-current]', "line");
     expect(await indicatorAnimations(page)).toBe(0);
     await context.close();
   });
 
-  test("indikator aktif: diam saat muat pertama, bergeser (FLIP) saat chip, urutan, atau menu berubah; bisa lewat keyboard", async ({ page }) => {
+  test("indikator aktif: diam saat muat pertama, bergeser (FLIP) saat urutan atau menu berubah; bisa lewat keyboard", async ({ page }) => {
     await countIndicatorAnimations(page);
     await page.goto("/pelatihan");
-    const metode = '[role=group][aria-label="Metode"]';
-    const pill = `${metode} [data-active-indicator]`;
-    await expectIndicatorOn(page, pill, `${metode} [aria-current]`, "pill");
+    await expectIndicatorOn(page, 'nav[aria-label="Urutkan"] [data-active-indicator]', 'nav[aria-label="Urutkan"] [aria-current]', "line");
     await expectIndicatorOn(page, 'nav[aria-label="Menu utama"] > [data-active-indicator]', TOP_MENU_ACTIVE, "line");
     await page.waitForTimeout(500);
     expect(await indicatorAnimations(page)).toBe(0);
-    // Setelah JS siap, latar chip aktif digantikan indikator (tanpa JS chip tetap hitam sendiri).
-    await expect(page.locator(`${metode} [data-indicator-ready]`)).toHaveCount(1);
-    expect(await page.locator(`${metode} [aria-current]`).evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
 
-    // Chip lewat keyboard.
-    const online = page.getByRole("group", { name: "Metode" }).getByRole("link", { name: "Online" });
-    await online.focus();
-    await page.keyboard.press("Enter");
-    await page.waitForURL(/metode=online/);
-    await expect(online).toHaveAttribute("aria-current", "true");
-    await expectIndicatorOn(page, pill, `${metode} [aria-current]`, "pill");
-    expect(await indicatorAnimations(page)).toBe(1);
-
-    // Urutan: garis bergeser ke "A-Z".
+    // Urutan lewat keyboard: garis bergeser ke "A-Z".
     const sort = page.getByRole("navigation", { name: "Urutkan" });
-    await sort.getByRole("link", { name: "A-Z" }).click();
+    const az = sort.getByRole("link", { name: "A-Z" });
+    await az.focus();
+    await page.keyboard.press("Enter");
     await page.waitForURL(/urut=az/);
+    await expect(az).toHaveAttribute("aria-current", "true");
     await expectIndicatorOn(page, 'nav[aria-label="Urutkan"] [data-active-indicator]', 'nav[aria-label="Urutkan"] [aria-current]', "line");
-    expect(await indicatorAnimations(page)).toBe(2);
+    expect(await indicatorAnimations(page)).toBe(1);
 
     // Menu header: pindah halaman (navigasi klien), garis bergeser ke menu baru.
     await page.getByRole("navigation", { name: "Menu utama" }).getByRole("link", { name: "Jadwal Training" }).click();
     await page.waitForURL(/\/jadwal$/);
     await expectIndicatorOn(page, 'nav[aria-label="Menu utama"] > [data-active-indicator]', TOP_MENU_ACTIVE, "line");
-    expect(await indicatorAnimations(page)).toBe(3);
+    expect(await indicatorAnimations(page)).toBe(2);
   });
 });

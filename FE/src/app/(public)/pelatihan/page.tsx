@@ -23,7 +23,7 @@ export default function CatalogPage({ searchParams }: PageProps<"/pelatihan">) {
         <h1 data-page-enter="" className="relative z-10 px-4 text-center text-[30px] font-bold uppercase">Semua Pelatihan</h1>
       </div>
       <Container className="py-16 md:py-20">
-      {/* Filter dibaca dari URL saat request, jadi bagian ini di-stream di dalam Suspense. */}
+      {/* Pencarian & urutan dibaca dari URL saat request, jadi bagian ini di-stream di dalam Suspense. */}
       <Suspense fallback={<CatalogSkeleton />}>
         <Catalog searchParams={searchParams} />
       </Suspense>
@@ -34,13 +34,8 @@ export default function CatalogPage({ searchParams }: PageProps<"/pelatihan">) {
 
 function CatalogSkeleton() {
   return (
-    <div className="mt-10 space-y-10">
-      <div className="h-12 max-w-2xl bg-bg-muted" />
-      <div className="flex flex-wrap gap-2">
-        {Array.from({ length: 8 }, (_, index) => (
-          <div key={index} className="h-8 w-28 rounded-full bg-bg-muted" />
-        ))}
-      </div>
+    <div className="space-y-10">
+      <div className="h-6 max-w-xs bg-bg-muted" />
       <TrainingGridSkeleton />
     </div>
   );

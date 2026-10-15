@@ -88,7 +88,7 @@ Buka http://localhost:3000/admin/login dan masuk dengan `ADMIN_EMAIL` / `ADMIN_P
 
 | URL | Isi |
 |---|---|
-| `/pelatihan` | Katalog: search, chip kategori (multi), metode, tipe, urutan, 24 per halaman. State di URL: `?q=&kategori=a,b&metode=&tipe=&urut=&hal=` |
+| `/pelatihan` | Katalog: hasil pencarian dari kolom cari (`?q=`), urutan, 24 per halaman. Tanpa panel filter: kategori hanya dipilih lewat dropdown menu Pelatihan di header. State di URL: `?q=&urut=&hal=` |
 | `/pelatihan/kategori/<slug>` | Landing kategori: deskripsi + 24 pelatihan terbaru, tautan ke katalog terfilter |
 | `/pelatihan/<slug>` | Detail, jadwal terdekat, CTA WhatsApp, pelatihan terkait, JSON-LD Course/Event |
 | `/jadwal` | Daftar sesi, filter bulan/kota/kategori |
@@ -131,7 +131,7 @@ Dijalankan dari `BE/` atau `FE/`:
 | `npm run check` | BE/FE: lint + typecheck + test. Wajib lulus sebelum commit |
 | `npm run db:generate` | BE: generate Prisma Client |
 | `npm run db:migrate` | BE: `prisma migrate dev`. Perubahan skema: `npm run db:migrate -- --name <nama>` |
-| `npm run db:seed` | BE: isi katalog referensi 5.831 pelatihan, kategori dan 77 submenu Pelatihan, serta admin pertama; aman dijalankan ulang |
+| `npm run db:seed` | BE: isi katalog referensi (maks. 10 pelatihan per kategori), 392 kategori dan 77 submenu Pelatihan, serta admin pertama; aman dijalankan ulang |
 | `npm run db:seed:bulk` | BE, khusus dev: ~70 kategori + 1.200 pelatihan dummy + jadwal. Menolak jalan untuk database bernama `*prod*` |
 | `npm run bench:search` | BE: ukur latensi search katalog (p50/p95/p99) lewat HTTP ke BE yang sedang jalan. Target p95 < 300 ms |
 | `npm run db:studio` | BE: Prisma Studio |
@@ -141,7 +141,13 @@ Dijalankan dari `BE/` atau `FE/`:
 
 Seed standar mengisi katalog lokal dari snapshot metadata publik Diorama yang tersimpan di
 `BE/prisma/seed-data/reference-catalog.json` (14 Oktober 2026). Snapshot berisi judul,
-slug, tanggal, dan relasi kategori untuk 5.831 pelatihan. Naskah detail pada aplikasi
+slug, tanggal, dan relasi kategori untuk 5.831 pelatihan. Seed hanya memasang paling banyak
+10 pelatihan per kategori (kategori yang di snapshot lebih kecil memakai semua yang ada, jadi 614
+pelatihan di 392 kategori). Pemilihannya deterministik (`selectPostsPerCategory` di
+`reference-training.ts`) dan setiap pelatihan hanya ditautkan ke kategori yang memilihnya. Mengubah
+batas atau aturan ini: naikkan `REFERENCE_SEED_VERSION` di `seed-reference.ts`, maka `docker compose up`
+berikutnya merapikan database lama (pelatihan yang tidak lagi dipilih masuk Sampah dan tautan kategori
+lamanya dilepas, hanya untuk baris yang belum disentuh admin). Naskah detail pada aplikasi
 ditulis ulang oleh `reference-training.ts`; halaman Finance & Treasury memiliki materi
 khusus. Jadwal, harga, foto, logo, dan informasi kontak milik situs referensi tidak
 diimpor. Sesuaikan informasi operasional tersebut di admin sebelum dipublikasikan.

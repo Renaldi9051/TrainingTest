@@ -1,70 +1,20 @@
-import { SearchIcon, XIcon } from "lucide-react";
-import Form from "next/form";
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { ChipLink } from "@/components/public/chip-link";
 import { ActiveIndicator } from "@/components/motion/active-indicator";
 import { Pagination } from "@/components/public/pagination";
 import { TrainingGrid } from "@/components/public/training-card";
 import { buttonVariants } from "@/components/ui/button";
-import { getCatalog, getCategories } from "@/lib/api/public";
-import type { PublicCategory } from "@/lib/api/types";
-import {
-  catalogHref,
-  hasFilters,
-  METHOD_PARAMS,
-  parseCatalogState,
-  toCatalogParams,
-  toggleCategory,
-  TYPE_PARAMS,
-  type CatalogState,
-} from "@/lib/catalog-url";
+import { getCatalog } from "@/lib/api/public";
+import { catalogHref, hasFilters, parseCatalogState, toCatalogParams, type CatalogState } from "@/lib/catalog-url";
 import { formatNumber } from "@/lib/format";
 
-const METHOD_TEXT: Record<(typeof METHOD_PARAMS)[number], string> = {
-  online: "Online",
-  offline: "Offline",
-  hybrid: "Hybrid",
-};
-const TYPE_TEXT: Record<(typeof TYPE_PARAMS)[number], string> = { public: "Public", "in-house": "In-house" };
-const VISIBLE_CATEGORIES = 12;
-
+// Kategori hanya dipilih lewat dropdown menu Pelatihan di header; halaman ini tidak punya panel filter.
 export async function Catalog({ searchParams }: { searchParams: PageProps<"/pelatihan">["searchParams"] }) {
   const state = parseCatalogState(await searchParams);
-  const [catalog, categories] = await Promise.all([getCatalog(toCatalogParams(state, 15)), getCategories()]);
-  const { items, meta } = catalog;
+  const { items, meta } = await getCatalog(toCatalogParams(state, 15));
 
   return (
     <div>
-      <details className="mb-10 rounded-xl border border-[#dce4ed] bg-white px-5 py-4" open={hasFilters(state) || state.hal > 1}>
-        <summary className="cursor-pointer text-[15px] font-semibold text-[#0b417f]">Cari dan saring pelatihan</summary>
-        <div className="mt-6"><SearchForm state={state} /></div>
-        <div className="mt-6 space-y-6 border-t border-border pt-6">
-          <CategoryFilter state={state} categories={categories} />
-          <FilterRow label="Metode" single>
-          <ChipLink href={catalogHref(state, { metode: null })} active={!state.metode}>
-            Semua
-          </ChipLink>
-          {METHOD_PARAMS.map((method) => (
-            <ChipLink key={method} href={catalogHref(state, { metode: method })} active={state.metode === method}>
-              {METHOD_TEXT[method]}
-            </ChipLink>
-          ))}
-          </FilterRow>
-          <FilterRow label="Tipe" single>
-          <ChipLink href={catalogHref(state, { tipe: null })} active={!state.tipe}>
-            Semua
-          </ChipLink>
-          {TYPE_PARAMS.map((type) => (
-            <ChipLink key={type} href={catalogHref(state, { tipe: type })} active={state.tipe === type}>
-              {TYPE_TEXT[type]}
-            </ChipLink>
-          ))}
-          </FilterRow>
-        </div>
-      </details>
-
-      <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-small text-fg-muted" role="status">
           <span className="font-mono text-fg-strong">{formatNumber(meta.total)}</span> pelatihan
           {state.q ? (
@@ -104,102 +54,6 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
         <Pagination meta={meta} hrefFor={(page) => catalogHref(state, { hal: page })} />
       </div>
     </div>
-  );
-}
-
-function SearchForm({ state }: { state: CatalogState }) {
-  return (
-    // next/form: navigasi GET di sisi klien, tetap jalan sebagai form biasa tanpa JavaScript.
-    <Form action="/pelatihan" role="search" className="flex max-w-2xl gap-2">
-      <label htmlFor="catalog-q" className="sr-only">
-        Cari pelatihan
-      </label>
-      <div className="relative flex-1">
-        <SearchIcon
-          className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-fg-muted"
-          strokeWidth={1.5}
-          aria-hidden
-        />
-        <input
-          id="catalog-q"
-          name="q"
-          type="search"
-          defaultValue={state.q}
-          maxLength={100}
-          placeholder="Cari judul, topik, atau kategori"
-          className="h-12 w-full rounded-md border border-border-strong bg-bg pr-4 pl-12 text-body text-fg outline-none placeholder:text-fg-subtle focus-visible:border-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
-        />
-      </div>
-      {/* Filter lain ikut terbawa saat mencari. */}
-      {state.kategori.length > 0 ? <input type="hidden" name="kategori" value={state.kategori.join(",")} /> : null}
-      {state.metode ? <input type="hidden" name="metode" value={state.metode} /> : null}
-      {state.tipe ? <input type="hidden" name="tipe" value={state.tipe} /> : null}
-      <button type="submit" className={buttonVariants({ variant: "primary", size: "lg" })}>
-        Cari
-      </button>
-    </Form>
-  );
-}
-
-// single: filter pilih satu, chip aktif ditandai indikator yang bergeser (DESIGN 8.2).
-function FilterRow({ label, single, children }: { label: string; single?: boolean; children: ReactNode }) {
-  return (
-    <div role="group" aria-label={label} className="flex flex-col gap-3 md:flex-row md:items-start md:gap-6">
-      <p aria-hidden className="w-24 shrink-0 pt-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
-        {label}
-      </p>
-      {single ? (
-        <ActiveIndicator variant="pill" className="flex flex-wrap gap-2">
-          {children}
-        </ActiveIndicator>
-      ) : (
-        <div className="flex flex-wrap gap-2">{children}</div>
-      )}
-    </div>
-  );
-}
-
-function CategoryFilter({ state, categories }: { state: CatalogState; categories: PublicCategory[] }) {
-  const available = categories.filter(
-    (category) => category.trainingCount > 0 || state.kategori.includes(category.slug),
-  );
-  // Kategori terpilih & unggulan tampil dulu; sisanya di balik "Kategori lain" (tanpa JS).
-  const primary = available.filter((category) => category.featured || state.kategori.includes(category.slug));
-  const ordered = [...primary, ...available.filter((category) => !primary.includes(category))];
-  const shown = ordered.slice(0, Math.max(VISIBLE_CATEGORIES, primary.length));
-  const rest = available.filter((category) => !shown.includes(category));
-  const chip = (category: PublicCategory) => (
-    <ChipLink key={category.slug} href={toggleCategory(state, category.slug)} active={state.kategori.includes(category.slug)}>
-      {category.name}
-      <span className="ml-2 font-mono text-xs opacity-70">{category.trainingCount}</span>
-    </ChipLink>
-  );
-
-  return (
-    <FilterRow label="Kategori">
-      <ChipLink href={catalogHref(state, { kategori: [] })} active={state.kategori.length === 0}>
-        Semua
-      </ChipLink>
-      {shown.map(chip)}
-      {rest.length > 0 ? (
-        <details className="group w-full">
-          <summary className="inline-flex h-8 cursor-pointer list-none items-center gap-1 rounded-sm text-small text-fg underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
-            <span className="group-open:hidden">Kategori lain ({rest.length})</span>
-            <span className="hidden group-open:inline">Sembunyikan kategori lain</span>
-          </summary>
-          <div className="mt-3 flex flex-wrap gap-2">{rest.map(chip)}</div>
-        </details>
-      ) : null}
-      {state.kategori.length > 1 ? (
-        <Link
-          href={catalogHref(state, { kategori: [] })}
-          className="inline-flex h-8 items-center gap-1 text-small text-fg-muted underline-offset-4 hover:text-fg-strong hover:underline"
-        >
-          <XIcon className="size-4" strokeWidth={1.5} aria-hidden />
-          Hapus pilihan kategori
-        </Link>
-      ) : null}
-    </FilterRow>
   );
 }
 

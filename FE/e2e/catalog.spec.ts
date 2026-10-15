@@ -120,41 +120,25 @@ test.describe("katalog & detail pelatihan", () => {
     });
     created.push(training);
 
-    await page.goto("/pelatihan");
-    await page.getByRole("searchbox", { name: "Cari pelatihan" }).fill(word);
-    await page.getByRole("button", { name: "Cari", exact: true }).click();
+    // Pencarian diajukan dari kolom cari di beranda/header (GET /pelatihan?q=); halaman katalog tidak punya panel filter.
+    await page.goto(`/pelatihan?q=${word}`);
     await expect(page).toHaveURL(new RegExp(`q=${word}`));
     await expect(page.getByRole("link", { name: training.title })).toBeVisible();
     await expect(page.getByRole("status").filter({ hasText: "pelatihan" })).toContainText("1");
   });
 
-  test("filter tersimpan di URL dan bisa dibuka ulang", async ({ page, context }) => {
+  test("katalog tanpa panel filter; urutan tersimpan di URL dan bisa dibuka ulang", async ({ page, context }) => {
     await page.goto("/pelatihan");
-    // Chip ke-2 di grup Kategori (chip pertama = "Semua").
-    const categoryChip = page.getByRole("group", { name: "Kategori" }).getByRole("link").nth(1);
-    const categoryHref = (await categoryChip.getAttribute("href")) ?? "";
-    const categorySlug = new URLSearchParams(categoryHref.split("?")[1]).get("kategori") ?? "";
-    // Nama tanpa angka jumlah di ujung (jumlah bisa berubah karena test lain).
-    const categoryName = (await categoryChip.innerText()).replace(/\s*\d+$/, "");
-    await categoryChip.click();
-    await expect(page).toHaveURL(new RegExp(`kategori=${categorySlug}`));
-    await page.getByRole("group", { name: "Metode" }).getByRole("link", { name: "Offline" }).click();
-    await expect(page).toHaveURL(/metode=offline/);
+    // Kategori hanya dipilih lewat dropdown menu Pelatihan di header.
+    await expect(page.getByText("Cari dan saring pelatihan")).toHaveCount(0);
+    await expect(page.getByRole("group", { name: "Kategori" })).toHaveCount(0);
+    await expect(page.getByRole("group", { name: "Metode" })).toHaveCount(0);
     await page.getByRole("navigation", { name: "Urutkan" }).getByRole("link", { name: "A-Z" }).click();
     await expect(page).toHaveURL(/urut=az/);
 
-    // URL yang sama dibuka di tab baru: filter yang sama aktif.
-    const url = page.url();
-    expect(url).toContain(`kategori=${categorySlug}&metode=offline&urut=az`);
+    // URL yang sama dibuka di tab baru: urutan yang sama aktif.
     const reopened = await context.newPage();
-    await reopened.goto(url);
-    const activeCategory = reopened.getByRole("group", { name: "Kategori" }).locator('a[aria-current="true"]');
-    await expect(activeCategory).toHaveCount(1);
-    await expect(activeCategory).toContainText(categoryName);
-    await expect(reopened.getByRole("group", { name: "Metode" }).getByRole("link", { name: "Offline" })).toHaveAttribute(
-      "aria-current",
-      "true",
-    );
+    await reopened.goto(page.url());
     await expect(reopened.getByRole("navigation", { name: "Urutkan" }).getByRole("link", { name: "A-Z" })).toHaveAttribute(
       "aria-current",
       "true",
