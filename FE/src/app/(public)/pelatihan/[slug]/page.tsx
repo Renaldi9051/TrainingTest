@@ -286,10 +286,11 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
           </Container>
         </section>
 
-        {/* Tanpa sampul: tanpa blok gambar (aturan konten 6, bukan placeholder). */}
+        {/* Sampul pelatihan, atau gambar kategori kalau sampul kosong (alt dari media kategori).
+            Tanpa keduanya: tanpa blok gambar (aturan konten 6, bukan placeholder). */}
         {training.cover ? (
           <Container>
-            <div data-training-cover="" className="relative aspect-4/3 overflow-hidden bg-bg-muted sm:aspect-video lg:aspect-auto lg:h-130">
+            <div data-training-cover="" data-cover-source={training.coverSource ?? "none"} className="relative aspect-4/3 overflow-hidden bg-bg-muted sm:aspect-video lg:aspect-auto lg:h-130">
               <PublicImage image={training.cover} sizes="(min-width: 1280px) 1232px, 100vw" grayscale={false} priority />
               <Viewfinder
                 className="inset-4 md:inset-6"

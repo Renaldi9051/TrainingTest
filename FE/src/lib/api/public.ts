@@ -86,14 +86,14 @@ export async function getNav(): Promise<PublicNav> {
 export async function getCategories(): Promise<PublicCategory[]> {
   "use cache";
   cacheLife("content");
-  cacheTag(Tag.CATEGORIES, Tag.TRAININGS);
+  cacheTag(Tag.CATEGORIES, Tag.TRAININGS, Tag.MEDIA);
   return getRequired<PublicCategory[]>("/categories");
 }
 
 export async function getCategory(slug: string): Promise<PublicCategory | null> {
   "use cache";
   cacheLife("content");
-  cacheTag(Tag.CATEGORIES, Tag.category(slug), Tag.TRAININGS);
+  cacheTag(Tag.CATEGORIES, Tag.category(slug), Tag.TRAININGS, Tag.MEDIA);
   return (await getJson<PublicCategory>(`/categories/${encodeURIComponent(slug)}`))?.data ?? null;
 }
 

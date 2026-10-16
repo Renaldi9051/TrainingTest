@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { HudLabel } from "@/components/decor/hud-label";
+import { Viewfinder } from "@/components/decor/viewfinder";
 import { ActiveIndicator } from "@/components/motion/active-indicator";
 import { ChipLink } from "@/components/public/chip-link";
 import { PageHero } from "@/components/public/page-hero";
+import { PublicImage } from "@/components/public/public-image";
 import { Pagination } from "@/components/public/pagination";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { TrainingGrid } from "@/components/public/training-card";
@@ -99,6 +102,17 @@ export default async function CategoryPage({ params, searchParams }: PageProps<"
           </div>
         }
       />
+
+      {/* Gambar kategori (diisi admin): foto lebar berwarna seperti foto di detail pelatihan.
+          Kosong: tanpa blok gambar (aturan konten 6, bukan placeholder). */}
+      {category.image ? (
+        <Container className="pt-8">
+          <div data-category-image="" className="relative aspect-4/3 overflow-hidden bg-bg-muted sm:aspect-video lg:aspect-auto lg:h-130">
+            <PublicImage image={category.image} sizes="(min-width: 1280px) 1232px, 100vw" grayscale={false} priority />
+            <Viewfinder className="inset-4 md:inset-6" topLeft={<HudLabel tone="photo">{`Kategori / ${category.name}`}</HudLabel>} />
+          </div>
+        </Container>
+      ) : null}
 
       <Container className="pt-8 pb-20 md:pb-24">
         {/* Di luar kepala halaman supaya tidak menumpuk di atas teks outline (DESIGN.md 6.2). */}

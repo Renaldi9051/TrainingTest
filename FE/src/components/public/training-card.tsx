@@ -14,7 +14,8 @@ export const CARD_IMAGE_SIZES = "(min-width: 1024px) 400px, (min-width: 640px) 5
 // Hover: gambar zoom 1.03 dan kembali berwarna, sudut Viewfinder 12 px masuk, judul bergaris bawah,
 // label "Lihat →" mengikuti kursor (PointerEffects, hanya desktop). Di grid: gambar wipe dari bawah
 // + zoom 1,15 -> 1 bersama kartunya.
-// Tanpa sampul: blok 4:3 --bg-subtle berisi label kategori dan sudut Viewfinder tipis (elemen UI,
+// Gambar: sampul pelatihan, atau gambar kategori kalau sampul kosong (coverSource dari BE).
+// Tanpa keduanya: blok 4:3 --bg-subtle berisi label kategori dan sudut Viewfinder tipis (elemen UI,
 // bukan foto pengganti), supaya grid tetap rata; hover-nya sama (sudut masuk, judul bergaris bawah).
 // label: "category" (katalog, beranda) atau "level" (landing kategori; kembali ke kategori kalau
 // tingkat belum diisi).
@@ -37,7 +38,7 @@ export function TrainingCard({
   ].filter(Boolean);
 
   return (
-    <article data-cursor-label="" className="group relative flex h-full flex-col border-b border-border pb-6">
+    <article data-cursor-label="" data-cover-source={training.coverSource ?? "none"} className="group relative flex h-full flex-col border-b border-border pb-6">
       <RevealImage className={cn("relative aspect-[4/3] overflow-hidden", training.cover ? "bg-bg-muted" : "bg-bg-subtle")}>
         {training.cover ? (
           <>
