@@ -32,12 +32,13 @@
 :root:has([data-header-over]):not(:has([data-preview-banner])) .site-header .site-brand-dark {
   display: flex;
 }
+/* Di atas foto hero: CTA --accent dengan teks gelap (palet C; fallback netral = terang/teks gelap). */
 :root:has([data-header-over]):not(:has([data-preview-banner])) .site-header .site-header-cta {
-  background: var(--inverse-fg);
-  color: var(--fg-strong);
+  background: var(--cta, var(--inverse-fg));
+  color: var(--on-cta, var(--fg-strong));
 }
 :root:has([data-header-over]):not(:has([data-preview-banner])) .site-header .site-header-cta:hover {
-  background: var(--bg-muted);
+  background: var(--cta-hover, var(--bg-muted));
 }
 
 /* Floating contact di halaman ber-hero: baru muncul setelah hero lewat (DESIGN.md 8.11, HeroSlideshow

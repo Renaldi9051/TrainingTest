@@ -5,8 +5,12 @@ import { extendTailwindMerge } from "tailwind-merge";
 // tailwind-merge membuang warna teks (mis. text-inverse-fg) saat ada text-small.
 export const FONT_SIZE_TOKENS = ["label", "small", "body", "body-lg", "h3", "h2", "h1", "display", "mega"] as const;
 
+// Radius kustom: rounded-card (radius kartu palet C di theme.css) satu grup dengan rounded-md dkk.
 const twMerge = extendTailwindMerge({
-  extend: { classGroups: { "font-size": [{ text: [...FONT_SIZE_TOKENS] }] } },
+  extend: {
+    theme: { radius: ["card"] },
+    classGroups: { "font-size": [{ text: [...FONT_SIZE_TOKENS] }] },
+  },
 });
 
 export function cn(...inputs: ClassValue[]) {
