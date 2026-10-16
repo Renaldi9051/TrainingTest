@@ -19,14 +19,17 @@ export function pageMetadata({ title, path, seo, fallbackDescription, fallbackIm
   const metaTitle = seo?.title || title;
   const description = seo?.description || fallbackDescription || undefined;
   const image = seo?.ogImage ?? fallbackImage ?? null;
+  // Key `description` dibiarkan tidak ada kalau kosong: nilai undefined menimpa deskripsi default
+  // situs dari layout publik (meta description hilang).
+  const describe = description ? { description } : {};
   return {
     title: metaTitle,
-    description,
+    ...describe,
     alternates: { canonical: path },
     openGraph: {
       type: "website",
       title: metaTitle,
-      description,
+      ...describe,
       url: path,
       images: image ? [{ url: image.url, alt: image.alt ?? title }] : undefined,
     },
