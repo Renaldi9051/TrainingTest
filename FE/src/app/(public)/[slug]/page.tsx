@@ -83,9 +83,9 @@ export default async function StaticPage({ params }: PageProps<"/[slug]">) {
         }
       >
         {tabs.length >= 2 ? (
-          <nav aria-label="Halaman lain" className="mt-10 -mb-px overflow-x-auto">
+          <nav aria-label="Halaman lain" className="mt-10">
             <ActiveIndicator variant="line">
-              <ul className="flex w-max gap-6">
+              <ul className="flex flex-wrap gap-x-6">
                 {tabs.map((tab) => (
                   <li key={tab.slug}>
                     <Link

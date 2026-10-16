@@ -12,7 +12,7 @@ import { buttonVariants, MAGNETIC } from "@/components/ui/button";
 import type { PublicPageBlock } from "@/lib/api/types";
 import { categoryIcon } from "@/lib/category-icons";
 import { formatBytes } from "@/lib/format";
-import { blockAnchor } from "@/lib/static-page-plan";
+import { anchorHeadings, blockAnchor } from "@/lib/static-page-plan";
 
 // Judul h2 tersembunyi untuk blok tanpa judul (label UI, bukan konten).
 const FALLBACK_HEADINGS: Record<PublicPageBlock["type"], string> = {
@@ -38,7 +38,7 @@ function Block({ block, anchor }: { block: PublicPageBlock; anchor: string }) {
     case "RICH_TEXT":
       return (
         <PublicSection bare id={anchor} eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.RICH_TEXT}>
-          <RichTextHtml html={block.bodyHtml} className="max-w-[65ch] text-body-lg text-fg" />
+          <RichTextHtml html={anchorHeadings(block.bodyHtml, anchor).html} className="max-w-[65ch] text-body-lg text-fg" />
         </PublicSection>
       );
     case "VISION_MISSION":

@@ -14,11 +14,37 @@ function blockHeading(block: PublicPageBlock): string {
   return block.heading.trim();
 }
 
-// Daftar isi hanya kalau ada minimal 2 judul (satu judul tidak perlu navigasi).
+const ENTITIES: Record<string, string> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&nbsp;": " " };
+
+function plainHeading(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (entity) => ENTITIES[entity] ?? entity)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Subjudul h2/h3 di rich text (HTML allowlist dari BE, tag polos tanpa atribut) diberi id supaya bisa
+// dituju daftar isi. Teks tidak diubah.
+export function anchorHeadings(html: string, prefix: string): { html: string; headings: TocEntry[] } {
+  const headings: TocEntry[] = [];
+  const anchored = html.replace(/<(h[23])>([\s\S]*?)<\/\1>/g, (match, tag: string, inner: string) => {
+    const label = plainHeading(inner);
+    if (!label) return match;
+    const id = `${prefix}-${headings.length + 1}`;
+    headings.push({ id, label });
+    return `<${tag} id="${id}">${inner}</${tag}>`;
+  });
+  return { html: anchored, headings };
+}
+
+// Daftar isi: judul blok, lalu subjudul di dalam teks. Hanya kalau ada minimal 2 entri.
 export function tocEntries(blocks: PublicPageBlock[]): TocEntry[] {
   const entries = blocks.flatMap((block, index) => {
     const label = blockHeading(block);
-    return label ? [{ id: blockAnchor(index), label }] : [];
+    const own = label ? [{ id: blockAnchor(index), label }] : [];
+    const inner = block.type === "RICH_TEXT" ? anchorHeadings(block.bodyHtml, blockAnchor(index)).headings : [];
+    return [...own, ...inner];
   });
   return entries.length >= 2 ? entries : [];
 }
