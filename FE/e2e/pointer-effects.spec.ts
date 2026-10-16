@@ -43,12 +43,13 @@ async function box(page: Page, selector: string) {
 }
 
 // Indikator berada tepat di elemen aktif (pill) atau garis 1 px di bawahnya (line).
-async function expectIndicatorOn(page: Page, indicator: string, target: string, variant: "pill" | "line") {
+// thickness: tebal garis indikator line (palet C: menu & urutan 2 px, tab 3 px).
+async function expectIndicatorOn(page: Page, indicator: string, target: string, variant: "pill" | "line", thickness = 2) {
   await expect
     .poll(async () => {
       const [mark, active] = await Promise.all([box(page, indicator), box(page, target)]);
       const top = variant === "pill" ? active.y : active.y + active.height;
-      const height = variant === "pill" ? active.height : 1;
+      const height = variant === "pill" ? active.height : thickness;
       return [mark.x - active.x, mark.y - top, mark.width - active.width, mark.height - height].every((delta) => Math.abs(delta) < 1);
     })
     .toBe(true);
@@ -104,8 +105,9 @@ test.describe("efek kursor & indikator aktif", () => {
     const rect = await cta.boundingBox();
     if (!rect) throw new Error("CTA tidak terlihat");
 
-    // Pojok kanan bawah: geser ke arah kursor, tidak lebih dari 6 px.
-    await page.mouse.move(rect.x + rect.width - 2, rect.y + rect.height - 2, { steps: 5 });
+    // Pojok kanan bawah: geser ke arah kursor, tidak lebih dari 6 px. 4 px dari pojok: tetap di dalam
+    // lengkung radius 8 px (palet C); hit-test browser mengikuti border-radius.
+    await page.mouse.move(rect.x + rect.width - 4, rect.y + rect.height - 4, { steps: 5 });
     await expect.poll(async () => parseTranslate(await magneticTransform(page, "Lihat katalog pelatihan"))?.[0] ?? 0).toBeGreaterThan(0);
     const [x, y] = parseTranslate(await magneticTransform(page, "Lihat katalog pelatihan")) ?? [0, 0];
     expect(Math.abs(x)).toBeLessThanOrEqual(MAX_PX);
@@ -215,7 +217,7 @@ test.describe("efek kursor & indikator aktif", () => {
     await expectIndicatorOn(page, 'nav[aria-label="Menu utama"] > [data-active-indicator]', TOP_MENU_ACTIVE, "line");
     await page.waitForTimeout(500);
     expect(await indicatorAnimations(page)).toBe(0);
-    // Setelah JS siap, latar chip aktif digantikan indikator (tanpa JS chip tetap hitam sendiri).
+    // Setelah JS siap, latar chip aktif digantikan indikator (tanpa JS chip tetap --primary sendiri).
     await expect(page.locator(`${metode} [data-indicator-ready]`)).toHaveCount(1);
     expect(await page.locator(`${metode} [aria-current]`).evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
 

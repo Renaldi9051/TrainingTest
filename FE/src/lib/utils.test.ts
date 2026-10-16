@@ -20,6 +20,15 @@ describe("cn", () => {
     expect(cn("text-h2", "text-display")).toBe("text-display");
   });
 
+  it("palet C: warna peran baru tetap warna, rounded-card satu grup dengan radius lain", () => {
+    expect(cn("bg-fg-strong", "bg-primary")).toBe("bg-primary");
+    expect(cn("text-small text-on-primary")).toBe("text-small text-on-primary");
+    expect(cn("text-fg-muted", "text-accent-ink")).toBe("text-accent-ink");
+    expect(cn("ring-fg-strong", "ring-focus")).toBe("ring-focus");
+    expect(cn("rounded-md", "rounded-card")).toBe("rounded-card");
+    expect(cn("rounded-card", "rounded-full")).toBe("rounded-full");
+  });
+
   it("semua token --text-* di theme.css terdaftar di tailwind-merge", () => {
     const css = readFileSync(new URL("../app/theme.css", import.meta.url), "utf8");
     const tokens = [...css.matchAll(/^\s*--text-([a-z0-9]+(?:-[a-z0-9]+)*):/gm)].map((match) => match[1]);
