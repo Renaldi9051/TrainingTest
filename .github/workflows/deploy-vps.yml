@@ -1,0 +1,82 @@
+# Deploy otomatis ke VPS (https://pelatihanjogpro.duckdns.org) setiap push ke main.
+#
+# Cara kerja: workflow SSH ke VPS memakai key khusus. Di VPS key itu dibatasi
+# (authorized_keys: restrict,command="/opt/training/deploy.sh"), jadi apa pun perintah yang dikirim,
+# yang jalan hanya skrip deploy: git reset ke origin/main, build berurutan, docker compose up,
+# tunggu FE sehat. Key ini tidak bisa membuka shell atau menjalankan perintah lain.
+#
+# Secret repo (Settings > Secrets and variables > Actions), diisi pemilik repo:
+#   VPS_HOST         IP VPS
+#   VPS_SSH_KEY      private key khusus deploy (isi file training_actions_deploy)
+#   VPS_KNOWN_HOSTS  host key VPS (hasil ssh-keyscan), supaya koneksi tidak bisa disadap
+name: Deploy VPS
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+# Push beruntun: deploy berjalan satu per satu, yang terbaru tidak membatalkan yang sedang jalan.
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # Sebelum pemilik repo mengisi secret, workflow dilewati (hijau) alih-alih gagal di setiap push.
+      - name: Cek secret
+        id: secrets
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          if [ -n "$VPS_HOST" ] && [ -n "$VPS_SSH_KEY" ] && [ -n "$VPS_KNOWN_HOSTS" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Secret VPS_HOST/VPS_SSH_KEY/VPS_KNOWN_HOSTS belum diisi; deploy dilewati."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Siapkan SSH
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Deploy
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=30 -o ServerAliveCountMax=10 \
+            "jogjacreativepro@${VPS_HOST}" deploy
+
+      - name: Cek situs
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          for i in $(seq 1 12); do
+            if curl -fsS -m 15 https://pelatihanjogpro.duckdns.org/api/health; then exit 0; fi
+            sleep 10
+          done
+          echo "Situs tidak merespons sehat setelah deploy" >&2
+          exit 1
+
+      - name: Hapus key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
