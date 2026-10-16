@@ -121,7 +121,15 @@ function HeroText({ section, inverse, aside }: { section: HeroData; inverse: boo
               <label htmlFor={`${section.id}-search`} className={cn("block font-mono text-label uppercase tracking-[0.08em]", muted)}>
                 Cari pelatihan
               </label>
-              <div className={cn("flex h-14 items-center gap-2 rounded-md pr-1.5 pl-4", inverse ? "bg-bg text-fg" : "border border-border-strong bg-bg")}>
+              {/* Cincin fokus di wrapper (input tanpa outline sendiri), terlihat juga di atas foto hero. */}
+              <div
+                className={cn(
+                  "flex h-14 items-center gap-2 rounded-md pr-1.5 pl-4 focus-within:ring-2 focus-within:ring-offset-2",
+                  inverse
+                    ? "bg-bg text-fg focus-within:ring-inverse-fg focus-within:ring-offset-fg-strong"
+                    : "border border-border-strong bg-bg focus-within:border-fg-strong focus-within:ring-fg-strong",
+                )}
+              >
                 <SearchIcon aria-hidden strokeWidth={1.5} className="size-5 shrink-0 text-fg-muted" />
                 <input
                   id={`${section.id}-search`}

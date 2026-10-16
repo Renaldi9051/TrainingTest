@@ -114,7 +114,7 @@ export async function SiteFooter() {
               ) : null}
             </address>
             {contact.mapEmbedUrl ? (
-              <div className="group/map relative mt-5 h-32 overflow-hidden border border-inverse-line">
+              <div className="group/map relative mt-5 h-32 overflow-hidden border border-inverse-line focus-within:ring-2 focus-within:ring-inverse-fg focus-within:ring-offset-2 focus-within:ring-offset-inverse-bg">
                 {/* URL sudah divalidasi domainnya di BE; iframe dibuat di sini, bukan HTML dari CMS.
                     Monokrom seperti foto (DESIGN 2); berwarna saat hover atau fokus di dalam peta. */}
                 <iframe
