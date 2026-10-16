@@ -38,6 +38,10 @@ describe("tagsForEvent: tag Fase 2 tetap terpanggil", () => {
   });
 });
 
+it("urutan kategori me-revalidate pelatihan (gambar kategori pengganti sampul ikut urutan)", () => {
+  expect(tagsForEvent({ entity: "CategoryOrder" })).toEqual(expect.arrayContaining(["categories", "home", "trainings"]));
+});
+
 describe("tagsForEvent: beranda ikut di-revalidate saat datanya berubah", () => {
   it.each([
     { entity: "Training", slugs: ["a"] } as const,

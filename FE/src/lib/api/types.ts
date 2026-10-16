@@ -181,6 +181,7 @@ export type Media = {
 export type MediaUsage = {
   entity:
     | "Training"
+    | "Category"
     | "Service"
     | "Client"
     | "Testimonial"
@@ -322,7 +323,9 @@ export type Category = {
   icon: string | null;
   order: number;
   featured: boolean;
-  // Admin: pelatihan yang belum dihapus (draft + published).
+  imageId: string | null;
+  image: Media | null;
+  // Admin: pelatihan aktif = belum dihapus (draft + published).
   trainingCount: number;
   createdAt: string;
   updatedAt: string;
@@ -339,6 +342,8 @@ export type PublicCategory = {
   description: string | null;
   icon: string | null;
   featured: boolean;
+  // Foto landing kategori; null kalau kosong.
+  image: PublicImage | null;
   // Hanya pelatihan yang tampil publik.
   trainingCount: number;
 };
@@ -432,10 +437,14 @@ export type PublicTrainingCard = {
   method: TrainingMethod | null;
   types: TrainingType[];
   level: TrainingLevel | null;
+  // Sampul pelatihan, atau gambar kategori pertama yang punya gambar (lihat coverSource).
   cover: PublicImage | null;
+  coverSource: CoverSource;
   categories: PublicCategoryRef[];
   publishedAt: string;
 };
+
+export type CoverSource = "training" | "category" | null;
 
 export type ScheduleStatus = "OPEN" | "FULL" | "COMPLETED";
 

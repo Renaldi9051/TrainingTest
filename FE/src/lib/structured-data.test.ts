@@ -13,6 +13,7 @@ const training: PublicTrainingDetail = {
   types: ["PUBLIC"],
   level: null,
   cover: { url: "/uploads/a.webp", alt: "x", width: 10, height: 10, mime: "image/webp", variants: null },
+  coverSource: "training",
   categories: [{ slug: "sdm", name: "SDM" }],
   publishedAt: "2026-10-01T00:00:00.000Z",
   descriptionHtml: null,

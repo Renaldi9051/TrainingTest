@@ -50,8 +50,9 @@ export function tagsForEvent(event: RevalidateEvent): string[] {
         RevalidateTag.HOME,
         ...slugTags(event.slugs, RevalidateTag.category),
       );
+    // Urutan kategori menentukan gambar kategori yang dipakai kartu tanpa sampul (toCard).
     case "CategoryOrder":
-      return [RevalidateTag.CATEGORIES, RevalidateTag.HOME];
+      return [RevalidateTag.CATEGORIES, RevalidateTag.HOME, RevalidateTag.TRAININGS];
     case "Training":
       return tags(
         RevalidateTag.TRAININGS,

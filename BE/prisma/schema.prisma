@@ -274,6 +274,9 @@ model Category {
   icon        String?
   order       Int       @default(0)
   featured    Boolean   @default(false)
+  // Gambar kategori: fallback sampul pelatihan tanpa cover dan foto di landing kategori.
+  imageId     String?   @db.Uuid
+  image       Media?    @relation(fields: [imageId], references: [id], onDelete: SetNull)
   createdAt   DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
   deletedAt   DateTime? @db.Timestamptz(3)
@@ -520,6 +523,7 @@ model Media {
   testimonialPhotos Testimonial[]
   marketingPhotos   MarketingContact[]
   portfolioImages   PortfolioImage[]
+  categoryImages    Category[]
 
   @@index([folder])
   @@index([deletedAt])
