@@ -9,6 +9,7 @@ import type {
   PortfolioCreateInput,
   PortfolioListQuery,
   PortfolioUpdateInput,
+  PortfolioActivityType,
 } from "@/lib/validators/portfolio";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
 import {
@@ -23,7 +24,7 @@ import { withSelected, type OptionItem } from "@/services/options";
 import { nextOrder } from "@/services/reorder";
 
 const ENTITY = "PortfolioItem";
-const AUDIT_FIELDS = ["title", "date", "client", "description", "imageIds"] as const;
+const AUDIT_FIELDS = ["title", "activityType", "date", "client", "description", "imageIds"] as const;
 
 type PortfolioRow = PortfolioItem & { images: (PortfolioImage & { media: Media })[] };
 const include = {
@@ -33,6 +34,7 @@ const include = {
 export type PortfolioDto = {
   id: string;
   title: string;
+  activityType: PortfolioActivityType | null;
   date: string | null;
   client: string | null;
   description: string | null;
@@ -53,6 +55,7 @@ function toDto(row: PortfolioRow): PortfolioDto {
   return {
     id: row.id,
     title: row.title,
+    activityType: row.activityType,
     date: row.date ? toDateString(row.date) : null,
     client: row.client,
     description: row.description,
@@ -68,6 +71,7 @@ function auditShape(row: PortfolioRow) {
   const dto = toDto(row);
   return {
     title: dto.title,
+    activityType: dto.activityType,
     date: dto.date,
     client: dto.client,
     description: dto.description,
@@ -146,6 +150,7 @@ export async function createPortfolio(input: PortfolioCreateInput, userId: strin
     const row = await tx.portfolioItem.create({
       data: {
         title: input.title,
+        activityType: input.activityType,
         date: toDbDate(input.date),
         client: input.client,
         description: input.description,
@@ -177,6 +182,7 @@ export async function updatePortfolio(id: string, input: PortfolioUpdateInput, u
   const data: Prisma.PortfolioItemUncheckedUpdateInput = { updatedById: userId };
   if (input.title !== undefined) data.title = input.title;
   if (input.date !== undefined) data.date = toDbDate(input.date);
+  if (input.activityType !== undefined) data.activityType = input.activityType;
   if (input.client !== undefined) data.client = input.client;
   if (input.description !== undefined) data.description = input.description;
 
@@ -238,6 +244,8 @@ export async function restorePortfolio(id: string, userId: string): Promise<Port
 
 export type PublicPortfolioItem = {
   title: string;
+  // null = belum diisi; item tetap tampil di "Semua", tidak ikut chip jenis.
+  activityType: PortfolioActivityType | null;
   date: string | null;
   client: string | null;
   description: string | null;
@@ -247,6 +255,7 @@ export type PublicPortfolioItem = {
 export function toPublicPortfolio(row: PortfolioRow): PublicPortfolioItem {
   return {
     title: row.title,
+    activityType: row.activityType,
     date: row.date ? toDateString(row.date) : null,
     client: row.client,
     description: row.description,

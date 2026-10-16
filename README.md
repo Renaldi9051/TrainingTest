@@ -75,6 +75,29 @@ curl http://localhost:3000/api/health
 # {"error":{"code":"DB_UNAVAILABLE",...}}  (HTTP 503 kalau database mati)
 ```
 
+### Menjalankan branch redesign untuk demo
+
+Untuk mendemokan branch `redesign-v02` tanpa menyentuh container Docker (`be`/`fe` di port
+3000/4000 tetap jalan dengan kode lamanya). Satu perintah menyalakan BE di port 4100 lalu FE di
+port 3100, memakai database dev (`DATABASE_URL` di `.env`). Alamat yang berbeda diberikan lewat env
+override di proses itu saja, jadi `.env` tidak diubah.
+
+```bash
+git switch redesign-v02
+cd BE
+npm install && (cd ../FE && npm install)
+npm run db:up            # kalau Postgres belum jalan
+npm run db:migrate       # sekali, kalau branch membawa migrasi baru (demo menolak jalan kalau belum)
+npm run demo             # http://localhost:3100 (admin: /admin/login), Ctrl+C untuk berhenti
+```
+
+- Port 3100/4100 sama dengan e2e: jangan jalankan bersamaan dengan `npm run test:e2e`. Demo menolak
+  jalan kalau port itu sedang dipakai.
+- Demo menolak database yang namanya mengandung `prod` atau `training_e2e`, dan tidak menjalankan
+  migrasi sendiri.
+- Data yang diubah lewat admin demo tersimpan di database dev yang sama dengan Docker.
+- Kalau terminal ditutup paksa (bukan Ctrl+C), cek tidak ada proses tertinggal di port 3100/4100.
+
 ## Panel admin
 
 Buka http://localhost:3000/admin/login dan masuk dengan `ADMIN_EMAIL` / `ADMIN_PASSWORD` dari `.env`. Seed hanya membuat admin kalau email tersebut belum ada; password admin yang sudah ada tidak ditimpa.
@@ -88,8 +111,8 @@ Buka http://localhost:3000/admin/login dan masuk dengan `ADMIN_EMAIL` / `ADMIN_P
 
 | URL | Isi |
 |---|---|
-| `/pelatihan` | Katalog: hasil pencarian dari kolom cari (`?q=`), urutan, 24 per halaman. Tanpa panel filter: kategori hanya dipilih lewat dropdown menu Pelatihan di header. State di URL: `?q=&urut=&hal=` |
-| `/pelatihan/kategori/<slug>` | Landing kategori: deskripsi + 24 pelatihan terbaru, tautan ke katalog terfilter |
+| `/pelatihan` | Katalog: kolom cari, sidebar filter (10 kategori teratas + "Tampilkan semua" yang membuka indeks A-Z, metode, tipe), urutan, 15 per halaman. Di mobile panel filter bisa dilipat. Menu Pelatihan di header tetap jalan pintas ke landing kategori. State di URL: `?q=&kategori=a,b&metode=&tipe=&urut=&hal=` |
+| `/pelatihan/kategori/<slug>` | Landing kategori: deskripsi, jumlah pelatihan dan jadwal bulan ini, kategori lain, filter metode (`?metode=`), 12 per halaman (`?hal=`), sesi terdekat, tautan ke katalog terfilter |
 | `/pelatihan/<slug>` | Detail, jadwal terdekat, CTA WhatsApp, pelatihan terkait, JSON-LD Course/Event |
 | `/jadwal` | Daftar sesi, filter bulan/kota/kategori |
 

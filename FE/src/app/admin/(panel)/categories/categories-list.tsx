@@ -10,6 +10,7 @@ import {
   DataTableToolbar,
   type DataTableColumn,
 } from "@/components/admin/data-table";
+import { MediaThumbnail } from "@/components/admin/media/media-thumbnail";
 import { ReorderPanel } from "@/components/admin/reorder-panel";
 import { Button } from "@/components/admin/ui/button";
 import {
@@ -50,6 +51,19 @@ const columns: DataTableColumn<Category>[] = columnHelper.columns([
       );
     },
   }),
+  // Gambar kategori: foto landing kategori dan gambar pelatihan tanpa sampul.
+  columnHelper.display({
+    id: "image",
+    header: "Gambar",
+    cell: ({ row }) =>
+      row.original.image ? (
+        <span className="relative block aspect-[4/3] w-14 overflow-hidden rounded-md border border-border">
+          <MediaThumbnail media={row.original.image} sizes="56px" />
+        </span>
+      ) : (
+        <span className="text-small text-fg-muted">Tanpa gambar</span>
+      ),
+  }),
   columnHelper.accessor("featured", {
     header: "Unggulan",
     cell: ({ getValue }) =>
@@ -63,7 +77,8 @@ const columns: DataTableColumn<Category>[] = columnHelper.columns([
       ),
   }),
   columnHelper.accessor("trainingCount", {
-    header: "Pelatihan",
+    // Pelatihan yang belum di Sampah (draft + tayang). Urutkan lewat pilihan "Pelatihan aktif".
+    header: "Pelatihan aktif",
     cell: ({ row, getValue }) => (
       <Link href={`/admin/trainings?categoryId=${row.original.id}`} className="font-mono underline-offset-4 hover:underline" aria-label={`Lihat ${getValue()} pelatihan kategori ${row.original.name}`}>
         {formatNumber(getValue())}
@@ -98,9 +113,12 @@ const SORTS = [
   { value: "order", label: "Urutan" },
   { value: "name", label: "Nama A-Z" },
   { value: "-updatedAt", label: "Terakhir diubah" },
+  { value: "-trainingCount", label: "Pelatihan aktif terbanyak" },
+  { value: "trainingCount", label: "Pelatihan aktif tersedikit" },
 ] as const;
 
 const FEATURED_ALL = "all";
+const IMAGE_ALL = "all";
 
 export function CategoriesList() {
   const [reordering, setReordering] = useState(false);
@@ -123,21 +141,23 @@ function CategoryTable() {
   const q = useDeferredValue(search.trim());
   const [sort, setSort] = useState<string>("order");
   const [featured, setFeatured] = useState<string>(FEATURED_ALL);
+  const [issue, setIssue] = useState<string>(IMAGE_ALL);
   const [page, setPage] = useState(1);
 
-  const params = useMemo(() => ({ q, sort, featured, page }), [q, sort, featured, page]);
+  const params = useMemo(() => ({ q, sort, featured, issue, page }), [q, sort, featured, issue, page]);
   const query = useQuery({
     queryKey: categoryKeys.list(params),
     queryFn: async () => {
       const search = new URLSearchParams({ page: String(page), pageSize: "20", sort });
       if (q) search.set("q", q);
       if (featured !== FEATURED_ALL) search.set("featured", featured);
+      if (issue !== IMAGE_ALL) search.set("issue", issue);
       return apiFetch<Category[], PaginationMeta>(`/admin/categories?${search}`);
     },
     placeholderData: keepPreviousData,
   });
 
-  const filtered = Boolean(q) || featured !== FEATURED_ALL;
+  const filtered = Boolean(q) || featured !== FEATURED_ALL || issue !== IMAGE_ALL;
 
   return (
     <>
@@ -166,8 +186,29 @@ function CategoryTable() {
                 <SelectItem value="false">Bukan unggulan</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger className="w-44" aria-label="Urutkan daftar">
+            <Select
+              value={issue}
+              onValueChange={(value) => {
+                setIssue(value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-40" aria-label="Filter gambar">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={IMAGE_ALL}>Semua gambar</SelectItem>
+                <SelectItem value="no-image">Tanpa gambar</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={sort}
+              onValueChange={(value) => {
+                setSort(value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-56" aria-label="Urutkan daftar">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

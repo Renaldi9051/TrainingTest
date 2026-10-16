@@ -12,6 +12,7 @@ import { buttonVariants, MAGNETIC } from "@/components/ui/button";
 import type { PublicPageBlock } from "@/lib/api/types";
 import { categoryIcon } from "@/lib/category-icons";
 import { formatBytes } from "@/lib/format";
+import { anchorHeadings, blockAnchor } from "@/lib/static-page-plan";
 
 // Judul h2 tersembunyi untuk blok tanpa judul (label UI, bukan konten).
 const FALLBACK_HEADINGS: Record<PublicPageBlock["type"], string> = {
@@ -32,23 +33,23 @@ function FeatureIcon({ name }: { name: string | null }) {
   return icon ? createElement(icon, { className: "size-6 text-fg-strong", strokeWidth: 1.5, "aria-hidden": true }) : null;
 }
 
-function Block({ block }: { block: PublicPageBlock }) {
+function Block({ block, anchor }: { block: PublicPageBlock; anchor: string }) {
   switch (block.type) {
     case "RICH_TEXT":
       return (
-        <PublicSection eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.RICH_TEXT}>
-          <RichTextHtml html={block.bodyHtml} className="max-w-[65ch] text-body-lg text-fg" />
+        <PublicSection bare id={anchor} eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.RICH_TEXT}>
+          <RichTextHtml html={anchorHeadings(block.bodyHtml, anchor).html} className="max-w-[65ch] text-body-lg text-fg" />
         </PublicSection>
       );
     case "VISION_MISSION":
       return (
-        <PublicSection eyebrow={block.eyebrow} heading="" fallbackHeading={FALLBACK_HEADINGS.VISION_MISSION}>
+        <PublicSection bare id={anchor} eyebrow={block.eyebrow} heading="" fallbackHeading={FALLBACK_HEADINGS.VISION_MISSION}>
           <VisionMission vision={block.vision} mission={block.mission} motto={block.motto} />
         </PublicSection>
       );
     case "FEATURES":
       return (
-        <PublicSection eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.FEATURES}>
+        <PublicSection bare id={anchor} eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.FEATURES}>
           <Reveal>
             <LineDraw />
             <ul data-reveal-children="card" className="grid sm:grid-cols-2 lg:grid-cols-3">
@@ -65,7 +66,7 @@ function Block({ block }: { block: PublicPageBlock }) {
       );
     case "LIST":
       return (
-        <PublicSection eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.LIST}>
+        <PublicSection bare id={anchor} eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.LIST}>
           {block.style === "chips" ? (
             <Reveal as="ul" data-reveal-children="pop" className="flex flex-wrap gap-2">
               {block.items.map((item, index) => (
@@ -93,13 +94,13 @@ function Block({ block }: { block: PublicPageBlock }) {
       );
     case "SERVICES":
       return block.items.length > 0 ? (
-        <PublicSection eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.SERVICES} intro={block.intro}>
+        <PublicSection bare id={anchor} eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.SERVICES} intro={block.intro}>
           <ServiceRows services={block.items} />
         </PublicSection>
       ) : null;
     case "IMAGE":
       return (
-        <figure className="mx-auto w-full max-w-[1280px] space-y-3 px-4 py-10 sm:px-6 md:py-16">
+        <figure id={anchor} className="scroll-mt-28 space-y-3 py-10 first:pt-0 md:py-12">
           <Reveal>
             <RevealImage className="relative aspect-video overflow-hidden bg-bg-muted">
               <PublicImage image={block.image} sizes={BLOCK_IMAGE_SIZES} />
@@ -110,25 +111,24 @@ function Block({ block }: { block: PublicPageBlock }) {
       );
     case "DOWNLOAD":
       return (
-        <PublicSection eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.DOWNLOAD} intro={block.description}>
+        <PublicSection bare id={anchor} eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.DOWNLOAD} intro={block.description}>
           <a href={block.file.url} download className={buttonVariants({ variant: "primary", size: "lg" })} {...MAGNETIC}>
             <DownloadIcon aria-hidden strokeWidth={1.5} />
             <RollText>{block.label}</RollText>
-            <span className="font-mono text-label text-inverse-fg/70">PDF · {formatBytes(block.file.size)}</span>
+            <span className="font-mono text-label text-on-primary">PDF · {formatBytes(block.file.size)}</span>
           </a>
         </PublicSection>
       );
   }
 }
 
-// Blok halaman berurutan. Pemisah antar blok: garis tipis (bukan kartu berlatar).
-// Blok pertama langsung menyusul PageIntro: tanpa padding atas, jadi jarak judul -> blok pertama
-// cukup dari padding bawah PageIntro (48/64 px). Jarak 128/80 px hanya antar section.
+// Blok halaman statis berurutan di kolom isi (di samping daftar isi). Pemisah antar blok: garis tipis
+// (bukan kartu berlatar). Tiap blok punya anchor untuk daftar isi (lib/static-page-plan.ts).
 export function PageBlocks({ blocks }: { blocks: PublicPageBlock[] }) {
   return (
-    <div className="divide-y divide-border [&>:first-child]:pt-0">
-      {blocks.map((block) => (
-        <Block key={block.id} block={block} />
+    <div className="divide-y divide-border">
+      {blocks.map((block, index) => (
+        <Block key={block.id} block={block} anchor={blockAnchor(index)} />
       ))}
     </div>
   );

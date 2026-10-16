@@ -1,8 +1,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
-import { loginViaApi, ORIGIN, runId } from "./helpers";
+import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { loginViaApi, ORIGIN, photoLikeJpeg, runId } from "./helpers";
 
 // Halaman publik Fase 3.5: beranda dari CMS, profil, portofolio, layanan, halaman statis, footer.
 // Jalankan dengan build produksi untuk verifikasi cache sungguhan: `npm run test:e2e:prod`.
@@ -38,42 +38,6 @@ async function uploadImage(
   const id = ((await response.json()) as { data: { created: { id: string }[] } }).data.created[0].id;
   await patch(request, `/admin/media/${id}`, { alt });
   return id;
-}
-
-// JPEG 2400x1350 dengan gradasi + noise, supaya ukuran varian WebP mendekati foto sungguhan
-// (sample.png berwarna rata sehingga ukurannya tidak mewakili). Dibuat saat test, tanpa file biner.
-async function photoLikeJpeg(browser: Browser): Promise<{ buffer: Buffer; mimeType: string }> {
-  const page = await browser.newPage({ viewport: { width: 2400, height: 1350 } });
-  await page.setContent('<canvas id="c" width="2400" height="1350" style="display:block"></canvas>');
-  await page.evaluate(() => {
-    const canvas = document.getElementById("c") as HTMLCanvasElement;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-    const gradient = context.createLinearGradient(0, 0, 2400, 1350);
-    gradient.addColorStop(0, "#5b6b7a");
-    gradient.addColorStop(1, "#c9b79c");
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, 2400, 1350);
-    let seed = 7;
-    const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    for (let i = 0; i < 1400; i += 1) {
-      context.fillStyle = `rgba(${Math.floor(random() * 255)}, ${Math.floor(random() * 255)}, ${Math.floor(random() * 255)}, 0.35)`;
-      context.beginPath();
-      context.arc(random() * 2400, random() * 1350, 4 + random() * 60, 0, Math.PI * 2);
-      context.fill();
-    }
-    const noise = context.getImageData(0, 0, 2400, 1350);
-    for (let i = 0; i < noise.data.length; i += 4) {
-      const delta = (random() - 0.5) * 40;
-      noise.data[i] += delta;
-      noise.data[i + 1] += delta;
-      noise.data[i + 2] += delta;
-    }
-    context.putImageData(noise, 0, 0);
-  });
-  const buffer = await page.screenshot({ type: "jpeg", quality: 85 });
-  await page.close();
-  return { buffer, mimeType: "image/jpeg" };
 }
 
 async function clearHome(request: APIRequestContext) {
@@ -203,7 +167,7 @@ test.describe("halaman publik", () => {
       searchPlaceholder: "Cari pelatihan, mis. KPI",
       primaryCta: { label: "Lihat pelatihan", href: "/pelatihan" },
       secondaryCta: { label: "Lihat jadwal", href: "/jadwal" },
-      image: { mediaId: heroImage },
+      slides: [{ mediaId: heroImage }],
     });
     await section("STATS", {
       eyebrow: "01 / Angka",
@@ -295,6 +259,12 @@ test.describe("halaman publik", () => {
     await page.goto(`/layanan/${serviceSlug}`);
     await expect(page.getByRole("heading", { level: 1, name: new RegExp(`In-house training ${id}`) })).toBeVisible();
     expect(await headingIssues(page)).toEqual([]);
+
+    // Tab yang masih membuka halaman layanan ditutup sebelum mutasi: di `next dev`, setiap revalidate
+    // memicu refresh RSC otomatis di tab itu. Render yang masih berjalan saat slug diganti bisa
+    // tersimpan sebagai cache segar slug lama (200, bukan 308). Pemeriksaan berikutnya lewat
+    // page.request. BE juga mengirim revalidate susulan untuk ganti slug (revalidate-map.ts).
+    await page.goto("about:blank");
 
     // Ubah judul di admin: halaman publik ikut berubah < 5 detik.
     await patch(page.request, `/admin/services/${serviceId}`, { title: `[UJI] In-house training ${id} edisi baru` });

@@ -412,7 +412,16 @@ export const homeSections = [
       searchPlaceholder: "Cari pelatihan, mis. pemetaan drone",
       primaryCta: { label: "Dapatkan harga spesial", href: "/pelatihan" },
       secondaryCta: null,
-      image: null,
+      // Tanpa slide: hero teks. Slide (gambar dokumentasi asli) diisi admin lewat editor slide.
+      layout: "fullbleed",
+      intervalMs: 6000,
+      photoStyle: "color",
+      showViewfinder: true,
+      showBadge: false,
+      badgeText: "",
+      badgeHref: "",
+      slides: [],
+      decor: true,
     },
   },
   {

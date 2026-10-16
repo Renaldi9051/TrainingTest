@@ -90,6 +90,9 @@ export type PublicSettings = {
   };
   social: SettingValues["site.social"];
   footer: SettingValues["site.footer"];
+  // Kosong per field = FE memakai label lama.
+  pageHeaders: SettingValues["page.headers"];
+  servicesProcess: SettingValues["services.process"];
   seo: {
     titleTemplate: string;
     defaultTitle: string;
@@ -124,6 +127,8 @@ export async function getPublicSettings(): Promise<PublicSettings> {
     contact: { ...contact, whatsappUrl: whatsappUrl(contact.whatsapp) },
     social: values["site.social"],
     footer: values["site.footer"],
+    pageHeaders: values["page.headers"],
+    servicesProcess: values["services.process"],
     seo: {
       titleTemplate: seo.titleTemplate,
       defaultTitle: seo.defaultTitle || identity.name,

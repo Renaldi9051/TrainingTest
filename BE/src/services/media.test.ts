@@ -39,6 +39,7 @@ let mock: MockDb;
 function noUsages() {
   for (const model of [
     mock.training,
+    mock.category,
     mock.service,
     mock.client,
     mock.testimonial,
@@ -130,6 +131,30 @@ describe("deleteMedia", () => {
   it("404 kalau media tidak ada atau sudah dihapus", async () => {
     mock.media.findFirst.mockResolvedValue(null);
     await expect(deleteMedia(media.id, "u1")).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe("getMediaUsages: gambar kategori", () => {
+  it("kategori yang memakai media dihitung (termasuk di Sampah), hapus media = 409 MEDIA_IN_USE", async () => {
+    mock.media.findFirst.mockResolvedValue(media);
+    noUsages();
+    mock.category.findMany.mockResolvedValue([
+      { id: "c1", name: "Keuangan", deletedAt: null },
+      { id: "c2", name: "Arsip", deletedAt: new Date() },
+    ]);
+
+    await expect(deleteMedia(media.id, "u1")).rejects.toMatchObject({
+      status: 409,
+      code: "MEDIA_IN_USE",
+      details: {
+        usages: [
+          { entity: "Category", entityLabel: "Kategori", id: "c1", label: "Keuangan", field: "Gambar", inTrash: false },
+          { entity: "Category", entityLabel: "Kategori", id: "c2", label: "Arsip", field: "Gambar", inTrash: true },
+        ],
+      },
+    });
+    expect(mock.category.findMany.mock.calls[0][0].where).toEqual({ imageId: media.id });
+    expect(mock.media.update).not.toHaveBeenCalled();
   });
 });
 

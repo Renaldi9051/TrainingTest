@@ -114,14 +114,14 @@ test.describe("animasi 4.1e", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
   });
 
-  test("kata hero berganti terus tiap 2 s tanpa jeda (juga saat kursor di judul); nama h1 utuh", async ({ page }) => {
+  // Keputusan pemilik 15 Okt 2026 (DESIGN.md 9.2): kata tetap berganti tiap 2 s, tapi ada tombol
+  // pause/play (WCAG 2.2.2). Kursor di judul tidak menahan pergantian.
+  test("kata hero berganti terus tiap 2 s (juga saat kursor di judul); tombol jeda menghentikan; nama h1 utuh", async ({ page }) => {
     test.setTimeout(60_000);
     await page.goto("/");
     const h1 = page.getByRole("heading", { level: 1 });
     await expect(h1).toHaveAccessibleName(`[UJI] Tim belajar ${id} ${WORDS[0]}`);
     expect(await visibleWord(page)).toBe(0);
-    // Tidak ada tombol jeda; kursor di atas judul tidak menahan pergantian.
-    await expect(page.getByRole("button", { name: /Jeda kata|Putar kata/ })).toHaveCount(0);
     await h1.hover();
     // Urutan kata yang tampil selama ~9 s: 0 -> 1 -> 2 -> 0 -> 1 (tidak berhenti setelah satu putaran).
     const sequence: number[] = [];
@@ -132,6 +132,14 @@ test.describe("animasi 4.1e", () => {
       await page.waitForTimeout(150);
     }
     expect(sequence.slice(0, 5)).toEqual([0, 1, 2, 0, 1]);
+
+    // Jeda: kata berhenti; putar: lanjut lagi.
+    await page.getByRole("button", { name: "Jeda kata berganti" }).click();
+    const paused = await visibleWord(page);
+    await page.waitForTimeout(3_000);
+    expect(await visibleWord(page)).toBe(paused);
+    await page.getByRole("button", { name: "Putar kata berganti" }).click();
+    await expect.poll(() => visibleWord(page), { timeout: 5_000 }).not.toBe(paused);
   });
 
   test("counter berjalan di bawah layar awal, berakhir di angka final, tanpa layout shift", async ({ page }) => {
@@ -267,7 +275,7 @@ test.describe("animasi 4.1e", () => {
     await page.goto(`/pelatihan/${training.slug}`);
     const bar = page.locator("[data-reading-progress]");
     await expect.poll(() => bar.evaluate((element) => (element as HTMLElement).style.transform)).toBe("scaleX(0)");
-    const toc = page.getByRole("navigation", { name: "Daftar isi", exact: true });
+    const toc = page.getByRole("navigation", { name: "Isi pelatihan", exact: true });
     await expect(toc.locator("a[aria-current=location]")).toHaveCount(1);
 
     await page.locator("#materi").scrollIntoViewIfNeeded();

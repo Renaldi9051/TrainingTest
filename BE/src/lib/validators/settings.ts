@@ -5,6 +5,7 @@ import {
   mediaRefSchema,
   optionalWhatsappSchema,
   plainText,
+  requiredText,
 } from "@/lib/validators/common";
 import { facilitiesListSchema, faqSchema } from "@/lib/validators/training-content";
 
@@ -83,6 +84,33 @@ const optionalHref = z
   .default("")
   .pipe(z.union([z.literal(""), hrefSchema]));
 
+// Kepala halaman daftar (eyebrow, h1, lead). Kosong = label lama di FE (aturan konten 5).
+export const PAGE_HEADER_PAGES = ["pelatihan", "layanan", "portofolio", "jadwal", "kontak"] as const;
+export type PageHeaderPage = (typeof PAGE_HEADER_PAGES)[number];
+const pageHeaderSchema = z.object({
+  eyebrow: plainText("Eyebrow", 60),
+  heading: plainText("Judul", 120),
+  lead: plainText("Pengantar", 300),
+});
+const EMPTY_PAGE_HEADER = { eyebrow: "", heading: "", lead: "" };
+const pageHeadersSchema = z.object(
+  Object.fromEntries(PAGE_HEADER_PAGES.map((page) => [page, pageHeaderSchema.default(EMPTY_PAGE_HEADER)])) as Record<
+    PageHeaderPage,
+    z.ZodDefault<typeof pageHeaderSchema>
+  >,
+);
+
+// Alur kerja sama di /layanan. Tanpa langkah = section disembunyikan.
+export const PROCESS_STEPS_MAX = 6;
+
+const coordinateSchema = (label: string, limit: number) =>
+  z
+    .number({ error: `${label} harus angka.` })
+    .min(-limit, { error: `${label} minimal -${limit}.` })
+    .max(limit, { error: `${label} maksimal ${limit}.` })
+    .nullable()
+    .default(null);
+
 export const settingSchemas = {
   "site.identity": z.object({
     name: z
@@ -104,15 +132,25 @@ export const settingSchemas = {
       error: "Isi label dan tautan tombol sekaligus, atau kosongkan keduanya.",
       path: ["ctaHref"],
     }),
-  "site.contact": z.object({
-    phone: phoneSchema,
-    email: emailSchema,
-    // Email kedua (mis. pendaftaran/keuangan); opsional.
-    emailSecondary: emailSchema,
-    whatsapp: optionalWhatsappSchema,
-    address: plainText("Alamat", 500),
-    mapEmbedUrl: mapEmbedUrlSchema,
-  }),
+  "site.contact": z
+    .object({
+      phone: phoneSchema,
+      email: emailSchema,
+      // Email kedua (mis. pendaftaran/keuangan); opsional.
+      emailSecondary: emailSchema,
+      whatsapp: optionalWhatsappSchema,
+      address: plainText("Alamat", 500),
+      mapEmbedUrl: mapEmbedUrlSchema,
+      // Fase 6 redesign: jam operasional & koordinat kantor (label LAT/LON, tombol Google Maps).
+      // Kosong = tidak tampil; nilai lama tanpa field ini tetap terbaca.
+      openingHours: plainText("Jam operasional", 300),
+      latitude: coordinateSchema("Lintang", 90),
+      longitude: coordinateSchema("Bujur", 180),
+    })
+    .refine((value) => (value.latitude === null) === (value.longitude === null), {
+      error: "Isi lintang dan bujur sekaligus, atau kosongkan keduanya.",
+      path: ["longitude"],
+    }),
   "site.social": z.object({
     links: z
       .array(
@@ -149,6 +187,15 @@ export const settingSchemas = {
     description: plainText("Deskripsi default", 160),
     ogImageId: mediaRefSchema,
   }),
+  "page.headers": pageHeadersSchema,
+  "services.process": z.object({
+    eyebrow: plainText("Eyebrow", 60),
+    heading: plainText("Judul", 120),
+    steps: z
+      .array(z.object({ title: requiredText("Judul langkah", 80), description: plainText("Deskripsi langkah", 300) }))
+      .max(PROCESS_STEPS_MAX, { error: `Langkah maksimal ${PROCESS_STEPS_MAX}.` })
+      .default([]),
+  }),
 } as const;
 
 export type SettingKey = keyof typeof settingSchemas;
@@ -168,6 +215,8 @@ export const SETTING_LABELS: Record<SettingKey, string> = {
   "site.footer": "Footer",
   "training.defaults": "Default pelatihan",
   "seo.default": "SEO default",
+  "page.headers": "Kepala halaman",
+  "services.process": "Alur kerja sama",
 };
 
 // Field berisi mediaId per key, beserta label untuk "media dipakai di mana".
@@ -186,11 +235,23 @@ export const SETTING_DEFAULTS: SettingValues = {
     faviconId: null,
   },
   "site.header": { ctaLabel: "", ctaHref: "" },
-  "site.contact": { phone: "", email: "", emailSecondary: "", whatsapp: "", address: "", mapEmbedUrl: "" },
+  "site.contact": {
+    phone: "",
+    email: "",
+    emailSecondary: "",
+    whatsapp: "",
+    address: "",
+    mapEmbedUrl: "",
+    openingHours: "",
+    latitude: null,
+    longitude: null,
+  },
   "site.social": { links: [] },
   "site.footer": { description: "", copyright: "" },
   "training.defaults": { facilities: [], faq: [], inHouseNote: "", disclaimer: "" },
   "seo.default": { titleTemplate: "%s", defaultTitle: "", description: "", ogImageId: null },
+  "page.headers": Object.fromEntries(PAGE_HEADER_PAGES.map((page) => [page, EMPTY_PAGE_HEADER])) as SettingValues["page.headers"],
+  "services.process": { eyebrow: "", heading: "", steps: [] },
 };
 
 export function parseStoredSetting<K extends SettingKey>(key: K, stored: unknown): SettingValues[K] {

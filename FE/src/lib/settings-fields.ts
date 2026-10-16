@@ -1,4 +1,4 @@
-import type { SettingKey } from "@/lib/api/types";
+import type { PageHeaderPage, SettingKey } from "@/lib/api/types";
 
 // Field halaman Pengaturan situs yang bisa dituju dari search global admin (Ctrl/Cmd+K).
 // anchor = "<key>.<field>" dipasang sebagai data-anchor di form; URL: /admin/settings#field-<anchor>.
@@ -18,6 +18,17 @@ export const SETTING_TAB_LABELS: Record<SettingKey, string> = {
   "site.footer": "Footer",
   "training.defaults": "Pelatihan",
   "seo.default": "SEO default",
+  "page.headers": "Kepala halaman",
+  "services.process": "Alur kerja sama",
+};
+
+// Halaman daftar yang kepalanya bisa diatur (setting page.headers); label lama = fallback di FE.
+export const PAGE_HEADER_LABELS: Record<PageHeaderPage, string> = {
+  pelatihan: "Katalog pelatihan",
+  layanan: "Layanan",
+  portofolio: "Portofolio",
+  jadwal: "Jadwal",
+  kontak: "Kontak",
 };
 
 export const SETTING_FIELDS: readonly SettingField[] = [
@@ -34,6 +45,8 @@ export const SETTING_FIELDS: readonly SettingField[] = [
   { key: "site.contact", field: "emailSecondary", label: "Email kedua", synonyms: ["email pendaftaran", "email keuangan"] },
   { key: "site.contact", field: "address", label: "Alamat", synonyms: ["lokasi", "alamat kantor"] },
   { key: "site.contact", field: "mapEmbedUrl", label: "URL embed peta", synonyms: ["peta", "maps", "google maps", "lokasi"] },
+  { key: "site.contact", field: "openingHours", label: "Jam operasional", synonyms: ["jam kerja", "jam buka", "hari kerja"] },
+  { key: "site.contact", field: "latitude", label: "Koordinat kantor", synonyms: ["lintang", "bujur", "latitude", "longitude", "lokasi"] },
   {
     key: "site.social",
     field: "links",
@@ -50,6 +63,10 @@ export const SETTING_FIELDS: readonly SettingField[] = [
   { key: "seo.default", field: "defaultTitle", label: "Judul default", synonyms: ["seo", "title"] },
   { key: "seo.default", field: "description", label: "Deskripsi default", synonyms: ["seo", "meta description"] },
   { key: "seo.default", field: "ogImageId", label: "Gambar OG default", synonyms: ["og image", "gambar share", "seo"] },
+  { key: "page.headers", field: "layanan", label: "Kepala halaman Layanan", synonyms: ["judul halaman", "header halaman", "layanan"] },
+  { key: "page.headers", field: "portofolio", label: "Kepala halaman Portofolio", synonyms: ["judul halaman", "header halaman", "portofolio"] },
+  { key: "page.headers", field: "pelatihan", label: "Kepala halaman Katalog", synonyms: ["judul halaman", "header halaman", "katalog"] },
+  { key: "services.process", field: "steps", label: "Alur kerja sama", synonyms: ["langkah", "proses", "alur layanan"] },
 ];
 
 export function settingAnchor(key: SettingKey, field: string): string {

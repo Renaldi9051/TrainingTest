@@ -50,8 +50,9 @@ export function tagsForEvent(event: RevalidateEvent): string[] {
         RevalidateTag.HOME,
         ...slugTags(event.slugs, RevalidateTag.category),
       );
+    // Urutan kategori menentukan gambar kategori yang dipakai kartu tanpa sampul (toCard).
     case "CategoryOrder":
-      return [RevalidateTag.CATEGORIES, RevalidateTag.HOME];
+      return [RevalidateTag.CATEGORIES, RevalidateTag.HOME, RevalidateTag.TRAININGS];
     case "Training":
       return tags(
         RevalidateTag.TRAININGS,
@@ -93,23 +94,50 @@ export function tagsForEvent(event: RevalidateEvent): string[] {
   }
 }
 
+// Ganti slug: render halaman (slug lama/baru) yang SUDAH berjalan saat mutasi bisa selesai setelah
+// revalidate dan tersimpan di FE sebagai cache segar berisi data sebelum ganti slug (mis. halaman
+// slug lama tanpa redirect), yang baru kedaluwarsa saat cacheLife habis. Revalidate tidak menolak
+// hasil render yang dimulai sebelumnya, jadi tag event yang mengganti slug dikirim sekali lagi
+// setelah jeda ini (lebih lama dari render normal) untuk membuang hasil yang kalah balapan.
+export const SLUG_CHANGE_FOLLOW_UP_MS = 3_000;
+
+// Event mengganti slug = membawa dua slug berbeda (slug baru + slug lama, lihat service).
+function changesSlug(event: RevalidateEvent): boolean {
+  if (!("slugs" in event)) return false;
+  return new Set(event.slugs.filter(Boolean)).size > 1;
+}
+
+function scheduleFollowUp(followUp: string[]): void {
+  if (followUp.length === 0) return;
+  const timer = setTimeout(() => void revalidateTags(followUp), SLUG_CHANGE_FOLLOW_UP_MS);
+  // Tidak menahan proses (skrip seed/import) tetap hidup hanya karena revalidate susulan.
+  timer.unref?.();
+}
+
+type Batch = { tags: Set<string>; followUp: Set<string> };
+
 // Tag yang dikumpulkan selama satu request admin (lihat withRevalidateBatch).
-const batchStorage = new AsyncLocalStorage<Set<string>>();
+const batchStorage = new AsyncLocalStorage<Batch>();
 
 // Revalidate tag untuk satu atau beberapa event sekaligus, tanpa duplikat. Di dalam
 // withRevalidateBatch tag hanya dikumpulkan (dikirim sekali di akhir request) dan hasilnya true.
-// Di luar batch (scheduler, seed) dikirim langsung; false = ada batch ke FE yang gagal.
+// Di luar batch (scheduler, seed) dikirim langsung; false = ada batch ke FE yang gagal. Event yang
+// mengganti slug juga dijadwalkan dikirim ulang (SLUG_CHANGE_FOLLOW_UP_MS).
 export async function revalidateEntity(events: RevalidateEvent | readonly RevalidateEvent[]): Promise<boolean> {
   const list: readonly RevalidateEvent[] = Array.isArray(events) ? events : [events as RevalidateEvent];
   const collected = tags(...list.flatMap(tagsForEvent));
   if (collected.length === 0) return true;
+  const followUp = tags(...list.filter(changesSlug).flatMap(tagsForEvent));
 
   const batch = batchStorage.getStore();
   if (batch) {
-    for (const tag of collected) batch.add(tag);
+    for (const tag of collected) batch.tags.add(tag);
+    for (const tag of followUp) batch.followUp.add(tag);
     return true;
   }
-  return revalidateTags(collected);
+  const ok = await revalidateTags(collected);
+  scheduleFollowUp(followUp);
+  return ok;
 }
 
 // Jalankan fn dengan satu antrean tag; semua revalidateEntity di dalamnya digabung jadi satu
@@ -117,10 +145,11 @@ export async function revalidateEntity(events: RevalidateEvent | readonly Revali
 // sudah commit sebelum error tetap harus tampil. Batch bersarang memakai antrean terluar.
 export async function withRevalidateBatch<T>(fn: () => Promise<T>): Promise<T> {
   if (batchStorage.getStore()) return fn();
-  const batch = new Set<string>();
+  const batch: Batch = { tags: new Set(), followUp: new Set() };
   try {
     return await batchStorage.run(batch, fn);
   } finally {
-    if (batch.size > 0) await revalidateTags([...batch]);
+    if (batch.tags.size > 0) await revalidateTags([...batch.tags]);
+    scheduleFollowUp([...batch.followUp]);
   }
 }

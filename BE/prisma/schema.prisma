@@ -62,6 +62,21 @@ enum TrainingType {
   IN_HOUSE
 }
 
+// Tingkat pelatihan (label publik: DASAR / MENENGAH / LANJUTAN). null = tidak ditampilkan.
+enum TrainingLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+// Jenis kegiatan portofolio (chip filter /profil/portofolio). null = belum diisi, tidak ikut filter.
+enum PortfolioActivityType {
+  FIELD
+  CLASSROOM
+  CERTIFICATION
+  OUTBOUND
+}
+
 enum ScheduleStatus {
   OPEN
   FULL
@@ -221,9 +236,17 @@ model Service {
   id          String        @id @default(uuid(7)) @db.Uuid
   slug        String
   title       String
+  // Label mono di bawah judul. null = tidak tampil.
+  tagline     String?
   icon        String?
   summary     String?
   body        Json?
+  // { icon, title, description }[]; kosong = section benefit disembunyikan.
+  benefits    Json          @default("[]")
+  // { q, a }[]; kosong = section FAQ disembunyikan.
+  faqs        Json          @default("[]")
+  // Pelatihan terkait: { mode: "manual", ids } (maks 12); null = section tidak tampil.
+  trainingSelection Json?
   imageId     String?       @db.Uuid
   image       Media?        @relation(fields: [imageId], references: [id], onDelete: SetNull)
   order       Int           @default(0)
@@ -251,6 +274,9 @@ model Category {
   icon        String?
   order       Int       @default(0)
   featured    Boolean   @default(false)
+  // Gambar kategori: fallback sampul pelatihan tanpa cover dan foto di landing kategori.
+  imageId     String?   @db.Uuid
+  image       Media?    @relation(fields: [imageId], references: [id], onDelete: SetNull)
   createdAt   DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
   deletedAt   DateTime? @db.Timestamptz(3)
@@ -287,6 +313,10 @@ model Training {
   duration             String?
   method               TrainingMethod?
   types                TrainingType[]           @default([])
+  // null = belum diisi admin; blok "Tingkat" disembunyikan di publik.
+  level                TrainingLevel?
+  // null = belum diisi admin; fakta "Sertifikat" disembunyikan di publik.
+  certificate          Boolean?
   priceText            String?
   showPrice            Boolean                  @default(false)
   coverId              String?                  @db.Uuid
@@ -400,6 +430,7 @@ model Testimonial {
 model PortfolioItem {
   id          String    @id @default(uuid(7)) @db.Uuid
   title       String
+  activityType PortfolioActivityType?
   date        DateTime? @db.Date
   client      String?
   description String?
@@ -433,6 +464,8 @@ model PortfolioImage {
 model MarketingContact {
   id             String    @id @default(uuid(7)) @db.Uuid
   name           String
+  // Wilayah/segmen yang ditangani (mis. "Instansi pemerintah"). null = tidak tampil.
+  area           String?
   photoId        String?   @db.Uuid
   photo          Media?    @relation(fields: [photoId], references: [id], onDelete: SetNull)
   phone          String
@@ -490,6 +523,7 @@ model Media {
   testimonialPhotos Testimonial[]
   marketingPhotos   MarketingContact[]
   portfolioImages   PortfolioImage[]
+  categoryImages    Category[]
 
   @@index([folder])
   @@index([deletedAt])

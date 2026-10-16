@@ -1,4 +1,4 @@
-import type { Category, Prisma } from "@/generated/prisma/client";
+import type { Category, Media, Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
 import { listMeta, pagination, type ListMeta } from "@/lib/list-query";
@@ -17,12 +17,19 @@ import type {
 } from "@/lib/validators/category";
 import type { ReorderInput, RestoreInput } from "@/lib/validators/common";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
+import {
+  activeMediaDto,
+  assertMediaRefs,
+  toPublicImage,
+  type MediaDto,
+  type PublicImage,
+} from "@/services/media";
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
 import { reorderResource } from "@/services/reorder";
 import { publicTrainingWhere } from "@/services/training-visibility";
 
 const ENTITY = "Category";
-const FIELDS = ["slug", "name", "description", "icon", "featured", "order"] as const;
+const FIELDS = ["slug", "name", "description", "icon", "featured", "order", "imageId"] as const;
 
 export type CategoryDto = {
   id: string;
@@ -32,6 +39,8 @@ export type CategoryDto = {
   icon: string | null;
   order: number;
   featured: boolean;
+  imageId: string | null;
+  image: MediaDto | null;
   trainingCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -44,7 +53,9 @@ const adminTrainingCount = {
   _count: { select: { trainings: { where: { training: { deletedAt: null } } } } },
 } satisfies Prisma.CategoryInclude;
 
-type CategoryWithCount = Category & { _count: { trainings: number } };
+const adminInclude = { ...adminTrainingCount, image: true } satisfies Prisma.CategoryInclude;
+
+type CategoryWithCount = Category & { _count: { trainings: number }; image: Media | null };
 
 function toDto(category: CategoryWithCount): CategoryDto {
   return {
@@ -55,6 +66,8 @@ function toDto(category: CategoryWithCount): CategoryDto {
     icon: category.icon,
     order: category.order,
     featured: category.featured,
+    imageId: category.imageId,
+    image: activeMediaDto(category.image),
     trainingCount: category._count.trainings,
     createdAt: category.createdAt,
     updatedAt: category.updatedAt,
@@ -71,6 +84,7 @@ export async function listCategories(
   const where: Prisma.CategoryWhereInput = {
     deletedAt: null,
     ...(query.featured === undefined ? {} : { featured: query.featured }),
+    ...(query.issue === "no-image" ? { imageId: null } : {}),
     ...(query.q
       ? {
           OR: [
@@ -81,16 +95,39 @@ export async function listCategories(
       : {}),
   };
   const db = getDb();
+  if (query.sort.field === "trainingCount") return listByTrainingCount(where, query);
   const [rows, total] = await Promise.all([
     db.category.findMany({
       where,
-      include: adminTrainingCount,
+      include: adminInclude,
       orderBy: [{ [query.sort.field]: query.sort.direction }, { name: "asc" }],
       ...pagination(query.page, query.pageSize),
     }),
     db.category.count({ where }),
   ]);
   return { items: rows.map(toDto), meta: listMeta(query.page, query.pageSize, total) };
+}
+
+// Urut jumlah pelatihan aktif: orderBy _count Prisma ikut menghitung tautan pelatihan di Sampah,
+// jadi jumlah yang benar dihitung untuk semua kategori yang cocok (ratusan baris), diurutkan di
+// sini, lalu halaman yang diminta diambil lengkap.
+async function listByTrainingCount(
+  where: Prisma.CategoryWhereInput,
+  query: CategoryListQuery,
+): Promise<{ items: CategoryDto[]; meta: ListMeta }> {
+  const db = getDb();
+  const counts = await db.category.findMany({ where, select: { id: true, name: true, ...adminTrainingCount } });
+  const sign = query.sort.direction === "asc" ? 1 : -1;
+  counts.sort((a, b) => sign * (a._count.trainings - b._count.trainings) || a.name.localeCompare(b.name, "id"));
+  const { skip, take } = pagination(query.page, query.pageSize);
+  const ids = counts.slice(skip, skip + take).map((row) => row.id);
+  const rows = await db.category.findMany({ where: { id: { in: ids } }, include: adminInclude });
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const items = ids.flatMap((id) => {
+    const row = byId.get(id);
+    return row ? [toDto(row)] : [];
+  });
+  return { items, meta: listMeta(query.page, query.pageSize, counts.length) };
 }
 
 // Semua kategori aktif (untuk pilihan di form pelatihan dan mode urutkan).
@@ -105,7 +142,7 @@ export async function listCategoryOptions(): Promise<CategoryOption[]> {
 async function findActive(id: string): Promise<CategoryWithCount> {
   const category = await getDb().category.findFirst({
     where: { id, deletedAt: null },
-    include: adminTrainingCount,
+    include: adminInclude,
   });
   if (!category) throw new HttpError(404, "NOT_FOUND", "Kategori tidak ditemukan.");
   return category;
@@ -119,6 +156,7 @@ export async function createCategory(input: CategoryCreateInput, userId: string)
   // Slug ditulis admin: bentrok = 409. Slug otomatis dari nama: cari sufiks yang kosong.
   const slug = input.slug ?? (await nextAvailableSlug(slugLookup, slugify(input.name) || "kategori"));
   if (input.slug) await assertSlugAvailable(slugLookup, slug);
+  await assertMediaRefs([{ field: "imageId", mediaId: input.imageId, kind: "image", requireAlt: true }]);
 
   const last = await getDb().category.aggregate({ where: { deletedAt: null }, _max: { order: true } });
   const order = (last._max.order ?? -1) + 1;
@@ -132,10 +170,11 @@ export async function createCategory(input: CategoryCreateInput, userId: string)
           description: input.description,
           icon: input.icon,
           featured: input.featured,
+          imageId: input.imageId,
           order,
           updatedById: userId,
         },
-        include: adminTrainingCount,
+        include: adminInclude,
       });
       await releaseRedirectPath(tx, publicPath.category(slug), userId);
       await writeAudit(
@@ -164,6 +203,7 @@ export async function updateCategory(
   const before = await findActive(id);
   const slugChanged = input.slug !== undefined && input.slug !== before.slug;
   if (slugChanged && input.slug) await assertSlugAvailable(slugLookup, input.slug, id);
+  await assertMediaRefs([{ field: "imageId", mediaId: input.imageId, kind: "image", requireAlt: true }]);
 
   const data: Prisma.CategoryUncheckedUpdateInput = { updatedById: userId };
   if (input.name !== undefined) data.name = input.name;
@@ -171,10 +211,11 @@ export async function updateCategory(
   if (input.description !== undefined) data.description = input.description;
   if (input.icon !== undefined) data.icon = input.icon;
   if (input.featured !== undefined) data.featured = input.featured;
+  if (input.imageId !== undefined) data.imageId = input.imageId;
 
   const updated = await withSlugConflict(() =>
     getDb().$transaction(async (tx) => {
-      const category = await tx.category.update({ where: { id }, data, include: adminTrainingCount });
+      const category = await tx.category.update({ where: { id }, data, include: adminInclude });
       if (slugChanged) {
         await recordSlugRedirect(tx, {
           from: publicPath.category(before.slug),
@@ -237,7 +278,7 @@ export async function restoreCategory(id: string, input: RestoreInput, userId: s
       const updated = await tx.category.update({
         where: { id },
         data: { deletedAt: null, slug, order: (last._max.order ?? -1) + 1, updatedById: userId },
-        include: adminTrainingCount,
+        include: adminInclude,
       });
       await releaseRedirectPath(tx, publicPath.category(slug), userId);
       await writeAudit(
@@ -270,12 +311,15 @@ export type PublicCategory = {
   description: string | null;
   icon: string | null;
   featured: boolean;
+  // Gambar kategori (foto landing kategori); null kalau kosong atau media di Sampah.
+  image: PublicImage | null;
   trainingCount: number;
 };
 
 export function publicCountInclude(now: Date) {
   return {
     _count: { select: { trainings: { where: { training: publicTrainingWhere(now) } } } },
+    image: true,
   } satisfies Prisma.CategoryInclude;
 }
 
@@ -286,6 +330,7 @@ export function toPublicCategory(category: CategoryWithCount): PublicCategory {
     description: category.description,
     icon: category.icon,
     featured: category.featured,
+    image: toPublicImage(activeMediaDto(category.image)),
     trainingCount: category._count.trainings,
   };
 }

@@ -12,6 +12,7 @@ import { z } from "zod";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { FormField } from "@/components/admin/form-field";
 import { IconPicker } from "@/components/admin/icon-picker";
+import { MediaPicker } from "@/components/admin/media/media-picker";
 import { SlugField } from "@/components/admin/slug-field";
 import { StickySaveBar } from "@/components/admin/sticky-save-bar";
 import { Button } from "@/components/admin/ui/button";
@@ -38,9 +39,9 @@ const schema = z.object({
   description: z.string().trim().max(1000, { error: "Deskripsi maksimal 1000 karakter." }),
   icon: z.string().nullable(),
   featured: z.boolean(),
+  imageId: z.string().nullable(),
 });
 type FormValues = z.infer<typeof schema>;
-
 
 export function CategoryForm({ category }: { category: Category | null }) {
   const sid = useScopedId("category");
@@ -58,6 +59,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
       description: category?.description ?? "",
       icon: category?.icon ?? null,
       featured: category?.featured ?? false,
+      imageId: category?.imageId ?? null,
     },
     mode: "onBlur",
   });
@@ -82,13 +84,14 @@ export function CategoryForm({ category }: { category: Category | null }) {
         description: saved.description ?? "",
         icon: saved.icon,
         featured: saved.featured,
+        imageId: saved.imageId,
       });
       setAutoSlug(false);
       toast.success(category ? "Kategori disimpan." : "Kategori ditambahkan.");
       if (!category) router.push(`/admin/categories/${saved.id}`);
     },
     onError: (error) => {
-      if (!applyFieldErrors(error, form.setError, ["name", "slug", "description", "icon", "featured"])) {
+      if (!applyFieldErrors(error, form.setError, ["name", "slug", "description", "icon", "featured", "imageId"])) {
         toast.error(errorMessage(error));
       }
     },
@@ -188,6 +191,20 @@ export function CategoryForm({ category }: { category: Category | null }) {
             name="icon"
             render={({ field }) => (
               <IconPicker name={sid("icon")} value={field.value} onChange={field.onChange} error={errors.icon?.message} />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="imageId"
+            render={({ field, fieldState }) => (
+              <FormField
+                id={sid("image")}
+                label="Gambar"
+                description="Wajib punya alt text. Tampil di halaman kategori dan menjadi gambar pelatihan yang belum punya sampul."
+                error={fieldState.error?.message}
+              >
+                <MediaPicker value={field.value} onChange={field.onChange} initialMedia={category?.image} dialogTitle="Pilih gambar kategori" />
+              </FormField>
             )}
           />
           {category ? (

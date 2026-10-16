@@ -1,12 +1,12 @@
-import { Prisma } from "@/generated/prisma/client";
+import { Prisma, type Media } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { listMeta, type ListMeta } from "@/lib/list-query";
 import { renderRichText } from "@/lib/rich-text";
 import { normalizeSearchText, toPrefixTsQuery, TYPO_SIMILARITY_THRESHOLD } from "@/lib/search";
 import { slugSchema } from "@/lib/slug";
 import { appToday, toDateString } from "@/lib/time";
-import type { PublicTrainingQuery } from "@/lib/validators/training";
-import { getMediaMap, toMediaDto, toPublicImage, type PublicImage } from "@/services/media";
+import type { PublicTrainingQuery, TrainingLevel } from "@/lib/validators/training";
+import { activeMediaDto, getMediaMap, toPublicImage, type PublicImage } from "@/services/media";
 import { scheduleDisplayStatus, type PublicScheduleStatus } from "@/services/schedule-status";
 import {
   readAudience,
@@ -25,6 +25,9 @@ import { publicTrainingWhere } from "@/services/training-visibility";
 
 export type PublicCategoryRef = { slug: string; name: string };
 
+// Asal gambar kartu/detail: sampul pelatihan sendiri, gambar kategori (fallback), atau tidak ada.
+export type CoverSource = "training" | "category" | null;
+
 export type PublicTrainingCard = {
   slug: string;
   title: string;
@@ -32,7 +35,11 @@ export type PublicTrainingCard = {
   duration: string | null;
   method: string | null;
   types: string[];
+  // null = belum diisi admin; label tingkat tidak ditampilkan.
+  level: TrainingLevel | null;
+  // Sampul pelatihan, atau gambar kategori pertama yang punya gambar (lihat coverSource).
   cover: PublicImage | null;
+  coverSource: CoverSource;
   categories: PublicCategoryRef[];
   publishedAt: Date;
 };
@@ -66,6 +73,8 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   faq: FaqItem[];
   inHouseNote: string | null;
   disclaimer: string | null;
+  // null = belum diisi admin; fakta "Sertifikat" tidak ditampilkan.
+  certificate: boolean | null;
   showPrice: boolean;
   // null kalau showPrice false: harga tidak pernah dikirim ke publik.
   priceText: string | null;
@@ -81,13 +90,31 @@ export type PublicTrainingDetail = PublicTrainingCard & {
 export const cardInclude = {
   cover: true,
   categories: {
-    include: { category: { select: { slug: true, name: true, order: true, deletedAt: true } } },
+    include: { category: { select: { slug: true, name: true, order: true, deletedAt: true, image: true } } },
   },
 } satisfies Prisma.TrainingInclude;
 
 export type CardRow = Prisma.TrainingGetPayload<{ include: typeof cardInclude }>;
 
+// Urutan fallback gambar: sampul pelatihan -> gambar kategori aktif pertama (urutan kategori admin,
+// sama dengan label kategori di kartu) yang medianya belum dihapus -> null (blok tanpa sampul).
+// Alt mengikuti media yang dipakai.
+export function resolveCover(
+  cover: Media | null,
+  categories: { order: number; deletedAt: Date | null; image: Media | null }[],
+): { cover: PublicImage | null; coverSource: CoverSource } {
+  const own = activeMediaDto(cover);
+  if (own) return { cover: toPublicImage(own), coverSource: "training" };
+  const fallback = [...categories]
+    .filter((category) => category.deletedAt === null)
+    .sort((a, b) => a.order - b.order)
+    .map((category) => activeMediaDto(category.image))
+    .find((image) => image !== null);
+  return fallback ? { cover: toPublicImage(fallback), coverSource: "category" } : { cover: null, coverSource: null };
+}
+
 export function toCard(row: CardRow): PublicTrainingCard {
+  const categories = row.categories.map((link) => link.category);
   return {
     slug: row.slug,
     title: row.title,
@@ -95,9 +122,9 @@ export function toCard(row: CardRow): PublicTrainingCard {
     duration: row.duration,
     method: row.method,
     types: row.types,
-    cover: row.cover && row.cover.deletedAt === null ? toPublicImage(toMediaDto(row.cover)) : null,
-    categories: row.categories
-      .map((link) => link.category)
+    level: row.level,
+    ...resolveCover(row.cover, categories),
+    categories: categories
       .filter((category) => category.deletedAt === null)
       .sort((a, b) => a.order - b.order)
       .map(({ slug, name }) => ({ slug, name })),
@@ -273,6 +300,7 @@ async function buildDetail(
     faq: [...readFaq(row.faq), ...defaults.faq],
     inHouseNote: defaults.inHouseNote || null,
     disclaimer: defaults.disclaimer || null,
+    certificate: row.certificate,
     showPrice: row.showPrice,
     priceText: row.showPrice ? row.priceText : null,
     investment: computeInvestment(row.showPrice, row.priceText, schedules),

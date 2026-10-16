@@ -11,9 +11,12 @@ export const OUTCOMES_MIN = 4;
 export const OUTCOMES_MAX = 8;
 export const OUTCOME_MAX = 160;
 export const MODULES_MAX = 20;
-export const MODULE_TITLE_MAX = 120;
+// 300: judul modul katalog impor ada yang > 120 karakter; batas lama membuat Materi-nya hilang.
+export const MODULE_TITLE_MAX = 300;
 export const MODULE_POINTS_MAX = 12;
 export const MODULE_POINT_MAX = 200;
+// Nomor hari silabus (HARI 01); null = modul tanpa pembagian hari.
+export const MODULE_DAY_MAX = 30;
 export const AUDIENCE_MAX = 12;
 export const AUDIENCE_ROLE_MAX = 100;
 export const AUDIENCE_NOTE_MAX = 160;
@@ -47,12 +50,23 @@ const durationSchema = z
   .optional()
   .transform((value) => value ?? null);
 
+const daySchema = z
+  .number({ error: "Hari harus angka." })
+  .int({ error: "Hari harus bilangan bulat." })
+  .min(1, { error: "Hari minimal 1." })
+  .max(MODULE_DAY_MAX, { error: `Hari maksimal ${MODULE_DAY_MAX}.` })
+  .nullable()
+  .optional()
+  .transform((value) => value ?? null);
+
 export const moduleSchema = z.object({
   title: requiredText("Judul modul", MODULE_TITLE_MAX),
   points: z
     .array(requiredText("Poin materi", MODULE_POINT_MAX))
     .max(MODULE_POINTS_MAX, { error: `Maksimal ${MODULE_POINTS_MAX} poin per modul.` }),
   durationMinutes: durationSchema,
+  // Data lama tanpa `day` dibaca sebagai null (tanpa menulis ulang DB).
+  day: daySchema,
 });
 export type TrainingModule = z.infer<typeof moduleSchema>;
 

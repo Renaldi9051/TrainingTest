@@ -55,6 +55,17 @@ export const COUNTER_MS = 900;
 export const ROTATE_INTERVAL_MS = 2000;
 export const ROTATE_SWAP_MS = 300;
 
+// Hero slideshow (DESIGN.md 8.1): wipe slide baru 900 ms; interval default 6 s, admin 4-10 s.
+// Selama tampil gambar zoom pelan 1,08 -> 1 (Ken Burns) sepanjang interval.
+export const SLIDE_WIPE_MS = 900;
+export const SLIDE_INTERVAL_MS = 6000;
+export const SLIDE_INTERVAL_MIN_MS = 4000;
+export const SLIDE_INTERVAL_MAX_MS = 10000;
+export const KEN_BURNS_FROM = 1.08;
+
+// Badge berputar (DESIGN.md 9.2): 360 derajat per 20 s, hover melambat jadi setengahnya.
+export const BADGE_SPIN_MS = 20000;
+
 // Tombol magnetic: geser maksimal (px).
 export const MAGNETIC_MAX_PX = 6;
 

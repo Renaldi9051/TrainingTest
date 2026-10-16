@@ -25,6 +25,9 @@ test-results/
 /uploads/
 /BE/uploads/
 
+# backup database lokal (pg_dump), tidak pernah di-commit
+/backups/
+
 # dokumen kerja lokal (tidak di-push ke GitHub)
 AGENTS.md
 CLAUDE.md

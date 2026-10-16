@@ -9,12 +9,25 @@
   --border: #e5e5e5;
   --border-strong: #d4d4d4;
   --fg-subtle: #a3a3a3;
-  --fg-muted: #737373;
+  /* #6b6b6b (bukan #737373): kontras AA juga di atas --bg-subtle (4,89:1). Keputusan pemilik 16 Okt 2026. */
+  --fg-muted: #6b6b6b;
   --fg: #171717;
   --fg-strong: #0a0a0a;
   --fg-strong-hover: #262626;
   --inverse-bg: #0a0a0a;
   --inverse-fg: #fafafa;
+  /* v0.2 (DESIGN.md 2 & 6): garis grid latar, garis/grid di section terbalik, overlay foto hero. */
+  --grid-line: #f0f0f0;
+  --inverse-line: #262626;
+  --overlay: rgb(10 10 10 / 0.45);
+
+  /* Skala tipografi responsif (DESIGN.md 3): mobile di sini, desktop (md, 768 px) di bawah. Dipakai
+     utilitas text-mega/display/h1/h2/h3 lewat @theme inline, jadi satu kelas tanpa md:. */
+  --type-mega: 96px;
+  --type-display: 48px;
+  --type-h1: 36px;
+  --type-h2: 28px;
+  --type-h3: 20px;
 
   /* Warna status: HANYA untuk admin (DESIGN.md 2), kecil (teks/ikon/titik), bukan latar besar. */
   --status-error: #b91c1c;
@@ -52,6 +65,16 @@
   --sidebar-ring: var(--fg-strong);
 }
 
+@media (width >= 48rem) {
+  :root {
+    --type-mega: 200px;
+    --type-display: 88px;
+    --type-h1: 56px;
+    --type-h2: 40px;
+    --type-h3: 24px;
+  }
+}
+
 @theme inline {
   /* Matikan palet bawaan Tailwind supaya hanya token di bawah yang bisa dipakai. */
   --color-*: initial;
@@ -68,10 +91,37 @@
   --color-fg-strong-hover: var(--fg-strong-hover);
   --color-inverse-bg: var(--inverse-bg);
   --color-inverse-fg: var(--inverse-fg);
+  --color-grid-line: var(--grid-line);
+  --color-inverse-line: var(--inverse-line);
+  --color-overlay: var(--overlay);
   --color-white: var(--bg);
   --color-black: var(--fg-strong);
   --color-transparent: transparent;
   --color-current: currentColor;
+
+  /* Palet C (v0.3): nilainya hanya dideklarasikan di (public)/palette-c.css (scope halaman publik).
+     Fallback = token netral lama, jadi komponen bersama (components/ui) yang juga dirender di admin
+     menghasilkan nilai yang sama persis dengan sebelumnya. Utilitas --accent polos bentrok dengan
+     token shadcn admin (--accent = latar hover), jadi bg/text/border-accent hanya untuk komponen
+     publik (dijaga test components/ui/palette-guard.test.ts). */
+  --color-primary-hover: var(--primary-hover, var(--fg-strong-hover));
+  --color-on-primary: var(--on-primary, var(--inverse-fg));
+  --color-on-accent: var(--on-accent, var(--fg-strong));
+  --color-accent-ink: var(--accent-ink, var(--fg-muted));
+  --color-accent-on-dark: var(--accent-on-dark, var(--inverse-fg));
+  --color-accent-on-primary: var(--accent-on-primary, var(--inverse-fg));
+  --color-inverse-muted: var(--inverse-muted, var(--inverse-fg));
+  --color-ok: var(--ok, var(--fg-strong));
+  --color-cta: var(--cta, var(--inverse-fg));
+  --color-cta-hover: var(--cta-hover, var(--bg-muted));
+  --color-on-cta: var(--on-cta, var(--fg-strong));
+  --color-line-hover: var(--line-hover, var(--border-strong));
+  --color-ink-hover: var(--ink-hover, var(--fg));
+  --color-focus: var(--focus, var(--fg-strong));
+  --color-focus-dark: var(--focus-dark, var(--inverse-fg));
+  --color-overlay-top: var(--overlay-top, var(--overlay));
+  --color-overlay-bottom: var(--overlay-bottom, var(--overlay));
+  --color-dot: var(--dot, var(--border-strong));
 
   --color-status-error: var(--status-error);
   --color-status-success: var(--status-success);
@@ -110,6 +160,8 @@
   --radius-md: var(--radius);
   --radius-lg: var(--radius);
   --radius-xl: var(--radius);
+  /* Kartu & kotak statistik publik (palet C: 12 px); di admin sama dengan --radius. */
+  --radius-card: var(--card-radius, var(--radius));
 
   /* Bayangan: hanya shadow-sm (popover/dropdown/dialog admin). Kelas shadow lain sengaja tidak ada. */
   --shadow-*: initial;
@@ -128,8 +180,42 @@
   --text-body--line-height: 1.6;
   --text-body-lg: 18px;
   --text-body-lg--line-height: 1.6;
+  /* Judul (DESIGN.md 3): ukuran ikut breakpoint lewat --type-*; weight bawaan bisa ditimpa font-*. */
+  --text-mega: var(--type-mega);
+  --text-mega--line-height: 0.85;
+  --text-mega--letter-spacing: -0.04em;
+  --text-mega--font-weight: 700;
+  --text-display: var(--type-display);
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.04em;
+  --text-display--font-weight: 600;
+  --text-h1: var(--type-h1);
+  --text-h1--line-height: 1.05;
+  --text-h1--letter-spacing: -0.035em;
+  --text-h1--font-weight: 600;
+  --text-h2: var(--type-h2);
+  --text-h2--line-height: 1.1;
+  --text-h2--letter-spacing: -0.03em;
+  --text-h2--font-weight: 600;
+  --text-h3: var(--type-h3);
+  --text-h3--line-height: 1.25;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 500;
 
   --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Badge berputar (DESIGN.md 6.1 & 9.2): cincin 360 derajat per 20 s. Lapisan dalam berputar balik
+   40 s yang hanya berjalan saat hover, jadi putaran melambat jadi setengah tanpa melompat. */
+@theme {
+  --animate-badge-spin: badge-spin 20s linear infinite;
+  --animate-badge-counter: badge-spin 40s linear infinite reverse;
+
+  @keyframes badge-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 }
 
 @layer base {
@@ -198,7 +284,8 @@
     color: var(--fg-muted);
   }
   .rich-text a {
-    color: var(--fg-strong);
+    /* Palet C: link --accent-ink di halaman publik; editor admin tetap --fg-strong (fallback). */
+    color: var(--accent-ink, var(--fg-strong));
     text-decoration: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;

@@ -9,6 +9,7 @@ import {
   getPublicTraining,
   listPublicTrainings,
   nextOpenSchedule,
+  resolveCover,
 } from "@/services/training-public";
 import { publicTrainingQuerySchema } from "@/lib/validators/training";
 
@@ -29,6 +30,8 @@ const detailRow = (extra: Record<string, unknown> = {}) => ({
   duration: "2 hari",
   method: "OFFLINE",
   types: ["PUBLIC"],
+  level: null,
+  certificate: null,
   priceText: "Rp4.500.000",
   showPrice: false,
   cover: null,
@@ -122,6 +125,20 @@ describe("getPublicTraining", () => {
     expect(detail?.disclaimer).toBeNull();
   });
 
+  it("tingkat, sertifikat, dan hari modul: null kalau belum diisi; terkirim kalau diisi", async () => {
+    mock.training.findFirst.mockResolvedValue(detailRow());
+    const empty = await getPublicTraining("kpi", now);
+    expect(empty).toMatchObject({ level: null, certificate: null });
+    expect(empty?.modules).toEqual([{ title: "Modul 1", points: ["Poin"], durationMinutes: 90, day: null }]);
+
+    mock.training.findFirst.mockResolvedValue(
+      detailRow({ level: "ADVANCED", certificate: false, modules: [{ title: "Hari pertama", points: [], day: 1 }] }),
+    );
+    const filled = await getPublicTraining("kpi", now);
+    expect(filled).toMatchObject({ level: "ADVANCED", certificate: false });
+    expect(filled?.modules[0].day).toBe(1);
+  });
+
   it("fasilitas khusus pelatihan menggantikan default", async () => {
     mock.training.findFirst.mockResolvedValue(detailRow({ facilities: ["Makan siang"] }));
     expect((await getPublicTraining("kpi", now))?.facilities).toEqual(["Makan siang"]);
@@ -177,5 +194,78 @@ describe("investasi & jadwal terdekat", () => {
       ]),
     ).toEqual({ startDate: "2026-11-01", endDate: "2026-11-02", city: "Jakarta", method: "OFFLINE" });
     expect(nextOpenSchedule([{ ...base, startDate: "2026-10-20", status: "FULL" }])).toBeNull();
+  });
+});
+
+// Sampul pelatihan -> gambar kategori aktif pertama (urutan admin) -> null.
+describe("gambar pelatihan: urutan fallback", () => {
+  const image = (id: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    path: `2026/10/${id}.webp`,
+    originalName: `${id}.jpg`,
+    mime: "image/webp",
+    size: 100,
+    width: 1600,
+    height: 1200,
+    alt: `Alt ${id}`,
+    folder: null,
+    variants: null,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+    updatedById: null,
+    ...extra,
+  });
+  const cat = (order: number, img: ReturnType<typeof image> | null, deletedAt: Date | null = null) => ({
+    order,
+    deletedAt,
+    image: img,
+  });
+
+  it("sampul pelatihan menang atas gambar kategori", () => {
+    expect(resolveCover(image("sampul"), [cat(0, image("kategori"))])).toEqual({
+      cover: expect.objectContaining({ alt: "Alt sampul", url: expect.stringContaining("sampul.webp") }),
+      coverSource: "training",
+    });
+  });
+
+  it("sampul kosong: kategori pertama menurut urutan admin yang punya gambar; alt dari media kategori", () => {
+    const result = resolveCover(null, [cat(5, image("kelima")), cat(0, null), cat(2, image("kedua"))]);
+    expect(result.coverSource).toBe("category");
+    expect(result.cover).toMatchObject({ alt: "Alt kedua", url: expect.stringContaining("kedua.webp") });
+  });
+
+  it("sampul dan gambar kategori di Sampah, serta kategori di Sampah, dilewati", () => {
+    const result = resolveCover(image("sampul", { deletedAt: now }), [
+      cat(0, image("kategori-terhapus"), now),
+      cat(1, image("media-terhapus", { deletedAt: now })),
+      cat(2, image("aktif")),
+    ]);
+    expect(result).toMatchObject({ coverSource: "category", cover: { alt: "Alt aktif" } });
+  });
+
+  it("tanpa sampul dan tanpa gambar kategori: null (blok tanpa sampul di FE)", () => {
+    expect(resolveCover(null, [cat(0, null), cat(1, image("x"), now)])).toEqual({ cover: null, coverSource: null });
+    expect(resolveCover(null, [])).toEqual({ cover: null, coverSource: null });
+  });
+
+  it("detail: gambar kategori dipakai sebagai sampul dan gambar OG; query memuat gambar kategori", async () => {
+    mock.training.findFirst.mockResolvedValue(
+      detailRow({
+        categories: [
+          { categoryId: "c1", category: { slug: "sdm", name: "SDM", order: 0, deletedAt: null, image: image("sdm") } },
+        ],
+      }),
+    );
+    const detail = await getPublicTraining("kpi", now);
+    expect(detail).toMatchObject({ coverSource: "category", cover: { alt: "Alt sdm" } });
+    expect(detail?.seo.ogImage).toMatchObject({ alt: "Alt sdm" });
+    const include = mock.training.findFirst.mock.calls[0][0].include;
+    expect(include.categories.include.category.select.image).toBe(true);
+  });
+
+  it("detail tanpa sampul dan tanpa gambar kategori: cover null, coverSource null", async () => {
+    mock.training.findFirst.mockResolvedValue(detailRow());
+    expect(await getPublicTraining("kpi", now)).toMatchObject({ cover: null, coverSource: null });
   });
 });

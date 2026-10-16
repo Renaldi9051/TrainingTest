@@ -28,6 +28,7 @@ export function ClientLogos({ clients }: { clients: PublicClient[] }) {
                 image={{ ...client.logo, alt: client.logo.alt || client.name }}
                 sizes={LOGO_SIZES}
                 fit="contain"
+                grayscale
               />
             </span>
           ) : (
@@ -42,7 +43,7 @@ export function ClientLogos({ clients }: { clients: PublicClient[] }) {
                   href={client.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`${box} outline-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fg-strong`}
+                  className={`${box} outline-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus`}
                 >
                   {content}
                   <span className="sr-only"> (tab baru)</span>

@@ -54,6 +54,21 @@ describe("site.contact", () => {
     expect(normalizeWhatsapp(input)).toBe(expected);
   });
 
+  it("jam operasional & koordinat opsional; nilai lama tanpa field ini tetap terbaca identik", () => {
+    const schema = settingSchemas["site.contact"];
+    const stored = { phone: "021 1234", email: "halo@contoh.id", emailSecondary: "", whatsapp: "6281234567890", address: "Jl. Contoh", mapEmbedUrl: "" };
+    expect(parseStoredSetting("site.contact", stored)).toEqual({ ...stored, openingHours: "", latitude: null, longitude: null });
+    expect(schema.parse({ openingHours: " Senin-Jumat 08.00-16.00 ", latitude: -7.71, longitude: 110.35 })).toMatchObject({
+      openingHours: "Senin-Jumat 08.00-16.00",
+      latitude: -7.71,
+      longitude: 110.35,
+    });
+    // Koordinat berpasangan, dalam rentang.
+    expect(schema.safeParse({ latitude: -7.71 }).success).toBe(false);
+    expect(schema.safeParse({ latitude: 91, longitude: 10 }).success).toBe(false);
+    expect(schema.safeParse({ latitude: 10, longitude: -181 }).success).toBe(false);
+  });
+
   it("menolak WhatsApp/email/telepon tidak valid", () => {
     const schema = settingSchemas["site.contact"];
     expect(schema.safeParse({ whatsapp: "abc" }).success).toBe(false);
@@ -125,5 +140,36 @@ describe("parseStoredSetting & default", () => {
       faviconId: null,
     });
     expect(settingMediaIds("site.footer", { description: "x" })).toEqual({});
+  });
+});
+
+describe("page.headers", () => {
+  it("belum ada di DB: semua halaman kosong (FE memakai label lama)", () => {
+    const value = parseStoredSetting("page.headers", undefined);
+    expect(value.layanan).toEqual({ eyebrow: "", heading: "", lead: "" });
+    expect(Object.keys(value).sort()).toEqual(["jadwal", "kontak", "layanan", "pelatihan", "portofolio"]);
+  });
+
+  it("isi sebagian dirapikan; batas panjang per field", () => {
+    const value = settingSchemas["page.headers"].parse({ layanan: { heading: "  Pilih format kerja sama " } });
+    expect(value.layanan).toEqual({ eyebrow: "", heading: "Pilih format kerja sama", lead: "" });
+    expect(value.portofolio.heading).toBe("");
+    expect(settingSchemas["page.headers"].safeParse({ layanan: { lead: "a".repeat(301) } }).success).toBe(false);
+  });
+});
+
+describe("services.process", () => {
+  it("default kosong; langkah wajib berjudul, maks 6", () => {
+    expect(parseStoredSetting("services.process", undefined)).toEqual({ eyebrow: "", heading: "", steps: [] });
+    const step = { title: "Konsultasi", description: "Kami pelajari kebutuhan tim Anda." };
+    expect(settingSchemas["services.process"].parse({ steps: [step] }).steps).toEqual([step]);
+    expect(settingSchemas["services.process"].safeParse({ steps: [{ title: " " }] }).success).toBe(false);
+    expect(settingSchemas["services.process"].safeParse({ steps: Array.from({ length: 7 }, () => step) }).success).toBe(false);
+  });
+
+  it("nilai settings lama tetap terbaca identik setelah key baru ditambah", () => {
+    expect(SETTING_KEYS).toContain("page.headers");
+    expect(SETTING_KEYS).toContain("services.process");
+    for (const key of SETTING_KEYS) expect(parseStoredSetting(key, SETTING_DEFAULTS[key])).toEqual(SETTING_DEFAULTS[key]);
   });
 });

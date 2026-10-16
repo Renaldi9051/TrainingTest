@@ -14,13 +14,16 @@ import { GalleryEditor } from "@/components/admin/media/gallery-editor";
 import { StickySaveBar } from "@/components/admin/sticky-save-bar";
 import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
+import { Label } from "@/components/admin/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/admin/ui/select";
 import { Textarea } from "@/components/admin/ui/textarea";
 import { useDeleteWithUndo } from "@/hooks/use-delete-with-undo";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { useScopedId } from "@/hooks/use-scoped-id";
 import { resourceKeys } from "@/lib/admin-resources";
 import { apiSend, errorMessage } from "@/lib/api/client";
-import type { PortfolioItem } from "@/lib/api/types";
+import type { PortfolioActivityType, PortfolioItem } from "@/lib/api/types";
+import { ACTIVITY_TYPE_LABELS } from "@/lib/labels";
 import { applyFieldErrors } from "@/lib/form-errors";
 
 export const portfolioKeys = resourceKeys("portfolio");
@@ -28,8 +31,11 @@ export const portfolioKeys = resourceKeys("portfolio");
 // Sama dengan BE (PORTFOLIO_IMAGES_MAX).
 const IMAGES_MAX = 30;
 
+const NO_TYPE = "none";
+
 const schema = z.object({
   title: z.string().trim().min(1, { error: "Judul wajib diisi." }).max(200, { error: "Judul maksimal 200 karakter." }),
+  activityType: z.string(),
   date: z.string(),
   client: z.string().trim().max(120, { error: "Klien maksimal 120 karakter." }),
   description: z.string().trim().max(1000, { error: "Deskripsi maksimal 1000 karakter." }),
@@ -41,6 +47,7 @@ const FIELD_NAMES = Object.keys(schema.shape);
 function toFormValues(item: PortfolioItem | null): FormValues {
   return {
     title: item?.title ?? "",
+    activityType: item?.activityType ?? NO_TYPE,
     date: item?.date ?? "",
     client: item?.client ?? "",
     description: item?.description ?? "",
@@ -63,6 +70,7 @@ export function PortfolioForm({ item }: { item: PortfolioItem | null }) {
     mutationFn: async (values: FormValues) => {
       const body = {
         title: values.title,
+        activityType: values.activityType === NO_TYPE ? null : (values.activityType as PortfolioActivityType),
         date: values.date || null,
         client: values.client || null,
         description: values.description || null,
@@ -150,6 +158,31 @@ export function PortfolioForm({ item }: { item: PortfolioItem | null }) {
         </div>
 
         <aside className="space-y-6 lg:border-l lg:border-border lg:pl-8">
+          <Controller
+            control={form.control}
+            name="activityType"
+            render={({ field }) => (
+              <div className="space-y-2">
+                <Label htmlFor={id("activity-type")}>Jenis kegiatan</Label>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id={id("activity-type")} className="w-full" aria-describedby={id("activity-type-help")}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_TYPE}>Belum diatur</SelectItem>
+                    {(Object.entries(ACTIVITY_TYPE_LABELS) as [PortfolioActivityType, string][]).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p id={id("activity-type-help")} className="text-small text-fg-muted">
+                  Dipakai filter di halaman Portofolio. Belum diatur = hanya tampil di Semua.
+                </p>
+              </div>
+            )}
+          />
           <FormField id={id("date")} label="Tanggal kegiatan" error={errors.date?.message}>
             <Input type="date" {...form.register("date")} />
           </FormField>

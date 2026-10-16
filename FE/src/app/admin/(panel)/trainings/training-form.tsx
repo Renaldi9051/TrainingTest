@@ -40,7 +40,7 @@ import { Textarea } from "@/components/admin/ui/textarea";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { useScopedId } from "@/hooks/use-scoped-id";
 import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
-import type { CategoryOption, RichTextDoc, Training, TrainingMethod, TrainingType } from "@/lib/api/types";
+import type { CategoryOption, RichTextDoc, Training, TrainingLevel, TrainingMethod, TrainingType } from "@/lib/api/types";
 import { fromWibInputValue, toWibInputValue } from "@/lib/format";
 import { applyFieldErrors } from "@/lib/form-errors";
 import {
@@ -50,6 +50,7 @@ import {
   FACILITY_MAX,
   FAQ_A_MAX,
   FAQ_Q_MAX,
+  MODULE_DAY_MAX,
   MODULE_POINT_MAX,
   MODULE_POINTS_MAX,
   MODULE_TITLE_MAX,
@@ -59,12 +60,28 @@ import {
   PREREQUISITES_MAX,
   SUMMARY_MAX,
 } from "@/lib/training-content";
-import { METHOD_LABELS, TYPE_LABELS } from "@/lib/labels";
+import { LEVEL_LABELS, METHOD_LABELS, TYPE_LABELS } from "@/lib/labels";
 import { categoryKeys } from "../categories/category-form";
 import { trainingKeys } from "./training-keys";
 import { previewHref } from "./trainings-list";
 
 const NO_METHOD = "none";
+const NO_LEVEL = "none";
+// Sertifikat: belum diisi (null) / ya / tidak. Belum diisi = fakta tidak tampil di situs.
+const CERTIFICATE_OPTIONS = [
+  { value: "none", label: "Belum diatur" },
+  { value: "yes", label: "Ya" },
+  { value: "no", label: "Tidak" },
+] as const;
+type CertificateValue = (typeof CERTIFICATE_OPTIONS)[number]["value"];
+
+function toCertificateValue(certificate: boolean | null | undefined): CertificateValue {
+  return certificate === true ? "yes" : certificate === false ? "no" : "none";
+}
+
+function fromCertificateValue(value: CertificateValue): boolean | null {
+  return value === "yes" ? true : value === "no" ? false : null;
+}
 
 const richText = z.custom<RichTextDoc | null>((value) => value === null || typeof value === "object");
 
@@ -94,6 +111,12 @@ const schema = z
           .min(1, { error: "Durasi minimal 1 menit." })
           .max(600, { error: "Durasi maksimal 600 menit." })
           .nullable(),
+        day: z
+          .number()
+          .int()
+          .min(1, { error: "Hari minimal 1." })
+          .max(MODULE_DAY_MAX, { error: `Hari maksimal ${MODULE_DAY_MAX}.` })
+          .nullable(),
       }),
     ),
     audience: z.array(
@@ -109,6 +132,8 @@ const schema = z
     duration: z.string().trim().max(100, { error: "Durasi maksimal 100 karakter." }),
     method: z.string(),
     types: z.array(z.enum(["PUBLIC", "IN_HOUSE"])),
+    level: z.string(),
+    certificate: z.enum(["none", "yes", "no"]),
     priceText: z.string().trim().max(200, { error: "Investasi maksimal 200 karakter." }),
     showPrice: z.boolean(),
     coverId: z.string().nullable(),
@@ -154,6 +179,8 @@ function toFormValues(training: Training | null): FormValues {
     duration: training?.duration ?? "",
     method: training?.method ?? NO_METHOD,
     types: training?.types ?? [],
+    level: training?.level ?? NO_LEVEL,
+    certificate: toCertificateValue(training?.certificate),
     priceText: training?.priceText ?? "",
     showPrice: training?.showPrice ?? false,
     coverId: training?.coverId ?? null,
@@ -182,6 +209,8 @@ function toBody(values: FormValues, autoSlug: boolean) {
     duration: values.duration || null,
     method: values.method === NO_METHOD ? null : (values.method as TrainingMethod),
     types: values.types,
+    level: values.level === NO_LEVEL ? null : (values.level as TrainingLevel),
+    certificate: fromCertificateValue(values.certificate),
     priceText: values.priceText || null,
     showPrice: values.showPrice,
     coverId: values.coverId,
@@ -463,6 +492,58 @@ export function TrainingForm({ training }: { training: Training | null }) {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+            />
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Controller
+              control={form.control}
+              name="level"
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Label htmlFor={sid("level")}>Tingkat</Label>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id={sid("level")} className="w-full" aria-describedby={sid("level-help")}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NO_LEVEL}>Belum diatur</SelectItem>
+                      {(Object.entries(LEVEL_LABELS) as [TrainingLevel, string][]).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p id={sid("level-help")} className="text-small text-fg-muted">
+                    Tampil sebagai label di kartu pelatihan.
+                  </p>
+                </div>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="certificate"
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Label htmlFor={sid("certificate")}>Sertifikat</Label>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id={sid("certificate")} className="w-full" aria-describedby={sid("certificate-help")}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CERTIFICATE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p id={sid("certificate-help")} className="text-small text-fg-muted">
+                    Belum diatur = tidak ditampilkan di halaman pelatihan.
+                  </p>
                 </div>
               )}
             />

@@ -26,11 +26,15 @@ const serviceRow = (extra: Record<string, unknown> = {}) => ({
   id: ID,
   slug: "in-house-training",
   title: "In-house training",
+  tagline: null,
   icon: null,
   summary: "Pelatihan di kantor klien.",
   body: null,
   imageId: null,
   image: null,
+  benefits: [],
+  faqs: [],
+  trainingSelection: null,
   order: 0,
   status: "PUBLISHED",
   seo: { title: "", description: "", ogImageId: null },
@@ -64,6 +68,10 @@ describe("createService", () => {
         icon: null,
         summary: null,
         body: null,
+        tagline: null,
+        benefits: [],
+        faqs: [],
+        trainingSelection: null,
         imageId: null,
         status: "DRAFT",
         seo: { title: "", description: "", ogImageId: null },
@@ -87,6 +95,10 @@ describe("createService", () => {
           icon: null,
           summary: null,
           body: null,
+          tagline: null,
+          benefits: [],
+          faqs: [],
+          trainingSelection: null,
           imageId: null,
           status: "PUBLISHED",
           seo: { title: "", description: "", ogImageId: null },
@@ -108,6 +120,10 @@ describe("createService", () => {
           icon: null,
           summary: null,
           body: null,
+          tagline: null,
+          benefits: [],
+          faqs: [],
+          trainingSelection: null,
           imageId: IMAGE,
           status: "DRAFT",
           seo: { title: "", description: "", ogImageId: null },
@@ -132,6 +148,10 @@ describe("createService", () => {
         icon: "users",
         summary: null,
         body: null,
+        tagline: null,
+        benefits: [],
+        faqs: [],
+        trainingSelection: null,
         imageId: null,
         status: "PUBLISHED",
         seo: { title: "", description: "", ogImageId: null },
@@ -277,7 +297,7 @@ describe("publik", () => {
     mock.service.findMany.mockResolvedValue([serviceRow()]);
     const [card] = await listPublicServices();
     expect(mock.service.findMany.mock.calls[0][0].where).toEqual({ deletedAt: null, status: "PUBLISHED" });
-    expect(Object.keys(card).sort()).toEqual(["icon", "image", "slug", "summary", "title"]);
+    expect(Object.keys(card).sort()).toEqual(["icon", "image", "slug", "summary", "tagline", "title"]);
   });
 
   it("detail: rich text dirender lewat allowlist, tanpa field internal", async () => {
@@ -294,8 +314,45 @@ describe("publik", () => {
     });
     expect(detail?.bodyHtml).toBe("<p>Halo &lt;b&gt;</p>");
     expect(Object.keys(detail ?? {}).sort()).toEqual(
-      ["bodyHtml", "icon", "image", "seo", "slug", "summary", "title", "updatedAt"].sort(),
+      ["benefits", "bodyHtml", "faqs", "icon", "image", "seo", "slug", "summary", "tagline", "title", "trainings", "updatedAt"].sort(),
     );
+    // Kolom baru kosong (data lama): section disembunyikan di FE.
+    expect(detail).toMatchObject({ tagline: null, benefits: [], faqs: [], trainings: [] });
+  });
+
+  it("detail: pelatihan terkait hanya yang tampil publik, urutan pilihan admin dijaga", async () => {
+    const [a, b, gone] = ["0199b4d0-0000-7000-8000-00000000000a", "0199b4d0-0000-7000-8000-00000000000b", "0199b4d0-0000-7000-8000-00000000000c"];
+    mock.service.findFirst.mockResolvedValue(
+      serviceRow({
+        tagline: "Kelas khusus instansi",
+        benefits: [{ icon: null, title: "Materi disesuaikan", description: "" }, { broken: true }],
+        faqs: [{ q: "Minimal peserta?", a: "10 orang." }],
+        trainingSelection: { mode: "manual", ids: [b, gone, a] },
+      }),
+    );
+    const card = (id: string, slug: string) => ({
+      id,
+      slug,
+      title: slug,
+      summary: null,
+      duration: null,
+      method: null,
+      types: [],
+      level: null,
+      cover: null,
+      categories: [],
+      publishedAt: new Date("2026-10-01T00:00:00Z"),
+      createdAt: new Date("2026-10-01T00:00:00Z"),
+    });
+    mock.training.findMany.mockResolvedValue([card(a, "a"), card(b, "b")]);
+    const detail = await getPublicService("in-house-training");
+    const where = mock.training.findMany.mock.calls[0][0].where;
+    expect(where).toMatchObject({ id: { in: [b, gone, a] }, deletedAt: null, status: "PUBLISHED" });
+    expect(detail?.trainings.map((training) => training.slug)).toEqual(["b", "a"]);
+    expect(detail?.tagline).toBe("Kelas khusus instansi");
+    // Data rusak dibaca sebagai kosong, bukan error.
+    expect(detail?.benefits).toEqual([]);
+    expect(detail?.faqs).toEqual([{ q: "Minimal peserta?", a: "10 orang." }]);
   });
 
   it("pratinjau menyertakan draft tapi tetap filter deletedAt", async () => {

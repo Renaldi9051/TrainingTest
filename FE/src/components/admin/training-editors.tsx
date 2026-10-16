@@ -84,7 +84,7 @@ export function ModulesEditor({ value, onChange, errors }: ListProps<TrainingMod
     <ListEditor
       value={value}
       onChange={onChange}
-      createItem={() => ({ title: "", points: [], durationMinutes: null })}
+      createItem={() => ({ title: "", points: [], durationMinutes: null, day: null })}
       max={MODULES_MAX}
       addLabel="Tambah modul"
       emptyText="Belum ada modul materi."
@@ -92,9 +92,10 @@ export function ModulesEditor({ value, onChange, errors }: ListProps<TrainingMod
       renderItem={({ item, index, update }) => {
         const id = `${baseId}-${index}`;
         const durationError = itemError(errors, index, "durationMinutes");
+        const dayError = itemError(errors, index, "day");
         return (
           <div className="space-y-3 rounded-md border border-border p-3">
-            <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+            <div className="grid gap-3 sm:grid-cols-[1fr_96px_140px]">
               <div className="space-y-1">
                 <Label htmlFor={`${id}-title`} className="text-xs text-fg-muted">
                   Judul modul {index + 1}
@@ -107,6 +108,23 @@ export function ModulesEditor({ value, onChange, errors }: ListProps<TrainingMod
                   max={MODULE_TITLE_MAX}
                   error={itemError(errors, index, "title")}
                 />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor={`${id}-day`} className="text-xs text-fg-muted">
+                  Hari ke
+                </Label>
+                <Input
+                  id={`${id}-day`}
+                  inputMode="numeric"
+                  value={item.day ?? ""}
+                  placeholder="Opsional"
+                  aria-invalid={dayError ? true : undefined}
+                  onChange={(event) => {
+                    const digits = event.target.value.replace(/\D/g, "");
+                    update({ ...item, day: digits ? Number(digits) : null });
+                  }}
+                />
+                {dayError ? <p className="text-small text-status-error">{dayError}</p> : null}
               </div>
               <div className="space-y-1">
                 <Label htmlFor={`${id}-duration`} className="text-xs text-fg-muted">
@@ -186,14 +204,20 @@ export function AudienceEditor({ value, onChange, errors }: ListProps<AudienceIt
   );
 }
 
-export function FaqEditor({ value, onChange, errors, emptyText }: ListProps<FaqItem> & { emptyText?: string }) {
+export function FaqEditor({
+  value,
+  onChange,
+  errors,
+  emptyText,
+  max = FAQ_MAX,
+}: ListProps<FaqItem> & { emptyText?: string; max?: number }) {
   const baseId = useId();
   return (
     <ListEditor
       value={value}
       onChange={onChange}
       createItem={() => ({ q: "", a: "" })}
-      max={FAQ_MAX}
+      max={max}
       addLabel="Tambah pertanyaan"
       emptyText={emptyText ?? "Belum ada FAQ."}
       itemLabel={(item, index) => `FAQ ${index + 1}${item.q ? `: ${item.q}` : ""}`}

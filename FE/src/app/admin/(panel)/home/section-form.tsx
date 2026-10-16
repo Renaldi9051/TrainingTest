@@ -149,6 +149,27 @@ export function SectionForm({ type, section }: { type: HomeSectionType; section:
                 </div>
               )}
             />
+            {/* Elemen grafis per section (DESIGN.md 6.2): garis, pola titik, teks outline, dsb. */}
+            <Controller
+              control={form.control}
+              name="content.decor"
+              render={({ field }) => (
+                <div className="flex items-start gap-3">
+                  <Switch
+                    id={sid("decor")}
+                    checked={field.value !== false}
+                    onCheckedChange={field.onChange}
+                    aria-describedby={sid("decor-help")}
+                  />
+                  <div>
+                    <Label htmlFor={sid("decor")}>Elemen dekoratif</Label>
+                    <p id={sid("decor-help")} className="mt-1 text-small text-fg-muted">
+                      Hiasan grafis section ini (pola titik, tanda +, teks outline, bingkai). Isi tidak berubah.
+                    </p>
+                  </div>
+                </div>
+              )}
+            />
           </section>
           {section ? (
             <section className="border-t border-border pt-6">

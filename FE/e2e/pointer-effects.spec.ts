@@ -43,12 +43,13 @@ async function box(page: Page, selector: string) {
 }
 
 // Indikator berada tepat di elemen aktif (pill) atau garis 1 px di bawahnya (line).
-async function expectIndicatorOn(page: Page, indicator: string, target: string, variant: "pill" | "line") {
+// thickness: tebal garis indikator line (palet C: menu & urutan 2 px, tab 3 px).
+async function expectIndicatorOn(page: Page, indicator: string, target: string, variant: "pill" | "line", thickness = 2) {
   await expect
     .poll(async () => {
       const [mark, active] = await Promise.all([box(page, indicator), box(page, target)]);
       const top = variant === "pill" ? active.y : active.y + active.height;
-      const height = variant === "pill" ? active.height : 1;
+      const height = variant === "pill" ? active.height : thickness;
       return [mark.x - active.x, mark.y - top, mark.width - active.width, mark.height - height].every((delta) => Math.abs(delta) < 1);
     })
     .toBe(true);
@@ -104,8 +105,9 @@ test.describe("efek kursor & indikator aktif", () => {
     const rect = await cta.boundingBox();
     if (!rect) throw new Error("CTA tidak terlihat");
 
-    // Pojok kanan bawah: geser ke arah kursor, tidak lebih dari 6 px.
-    await page.mouse.move(rect.x + rect.width - 2, rect.y + rect.height - 2, { steps: 5 });
+    // Pojok kanan bawah: geser ke arah kursor, tidak lebih dari 6 px. 4 px dari pojok: tetap di dalam
+    // lengkung radius 8 px (palet C); hit-test browser mengikuti border-radius.
+    await page.mouse.move(rect.x + rect.width - 4, rect.y + rect.height - 4, { steps: 5 });
     await expect.poll(async () => parseTranslate(await magneticTransform(page, "Lihat katalog pelatihan"))?.[0] ?? 0).toBeGreaterThan(0);
     const [x, y] = parseTranslate(await magneticTransform(page, "Lihat katalog pelatihan")) ?? [0, 0];
     expect(Math.abs(x)).toBeLessThanOrEqual(MAX_PX);
@@ -193,8 +195,11 @@ test.describe("efek kursor & indikator aktif", () => {
     expect(await cta.locator("[data-roll] > span").first().evaluate((element) => getComputedStyle(element).translate)).toBe("none");
     await expect(page.locator("[data-cursor-label-float]")).toHaveCount(0);
 
-    // Indikator tetap pindah ke urutan baru, tapi tanpa animasi.
+    // Indikator tetap pindah ke chip/urutan baru, tapi tanpa animasi.
     await page.goto("/pelatihan");
+    await page.getByRole("group", { name: "Metode" }).getByRole("link", { name: "Online" }).click();
+    await page.waitForURL(/metode=online/);
+    await expectIndicatorOn(page, '[role=group][aria-label="Metode"] [data-active-indicator]', '[role=group][aria-label="Metode"] [aria-current]', "pill");
     await page.getByRole("navigation", { name: "Urutkan" }).getByRole("link", { name: "A-Z" }).click();
     await page.waitForURL(/urut=az/);
     await expectIndicatorOn(page, 'nav[aria-label="Urutkan"] [data-active-indicator]', 'nav[aria-label="Urutkan"] [aria-current]', "line");
@@ -202,13 +207,28 @@ test.describe("efek kursor & indikator aktif", () => {
     await context.close();
   });
 
-  test("indikator aktif: diam saat muat pertama, bergeser (FLIP) saat urutan atau menu berubah; bisa lewat keyboard", async ({ page }) => {
+  test("indikator aktif: diam saat muat pertama, bergeser (FLIP) saat chip, urutan, atau menu berubah; bisa lewat keyboard", async ({ page }) => {
     await countIndicatorAnimations(page);
     await page.goto("/pelatihan");
+    const metode = '[role=group][aria-label="Metode"]';
+    const pill = `${metode} [data-active-indicator]`;
+    await expectIndicatorOn(page, pill, `${metode} [aria-current]`, "pill");
     await expectIndicatorOn(page, 'nav[aria-label="Urutkan"] [data-active-indicator]', 'nav[aria-label="Urutkan"] [aria-current]', "line");
     await expectIndicatorOn(page, 'nav[aria-label="Menu utama"] > [data-active-indicator]', TOP_MENU_ACTIVE, "line");
     await page.waitForTimeout(500);
     expect(await indicatorAnimations(page)).toBe(0);
+    // Setelah JS siap, latar chip aktif digantikan indikator (tanpa JS chip tetap --primary sendiri).
+    await expect(page.locator(`${metode} [data-indicator-ready]`)).toHaveCount(1);
+    expect(await page.locator(`${metode} [aria-current]`).evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
+
+    // Chip lewat keyboard.
+    const online = page.getByRole("group", { name: "Metode" }).getByRole("link", { name: "Online" });
+    await online.focus();
+    await page.keyboard.press("Enter");
+    await page.waitForURL(/metode=online/);
+    await expect(online).toHaveAttribute("aria-current", "true");
+    await expectIndicatorOn(page, pill, `${metode} [aria-current]`, "pill");
+    expect(await indicatorAnimations(page)).toBe(1);
 
     // Urutan lewat keyboard: garis bergeser ke "A-Z".
     const sort = page.getByRole("navigation", { name: "Urutkan" });
@@ -218,12 +238,12 @@ test.describe("efek kursor & indikator aktif", () => {
     await page.waitForURL(/urut=az/);
     await expect(az).toHaveAttribute("aria-current", "true");
     await expectIndicatorOn(page, 'nav[aria-label="Urutkan"] [data-active-indicator]', 'nav[aria-label="Urutkan"] [aria-current]', "line");
-    expect(await indicatorAnimations(page)).toBe(1);
+    expect(await indicatorAnimations(page)).toBe(2);
 
     // Menu header: pindah halaman (navigasi klien), garis bergeser ke menu baru.
     await page.getByRole("navigation", { name: "Menu utama" }).getByRole("link", { name: "Jadwal Training" }).click();
     await page.waitForURL(/\/jadwal$/);
     await expectIndicatorOn(page, 'nav[aria-label="Menu utama"] > [data-active-indicator]', TOP_MENU_ACTIVE, "line");
-    expect(await indicatorAnimations(page)).toBe(2);
+    expect(await indicatorAnimations(page)).toBe(3);
   });
 });

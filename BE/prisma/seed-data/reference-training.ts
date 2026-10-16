@@ -1,5 +1,6 @@
 // Snapshot judul dan kategori dari katalog publik referensi. Semua uraian di bawah adalah naskah
 // baru; artikel, harga, jadwal, gambar, dan informasi kontak dari situs lain tidak disalin.
+import { requiredText } from "../../src/lib/validators/common";
 import snapshot from "./reference-catalog.json";
 import { paragraphs } from "./rich-text";
 
@@ -221,3 +222,10 @@ export const referencePosts = withUniqueSlugs(selectPostsPerCategory(snapshot.po
 // terlanjur berisi katalog lengkap versi sebelumnya.
 export const referenceSnapshotSlugs = withUniqueSlugs(snapshot.posts).map((post) => post.slug);
 export const referenceSnapshotDate = snapshot.fetchedAt;
+
+// Seed menulis lewat createMany (tanpa validator admin), jadi aturan judul admin dicek di sini:
+// post yang judulnya kosong setelah HTML dibuang tidak dibuat (snapshot berisi 10 post tanpa judul).
+const titleSchema = requiredText("Judul", 200);
+export function hasReferenceTitle(post: { title: string }): boolean {
+  return titleSchema.safeParse(plainTitle(post.title).slice(0, 200)).success;
+}

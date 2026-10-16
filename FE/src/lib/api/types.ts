@@ -181,6 +181,7 @@ export type Media = {
 export type MediaUsage = {
   entity:
     | "Training"
+    | "Category"
     | "Service"
     | "Client"
     | "Testimonial"
@@ -222,6 +223,11 @@ export type SlugCheckResult = {
 
 export type SocialPlatform = "instagram" | "facebook" | "linkedin" | "youtube" | "tiktok" | "x" | "other";
 
+// Kepala halaman daftar (BE/src/lib/validators/settings.ts). Kosong per field = label lama.
+export type PageHeaderPage = "pelatihan" | "layanan" | "portofolio" | "jadwal" | "kontak";
+export type PageHeader = { eyebrow: string; heading: string; lead: string };
+export type ServicesProcess = { eyebrow: string; heading: string; steps: { title: string; description: string }[] };
+
 export type SettingValues = {
   "site.identity": {
     name: string;
@@ -238,6 +244,10 @@ export type SettingValues = {
     whatsapp: string;
     address: string;
     mapEmbedUrl: string;
+    // Kosong / null = tidak tampil.
+    openingHours: string;
+    latitude: number | null;
+    longitude: number | null;
   };
   "site.social": { links: { platform: SocialPlatform; label: string; url: string }[] };
   "site.footer": { description: string; copyright: string };
@@ -253,6 +263,8 @@ export type SettingValues = {
     description: string;
     ogImageId: string | null;
   };
+  "page.headers": Record<PageHeaderPage, PageHeader>;
+  "services.process": ServicesProcess;
 };
 
 export type SettingKey = keyof SettingValues;
@@ -271,6 +283,8 @@ export type PublicSettings = {
   contact: SettingValues["site.contact"] & { whatsappUrl: string | null };
   social: SettingValues["site.social"];
   footer: SettingValues["site.footer"];
+  pageHeaders: SettingValues["page.headers"];
+  servicesProcess: ServicesProcess;
   seo: {
     titleTemplate: string;
     defaultTitle: string;
@@ -309,7 +323,9 @@ export type Category = {
   icon: string | null;
   order: number;
   featured: boolean;
-  // Admin: pelatihan yang belum dihapus (draft + published).
+  imageId: string | null;
+  image: Media | null;
+  // Admin: pelatihan aktif = belum dihapus (draft + published).
   trainingCount: number;
   createdAt: string;
   updatedAt: string;
@@ -326,6 +342,8 @@ export type PublicCategory = {
   description: string | null;
   icon: string | null;
   featured: boolean;
+  // Foto landing kategori; null kalau kosong.
+  image: PublicImage | null;
   // Hanya pelatihan yang tampil publik.
   trainingCount: number;
 };
@@ -348,6 +366,8 @@ export type RichTextDoc = { type: "doc"; content: RichTextNode[] };
 
 export type TrainingMethod = "ONLINE" | "OFFLINE" | "HYBRID";
 export type TrainingType = "PUBLIC" | "IN_HOUSE";
+// null = belum diisi admin (label tingkat tidak ditampilkan).
+export type TrainingLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 export type ContentStatus = "DRAFT" | "PUBLISHED";
 // SCHEDULED = PUBLISHED dengan waktu publish di masa depan.
 export type TrainingPublicState = "DRAFT" | "SCHEDULED" | "PUBLISHED";
@@ -371,7 +391,8 @@ export type TrainingListItem = {
   updatedAt: string;
 };
 
-export type TrainingModule = { title: string; points: string[]; durationMinutes: number | null };
+// day: nomor hari silabus (HARI 01); null = modul tanpa pembagian hari.
+export type TrainingModule = { title: string; points: string[]; durationMinutes: number | null; day: number | null };
 export type AudienceItem = { role: string; note: string | null };
 export type FaqItem = { q: string; a: string };
 
@@ -386,6 +407,8 @@ export type Training = TrainingListItem & {
   facilities: string[] | null;
   faq: FaqItem[];
   duration: string | null;
+  level: TrainingLevel | null;
+  certificate: boolean | null;
   priceText: string | null;
   showPrice: boolean;
   coverId: string | null;
@@ -413,10 +436,15 @@ export type PublicTrainingCard = {
   duration: string | null;
   method: TrainingMethod | null;
   types: TrainingType[];
+  level: TrainingLevel | null;
+  // Sampul pelatihan, atau gambar kategori pertama yang punya gambar (lihat coverSource).
   cover: PublicImage | null;
+  coverSource: CoverSource;
   categories: PublicCategoryRef[];
   publishedAt: string;
 };
+
+export type CoverSource = "training" | "category" | null;
 
 export type ScheduleStatus = "OPEN" | "FULL" | "COMPLETED";
 
@@ -447,6 +475,8 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   faq: FaqItem[];
   inHouseNote: string | null;
   disclaimer: string | null;
+  // null = belum diisi admin (fakta "Sertifikat" tidak ditampilkan).
+  certificate: boolean | null;
   showPrice: boolean;
   priceText: string | null;
   investment: PublicInvestment;
@@ -540,6 +570,7 @@ export type ServiceListItem = {
   id: string;
   slug: string;
   title: string;
+  tagline: string | null;
   icon: string | null;
   summary: string | null;
   image: Media | null;
@@ -548,9 +579,17 @@ export type ServiceListItem = {
   updatedAt: string;
 };
 
+export type ServiceBenefit = { icon: string | null; title: string; description: string };
+export type ServiceFaq = { q: string; a: string };
+// Pelatihan terkait (manual, urutan dijaga). null = section disembunyikan.
+export type ServiceTrainingSelection = { mode: "manual"; ids: string[] } | null;
+
 export type Service = ServiceListItem & {
   body: RichTextDoc | null;
   imageId: string | null;
+  benefits: ServiceBenefit[];
+  faqs: ServiceFaq[];
+  trainingSelection: ServiceTrainingSelection;
   seo: TrainingSeo;
   ogImage: Media | null;
   createdAt: string;
@@ -559,6 +598,7 @@ export type Service = ServiceListItem & {
 export type PublicServiceCard = {
   slug: string;
   title: string;
+  tagline: string | null;
   icon: string | null;
   summary: string | null;
   image: PublicImage | null;
@@ -566,6 +606,9 @@ export type PublicServiceCard = {
 
 export type PublicServiceDetail = PublicServiceCard & {
   bodyHtml: string | null;
+  benefits: ServiceBenefit[];
+  faqs: ServiceFaq[];
+  trainings: PublicTrainingCard[];
   seo: { title: string; description: string; ogImage: PublicImage | null };
   updatedAt: string;
 };
@@ -606,9 +649,13 @@ export type PublicTestimonial = {
   photo: PublicImage | null;
 };
 
+// Jenis kegiatan portofolio (chip filter ?jenis=). null = belum diisi.
+export type PortfolioActivityType = "FIELD" | "CLASSROOM" | "CERTIFICATION" | "OUTBOUND";
+
 export type PortfolioItem = {
   id: string;
   title: string;
+  activityType: PortfolioActivityType | null;
   // "YYYY-MM-DD"
   date: string | null;
   client: string | null;
@@ -622,6 +669,7 @@ export type PortfolioItem = {
 
 export type PublicPortfolioItem = {
   title: string;
+  activityType: PortfolioActivityType | null;
   date: string | null;
   client: string | null;
   description: string | null;
@@ -631,6 +679,7 @@ export type PublicPortfolioItem = {
 export type MarketingContact = {
   id: string;
   name: string;
+  area: string | null;
   // Format wa.me (62...).
   phone: string;
   defaultMessage: string | null;
@@ -644,6 +693,7 @@ export type MarketingContact = {
 
 export type PublicMarketingContact = {
   name: string;
+  area: string | null;
   phone: string;
   whatsappUrl: string | null;
   defaultMessage: string | null;
@@ -754,6 +804,33 @@ export type HomeSectionType =
 export type Cta = { label: string; href: string };
 type SectionHeading = { eyebrow: string; heading: string };
 type SelectionConfig = { mode: SelectionMode; limit: number; ids: string[] };
+// Elemen dekoratif per section (DESIGN.md 6.2), default menyala.
+type Decor = { decor: boolean };
+
+export type HeroLayout = "fullbleed" | "split";
+export type HeroPhotoStyle = "color" | "grayscale";
+
+// Satu slide hero tersimpan. alt "" = memakai alt media; href "" = tanpa tautan.
+export type HeroSlide = {
+  mediaId: string;
+  alt: string;
+  caption: string;
+  href: string;
+  hudLabel: string;
+  focalX: number;
+  focalY: number;
+};
+
+// Slide hero di respons publik (GET /api/public/home).
+export type PublicHeroSlide = {
+  image: PublicImage;
+  alt: string;
+  caption: string;
+  href: string | null;
+  hudLabel: string;
+  focalX: number;
+  focalY: number;
+};
 
 // Isi section per type, sama dengan BE (BE/src/lib/validators/home-section.ts).
 export type HomeSectionContentMap = {
@@ -766,19 +843,28 @@ export type HomeSectionContentMap = {
     searchPlaceholder: string;
     primaryCta: Cta | null;
     secondaryCta: Cta | null;
-    image: MediaRef | null;
-  };
-  STATS: SectionHeading & { items: { value: number; prefix: string; suffix: string; label: string }[] };
-  SERVICES: SectionHeading & SelectionConfig & { intro: string; cta: Cta | null };
-  CATEGORIES: SectionHeading & SelectionConfig & { intro: string; cta: Cta | null };
-  LATEST_TRAININGS: SectionHeading & SelectionConfig & { intro: string; cta: Cta | null };
-  UPCOMING_SCHEDULES: SectionHeading & { intro: string; limit: number; cta: Cta | null };
-  CLIENTS: SectionHeading & SelectionConfig & { intro: string };
-  VISION_MISSION: { eyebrow: string; vision: string; mission: string[]; motto: string };
-  TESTIMONIALS: SectionHeading & SelectionConfig & { intro: string };
-  CTA: { eyebrow: string; heading: string; body: string; primaryCta: Cta; secondaryCta: Cta | null };
+    layout: HeroLayout;
+    // 4000-10000 ms.
+    intervalMs: number;
+    photoStyle: HeroPhotoStyle;
+    showViewfinder: boolean;
+    showBadge: boolean;
+    badgeText: string;
+    badgeHref: string;
+    // 0-6 slide; 0 = hero teks, 1 = foto statis, 2+ = slideshow.
+    slides: HeroSlide[];
+  } & Decor;
+  STATS: SectionHeading & Decor & { items: { value: number; prefix: string; suffix: string; label: string }[] };
+  SERVICES: SectionHeading & SelectionConfig & Decor & { intro: string; cta: Cta | null };
+  CATEGORIES: SectionHeading & SelectionConfig & Decor & { intro: string; cta: Cta | null };
+  LATEST_TRAININGS: SectionHeading & SelectionConfig & Decor & { intro: string; cta: Cta | null };
+  UPCOMING_SCHEDULES: SectionHeading & Decor & { intro: string; limit: number; cta: Cta | null };
+  CLIENTS: SectionHeading & SelectionConfig & Decor & { intro: string };
+  VISION_MISSION: Decor & { eyebrow: string; vision: string; mission: string[]; motto: string };
+  TESTIMONIALS: SectionHeading & SelectionConfig & Decor & { intro: string };
+  CTA: Decor & { eyebrow: string; heading: string; body: string; primaryCta: Cta; secondaryCta: Cta | null };
   // Teks berjalan: heading hanya untuk pembaca layar; source services = judul layanan tayang.
-  MARQUEE: { heading: string; source: "custom" | "services"; items: string[]; limit: number };
+  MARQUEE: Decor & { heading: string; source: "custom" | "services"; items: string[]; limit: number };
 };
 
 export type HomeSection = {
@@ -799,7 +885,7 @@ type Omit3<T> = Omit<T, "mode" | "limit" | "ids">;
 type PublicBase<K extends HomeSectionType> = { id: string; type: K };
 
 export type PublicHomeSection =
-  | (PublicBase<"HERO"> & Omit<HomeSectionContentMap["HERO"], "image"> & { image: PublicImage | null })
+  | (PublicBase<"HERO"> & Omit<HomeSectionContentMap["HERO"], "slides"> & { slides: PublicHeroSlide[] })
   | (PublicBase<"STATS"> & HomeSectionContentMap["STATS"])
   | (PublicBase<"SERVICES"> & Omit3<HomeSectionContentMap["SERVICES"]> & { items: PublicServiceCard[] })
   | (PublicBase<"CATEGORIES"> & Omit3<HomeSectionContentMap["CATEGORIES"]> & { items: PublicCategory[] })
@@ -809,7 +895,7 @@ export type PublicHomeSection =
   | (PublicBase<"VISION_MISSION"> & HomeSectionContentMap["VISION_MISSION"])
   | (PublicBase<"TESTIMONIALS"> & Omit3<HomeSectionContentMap["TESTIMONIALS"]> & { items: PublicTestimonial[] })
   | (PublicBase<"CTA"> & HomeSectionContentMap["CTA"])
-  | (PublicBase<"MARQUEE"> & { heading: string; items: string[] });
+  | (PublicBase<"MARQUEE"> & Decor & { heading: string; items: string[] });
 
 export type PublicHome = { sections: PublicHomeSection[] };
 

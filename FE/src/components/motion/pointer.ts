@@ -24,10 +24,10 @@ export function magneticOffset(pointer: Point, box: Box, max = MAGNETIC_MAX_PX):
 export type IndicatorVariant = "pill" | "line";
 
 // Kotak indikator aktif untuk elemen aktif (relatif ke kontainer): pill menutup elemen, line
-// adalah garis 1 px tepat di bawahnya.
-export function indicatorBox(variant: IndicatorVariant, target: Box): Box {
+// adalah garis setebal thickness px tepat di bawahnya (palet C: menu 2 px, tab 3 px).
+export function indicatorBox(variant: IndicatorVariant, target: Box, thickness = 1): Box {
   if (variant === "pill") return target;
-  return { left: target.left, top: target.top + target.height, width: target.width, height: 1 };
+  return { left: target.left, top: target.top + target.height, width: target.width, height: thickness };
 }
 
 // FLIP: transform (transform-origin kiri atas) yang membuat indikator di posisi `to` tampak masih

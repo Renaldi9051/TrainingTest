@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { GridLines } from "@/components/decor/grid-lines";
 import { PageEnter } from "@/components/motion/page-enter";
+import { ParallaxEffects } from "@/components/motion/parallax-effects";
 import { PointerEffects } from "@/components/motion/pointer-effects";
 import { FloatingContact } from "@/components/public/floating-contact";
 import { SiteFooter } from "@/components/public/site-footer";
@@ -7,6 +9,8 @@ import { SiteHeader } from "@/components/public/site-header";
 import { getSettings } from "@/lib/api/public";
 import { getPublicEnv } from "@/lib/env";
 import { FALLBACK_ICON_PATH } from "@/lib/monogram";
+// Palet C hanya untuk halaman publik: semua aturannya di-scope ke [data-site="public"] (main di bawah).
+import "./palette-c.css";
 
 // Metadata dasar seluruh halaman publik dari pengaturan SEO default (bisa diubah admin).
 export async function generateMetadata(): Promise<Metadata> {
@@ -32,12 +36,16 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
     <>
       <a
         href="#konten"
-        className="sr-only z-50 rounded-md bg-fg-strong px-4 py-2 text-small text-inverse-fg focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        className="sr-only z-50 rounded-md bg-primary px-4 py-2 text-small text-on-primary focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
         Lewati ke konten
       </a>
       <SiteHeader />
-      <main id="konten" className="flex-1">
+      {/* isolate: garis grid (z negatif) di belakang semua isi main, tapi di atas latar halaman;
+          section berlatar menutupinya seperti di mockup. */}
+      {/* data-site: penanda scope palet C (palette-c.css); admin tidak punya penanda ini. */}
+      <main id="konten" data-site="public" className="relative isolate flex-1">
+        <GridLines className="-z-10" />
         {children}
       </main>
       <SiteFooter />
@@ -47,6 +55,8 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
       <PointerEffects />
       {/* Header halaman stagger masuk setelah navigasi klien (bukan muat penuh atau Back/Forward). */}
       <PageEnter />
+      {/* Teks outline raksasa bergeser pelan mengikuti scroll (satu listener). */}
+      <ParallaxEffects />
     </>
   );
 }

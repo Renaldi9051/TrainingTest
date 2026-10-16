@@ -15,9 +15,13 @@ import {
 
 export const TRAINING_METHODS = ["ONLINE", "OFFLINE", "HYBRID"] as const;
 export const TRAINING_TYPES = ["PUBLIC", "IN_HOUSE"] as const;
+// null = belum diisi; publik menyembunyikan label tingkat.
+export const TRAINING_LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
+export type TrainingLevel = (typeof TRAINING_LEVELS)[number];
 
 const methodSchema = z.enum(TRAINING_METHODS, { error: "Metode tidak dikenal." });
 const typeSchema = z.enum(TRAINING_TYPES, { error: "Tipe tidak dikenal." });
+const levelSchema = z.enum(TRAINING_LEVELS, { error: "Tingkat tidak dikenal." });
 
 const categoryIdsSchema = z
   .array(idSchema)
@@ -45,6 +49,9 @@ const trainingFields = {
   duration: nullableText("Durasi", 100),
   method: methodSchema.nullable(),
   types: z.array(typeSchema).max(10).transform((types) => [...new Set(types)]),
+  level: levelSchema.nullable(),
+  // null = belum diisi; publik menyembunyikan fakta "Sertifikat".
+  certificate: z.boolean({ error: "Sertifikat harus ya atau tidak." }).nullable(),
   priceText: nullableText("Investasi", 200),
   showPrice: z.boolean(),
   coverId: idSchema.nullable(),
@@ -70,6 +77,8 @@ export const trainingCreateSchema = z.object({
   duration: trainingFields.duration.default(null),
   method: trainingFields.method.default(null),
   types: trainingFields.types.default([]),
+  level: trainingFields.level.default(null),
+  certificate: trainingFields.certificate.default(null),
   priceText: trainingFields.priceText.default(null),
   showPrice: trainingFields.showPrice.default(false),
   coverId: trainingFields.coverId.default(null),
@@ -94,6 +103,8 @@ export const trainingUpdateSchema = z
     duration: trainingFields.duration,
     method: trainingFields.method.optional(),
     types: trainingFields.types.optional(),
+    level: trainingFields.level.optional(),
+    certificate: trainingFields.certificate.optional(),
     priceText: trainingFields.priceText,
     showPrice: trainingFields.showPrice.optional(),
     coverId: trainingFields.coverId.optional(),

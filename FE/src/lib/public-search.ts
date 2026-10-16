@@ -1,3 +1,4 @@
+import { displayTitle } from "@/lib/display-title";
 import type { PublicSearchGroup, PublicSearchItem, PublicSearchResult } from "@/lib/api/types";
 import type { PaletteGroup, PaletteItem } from "@/lib/command-palette";
 import { formatNumber } from "@/lib/format";
@@ -33,7 +34,7 @@ function toItem(group: PublicSearchGroup, item: PublicSearchItem): PaletteItem {
   return {
     key: `${group}:${item.slug}`,
     href: publicSearchHref(group, item.slug),
-    title: item.title,
+    title: group === "trainings" ? displayTitle(item.title) : item.title,
     meta: group === "categories" && item.trainingCount !== undefined ? `${formatNumber(item.trainingCount)} pelatihan` : item.meta,
   };
 }

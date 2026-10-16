@@ -67,8 +67,11 @@ export function SearchTrigger({ className }: { className?: string }) {
         className={className}
       >
         <SearchIcon className="size-4" strokeWidth={1.5} aria-hidden />
-        Cari pelatihan
-        <kbd aria-hidden className="rounded-sm border border-border px-1 font-mono text-[11px] text-fg-muted">
+        {/* Nama aksesibel tetap "Cari pelatihan"; yang tampil cukup "Cari" (DESIGN.md 8.10). */}
+        <span>
+          Cari<span className="sr-only"> pelatihan</span>
+        </span>
+        <kbd aria-hidden className="rounded-[4px] border border-(--header-line) px-1.5 py-0.5 font-mono text-[11px] leading-none opacity-70">
           {shortcut}
         </kbd>
       </Link>

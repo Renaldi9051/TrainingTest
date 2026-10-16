@@ -24,8 +24,20 @@ describe("trainingCreateSchema", () => {
       audience: [],
       facilities: null,
       faq: [],
+      level: null,
+      certificate: null,
       seo: { title: "", description: "", ogImageId: null },
     });
+  });
+
+  it("tingkat & sertifikat opsional (null = belum diisi)", () => {
+    expect(trainingCreateSchema.parse({ ...base, level: "BEGINNER", certificate: true })).toMatchObject({
+      level: "BEGINNER",
+      certificate: true,
+    });
+    expect(trainingCreateSchema.parse({ ...base, level: null, certificate: false })).toMatchObject({ level: null, certificate: false });
+    expect(trainingCreateSchema.safeParse({ ...base, level: "EXPERT" }).success).toBe(false);
+    expect(trainingCreateSchema.safeParse({ ...base, certificate: "ya" }).success).toBe(false);
   });
 
   it("minimal 1 kategori dan judul wajib", () => {
@@ -75,6 +87,11 @@ describe("trainingCreateSchema", () => {
   it("update kosong ditolak; update parsial diterima", () => {
     expect(trainingUpdateSchema.safeParse({}).success).toBe(false);
     expect(trainingUpdateSchema.parse({ title: "Baru" })).toMatchObject({ title: "Baru" });
+    // Field yang tidak dikirim tetap undefined (nilai lama di DB tidak disentuh).
+    const partial = trainingUpdateSchema.parse({ title: "Baru" });
+    expect(partial.level).toBeUndefined();
+    expect(partial.certificate).toBeUndefined();
+    expect(trainingUpdateSchema.parse({ level: null, certificate: null })).toMatchObject({ level: null, certificate: null });
   });
 });
 

@@ -27,7 +27,7 @@ export function SectionHeading({
   return (
     <Reveal className={cn("space-y-3", className)}>
       {eyebrow ? (
-        <Eyebrow index={index} scramble className={inverse ? "text-inverse-fg/70" : undefined}>
+        <Eyebrow index={index} scramble className={inverse ? "text-accent-on-dark" : undefined}>
           {eyebrow}
         </Eyebrow>
       ) : null}
