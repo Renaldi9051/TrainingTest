@@ -15,12 +15,35 @@ type PublicSectionProps = {
   className?: string;
   // Elemen dekoratif di belakang isi (DESIGN.md 6): dirender sebelum isi, isi di atasnya.
   background?: ReactNode;
+  // Tanpa Container & jarak section penuh: dipakai di kolom isi halaman statis (di samping daftar isi).
+  bare?: boolean;
+  // Anchor daftar isi.
+  id?: string;
   children: ReactNode;
 };
 
 // Kerangka section publik: jarak antar section 128 px desktop / 80 px mobile (DESIGN 4).
-export function PublicSection({ eyebrow, heading, fallbackHeading, intro, inverse, className, background, children }: PublicSectionProps) {
+export function PublicSection({ eyebrow, heading, fallbackHeading, intro, inverse, className, background, bare, id, children }: PublicSectionProps) {
   const headingId = useId();
+  if (bare) {
+    return (
+      <section id={id} aria-labelledby={headingId} className={cn("scroll-mt-28 py-10 first:pt-0 md:py-12", className)}>
+        <div className="space-y-6">
+          {eyebrow || heading ? (
+            <SectionHeading eyebrow={eyebrow} title={heading || undefined} id={heading ? headingId : undefined}>
+              {intro ? <p className="max-w-[65ch] text-body-lg text-fg-muted">{intro}</p> : null}
+            </SectionHeading>
+          ) : null}
+          {!heading ? (
+            <h2 id={headingId} className="sr-only">
+              {fallbackHeading}
+            </h2>
+          ) : null}
+          {children}
+        </div>
+      </section>
+    );
+  }
   return (
     <section
       aria-labelledby={headingId}

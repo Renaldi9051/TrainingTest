@@ -151,7 +151,8 @@ export async function getTrainingSlugs(limit: number): Promise<string[]> {
   return getRequired<string[]>(`/training-slugs?limit=${limit}`);
 }
 
-export type ScheduleParams = { bulan?: string; kota?: string; kategori?: string; hal?: number };
+// per: jumlah per halaman (BE maks 100); kalender sebulan memakai 100.
+export type ScheduleParams = { bulan?: string; kota?: string; kategori?: string; hal?: number; per?: number };
 
 export type ScheduleList = { items: PublicSchedule[]; meta: PublicScheduleMeta };
 
@@ -170,6 +171,7 @@ export function getSchedules(params: ScheduleParams): Promise<ScheduleList> {
   if (params.kota) search.set("kota", params.kota);
   if (params.kategori) search.set("kategori", params.kategori);
   if (params.hal && params.hal > 1) search.set("hal", String(params.hal));
+  if (params.per) search.set("per", String(params.per));
   return getSchedulesByQuery(search.toString());
 }
 

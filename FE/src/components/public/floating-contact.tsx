@@ -84,6 +84,9 @@ export async function FloatingContact() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-body font-medium text-fg-strong">{person.name}</span>
+                {person.area ? (
+                  <span className="block truncate font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{person.area}</span>
+                ) : null}
                 <span className="block font-mono text-small text-fg-muted">+{person.phone}</span>
               </span>
               {/* href awal = pesan tanpa topik; FloatingContactSync menggantinya saat panel dibuka. */}
