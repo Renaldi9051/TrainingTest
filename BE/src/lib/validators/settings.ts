@@ -103,6 +103,14 @@ const pageHeadersSchema = z.object(
 // Alur kerja sama di /layanan. Tanpa langkah = section disembunyikan.
 export const PROCESS_STEPS_MAX = 6;
 
+const coordinateSchema = (label: string, limit: number) =>
+  z
+    .number({ error: `${label} harus angka.` })
+    .min(-limit, { error: `${label} minimal -${limit}.` })
+    .max(limit, { error: `${label} maksimal ${limit}.` })
+    .nullable()
+    .default(null);
+
 export const settingSchemas = {
   "site.identity": z.object({
     name: z
@@ -124,15 +132,25 @@ export const settingSchemas = {
       error: "Isi label dan tautan tombol sekaligus, atau kosongkan keduanya.",
       path: ["ctaHref"],
     }),
-  "site.contact": z.object({
-    phone: phoneSchema,
-    email: emailSchema,
-    // Email kedua (mis. pendaftaran/keuangan); opsional.
-    emailSecondary: emailSchema,
-    whatsapp: optionalWhatsappSchema,
-    address: plainText("Alamat", 500),
-    mapEmbedUrl: mapEmbedUrlSchema,
-  }),
+  "site.contact": z
+    .object({
+      phone: phoneSchema,
+      email: emailSchema,
+      // Email kedua (mis. pendaftaran/keuangan); opsional.
+      emailSecondary: emailSchema,
+      whatsapp: optionalWhatsappSchema,
+      address: plainText("Alamat", 500),
+      mapEmbedUrl: mapEmbedUrlSchema,
+      // Fase 6 redesign: jam operasional & koordinat kantor (label LAT/LON, tombol Google Maps).
+      // Kosong = tidak tampil; nilai lama tanpa field ini tetap terbaca.
+      openingHours: plainText("Jam operasional", 300),
+      latitude: coordinateSchema("Lintang", 90),
+      longitude: coordinateSchema("Bujur", 180),
+    })
+    .refine((value) => (value.latitude === null) === (value.longitude === null), {
+      error: "Isi lintang dan bujur sekaligus, atau kosongkan keduanya.",
+      path: ["longitude"],
+    }),
   "site.social": z.object({
     links: z
       .array(
@@ -217,7 +235,17 @@ export const SETTING_DEFAULTS: SettingValues = {
     faviconId: null,
   },
   "site.header": { ctaLabel: "", ctaHref: "" },
-  "site.contact": { phone: "", email: "", emailSecondary: "", whatsapp: "", address: "", mapEmbedUrl: "" },
+  "site.contact": {
+    phone: "",
+    email: "",
+    emailSecondary: "",
+    whatsapp: "",
+    address: "",
+    mapEmbedUrl: "",
+    openingHours: "",
+    latitude: null,
+    longitude: null,
+  },
   "site.social": { links: [] },
   "site.footer": { description: "", copyright: "" },
   "training.defaults": { facilities: [], faq: [], inHouseNote: "", disclaimer: "" },

@@ -54,6 +54,21 @@ describe("site.contact", () => {
     expect(normalizeWhatsapp(input)).toBe(expected);
   });
 
+  it("jam operasional & koordinat opsional; nilai lama tanpa field ini tetap terbaca identik", () => {
+    const schema = settingSchemas["site.contact"];
+    const stored = { phone: "021 1234", email: "halo@contoh.id", emailSecondary: "", whatsapp: "6281234567890", address: "Jl. Contoh", mapEmbedUrl: "" };
+    expect(parseStoredSetting("site.contact", stored)).toEqual({ ...stored, openingHours: "", latitude: null, longitude: null });
+    expect(schema.parse({ openingHours: " Senin-Jumat 08.00-16.00 ", latitude: -7.71, longitude: 110.35 })).toMatchObject({
+      openingHours: "Senin-Jumat 08.00-16.00",
+      latitude: -7.71,
+      longitude: 110.35,
+    });
+    // Koordinat berpasangan, dalam rentang.
+    expect(schema.safeParse({ latitude: -7.71 }).success).toBe(false);
+    expect(schema.safeParse({ latitude: 91, longitude: 10 }).success).toBe(false);
+    expect(schema.safeParse({ latitude: 10, longitude: -181 }).success).toBe(false);
+  });
+
   it("menolak WhatsApp/email/telepon tidak valid", () => {
     const schema = settingSchemas["site.contact"];
     expect(schema.safeParse({ whatsapp: "abc" }).success).toBe(false);
