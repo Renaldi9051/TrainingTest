@@ -243,6 +243,10 @@ export type SettingValues = {
     whatsapp: string;
     address: string;
     mapEmbedUrl: string;
+    // Kosong / null = tidak tampil.
+    openingHours: string;
+    latitude: number | null;
+    longitude: number | null;
   };
   "site.social": { links: { platform: SocialPlatform; label: string; url: string }[] };
   "site.footer": { description: string; copyright: string };

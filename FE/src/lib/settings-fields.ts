@@ -45,6 +45,8 @@ export const SETTING_FIELDS: readonly SettingField[] = [
   { key: "site.contact", field: "emailSecondary", label: "Email kedua", synonyms: ["email pendaftaran", "email keuangan"] },
   { key: "site.contact", field: "address", label: "Alamat", synonyms: ["lokasi", "alamat kantor"] },
   { key: "site.contact", field: "mapEmbedUrl", label: "URL embed peta", synonyms: ["peta", "maps", "google maps", "lokasi"] },
+  { key: "site.contact", field: "openingHours", label: "Jam operasional", synonyms: ["jam kerja", "jam buka", "hari kerja"] },
+  { key: "site.contact", field: "latitude", label: "Koordinat kantor", synonyms: ["lintang", "bujur", "latitude", "longitude", "lokasi"] },
   {
     key: "site.social",
     field: "links",

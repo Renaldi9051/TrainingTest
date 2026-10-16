@@ -181,6 +181,8 @@ function useSettingForm<K extends SettingKey, TValues extends FieldValues>(
   value: SettingValues[K],
   onDirtyChange: SectionProps<K>["onDirtyChange"],
   toForm: (value: SettingValues[K]) => TValues = (current) => current as unknown as TValues,
+  // Nilai form -> body PUT (mis. teks koordinat -> angka). Default: apa adanya.
+  toInput: (values: TValues) => unknown = (values) => values,
 ) {
   const queryClient = useQueryClient();
   const form = useForm<TValues>({
@@ -193,7 +195,7 @@ function useSettingForm<K extends SettingKey, TValues extends FieldValues>(
 
   const mutation = useMutation({
     mutationFn: async (input: TValues) =>
-      (await apiSend<AdminSettings>(`/admin/settings/${key}`, "PUT", input)).data,
+      (await apiSend<AdminSettings>(`/admin/settings/${key}`, "PUT", toInput(input))).data,
     onSuccess: (data) => {
       queryClient.setQueryData(settingsKey, data);
       form.reset(toForm(data.values[key]) as TValues);
@@ -344,6 +346,15 @@ function HeaderSection({ value, onDirtyChange }: SectionProps<"site.header">) {
 
 // ===== Kontak =====
 
+function coordinateText(label: string, limit: number) {
+  return z
+    .string()
+    .trim()
+    .refine((v) => v === "" || (/^-?\d+([.,]\d+)?$/.test(v) && Math.abs(Number(v.replace(",", "."))) <= limit), {
+      error: `${label} berupa angka antara -${limit} dan ${limit}, mis. -7.7156.`,
+    });
+}
+
 const contactSchema = z.object({
   phone: text("Telepon", 30).refine((v) => v === "" || /^[+\d][\d\s().-]*$/.test(v), {
     error: "Nomor telepon hanya boleh berisi angka, spasi, +, -, dan tanda kurung.",
@@ -361,10 +372,39 @@ const contactSchema = z.object({
   mapEmbedUrl: z.string().trim().max(2000).refine((v) => v === "" || v.startsWith("https://"), {
     error: "Tempel URL embed (https://...), bukan kode <iframe>.",
   }),
+  openingHours: text("Jam operasional", 300),
+  // Input teks (koma atau titik desimal), diubah ke angka saat disimpan.
+  latitude: coordinateText("Lintang", 90),
+  longitude: coordinateText("Bujur", 180),
+}).refine((value) => (value.latitude.trim() === "") === (value.longitude.trim() === ""), {
+  error: "Isi lintang dan bujur sekaligus, atau kosongkan keduanya.",
+  path: ["longitude"],
 });
 
+type ContactForm = z.infer<typeof contactSchema>;
+
+function toContactForm(value: SettingValues["site.contact"]): ContactForm {
+  return {
+    phone: value.phone,
+    email: value.email,
+    emailSecondary: value.emailSecondary,
+    whatsapp: value.whatsapp,
+    address: value.address,
+    mapEmbedUrl: value.mapEmbedUrl,
+    openingHours: value.openingHours ?? "",
+    latitude: value.latitude === null || value.latitude === undefined ? "" : String(value.latitude),
+    longitude: value.longitude === null || value.longitude === undefined ? "" : String(value.longitude),
+  };
+}
+
+const toCoordinate = (value: string) => (value.trim() === "" ? null : Number(value.trim().replace(",", ".")));
+
 function ContactSection({ value, onDirtyChange }: SectionProps<"site.contact">) {
-  const { form, formId, onSubmit, saveBar } = useSettingForm("site.contact", contactSchema, value, onDirtyChange);
+  const { form, formId, onSubmit, saveBar } = useSettingForm("site.contact", contactSchema, value, onDirtyChange, toContactForm, (input) => ({
+    ...input,
+    latitude: toCoordinate(input.latitude),
+    longitude: toCoordinate(input.longitude),
+  }));
   const errors = form.formState.errors;
   return (
     <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
@@ -405,6 +445,28 @@ function ContactSection({ value, onDirtyChange }: SectionProps<"site.contact">) 
       >
         <Input {...form.register("mapEmbedUrl")} placeholder="https://www.google.com/maps/embed?pb=..." />
       </FormField>
+      <FormField
+        id={`${formId}-hours`} anchor="site.contact.openingHours"
+        label="Jam operasional"
+        description="Tampil di halaman Kontak, mis. Senin-Jumat 08.00-16.00. Kosong = tidak tampil."
+        error={errors.openingHours?.message}
+      >
+        <Textarea rows={2} {...form.register("openingHours")} />
+      </FormField>
+      <fieldset data-anchor="site.contact.latitude" className="space-y-2">
+        <legend className="text-sm font-medium">Koordinat kantor</legend>
+        <p className="text-small text-fg-muted">
+          Untuk label LAT/LON di peta dan tombol Buka di Google Maps. Isi keduanya atau kosongkan.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField id={`${formId}-lat`} label="Lintang (latitude)" error={errors.latitude?.message}>
+            <Input inputMode="decimal" {...form.register("latitude")} placeholder="-7.7156" />
+          </FormField>
+          <FormField id={`${formId}-lon`} label="Bujur (longitude)" error={errors.longitude?.message}>
+            <Input inputMode="decimal" {...form.register("longitude")} placeholder="110.3550" />
+          </FormField>
+        </div>
+      </fieldset>
     </SectionForm>
   );
 }
