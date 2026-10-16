@@ -108,7 +108,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps<"
       {category.image ? (
         <Container className="pt-8">
           <div data-category-image="" className="relative aspect-4/3 overflow-hidden bg-bg-muted sm:aspect-video lg:aspect-auto lg:h-130">
-            <PublicImage image={category.image} sizes="(min-width: 1280px) 1232px, 100vw" grayscale={false} priority />
+            <PublicImage image={category.image} sizes="(min-width: 1280px) 1232px, 100vw" priority />
             <Viewfinder className="inset-4 md:inset-6" topLeft={<HudLabel tone="photo">{`Kategori / ${category.name}`}</HudLabel>} />
           </div>
         </Container>
@@ -188,7 +188,7 @@ function Stat({ value, label }: { value: string; label: string }) {
     // dt lebih dulu di DOM (urutan dl yang benar), angka tampil di atas.
     <div className="flex flex-col-reverse">
       <dt className="mt-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{label}</dt>
-      <dd className="font-mono text-[32px] leading-none font-medium tracking-[-0.03em] text-fg-strong">{value}</dd>
+      <dd className="font-mono text-[32px] leading-none font-medium tracking-[-0.03em] text-primary">{value}</dd>
     </div>
   );
 }
@@ -207,7 +207,7 @@ function OtherCategories({ current, categories }: { current: PublicCategory; cat
           <Link
             href={`/pelatihan/kategori/${current.slug}`}
             aria-current="page"
-            className="inline-flex h-8 items-center rounded-full border border-fg-strong bg-fg-strong px-3 text-small whitespace-nowrap text-inverse-fg outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+            className="inline-flex h-8 items-center rounded-full border border-primary bg-primary px-3 text-small whitespace-nowrap text-on-primary outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             {current.name}
           </Link>

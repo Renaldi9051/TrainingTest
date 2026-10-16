@@ -71,7 +71,7 @@ function monthOptions(now: Date): { value: string; label: string }[] {
 }
 
 const selectClass =
-  "h-10 w-full rounded-md border border-border-strong bg-bg px-3 text-small text-fg outline-none focus-visible:border-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2";
+  "h-10 w-full rounded-md border border-border-strong bg-bg px-3 text-small text-fg outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2";
 
 // Ajakan saat tidak ada jadwal yang cocok (empty state & kotak penutup).
 function InHouseCta({ compact = false }: { compact?: boolean }) {
@@ -253,7 +253,7 @@ export async function ScheduleStats() {
       {stats.map((stat) => (
         <div key={stat.label} className="flex flex-col-reverse">
           <dt className="mt-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{stat.label}</dt>
-          <dd className="font-mono text-[40px] leading-none font-medium tracking-[-0.03em] text-fg-strong">
+          <dd className="font-mono text-[40px] leading-none font-medium tracking-[-0.03em] text-primary">
             {String(stat.value).padStart(2, "0")}
           </dd>
         </div>

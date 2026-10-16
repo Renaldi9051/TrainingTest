@@ -183,7 +183,6 @@ export default async function ServicePage({ params }: PageProps<"/layanan/[slug]
                   image={service.image}
                   sizes={SERVICE_IMAGE_SIZES}
                   priority
-                  className="transition-[filter] duration-300 ease-standard group-hover:grayscale-0"
                 />
                 <Viewfinder className="inset-4 md:inset-6" />
               </div>

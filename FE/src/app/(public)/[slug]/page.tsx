@@ -84,14 +84,14 @@ export default async function StaticPage({ params }: PageProps<"/[slug]">) {
       >
         {tabs.length >= 2 ? (
           <nav aria-label="Halaman lain" className="mt-10">
-            <ActiveIndicator variant="line">
+            <ActiveIndicator variant="line" thickness={3}>
               <ul className="flex flex-wrap gap-x-6">
                 {tabs.map((tab) => (
                   <li key={tab.slug}>
                     <Link
                       href={`/${tab.slug}`}
                       aria-current={tab.slug === page.slug ? "page" : undefined}
-                      className="inline-flex h-11 items-center rounded-sm text-small whitespace-nowrap text-fg-muted outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong aria-[current=page]:text-fg-strong"
+                      className="inline-flex h-11 items-center rounded-sm text-small whitespace-nowrap text-fg-muted outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-focus aria-[current=page]:text-fg-strong"
                     >
                       {tab.title}
                     </Link>

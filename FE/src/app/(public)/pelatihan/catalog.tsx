@@ -52,7 +52,7 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
               <Link
                 href={catalogHref(state, { kategori: [], metode: null, tipe: null })}
                 scroll={false}
-                className="rounded-sm text-small text-fg-muted underline underline-offset-4 outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong"
+                className="rounded-sm text-small text-fg-muted underline underline-offset-4 outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-focus"
               >
                 Reset
               </Link>
@@ -137,7 +137,7 @@ export function CatalogSearch({ state }: { state?: CatalogState }) {
       >
         Cari pelatihan
       </label>
-      <div className="flex h-14 items-center gap-3 rounded-md border border-fg-strong bg-bg pr-1.5 pl-4 focus-within:ring-2 focus-within:ring-fg-strong focus-within:ring-offset-2">
+      <div className="flex h-14 items-center gap-3 rounded-md border border-fg-strong bg-bg pr-1.5 pl-4 focus-within:ring-2 focus-within:ring-focus focus-within:ring-offset-2">
         <SearchIcon className="size-5 shrink-0 text-fg-muted" strokeWidth={1.5} aria-hidden />
         <input
           id="catalog-q"
@@ -237,13 +237,13 @@ function CheckLink({
       href={href}
       scroll={false}
       aria-current={active ? "true" : undefined}
-      className="group/check flex min-h-10 items-center gap-3 rounded-sm py-1.5 text-small text-fg outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong"
+      className="group/check flex min-h-10 items-center gap-3 rounded-sm py-1.5 text-small text-fg outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-focus"
     >
       <span
         aria-hidden
         className={cn(
           "flex size-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors duration-150",
-          active ? "border-fg-strong bg-fg-strong text-inverse-fg" : "border-border-strong group-hover/check:border-fg-strong",
+          active ? "border-primary bg-primary text-on-primary" : "border-border-strong group-hover/check:border-primary",
         )}
       >
         {active ? <CheckIcon strokeWidth={2} className="size-3" /> : null}
@@ -274,7 +274,7 @@ function ActiveFilterChips({ state, categories }: { state: CatalogState; categor
             href={chip.href}
             scroll={false}
             aria-label={`Hapus filter ${chip.label}`}
-            className="inline-flex h-7 items-center gap-1.5 rounded-full bg-fg-strong px-3 text-[12px] text-inverse-fg outline-none transition-colors duration-150 hover:bg-fg focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+            className="inline-flex h-7 items-center gap-1.5 rounded-full bg-primary px-3 text-[12px] text-on-primary outline-none transition-colors duration-150 hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             {chip.label}
             <XIcon aria-hidden strokeWidth={1.5} className="size-3.5" />
@@ -295,7 +295,7 @@ function SortLinks({ state }: { state: CatalogState }) {
   return (
     <nav aria-label="Urutkan" className="flex items-center gap-4">
       <span className="text-small text-fg-muted">Urutkan</span>
-      <ActiveIndicator variant="line">
+      <ActiveIndicator variant="line" thickness={2}>
         <ul className="flex gap-4">
           {options.map((option) => (
             <li key={option.value}>
@@ -303,7 +303,7 @@ function SortLinks({ state }: { state: CatalogState }) {
                 href={catalogHref(state, { urut: option.value })}
                 scroll={false}
                 aria-current={current === option.value ? "true" : undefined}
-                className="rounded-sm text-small text-fg-muted underline-offset-4 outline-none hover:text-fg-strong hover:underline focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 aria-[current=true]:text-fg-strong aria-[current=true]:underline [[data-indicator-ready]_&]:aria-[current=true]:no-underline"
+                className="rounded-sm text-small text-fg-muted underline-offset-4 outline-none hover:text-fg-strong hover:underline focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 aria-[current=true]:text-fg-strong aria-[current=true]:underline [[data-indicator-ready]_&]:aria-[current=true]:no-underline"
               >
                 {option.label}
               </Link>

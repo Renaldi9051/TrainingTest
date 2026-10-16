@@ -129,7 +129,7 @@ function GallerySkeleton() {
 
 const CARD_SIZES = "(min-width: 1024px) 720px, (min-width: 768px) 50vw, 100vw";
 
-// Kartu kegiatan: foto pertama (grayscale, hover berwarna + sudut Viewfinder), jumlah foto, jenis,
+// Kartu kegiatan: foto pertama (berwarna, hover zoom + sudut Viewfinder), jumlah foto, jenis,
 // bulan, judul (membuka galeri lengkap), klien. Tanpa foto: tanpa blok gambar.
 function PortfolioCard({ item, wide, priority }: { item: PublicPortfolioItem; wide: boolean; priority: boolean }) {
   const [cover] = item.images;
@@ -144,7 +144,7 @@ function PortfolioCard({ item, wide, priority }: { item: PublicPortfolioItem; wi
             image={cover}
             sizes={CARD_SIZES}
             priority={priority}
-            className="transition-[filter,transform] duration-300 ease-standard group-hover:grayscale-0 motion-safe:group-hover:scale-[1.03]"
+            className="transition-transform duration-300 ease-standard motion-safe:group-hover:scale-[1.03]"
           />
           <Viewfinder size="sm" hover />
           <span className="absolute bottom-3.5 left-4 bg-fg-strong/60 px-2 py-1 font-mono text-label uppercase tracking-[0.08em] text-inverse-fg">

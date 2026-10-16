@@ -233,7 +233,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
                       <li key={category.slug}>
                         <Link
                           href={`/pelatihan/kategori/${category.slug}`}
-                          className="inline-flex h-7 items-center rounded-full border border-border-strong px-3 text-[12px] text-fg outline-none transition-colors duration-150 hover:border-fg-strong hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+                          className="inline-flex h-7 items-center rounded-full border border-border-strong px-3 text-[12px] text-fg outline-none transition-colors duration-150 hover:border-primary hover:text-primary focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
                         >
                           {category.name}
                         </Link>
@@ -291,7 +291,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
         {training.cover ? (
           <Container>
             <div data-training-cover="" data-cover-source={training.coverSource ?? "none"} className="relative aspect-4/3 overflow-hidden bg-bg-muted sm:aspect-video lg:aspect-auto lg:h-130">
-              <PublicImage image={training.cover} sizes="(min-width: 1280px) 1232px, 100vw" grayscale={false} priority />
+              <PublicImage image={training.cover} sizes="(min-width: 1280px) 1232px, 100vw" priority />
               <Viewfinder
                 className="inset-4 md:inset-6"
                 topLeft={
@@ -336,7 +336,8 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
             aria-label="Ringkasan pendaftaran"
             className="hidden lg:sticky lg:top-36 lg:col-span-4 lg:col-start-9 lg:mt-14 lg:block"
           >
-            <div className="border border-border p-6 xl:p-8">
+            {/* Palet C: kartu harga radius 12 px dengan garis atas 4 px --accent. */}
+            <div className="rounded-card border border-t-4 border-border border-t-accent bg-bg p-6 xl:p-8">
               <dl>
                 <dt className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">Investasi</dt>
                 <dd className="mt-2 text-[28px] leading-[1.15] font-semibold tracking-[-0.03em] text-fg-strong">
@@ -460,7 +461,7 @@ function OutcomeList({ outcomes }: { outcomes: string[] }) {
     <ol className="border-b border-border">
       {outcomes.map((outcome, index) => (
         <li key={`${index}-${outcome}`} className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 border-t border-border py-4">
-          <span className="pt-0.5 font-mono text-small text-fg-muted">{pad(index + 1)}</span>
+          <span className="pt-0.5 font-mono text-small text-accent-ink">{pad(index + 1)}</span>
           <span className="text-body text-fg">{outcome}</span>
         </li>
       ))}
@@ -558,7 +559,7 @@ function FacilityList({ facilities }: { facilities: string[] }) {
     <ul className="grid border-t border-l border-border sm:grid-cols-2 xl:grid-cols-3">
       {facilities.map((facility, index) => (
         <li key={`${index}-${facility}`} className="flex items-start gap-3 border-r border-b border-border p-5 text-body text-fg">
-          <CheckIcon aria-hidden strokeWidth={1.5} className="mt-1 size-5 shrink-0 text-fg-strong" />
+          <CheckIcon aria-hidden strokeWidth={1.5} className="mt-1 size-5 shrink-0 text-primary" />
           {facility}
         </li>
       ))}

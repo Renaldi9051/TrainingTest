@@ -104,7 +104,7 @@ export default async function ContactPage() {
       {contact.mapEmbedUrl || marketing.length > 0 ? (
         <Container className="grid grid-cols-1 gap-12 py-20 md:py-24 lg:grid-cols-12 lg:items-start lg:gap-6">
           {contact.mapEmbedUrl ? (
-            <div className={cn("group/map relative aspect-[4/3] overflow-hidden border border-border focus-within:ring-2 focus-within:ring-fg-strong focus-within:ring-offset-2", marketing.length > 0 ? "lg:col-span-6" : "lg:col-span-12 lg:aspect-[16/7]")}>
+            <div className={cn("group/map relative aspect-[4/3] overflow-hidden border border-border focus-within:ring-2 focus-within:ring-focus focus-within:ring-offset-2", marketing.length > 0 ? "lg:col-span-6" : "lg:col-span-12 lg:aspect-[16/7]")}>
               {/* URL sudah divalidasi domainnya di BE. Monokrom seperti foto; berwarna saat hover/fokus. */}
               <iframe
                 src={contact.mapEmbedUrl}
