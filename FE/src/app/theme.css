@@ -9,7 +9,8 @@
   --border: #e5e5e5;
   --border-strong: #d4d4d4;
   --fg-subtle: #a3a3a3;
-  --fg-muted: #737373;
+  /* #6b6b6b (bukan #737373): kontras AA juga di atas --bg-subtle (4,89:1). Keputusan pemilik 16 Okt 2026. */
+  --fg-muted: #6b6b6b;
   --fg: #171717;
   --fg-strong: #0a0a0a;
   --fg-strong-hover: #262626;
