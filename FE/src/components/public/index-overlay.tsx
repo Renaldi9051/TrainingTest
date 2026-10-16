@@ -55,7 +55,7 @@ export function IndexOverlay({
           <button
             type="button"
             onClick={() => ref.current?.close()}
-            className="inline-flex h-10 items-center gap-2 rounded-md border border-border-strong px-4 text-small text-fg outline-none transition-colors duration-150 ease-standard hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+            className="inline-flex h-10 items-center gap-2 rounded-md border border-border-strong px-4 text-small text-fg outline-none transition-colors duration-150 ease-standard hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             Tutup
             <XIcon aria-hidden strokeWidth={1.5} className="size-4" />
@@ -79,7 +79,7 @@ export function IndexOverlay({
           }}
           placeholder="Ketik untuk menyaring kategori"
           autoComplete="off"
-          className="h-16 w-full rounded-none border-0 border-b border-border-strong bg-transparent px-0 text-[24px] text-fg-strong outline-none placeholder:text-fg-subtle focus-visible:border-fg-strong focus-visible:shadow-[0_1px_0_var(--fg-strong)]"
+          className="h-16 w-full rounded-none border-0 border-b border-border-strong bg-transparent px-0 text-[24px] text-fg-strong outline-none placeholder:text-fg-subtle focus-visible:border-primary focus-visible:shadow-[0_1px_0_var(--primary)]"
         />
         <p aria-live="polite" className="mt-3 mb-10 font-mono text-label uppercase tracking-[0.08em] text-fg-muted md:mb-12">
           {total} kategori
@@ -100,7 +100,7 @@ export function IndexOverlay({
           <div className="gap-6 md:columns-2 lg:columns-4">
             {groups.map((group) => (
               <section key={group.letter} aria-label={`Huruf ${group.letter}`} className="mb-7 break-inside-avoid">
-                <p aria-hidden className="mb-2 font-mono text-[32px] leading-none font-medium tracking-[-0.04em] text-fg-strong">
+                <p aria-hidden className="mb-2 font-mono text-[32px] leading-none font-medium tracking-[-0.04em] text-accent-ink">
                   {group.letter}
                 </p>
                 <ul>
@@ -109,7 +109,7 @@ export function IndexOverlay({
                       <Link
                         href={entry.href}
                         onClick={() => ref.current?.close()}
-                        className="flex items-baseline justify-between gap-3 rounded-sm py-1.5 text-[17px] text-fg underline-offset-4 outline-none hover:text-fg-strong hover:underline focus-visible:underline focus-visible:ring-2 focus-visible:ring-fg-strong"
+                        className="flex items-baseline justify-between gap-3 rounded-sm py-1.5 text-[17px] text-fg underline-offset-4 outline-none hover:text-fg-strong hover:underline focus-visible:underline focus-visible:ring-2 focus-visible:ring-focus"
                       >
                         <span>{entry.label}</span>
                         {entry.count !== undefined ? (

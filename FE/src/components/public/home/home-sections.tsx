@@ -11,7 +11,7 @@ import { HeroPauseButton } from "@/components/motion/hero-pause-button";
 import { HeroSlideshow } from "@/components/motion/hero-slideshow";
 import { Reveal } from "@/components/motion/reveal";
 import { HeroWords } from "@/components/motion/hero-words";
-import { CountUp, LineDraw } from "@/components/motion/reveal-parts";
+import { CountUp } from "@/components/motion/reveal-parts";
 import { VelocityMarquee } from "@/components/motion/velocity-marquee";
 import { ChipLink } from "@/components/public/chip-link";
 import { ClientLogos } from "@/components/public/client-logos";
@@ -95,7 +95,7 @@ function HeroText({ section, inverse, aside }: { section: HeroData; inverse: boo
     <div className="space-y-8 md:space-y-10">
       <div className="space-y-5 md:space-y-6">
         {section.eyebrow ? (
-          <Eyebrow data-page-enter="" className={muted}>
+          <Eyebrow data-page-enter="" className={inverse ? "text-accent-on-dark" : undefined}>
             {section.eyebrow}
           </Eyebrow>
         ) : null}
@@ -104,7 +104,8 @@ function HeroText({ section, inverse, aside }: { section: HeroData; inverse: boo
           <HeroWords
             text={section.headline}
             accents={section.rotatingWords}
-            accentClassName={inverse ? "italic font-medium" : "text-fg-muted"}
+            // Palet C: kata berganti --accent-on-dark di atas foto, --accent-ink di latar terang.
+            accentClassName={inverse ? "italic font-medium text-accent-on-dark" : "text-accent-ink"}
           />
         </h1>
         {section.subheadline ? (
@@ -126,8 +127,8 @@ function HeroText({ section, inverse, aside }: { section: HeroData; inverse: boo
                 className={cn(
                   "flex h-14 items-center gap-2 rounded-md pr-1.5 pl-4 focus-within:ring-2 focus-within:ring-offset-2",
                   inverse
-                    ? "bg-bg text-fg focus-within:ring-inverse-fg focus-within:ring-offset-fg-strong"
-                    : "border border-border-strong bg-bg focus-within:border-fg-strong focus-within:ring-fg-strong",
+                    ? "bg-bg text-fg focus-within:ring-focus-dark focus-within:ring-offset-fg-strong"
+                    : "border border-border-strong bg-bg focus-within:border-fg-strong focus-within:ring-focus",
                 )}
               >
                 <SearchIcon aria-hidden strokeWidth={1.5} className="size-5 shrink-0 text-fg-muted" />
@@ -206,27 +207,26 @@ function HeroSection({ section }: { section: HeroData }) {
   );
 }
 
-// Statistik (DESIGN.md 8.6): angka besar mono dipisah garis vertikal, tanda + di sudut tiap angka,
-// counter berjalan saat masuk layar. Label HUD tidak dipakai: belum ada data CMS untuknya (6.2).
+// Statistik (DESIGN.md 8.6, palet C): kotak radius 12 px ber-border dengan garis kiri 4 px --accent,
+// angka besar mono --primary, tanda + di sudut tiap kotak, counter berjalan saat masuk layar. Hover:
+// border --primary + naik 3 px seperti kartu pelatihan. Label HUD tidak dipakai: belum ada data CMS untuknya (6.2).
 function StatsSection({ section }: { section: Extract<PublicHomeSection, { type: "STATS" }> }) {
   return (
     <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.STATS}>
       <Reveal>
-        <LineDraw />
-        <dl data-reveal-children="item" className="grid grid-cols-2 border-b border-border lg:grid-cols-4">
+        <dl data-reveal-children="item" className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
           {section.items.map((item, index) => (
             <div
               key={index}
               className={cn(
-                "relative flex flex-col gap-3 px-4 pt-8 pb-7 md:px-6 md:pt-10",
-                index % 2 === 1 && "border-l border-border",
-                index >= 2 && "border-t border-border lg:border-t-0",
-                index % 4 !== 0 && "lg:border-l",
+                "relative flex flex-col gap-3 overflow-hidden rounded-card border border-border bg-bg px-5 pt-8 pb-7 md:px-6 md:pt-10",
+                "before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-accent",
+                "transition-[border-color,translate] ease-standard [transition-duration:150ms,300ms] hover:border-primary motion-safe:hover:-translate-y-[3px]",
               )}
             >
-              {section.decor ? <PlusMarker className="-top-1.5 -left-1.5" /> : null}
+              {section.decor ? <PlusMarker className="top-3 right-3" /> : null}
               {/* Counter berjalan saat grup masuk viewport (hanya kalau seluruhnya di bawah layar awal). */}
-              <dd className="order-1 font-mono text-[40px] leading-none font-medium tracking-[-0.04em] text-fg-strong md:text-[64px]">
+              <dd className="order-1 font-mono text-[40px] leading-none font-medium tracking-[-0.04em] text-primary md:text-[64px]">
                 {item.prefix}
                 <CountUp value={item.value} display={formatNumber(item.value)} />
                 {item.suffix}
@@ -312,14 +312,15 @@ function CategoryMarquee({ names }: { names: string[] }) {
     <ul className="flex">
       {names.map((name, index) => (
         <li key={`${index}-${name}`} className="flex items-center whitespace-nowrap">
-          <span className="px-6 text-[40px] leading-none font-semibold tracking-[-0.03em] text-fg-strong md:px-7 md:text-[56px]">{name}</span>
-          <span className="text-[24px] text-fg-subtle md:text-[32px]">✦</span>
+          <span className="px-6 text-[40px] leading-none font-semibold tracking-[-0.03em] text-on-primary md:px-7 md:text-[56px]">{name}</span>
+          <span className="text-[24px] text-accent-on-primary md:text-[32px]">✦</span>
         </li>
       ))}
     </ul>
   );
   return (
-    <div aria-hidden className="border-y border-border py-6 motion-reduce:hidden md:py-7">
+    // Palet C: pita --primary dengan teks --on-primary.
+    <div aria-hidden className="border-y border-primary bg-primary py-6 motion-reduce:hidden md:py-7">
       <VelocityMarquee>{list}</VelocityMarquee>
     </div>
   );

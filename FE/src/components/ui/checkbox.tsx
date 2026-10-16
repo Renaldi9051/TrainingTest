@@ -1,14 +1,14 @@
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-// Checkbox native monokrom (accent --fg-strong), fokus sama dengan input.
+// Checkbox native (accent --primary; netral di admin), fokus sama dengan input.
 export function Checkbox({ className, ...props }: Omit<ComponentProps<"input">, "type">) {
   return (
     <input
       type="checkbox"
       className={cn(
-        "size-4 shrink-0 cursor-pointer accent-fg-strong outline-none",
-        "focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2",
+        "size-4 shrink-0 cursor-pointer accent-primary outline-none",
+        "focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed",
         className,
       )}

@@ -18,7 +18,8 @@ export function GridLines({
   if (!decor) return null;
   const line = tone === "inverse" ? "border-inverse-line" : "border-grid-line";
   return (
-    <div aria-hidden className={cn("pointer-events-none absolute inset-0 z-0", className)}>
+    // Palet C: garis lebih samar (--grid-opacity 0,45 di halaman publik; tetap 1 px).
+    <div aria-hidden className={cn("pointer-events-none absolute inset-0 z-0 opacity-[var(--grid-opacity,1)]", className)}>
       <div className="mx-auto grid h-full w-full max-w-[1280px] grid-cols-4 px-4 sm:px-6 md:grid-cols-12">
         {Array.from({ length: COLUMNS }, (_, index) => (
           <span

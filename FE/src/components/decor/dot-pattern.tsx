@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 // Titik 1 px tiap 24 px warna --border-strong, memudar ke tepi (mask). Mask hanya mengatur
 // transparansi; "black" di sini bukan warna yang tampil.
 const DOT_STYLE = {
-  backgroundImage: "radial-gradient(var(--border-strong) 1px, transparent 1px)",
+  backgroundImage: "radial-gradient(var(--dot, var(--border-strong)) 1px, transparent 1px)",
   backgroundSize: "24px 24px",
   maskImage: "radial-gradient(ellipse at center, black 30%, transparent 72%)",
   WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 72%)",

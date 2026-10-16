@@ -77,7 +77,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
   const mobileId = useId();
   const desktopNavRef = useRef<HTMLElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
-  useActiveIndicator(desktopNavRef, indicatorRef, { variant: "line", selector: TOP_LEVEL_ACTIVE });
+  useActiveIndicator(desktopNavRef, indicatorRef, { variant: "line", selector: TOP_LEVEL_ACTIVE, thickness: 2 });
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -95,7 +95,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
   return (
     <>
       <nav ref={desktopNavRef} aria-label="Menu utama" className="relative hidden lg:block">
-        <IndicatorMark variant="line" ref={indicatorRef} className="bg-current" />
+        <IndicatorMark variant="line" ref={indicatorRef} />
         <ul className="flex items-center gap-7 xl:gap-8">
           {items.map((item) => (
             <li key={`${item.label}-${item.href}`} className="flex items-center">
@@ -153,7 +153,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
                     type="button"
                     aria-haspopup="dialog"
                     onClick={() => setIndexFor(item)}
-                    className="mt-2 inline-flex items-center gap-2 rounded-sm py-1 font-mono text-label uppercase tracking-[0.08em] text-fg-muted outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong"
+                    className="mt-2 inline-flex items-center gap-2 rounded-sm py-1 font-mono text-label uppercase tracking-[0.08em] text-fg-muted outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-focus"
                   >
                     Indeks {item.label} ({item.children.length})
                     <ArrowRightIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
@@ -195,7 +195,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
               <Link
                 href={cta.href}
                 onClick={() => setMobileOpen(false)}
-                className="inline-flex h-12 items-center justify-center rounded-md bg-fg-strong px-4 text-body font-medium text-inverse-fg"
+                className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-4 text-body font-medium text-on-primary transition-colors duration-150 ease-standard hover:bg-primary-hover"
               >
                 {cta.label}
               </Link>

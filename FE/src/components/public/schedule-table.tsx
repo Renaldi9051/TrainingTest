@@ -4,6 +4,7 @@ import type { ScheduleStatus, TrainingMethod } from "@/lib/api/types";
 import { dateBadgeParts, formatDateRange, formatRupiah } from "@/lib/format";
 import { displayTitle } from "@/lib/display-title";
 import { METHOD_LABELS } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 
 export type ScheduleRow = {
   id: string;
@@ -19,6 +20,8 @@ export type ScheduleRow = {
 
 // Status ditulis teks mono tanpa warna (DESIGN 7).
 const STATUS_TEXT: Record<ScheduleStatus, string> = { OPEN: "DIBUKA", FULL: "PENUH", COMPLETED: "SELESAI" };
+// Palet C: titik status (dekoratif) di samping label teks; DIBUKA --ok, PENUH --fg-muted.
+const STATUS_DOT: Record<ScheduleStatus, string> = { OPEN: "bg-ok", FULL: "bg-fg-muted", COMPLETED: "bg-border-strong" };
 
 const PRICE_HIDDEN = "Hubungi marketing";
 
@@ -93,8 +96,13 @@ export function ScheduleTable({
               {row.price === null ? <span className="text-fg-muted">{PRICE_HIDDEN}</span> : formatRupiah(row.price)}
             </td>
             <td className="col-span-2 font-mono text-label uppercase tracking-[0.08em] text-fg-strong md:py-4">
-              <span className="sr-only md:hidden">Status: </span>
-              {STATUS_TEXT[row.status]}
+              <span className="inline-flex items-center gap-2">
+                <span aria-hidden className={cn("size-2 shrink-0 rounded-full", STATUS_DOT[row.status])} />
+                <span>
+                  <span className="sr-only md:hidden">Status: </span>
+                  {STATUS_TEXT[row.status]}
+                </span>
+              </span>
             </td>
           </tr>
         ))}
@@ -106,12 +114,11 @@ export function ScheduleTable({
 function BigDate({ start, end }: { start: string; end: string }) {
   const { day, monthYear } = dateBadgeParts(start);
   return (
-    <span className="flex flex-col gap-1">
-      <span aria-hidden className="text-[32px] leading-none font-semibold tracking-[-0.03em]">
-        {day}
-      </span>
-      <span aria-hidden className="font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted">
-        {monthYear}
+    <span className="flex flex-col items-start gap-2">
+      {/* Palet C: kotak tanggal --primary / --on-primary. */}
+      <span aria-hidden className="flex w-20 flex-col items-center gap-1 rounded-md bg-primary px-2 py-2.5 text-on-primary">
+        <span className="text-[28px] leading-none font-semibold tracking-[-0.03em]">{day}</span>
+        <span className="font-mono text-[11px] leading-none font-medium uppercase tracking-[0.08em]">{monthYear}</span>
       </span>
       {/* Rentang lengkap tetap dibaca pembaca layar dan tampil kecil. */}
       <span className="text-small font-normal text-fg-muted">{formatDateRange(start, end)}</span>

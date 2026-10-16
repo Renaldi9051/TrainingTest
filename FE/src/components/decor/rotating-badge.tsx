@@ -33,9 +33,11 @@ export function RotatingBadge({
       className={cn(
         "group/badge absolute block size-[120px] origin-bottom-right rounded-full outline-none max-md:scale-50",
         "focus-visible:ring-2 focus-visible:ring-offset-2",
+        // Palet C: di atas foto/section gelap teks cincin --accent-on-dark & inti --accent; di latar
+        // terang inti --primary.
         tone === "light"
-          ? "text-inverse-fg focus-visible:ring-inverse-fg focus-visible:ring-offset-inverse-bg"
-          : "text-fg-strong focus-visible:ring-fg-strong",
+          ? "text-accent-on-dark focus-visible:ring-focus-dark focus-visible:ring-offset-inverse-bg"
+          : "text-fg-strong focus-visible:ring-focus",
         className,
       )}
     >
@@ -57,7 +59,7 @@ export function RotatingBadge({
         className={cn(
           "absolute inset-[34px] flex items-center justify-center rounded-full",
           "transition-transform duration-300 ease-standard motion-safe:group-hover/badge:translate-x-[3px] motion-safe:group-hover/badge:-translate-y-[3px]",
-          tone === "light" ? "bg-inverse-fg text-fg-strong" : "bg-fg-strong text-inverse-fg",
+          tone === "light" ? "bg-accent text-on-accent" : "bg-primary text-on-primary",
         )}
       >
         <ArrowUpRightIcon className="size-5" strokeWidth={1.5} />

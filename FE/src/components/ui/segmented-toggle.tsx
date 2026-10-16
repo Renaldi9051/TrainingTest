@@ -7,7 +7,7 @@ import { segmentKeyTarget } from "./segmented-plan";
 export type SegmentOption<T extends string> = { value: T; label: string; icon?: ReactNode };
 
 // Pilihan tampilan bersebelahan (mis. list/kalender di /jadwal). Radiogroup: satu tab stop, panah
-// memindah pilihan, pilihan aktif latar hitam teks putih.
+// memindah pilihan, pilihan aktif latar --primary teks --on-primary.
 export function SegmentedToggle<T extends string>({
   options,
   value,
@@ -58,8 +58,8 @@ export function SegmentedToggle<T extends string>({
             className={cn(
               "inline-flex h-8 items-center gap-2 rounded-[4px] px-3.5 text-[13px] font-medium outline-none",
               "transition-colors duration-150 ease-standard [&_svg]:size-4 [&_svg]:shrink-0",
-              "focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2",
-              checked ? "bg-fg-strong text-inverse-fg" : "text-fg-muted hover:text-fg-strong",
+              "focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
+              checked ? "bg-primary text-on-primary" : "text-fg-muted hover:text-fg-strong",
             )}
           >
             {option.icon}

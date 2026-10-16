@@ -45,11 +45,11 @@ export async function FloatingContact() {
   return (
     <>
       {/* Mobile: disembunyikan di halaman yang punya bar CTA bawah (public.css: data-contact-bar).
-          Border terang tipis supaya tombol tetap terlihat di atas footer hitam. */}
+          Border terang tipis supaya tombol tetap terlihat di atas footer gelap. Palet C: --primary. */}
       <div className="floating-contact fixed right-4 bottom-4 z-30 md:right-6 md:bottom-6">
         <ContactPanelTrigger
           label="Hubungi marketing"
-          className="inline-flex size-14 items-center justify-center rounded-full border border-inverse-fg/30 bg-fg-strong text-inverse-fg outline-none transition-colors duration-150 ease-standard hover:bg-fg-strong-hover focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+          className="inline-flex size-14 items-center justify-center rounded-full border border-inverse-fg/30 bg-primary text-on-primary outline-none transition-colors duration-150 ease-standard hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
           <MessageCircleIcon aria-hidden strokeWidth={1.5} className="size-6" />
         </ContactPanelTrigger>
@@ -60,7 +60,7 @@ export async function FloatingContact() {
         popover="auto"
         role="dialog"
         aria-labelledby={`${CONTACT_PANEL_ID}-title`}
-        className="contact-panel m-0 max-h-[80dvh] w-full overflow-y-auto border-x-0 border-t border-b-0 border-border bg-bg p-0 text-fg backdrop:bg-fg-strong/40 md:max-h-[min(32rem,calc(100dvh-8rem))] md:w-[360px] md:rounded-md md:border md:backdrop:bg-transparent"
+        className="contact-panel m-0 max-h-[80dvh] w-full overflow-y-auto border-x-0 border-t border-b-0 border-border bg-bg p-0 text-fg backdrop:bg-fg-strong/40 md:max-h-[min(32rem,calc(100dvh-8rem))] md:w-[360px] md:rounded-card md:border md:backdrop:bg-transparent"
       >
         <div className="flex items-center justify-between gap-4 border-b border-border py-2 pr-2 pl-5">
           <h2 id={`${CONTACT_PANEL_ID}-title`} className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
@@ -71,7 +71,7 @@ export async function FloatingContact() {
             popoverTarget={CONTACT_PANEL_ID}
             popoverTargetAction="hide"
             aria-label="Tutup"
-            className="inline-flex size-10 items-center justify-center rounded-md text-fg-muted outline-none hover:bg-bg-subtle hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong"
+            className="inline-flex size-10 items-center justify-center rounded-md text-fg-muted outline-none hover:bg-bg-subtle hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-focus"
           >
             <XIcon aria-hidden strokeWidth={1.5} className="size-5" />
           </button>
@@ -98,7 +98,7 @@ export async function FloatingContact() {
                 data-wa-phone={person.phone}
                 data-wa-name={person.name}
                 data-wa-default={person.defaultMessage ?? undefined}
-                className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md border border-border-strong px-3 text-small text-fg outline-none transition-colors duration-150 ease-standard hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong"
+                className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md border border-border-strong px-3 text-small text-fg outline-none transition-colors duration-150 ease-standard hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <MessageCircleIcon aria-hidden strokeWidth={1.5} className="size-4" />
                 Chat WA

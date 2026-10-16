@@ -48,7 +48,7 @@ export function PortfolioGallery({
           <button
             type="button"
             onClick={() => ref.current?.close()}
-            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md border border-border-strong px-4 text-small text-fg outline-none transition-colors duration-150 ease-standard hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md border border-border-strong px-4 text-small text-fg outline-none transition-colors duration-150 ease-standard hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             Tutup
             <XIcon aria-hidden strokeWidth={1.5} className="size-4" />
@@ -59,7 +59,7 @@ export function PortfolioGallery({
           <ul className="grid gap-4 sm:grid-cols-2">
             {images.map((image) => (
               <li key={image.url} className="relative aspect-[4/3] overflow-hidden bg-bg-muted">
-                <PublicImage image={image} sizes={GALLERY_SIZES} grayscale={false} />
+                <PublicImage image={image} sizes={GALLERY_SIZES} />
               </li>
             ))}
           </ul>
@@ -74,7 +74,7 @@ export function PortfolioGallery({
         type="button"
         aria-haspopup="dialog"
         onClick={() => ref.current?.showModal()}
-        className="cursor-pointer text-left underline-offset-4 outline-none after:absolute after:inset-0 group-hover:underline focus-visible:underline focus-visible:after:ring-2 focus-visible:after:ring-fg-strong focus-visible:after:ring-offset-4"
+        className="cursor-pointer text-left underline-offset-4 outline-none after:absolute after:inset-0 group-hover:underline focus-visible:underline focus-visible:after:ring-2 focus-visible:after:ring-focus focus-visible:after:ring-offset-4"
       >
         {title}
       </button>

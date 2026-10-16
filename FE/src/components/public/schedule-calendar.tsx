@@ -31,12 +31,13 @@ function EventLink({ schedule }: { schedule: PublicSchedule }) {
     <Link
       href={`/pelatihan/${schedule.training.slug}`}
       className={cn(
-        "block rounded-sm px-2 py-1.5 text-[12px] leading-[1.3] outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-1",
-        open ? "bg-fg-strong text-inverse-fg hover:bg-fg" : "border border-border-strong text-fg-muted hover:text-fg-strong",
+        "block rounded-sm px-2 py-1.5 text-[12px] leading-[1.3] outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1",
+        // Palet C: sesi dibuka --primary; penuh/selesai bergaris.
+        open ? "bg-primary text-on-primary hover:bg-primary-hover" : "border border-border-strong text-fg-muted hover:text-fg-strong",
       )}
     >
       <span className="line-clamp-2 font-medium">{displayTitle(schedule.training.title)}</span>
-      <span className="mt-0.5 block font-mono text-[10px] tracking-[0.04em] uppercase opacity-80">
+      <span className="mt-0.5 block font-mono text-[10px] tracking-[0.04em] uppercase">
         {rangeLabel(schedule.startDate, schedule.endDate)} / {place(schedule)}
         {open ? null : ` / ${STATUS_TEXT[schedule.status]}`}
       </span>
@@ -72,7 +73,7 @@ export function ScheduleCalendar({
           <Link
             href={prevHref}
             scroll={false}
-            className="inline-flex size-9 items-center justify-center rounded-md border border-border-strong text-fg outline-none hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong"
+            className="inline-flex size-9 items-center justify-center rounded-md border border-border-strong text-fg outline-none hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus"
           >
             <ChevronLeftIcon aria-hidden strokeWidth={1.5} className="size-4" />
             <span className="sr-only">Bulan sebelumnya</span>
@@ -83,7 +84,7 @@ export function ScheduleCalendar({
           <Link
             href={nextHref}
             scroll={false}
-            className="inline-flex size-9 items-center justify-center rounded-md border border-border-strong text-fg outline-none hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong"
+            className="inline-flex size-9 items-center justify-center rounded-md border border-border-strong text-fg outline-none hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus"
           >
             <ChevronRightIcon aria-hidden strokeWidth={1.5} className="size-4" />
             <span className="sr-only">Bulan berikutnya</span>
@@ -91,7 +92,7 @@ export function ScheduleCalendar({
         </div>
         <p className="flex flex-wrap items-center gap-4 text-small text-fg-muted">
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="size-3 rounded-sm bg-fg-strong" />
+            <span aria-hidden className="size-3 rounded-sm bg-primary" />
             Dibuka
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -113,7 +114,7 @@ export function ScheduleCalendar({
                 key={weekday.short}
                 scope="col"
                 abbr={weekday.long}
-                className="border-b border-border-strong py-2 text-left font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted"
+                className="border-b border-border-strong bg-bg-subtle px-2 py-2 text-left font-mono text-label font-medium uppercase tracking-[0.08em] text-accent-ink"
               >
                 {weekday.short}
               </th>

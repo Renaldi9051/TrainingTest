@@ -44,7 +44,7 @@ export async function SiteHeader() {
         </Link>
         <HeaderNav items={nav.header} cta={cta} />
         <div className="ml-auto hidden shrink-0 items-center gap-3 lg:flex">
-          <SearchTrigger className="inline-flex h-10 items-center gap-2.5 rounded-md border border-(--header-line) px-3 text-small text-current outline-none transition-colors duration-150 ease-standard hover:bg-(--header-hover) focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2" />
+          <SearchTrigger className="inline-flex h-10 items-center gap-2.5 rounded-md border border-(--header-line) px-3 text-small text-current outline-none transition-colors duration-150 ease-standard hover:border-[var(--header-line-hover,var(--header-line))] hover:bg-(--header-hover) focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2" />
           {cta ? (
             <Link href={cta.href} className={cn(buttonVariants({ variant: "primary", size: "md" }), "site-header-cta")}>
               {cta.label}

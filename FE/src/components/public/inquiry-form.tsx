@@ -102,9 +102,9 @@ export function InquiryForm({
 
   if (sent) {
     return (
-      <div className="border border-fg-strong bg-bg p-6 md:p-10">
+      <div className="rounded-card border border-primary bg-bg p-6 md:p-10">
         <div role="status" className="space-y-3">
-          <p className="font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-strong">Terkirim</p>
+          <p className="font-mono text-label font-medium uppercase tracking-[0.08em] text-accent-ink">Terkirim</p>
           <p className="flex items-center gap-2 text-h3 text-fg-strong">
             <CheckIcon aria-hidden strokeWidth={1.5} className="size-5 shrink-0" />
             Terima kasih, pesan terkirim.
@@ -155,7 +155,7 @@ export function InquiryForm({
           <button
             type="button"
             onClick={() => setTraining(null)}
-            className="inline-flex size-8 items-center justify-center rounded-sm text-fg-muted outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong"
+            className="inline-flex size-8 items-center justify-center rounded-sm text-fg-muted outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-focus"
             aria-label={`Lepas pelatihan ${training.title}`}
           >
             <XIcon aria-hidden strokeWidth={1.5} className="size-4" />
@@ -215,14 +215,14 @@ export function InquiryForm({
             required
             aria-invalid={errors.consent ? true : undefined}
             aria-describedby={describedBy("consent")}
-            className="mt-0.5 size-4 shrink-0 accent-[var(--fg-strong)]"
+            className="mt-0.5 size-4 shrink-0 accent-primary"
           />
           <span>
             {consentText(siteName)}{" "}
             {privacyHref ? (
               <>
                 Selengkapnya di{" "}
-                <Link href={privacyHref} className="underline underline-offset-4 hover:text-fg-strong">
+                <Link href={privacyHref} className="underline underline-offset-4 hover:text-primary">
                   Kebijakan Privasi
                 </Link>
                 .

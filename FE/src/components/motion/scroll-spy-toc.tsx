@@ -28,7 +28,7 @@ export function ScrollSpyToc({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
-  useActiveIndicator(listRef, indicatorRef, { variant: "line", selector: "a[aria-current]" });
+  useActiveIndicator(listRef, indicatorRef, { variant: "line", selector: "a[aria-current]", thickness: orientation === "horizontal" ? 3 : 2 });
 
   useEffect(() => {
     if (!spy) return;
@@ -76,7 +76,7 @@ export function ScrollSpyToc({
                 <a
                   href={`#${section.id}`}
                   aria-current={spy && index === active ? "location" : undefined}
-                  className="inline-flex h-14 items-center rounded-sm text-small whitespace-nowrap text-fg-muted outline-none transition-colors duration-150 hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-inset aria-[current=location]:text-fg-strong"
+                  className="inline-flex h-14 items-center rounded-sm text-small whitespace-nowrap text-fg-muted outline-none transition-colors duration-150 hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset aria-[current=location]:text-fg-strong"
                 >
                   {section.label}
                 </a>
@@ -97,7 +97,7 @@ export function ScrollSpyToc({
             <a
               href={`#${section.id}`}
               aria-current={spy && index === active ? "location" : undefined}
-              className="rounded-sm text-small text-fg-muted underline-offset-4 outline-none transition-colors duration-150 hover:text-fg-strong hover:underline focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 aria-[current=location]:text-fg-strong"
+              className="rounded-sm text-small text-fg-muted underline-offset-4 outline-none transition-colors duration-150 hover:text-fg-strong hover:underline focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 aria-[current=location]:text-fg-strong"
             >
               {section.label}
             </a>

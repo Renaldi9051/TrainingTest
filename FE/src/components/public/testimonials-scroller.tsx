@@ -37,7 +37,7 @@ export function TestimonialsScroller({
         ref={scroller}
         tabIndex={0}
         aria-label={`${label}, gulir ke samping`}
-        className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-4 [scrollbar-width:thin]"
+        className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 [scrollbar-width:thin]"
       >
         {testimonials.map((testimonial, index) => (
           <li
@@ -72,7 +72,7 @@ export function TestimonialsScroller({
             type="button"
             aria-controls={listId}
             onClick={() => scrollByCard(-1)}
-            className="inline-flex size-10 items-center justify-center rounded-md border border-border-strong text-fg outline-none transition-colors duration-150 hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+            className="inline-flex size-10 items-center justify-center rounded-md border border-border-strong text-fg outline-none transition-colors duration-150 hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             <ChevronLeftIcon className="size-5" strokeWidth={1.5} aria-hidden />
             <span className="sr-only">Testimoni sebelumnya</span>
@@ -81,7 +81,7 @@ export function TestimonialsScroller({
             type="button"
             aria-controls={listId}
             onClick={() => scrollByCard(1)}
-            className="inline-flex size-10 items-center justify-center rounded-md border border-border-strong text-fg outline-none transition-colors duration-150 hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+            className="inline-flex size-10 items-center justify-center rounded-md border border-border-strong text-fg outline-none transition-colors duration-150 hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             <ChevronRightIcon className="size-5" strokeWidth={1.5} aria-hidden />
             <span className="sr-only">Testimoni berikutnya</span>

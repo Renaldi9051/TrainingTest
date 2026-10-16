@@ -4,6 +4,9 @@ import type { ComponentProps, ReactNode } from "react";
 import { RollText } from "@/components/motion/roll-text";
 import { cn } from "@/lib/utils";
 
+// Tombol publik DESIGN.md 8.2 (palet C v0.3: primer --primary, CTA di hero/section gelap --accent
+// dengan teks gelap). Juga dirender di admin (/admin/dev/ui, pencarian admin): kelas warnanya punya
+// fallback netral di theme.css, jadi tampilan admin tidak berubah.
 // Tombol publik DESIGN.md 7. Tombol CTA besar: tambahkan {...MAGNETIC} di elemennya dan `roll` di
 // ButtonContent (DESIGN.md 8.2; efeknya dari PointerEffects dan RollText).
 export const buttonVariants = cva(
@@ -11,25 +14,25 @@ export const buttonVariants = cva(
     "group/button relative inline-flex shrink-0 items-center justify-center gap-2 font-medium whitespace-nowrap",
     // transform: geser magnetic (inline style dari PointerEffects) kembali halus saat kursor pergi.
     "transition-[background-color,color,border-color,transform] duration-150 ease-standard",
-    "outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2",
+    "outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
   ],
   {
     variants: {
       variant: {
-        primary: "rounded-md bg-fg-strong text-inverse-fg hover:bg-fg-strong-hover",
+        primary: "rounded-md bg-primary text-on-primary hover:bg-primary-hover",
         secondary:
-          "rounded-md border border-border-strong bg-bg text-fg hover:bg-bg-subtle",
+          "rounded-md border border-border-strong bg-bg text-fg hover:border-line-hover hover:bg-bg-subtle hover:text-ink-hover",
         // Untuk section terbalik (latar --inverse-bg): CTA penutup.
-        inverse: "rounded-md bg-inverse-fg text-fg-strong hover:bg-bg-muted focus-visible:ring-inverse-fg focus-visible:ring-offset-inverse-bg",
+        inverse: "rounded-md bg-cta text-on-cta hover:bg-cta-hover focus-visible:ring-focus-dark focus-visible:ring-offset-inverse-bg",
         inverseOutline:
-          "rounded-md border border-inverse-fg/40 text-inverse-fg hover:border-inverse-fg hover:bg-inverse-fg/10 focus-visible:ring-inverse-fg focus-visible:ring-offset-inverse-bg",
+          "rounded-md border border-inverse-fg/40 text-inverse-fg hover:border-inverse-fg hover:bg-inverse-fg/10 focus-visible:ring-focus-dark focus-visible:ring-offset-inverse-bg",
         // Garis tipis selalu ada; garis tegas memanjang dari kiri saat hover/fokus.
         ghost: [
           "rounded-none px-0 text-fg-strong",
           "before:absolute before:inset-x-0 before:bottom-0 before:h-px before:bg-border-strong",
-          "after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:scale-x-0 after:bg-fg-strong",
+          "after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:scale-x-0 after:bg-primary",
           "after:transition-transform after:duration-300 after:ease-standard",
           "hover:after:scale-x-100 focus-visible:after:scale-x-100",
         ],

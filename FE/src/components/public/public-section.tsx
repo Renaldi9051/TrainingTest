@@ -54,7 +54,7 @@ export function PublicSection({ eyebrow, heading, fallbackHeading, intro, invers
         {eyebrow || heading ? (
           <SectionHeading eyebrow={eyebrow} title={heading || undefined} id={heading ? headingId : undefined} inverse={inverse}>
             {intro ? (
-              <p className={cn("max-w-[65ch] text-body-lg", inverse ? "text-inverse-fg/80" : "text-fg-muted")}>{intro}</p>
+              <p className={cn("max-w-[65ch] text-body-lg", inverse ? "text-inverse-muted" : "text-fg-muted")}>{intro}</p>
             ) : null}
           </SectionHeading>
         ) : null}

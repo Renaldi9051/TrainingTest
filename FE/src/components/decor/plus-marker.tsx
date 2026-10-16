@@ -19,7 +19,8 @@ export function PlusMarker({
         "pointer-events-none absolute size-3",
         "before:absolute before:top-0 before:left-[5.5px] before:h-3 before:w-px before:bg-current",
         "after:absolute after:top-[5.5px] after:left-0 after:h-px after:w-3 after:bg-current",
-        tone === "inverse" ? "text-inverse-fg/60" : "text-fg-muted",
+        // Palet C: --accent di latar terang, --accent-on-dark di section gelap.
+        tone === "inverse" ? "text-accent-on-dark" : "text-accent",
         className,
       )}
     />

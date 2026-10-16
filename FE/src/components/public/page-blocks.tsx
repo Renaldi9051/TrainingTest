@@ -115,7 +115,7 @@ function Block({ block, anchor }: { block: PublicPageBlock; anchor: string }) {
           <a href={block.file.url} download className={buttonVariants({ variant: "primary", size: "lg" })} {...MAGNETIC}>
             <DownloadIcon aria-hidden strokeWidth={1.5} />
             <RollText>{block.label}</RollText>
-            <span className="font-mono text-label text-inverse-fg/70">PDF · {formatBytes(block.file.size)}</span>
+            <span className="font-mono text-label text-on-primary">PDF · {formatBytes(block.file.size)}</span>
           </a>
         </PublicSection>
       );

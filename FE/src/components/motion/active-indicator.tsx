@@ -16,7 +16,11 @@ const DEFAULT_SELECTOR = "[aria-current]";
 export function useActiveIndicator(
   containerRef: RefObject<HTMLElement | null>,
   indicatorRef: RefObject<HTMLElement | null>,
-  { variant, selector = DEFAULT_SELECTOR }: { variant: IndicatorVariant; selector?: string },
+  {
+    variant,
+    selector = DEFAULT_SELECTOR,
+    thickness = 1,
+  }: { variant: IndicatorVariant; selector?: string; thickness?: number },
 ) {
   const shown = useRef(false);
   const animation = useRef<ReturnType<typeof animate> | null>(null);
@@ -34,7 +38,7 @@ export function useActiveIndicator(
       return;
     }
     const rect = active.getBoundingClientRect();
-    const to = indicatorBox(variant, { left: rect.left - base.left, top: rect.top - base.top, width: rect.width, height: rect.height });
+    const to = indicatorBox(variant, { left: rect.left - base.left, top: rect.top - base.top, width: rect.width, height: rect.height }, thickness);
     // Posisi tampak sekarang (termasuk animasi yang sedang berjalan), supaya klik beruntun mulus.
     let from: Box | null = null;
     if (shown.current) {
@@ -78,9 +82,10 @@ export function useActiveIndicator(
   }, [containerRef]);
 }
 
+// Palet C: pill (chip/filter aktif) --primary, garis (menu, tab, urutan) --accent.
 const INDICATOR_CLASS = {
-  pill: "rounded-full bg-fg-strong",
-  line: "bg-fg-strong",
+  pill: "rounded-full bg-primary",
+  line: "bg-accent",
 } as const;
 
 // Elemen indikator (aria-hidden). Letakkan sebagai anak pertama kontainer yang `relative`.
@@ -109,16 +114,19 @@ export function ActiveIndicator({
   variant,
   className,
   selector,
+  thickness,
   children,
 }: {
   variant: IndicatorVariant;
   className?: string;
   selector?: string;
+  // Tebal garis (variant line), px.
+  thickness?: number;
   children: ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
-  useActiveIndicator(containerRef, indicatorRef, { variant, selector });
+  useActiveIndicator(containerRef, indicatorRef, { variant, selector, thickness });
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       <IndicatorMark variant={variant} ref={indicatorRef} />

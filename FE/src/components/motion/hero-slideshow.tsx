@@ -175,11 +175,12 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
       })}
       {full ? (
         <>
-          {/* Lapisan gelap agar teks terang terbaca (DESIGN.md 2 --overlay; gradien hitam transparan
-              hanya untuk overlay foto hero, DESIGN.md 5). */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-overlay" />
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-2/3 bg-linear-to-t from-inverse-bg/80 to-transparent" />
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-[3] h-40 bg-linear-to-b from-inverse-bg/50 to-transparent" />
+          {/* Lapisan gelap agar teks terang terbaca (palet C: gradasi --overlay-top .60 -> tipis di 35% ->
+              --overlay-bottom .90; gradien gelap transparan hanya untuk overlay foto hero, DESIGN.md 5). */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-[3] bg-linear-to-b from-overlay-top via-overlay-top/15 via-35% to-overlay-bottom"
+          />
         </>
       ) : null}
       <GrainOverlay decor={decor} tone="photo" className="z-[3]" />
@@ -229,13 +230,13 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
                 tabIndex={index === active ? 0 : -1}
                 className="group/segment flex h-6 flex-1 items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-current"
               >
-                <span className={cn("relative block h-0.5 w-full overflow-hidden", full ? "bg-inverse-fg/30" : "bg-border-strong")}>
+                <span className={cn("relative block h-[3px] w-full overflow-hidden rounded-full", full ? "bg-inverse-fg/30" : "bg-border-strong")}>
                   <span
                     ref={(element) => {
                       fillRefs.current[index] = element;
                     }}
                     data-segment-fill=""
-                    className={cn("absolute inset-0 origin-left", full ? "bg-inverse-fg" : "bg-fg-strong")}
+                    className="absolute inset-0 origin-left bg-accent"
                     style={{ transform: `scaleX(${index < active ? 1 : 0})` }}
                   />
                 </span>

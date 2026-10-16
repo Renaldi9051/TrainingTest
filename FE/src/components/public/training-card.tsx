@@ -10,12 +10,13 @@ import { PublicImage } from "./public-image";
 
 export const CARD_IMAGE_SIZES = "(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw";
 
-// Kartu pelatihan DESIGN 8.4: gambar 4:3 grayscale -> label mono -> judul h3 -> meta -> garis.
-// Hover: gambar zoom 1.03 dan kembali berwarna, sudut Viewfinder 12 px masuk, judul bergaris bawah,
+// Kartu pelatihan DESIGN 8.4 (palet C v0.3): kotak radius 12 px ber-border, gambar 4:3 berwarna ->
+// label mono --accent-ink -> judul h3 -> meta, teks berjarak 18 px dari tepi.
+// Hover: border --primary + kartu naik 3 px, gambar zoom 1.03, sudut Viewfinder 12 px masuk, judul bergaris bawah,
 // label "Lihat →" mengikuti kursor (PointerEffects, hanya desktop). Di grid: gambar wipe dari bawah
 // + zoom 1,15 -> 1 bersama kartunya.
 // Gambar: sampul pelatihan, atau gambar kategori kalau sampul kosong (coverSource dari BE).
-// Tanpa keduanya: blok 4:3 --bg-subtle berisi label kategori dan sudut Viewfinder tipis (elemen UI,
+// Tanpa keduanya: blok 4:3 --bg-muted berisi label kategori dan sudut Viewfinder tipis (elemen UI,
 // bukan foto pengganti), supaya grid tetap rata; hover-nya sama (sudut masuk, judul bergaris bawah).
 // label: "category" (katalog, beranda) atau "level" (landing kategori; kembali ke kategori kalau
 // tingkat belum diisi).
@@ -38,16 +39,25 @@ export function TrainingCard({
   ].filter(Boolean);
 
   return (
-    <article data-cursor-label="" data-cover-source={training.coverSource ?? "none"} className="group relative flex h-full flex-col border-b border-border pb-6">
-      <RevealImage className={cn("relative aspect-[4/3] overflow-hidden", training.cover ? "bg-bg-muted" : "bg-bg-subtle")}>
+    <article
+      data-cursor-label=""
+      data-cover-source={training.coverSource ?? "none"}
+      className={cn(
+        "group relative flex h-full flex-col rounded-card border border-border bg-bg pb-[18px]",
+        // Border 150 ms (DESIGN 9.3, pengecualian v0.3), naik 3 px 300 ms.
+        "transition-[border-color,translate] ease-standard [transition-duration:150ms,300ms]",
+        "hover:border-primary focus-within:border-primary motion-safe:hover:-translate-y-[3px]",
+      )}
+    >
+      <RevealImage className="relative aspect-[4/3] overflow-hidden rounded-t-[calc(var(--card-radius,var(--radius))-1px)] bg-bg-muted">
         {training.cover ? (
           <>
             <PublicImage
               image={training.cover}
               sizes={CARD_IMAGE_SIZES}
-              className="transition-[transform,filter] duration-300 ease-standard group-hover:scale-[1.03] group-hover:grayscale-0 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              className="transition-transform duration-300 ease-standard group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             />
-            <Viewfinder size="sm" hover />
+            <Viewfinder size="sm" tone="plain" hover />
           </>
         ) : (
           <>
@@ -65,18 +75,18 @@ export function TrainingCard({
         )}
       </RevealImage>
       {labelText ? (
-        <p className="mt-5 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{labelText}</p>
+        <p className="mt-5 px-[18px] font-mono text-label uppercase tracking-[0.08em] text-accent-ink">{labelText}</p>
       ) : null}
-      <Heading className={cn("mt-2 text-h3", isUntitled(training.title) ? "text-fg-muted" : "text-fg-strong")}>
+      <Heading className={cn("mt-2 px-[18px] text-h3", isUntitled(training.title) ? "text-fg-muted" : "text-fg-strong")}>
         {/* Seluruh kartu bisa diklik lewat pseudo-element, tapi tetap satu link untuk pembaca layar. */}
         <Link
           href={`/pelatihan/${training.slug}`}
-          className="underline-offset-4 outline-none group-hover:underline after:absolute after:inset-0 focus-visible:underline focus-visible:after:ring-2 focus-visible:after:ring-fg-strong focus-visible:after:ring-offset-4"
+          className="underline-offset-4 outline-none group-hover:underline after:absolute after:inset-0 focus-visible:underline after:rounded-card focus-visible:after:ring-2 focus-visible:after:ring-focus focus-visible:after:ring-offset-4"
         >
           {displayTitle(training.title)}
         </Link>
       </Heading>
-      {meta.length > 0 ? <p className="mt-3 text-small text-fg-muted">{meta.join(" · ")}</p> : null}
+      {meta.length > 0 ? <p className="mt-3 px-[18px] text-small text-fg-muted">{meta.join(" · ")}</p> : null}
     </article>
   );
 }

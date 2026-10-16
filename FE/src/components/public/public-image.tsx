@@ -7,7 +7,8 @@ type PublicImageProps = {
   image: PublicImageData;
   sizes: string;
   className?: string;
-  // Gambar foto di publik grayscale (DESIGN 2); hover-to-color diatur kartu lewat group-hover.
+  // Palet C (DESIGN 2, v0.3): foto tampil berwarna. Grayscale hanya untuk logo klien dan opsi
+  // photoStyle "grayscale" di hero.
   grayscale?: boolean;
   // Gambar utama di layar pertama (LCP): dimuat langsung dengan prioritas tinggi.
   priority?: boolean;
@@ -18,7 +19,7 @@ type PublicImageProps = {
 
 // Gambar dari media library dalam kotak berukuran tetap (parent menentukan rasio).
 // Placeholder saat memuat: blok --bg-muted (bukan spinner).
-export function PublicImage({ image, sizes, className, grayscale = true, priority, fit = "cover", style }: PublicImageProps) {
+export function PublicImage({ image, sizes, className, grayscale = false, priority, fit = "cover", style }: PublicImageProps) {
   return (
     <Image
       src={image.url}

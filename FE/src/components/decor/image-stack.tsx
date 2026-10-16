@@ -43,7 +43,6 @@ export function ImageStack({
           <PublicImage
             image={images[index]}
             sizes={SLOT_SIZES[slot]}
-            className="transition-[filter] duration-300 ease-standard group-hover/stack:grayscale-0"
           />
         </RevealImage>
       ))}

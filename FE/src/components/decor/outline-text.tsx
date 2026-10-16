@@ -26,7 +26,7 @@ export function OutlineText({
       data-parallax-x={parallax ? "" : undefined}
       className={cn(
         "pointer-events-none absolute z-0 text-mega whitespace-nowrap text-transparent select-none",
-        tone === "inverse" ? "[-webkit-text-stroke:1px_var(--inverse-line)]" : "[-webkit-text-stroke:1px_var(--border-strong)]",
+        tone === "inverse" ? "[-webkit-text-stroke:1px_var(--outline-stroke-dark,var(--inverse-line))]" : "[-webkit-text-stroke:1px_var(--outline-stroke,var(--border-strong))]",
         className,
       )}
     >

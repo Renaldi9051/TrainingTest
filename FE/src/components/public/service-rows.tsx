@@ -50,7 +50,7 @@ export function ServiceRows({
                   {/* Seluruh baris bisa diklik lewat pseudo-element, tapi tetap satu link untuk pembaca layar. */}
                   <Link
                     href={`/layanan/${service.slug}`}
-                    className="underline-offset-4 outline-none after:absolute after:inset-0 group-hover:underline focus-visible:underline focus-visible:after:ring-2 focus-visible:after:ring-fg-strong focus-visible:after:ring-offset-2"
+                    className="underline-offset-4 outline-none after:absolute after:inset-0 group-hover:underline focus-visible:underline focus-visible:after:ring-2 focus-visible:after:ring-focus focus-visible:after:ring-offset-2"
                   >
                     {service.title}
                   </Link>
@@ -64,7 +64,7 @@ export function ServiceRows({
               <ArrowRightIcon
                 aria-hidden
                 strokeWidth={1.5}
-                className="hidden size-6 justify-self-end text-fg-strong md:col-span-1 md:block"
+                className="hidden size-6 justify-self-end text-fg-strong transition-colors duration-150 ease-standard group-hover:text-primary group-focus-within:text-primary md:col-span-1 md:block"
               />
             </div>
           </li>

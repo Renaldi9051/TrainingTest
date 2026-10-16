@@ -18,10 +18,10 @@ const SOCIAL_LABELS: Record<SocialPlatform, string> = {
 
 // Tautan footer: garis bawah memanjang dari kiri saat hover/fokus (DESIGN.md 9.2 Link).
 const footerLink =
-  "relative self-start rounded-sm text-small text-inverse-fg/80 outline-none transition-colors duration-150 hover:text-inverse-fg focus-visible:text-inverse-fg focus-visible:ring-2 focus-visible:ring-inverse-fg focus-visible:ring-offset-2 focus-visible:ring-offset-inverse-bg after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100";
+  "relative self-start rounded-sm text-small text-inverse-fg/80 outline-none transition-colors duration-150 hover:text-accent-on-dark focus-visible:text-accent-on-dark focus-visible:ring-2 focus-visible:ring-focus-dark focus-visible:ring-offset-2 focus-visible:ring-offset-inverse-bg after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100";
 
 function FooterHeading({ children }: { children: string }) {
-  return <h2 className="mb-1.5 font-mono text-label font-medium uppercase tracking-[0.08em] text-inverse-fg/60">{children}</h2>;
+  return <h2 className="mb-1.5 font-mono text-label font-medium uppercase tracking-[0.08em] text-accent-on-dark">{children}</h2>;
 }
 
 function NavColumn({ label, items }: { label: string; items: PublicNavItem[] }) {
@@ -66,7 +66,7 @@ export async function SiteFooter() {
             <SiteLogo logo={identity.logoDark} name={identity.name} />
           </p>
           {footer.description ? (
-            <p className="max-w-[40ch] text-small text-inverse-fg/70">{footer.description}</p>
+            <p className="max-w-[40ch] text-small text-inverse-muted">{footer.description}</p>
           ) : null}
           {social.links.length > 0 ? (
             <ul className="flex flex-wrap gap-x-5 gap-y-2 pt-2" aria-label="Sosial media">
@@ -114,7 +114,7 @@ export async function SiteFooter() {
               ) : null}
             </address>
             {contact.mapEmbedUrl ? (
-              <div className="group/map relative mt-5 h-32 overflow-hidden border border-inverse-line focus-within:ring-2 focus-within:ring-inverse-fg focus-within:ring-offset-2 focus-within:ring-offset-inverse-bg">
+              <div className="group/map relative mt-5 h-32 overflow-hidden border border-inverse-line focus-within:ring-2 focus-within:ring-focus-dark focus-within:ring-offset-2 focus-within:ring-offset-inverse-bg">
                 {/* URL sudah divalidasi domainnya di BE; iframe dibuat di sini, bukan HTML dari CMS.
                     Monokrom seperti foto (DESIGN 2); berwarna saat hover atau fokus di dalam peta. */}
                 <iframe
@@ -150,7 +150,7 @@ export async function SiteFooter() {
         ) : null}
       </Container>
       <div className="border-t border-inverse-line">
-        <Container className="flex flex-col gap-2 py-6 text-[13px] text-inverse-fg/60 sm:flex-row sm:items-center sm:justify-between">
+        <Container className="flex flex-col gap-2 py-6 text-[13px] text-inverse-muted sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {year} {footer.copyright || identity.name}
           </p>

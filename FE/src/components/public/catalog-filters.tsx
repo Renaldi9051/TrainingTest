@@ -35,7 +35,7 @@ export function FilterDisclosure({
 
   return (
     <details ref={ref} open={defaultOpen || undefined} className="filter-disclosure group/filter">
-      <summary className="flex h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-md border border-border-strong px-4 text-body text-fg-strong outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 lg:hidden [&::-webkit-details-marker]:hidden">
+      <summary className="flex h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-md border border-border-strong px-4 text-body text-fg-strong outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 lg:hidden [&::-webkit-details-marker]:hidden">
         <span className="inline-flex items-center gap-2">
           <SlidersHorizontalIcon aria-hidden strokeWidth={1.5} className="size-4" />
           Filter
@@ -65,7 +65,7 @@ export function CategoryIndexButton({ items }: { items: IndexItem[] }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-3 inline-flex h-8 w-full items-center justify-center rounded-md border border-border-strong px-3 text-small text-fg outline-none transition-colors duration-150 ease-standard hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+        className="mt-3 inline-flex h-8 w-full items-center justify-center rounded-md border border-border-strong px-3 text-small text-fg outline-none transition-colors duration-150 ease-standard hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
       >
         Tampilkan semua
         <span className="sr-only"> kategori</span>
