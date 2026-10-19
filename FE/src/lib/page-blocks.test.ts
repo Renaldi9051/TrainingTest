@@ -13,6 +13,7 @@ import {
   MISSION_ITEMS_MAX,
   PAGE_BLOCK_TYPES,
   PAGE_BLOCKS_MAX,
+  PAYMENT_ACCOUNTS_MAX,
   pageBlocksFormSchema,
   removeBlock,
   reorderBlocks,
@@ -30,6 +31,7 @@ describe("batas blok sama dengan BE", () => {
     expect(blocks).toMatch(new RegExp(`export const PAGE_BLOCKS_MAX = ${PAGE_BLOCKS_MAX};`));
     expect(blocks).toMatch(new RegExp(`export const FEATURES_MAX = ${FEATURES_MAX};`));
     expect(blocks).toMatch(new RegExp(`export const LIST_ITEMS_MAX = ${LIST_ITEMS_MAX};`));
+    expect(blocks).toMatch(new RegExp(`export const PAYMENT_ACCOUNTS_MAX = ${PAYMENT_ACCOUNTS_MAX};`));
     expect(be("content-common.ts")).toMatch(new RegExp(`export const MISSION_ITEMS_MAX = ${MISSION_ITEMS_MAX};`));
   });
 });
@@ -128,5 +130,41 @@ describe("blockSummary", () => {
         body: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Tentang kami" }] }] },
       } as PageBlock),
     ).toBe("Tentang kami");
+  });
+});
+
+describe("form rekening pembayaran", () => {
+  const payment = (patch: Record<string, unknown>) => [{ ...createBlock("PAYMENT_ACCOUNTS", "p"), ...patch }];
+  const account = { bank: "Bank Contoh", number: "123 456-789", holder: "PT Contoh", note: "", logo: null };
+  // Path unik: field kosong bisa punya lebih dari satu issue (wajib + format); form menampilkan yang pertama.
+  const paths = (value: unknown) => [
+    ...new Set((pageBlocksFormSchema.safeParse(value).error?.issues ?? []).map((issue) => issue.path.join("."))),
+  ];
+
+  it("rekening lengkap tanpa tombol konfirmasi valid", () => {
+    expect(pageBlocksFormSchema.safeParse(payment({ accounts: [account] })).success).toBe(true);
+    expect(blockSummary(createBlock("PAYMENT_ACCOUNTS", "p"))).toBe("1 rekening");
+  });
+
+  it("blok baru: field rekening wajib diisi dulu", () => {
+    expect(paths(payment({}))).toEqual(["0.accounts.0.bank", "0.accounts.0.number", "0.accounts.0.holder"]);
+  });
+
+  it("nomor hanya angka dengan spasi/strip (path error sama dengan BE)", () => {
+    expect(paths(payment({ accounts: [{ ...account, number: "12ab" }] }))).toEqual(["0.accounts.0.number"]);
+    expect(paths(payment({ accounts: [{ ...account, number: "1234-" }] }))).toEqual(["0.accounts.0.number"]);
+  });
+
+  it("tombol konfirmasi aktif: label & tautan aman wajib", () => {
+    expect(paths(payment({ accounts: [account], confirm: { label: "", href: "" } }))).toEqual([
+      "0.confirm.label",
+      "0.confirm.href",
+    ]);
+    expect(paths(payment({ accounts: [account], confirm: { label: "Konfirmasi", href: "javascript:alert(1)" } }))).toEqual([
+      "0.confirm.href",
+    ]);
+    expect(
+      pageBlocksFormSchema.safeParse(payment({ accounts: [account], confirm: { label: "Konfirmasi", href: "https://wa.me/62812" } })).success,
+    ).toBe(true);
   });
 });
