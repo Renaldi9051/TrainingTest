@@ -252,9 +252,8 @@ export const footerNav: SeedNavItem[] = [
 
 const legalNote = "Isi halaman ini contoh. Sesuaikan dengan ketentuan resmi lembaga sebelum situs tayang.";
 
-// Halaman pembayaran: dibuat DRAFT dengan rekening bertanda [ISI]. Nomor rekening palsu di situs publik bisa
-// membuat orang salah transfer, jadi pemilik mengisi rekening resmi, menayangkan halaman, lalu menambah
-// menu "Pembayaran" lewat admin.
+// Halaman pembayaran (+ menu header, lihat seedPaymentPage di seed.ts). Tayang dengan rekening contoh
+// bertanda [ISI] (keputusan pemilik, 19 Okt 2026); pemilik menggantinya dengan rekening resmi lewat admin.
 export const PAYMENT_SLUG = "pembayaran";
 
 export const paymentPage = {
@@ -271,7 +270,6 @@ export const paymentPage = {
           bank: "[ISI] Nama bank",
           number: "0000000000",
           holder: "[ISI] Nama pemilik rekening",
-          note: "Ganti dengan rekening resmi lembaga sebelum halaman ditayangkan.",
         },
       ],
       confirm: { label: "Konfirmasi pembayaran", href: "/kontak" },
