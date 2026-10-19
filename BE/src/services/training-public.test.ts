@@ -41,6 +41,7 @@ const detailRow = (extra: Record<string, unknown> = {}) => ({
   createdAt: now,
   updatedAt: now,
   categories: [{ categoryId: "c1", category: { slug: "sdm", name: "SDM", order: 0, deletedAt: null } }],
+  images: [],
   schedules: [
     {
       id: "s1",
@@ -142,6 +143,42 @@ describe("getPublicTraining", () => {
   it("fasilitas khusus pelatihan menggantikan default", async () => {
     mock.training.findFirst.mockResolvedValue(detailRow({ facilities: ["Makan siang"] }));
     expect((await getPublicTraining("kpi", now))?.facilities).toEqual(["Makan siang"]);
+  });
+
+  it("galeri: urutan admin, gambar di Sampah dilewati, terpisah dari sampul", async () => {
+    const media = (id: string, deletedAt: Date | null = null) => ({
+      id,
+      path: `2026/10/${id}.webp`,
+      originalName: `${id}.jpg`,
+      mime: "image/webp",
+      size: 100,
+      width: 1600,
+      height: 1200,
+      alt: `Alt ${id}`,
+      folder: null,
+      variants: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt,
+      updatedById: null,
+    });
+    mock.training.findFirst.mockResolvedValue(
+      detailRow({
+        cover: media("sampul"),
+        images: [
+          { mediaId: "g1", order: 0, media: media("g1") },
+          { mediaId: "g2", order: 1, media: media("g2", now) },
+          { mediaId: "g3", order: 2, media: media("g3") },
+        ],
+      }),
+    );
+    const detail = await getPublicTraining("kpi", now);
+    expect(detail?.images.map((image) => image.alt)).toEqual(["Alt g1", "Alt g3"]);
+    expect(detail?.cover?.alt).toBe("Alt sampul");
+    expect(mock.training.findFirst.mock.calls[0][0].include.images).toEqual({
+      orderBy: { order: "asc" },
+      include: { media: true },
+    });
   });
 });
 

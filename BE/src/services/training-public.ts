@@ -82,6 +82,8 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   // Sesi DIBUKA terdekat; null = "Jadwal menyesuaikan".
   nextSchedule: PublicNextSchedule | null;
   seo: { title: string; description: string; ogImage: PublicImage | null };
+  // Galeri foto kegiatan (maks 6), terpisah dari sampul. Kosong = blok disembunyikan.
+  images: PublicImage[];
   schedules: PublicTrainingSchedule[];
   related: PublicTrainingCard[];
   updatedAt: Date;
@@ -268,7 +270,10 @@ export function nextOpenSchedule(schedules: PublicTrainingSchedule[]): PublicNex
 }
 
 async function buildDetail(
-  row: CardRow & { schedules: Prisma.ScheduleGetPayload<object>[] },
+  row: CardRow & {
+    schedules: Prisma.ScheduleGetPayload<object>[];
+    images: Prisma.TrainingImageGetPayload<{ include: { media: true } }>[];
+  },
   now: Date,
 ): Promise<PublicTrainingDetail> {
   const seo = parseSeo(row.seo);
@@ -310,6 +315,7 @@ async function buildDetail(
       description: seo.description,
       ogImage: toPublicImage(seo.ogImageId ? media.get(seo.ogImageId) : null) ?? card.cover,
     },
+    images: row.images.flatMap((link) => toPublicImage(activeMediaDto(link.media)) ?? []),
     schedules,
     related,
     updatedAt: row.updatedAt,
@@ -319,6 +325,7 @@ async function buildDetail(
 function detailInclude(now: Date) {
   return {
     ...cardInclude,
+    images: { orderBy: { order: "asc" as const }, include: { media: true } },
     schedules: {
       where: { deletedAt: null, endDate: { gte: appToday(now) } },
       orderBy: [{ startDate: "asc" as const }, { id: "asc" as const }],

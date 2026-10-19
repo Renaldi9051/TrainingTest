@@ -45,6 +45,7 @@ function noUsages() {
     mock.testimonial,
     mock.marketingContact,
     mock.portfolioImage,
+    mock.trainingImage,
     mock.siteSetting,
     mock.page,
   ]) {
@@ -91,6 +92,16 @@ describe("deleteMedia", () => {
       },
     });
     expect(mock.media.update).not.toHaveBeenCalled();
+  });
+
+  it("gambar di galeri pelatihan dihitung sebagai pemakaian", async () => {
+    mock.media.findFirst.mockResolvedValue(media);
+    noUsages();
+    mock.trainingImage.findMany.mockResolvedValue([{ training: { id: "t3", title: "Audit Internal", deletedAt: null } }]);
+    await expect(deleteMedia(media.id, "u1")).rejects.toMatchObject({
+      status: 409,
+      details: { usages: [expect.objectContaining({ entity: "Training", label: "Audit Internal", field: "Galeri" })] },
+    });
   });
 
   it("ikut menghitung mediaId di pengaturan situs dan SEO pelatihan", async () => {

@@ -462,6 +462,7 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
   const [
     trainings,
     trainingSeo,
+    trainingGallery,
     categories,
     services,
     serviceSeo,
@@ -481,6 +482,10 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
     db.training.findMany({
       where: { seo: { path: ["ogImageId"], equals: mediaId } },
       select: { id: true, title: true, deletedAt: true },
+    }),
+    db.trainingImage.findMany({
+      where: { mediaId },
+      select: { training: { select: { id: true, title: true, deletedAt: true } } },
     }),
     db.category.findMany({
       where: { imageId: mediaId },
@@ -560,6 +565,14 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
       id: row.id,
       label: row.title,
       field: "Gambar OG",
+      inTrash: row.deletedAt !== null,
+    })),
+    ...trainingGallery.map(({ training: row }) => ({
+      entity: "Training" as const,
+      entityLabel: "Pelatihan",
+      id: row.id,
+      label: row.title,
+      field: "Galeri",
       inTrash: row.deletedAt !== null,
     })),
     ...categories.map((row) => ({

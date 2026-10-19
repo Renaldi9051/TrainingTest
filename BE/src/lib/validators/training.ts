@@ -35,6 +35,14 @@ const publishedAtSchema = z.iso
   .transform((value) => new Date(value))
   .nullable();
 
+// Galeri foto kegiatan, terpisah dari sampul. Disimpan di tabel TrainingImage (urutan = urutan imageIds).
+// Admin diberi hint 4-6 gambar; galeri kosong boleh (blok disembunyikan di publik).
+export const TRAINING_IMAGES_MAX = 6;
+const imageIdsSchema = z
+  .array(idSchema)
+  .max(TRAINING_IMAGES_MAX, { error: `Galeri maksimal ${TRAINING_IMAGES_MAX} gambar.` })
+  .refine((ids) => new Set(ids).size === ids.length, { error: "Gambar tidak boleh dobel." });
+
 const trainingFields = {
   title: requiredText("Judul", 200),
   slug: optionalSlugSchema,
@@ -55,6 +63,7 @@ const trainingFields = {
   priceText: nullableText("Investasi", 200),
   showPrice: z.boolean(),
   coverId: idSchema.nullable(),
+  imageIds: imageIdsSchema,
   categoryIds: categoryIdsSchema,
   status: z.enum(["DRAFT", "PUBLISHED"], { error: "Status tidak dikenal." }),
   publishedAt: publishedAtSchema,
@@ -82,6 +91,7 @@ export const trainingCreateSchema = z.object({
   priceText: trainingFields.priceText.default(null),
   showPrice: trainingFields.showPrice.default(false),
   coverId: trainingFields.coverId.default(null),
+  imageIds: trainingFields.imageIds.default([]),
   status: trainingFields.status.default("DRAFT"),
   publishedAt: trainingFields.publishedAt.default(null),
   seo: seoSchema.default({ title: "", description: "", ogImageId: null }),
@@ -108,6 +118,7 @@ export const trainingUpdateSchema = z
     priceText: trainingFields.priceText,
     showPrice: trainingFields.showPrice.optional(),
     coverId: trainingFields.coverId.optional(),
+    imageIds: trainingFields.imageIds.optional(),
     categoryIds: trainingFields.categoryIds.optional(),
     status: trainingFields.status.optional(),
     publishedAt: trainingFields.publishedAt.optional(),

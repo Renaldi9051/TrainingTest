@@ -95,6 +95,26 @@ describe("trainingCreateSchema", () => {
   });
 });
 
+describe("galeri pelatihan (imageIds)", () => {
+  const id = (n: number) => `0199b4d0-0000-7000-8000-0000000000${String(n).padStart(2, "0")}`;
+
+  it("default kosong; maks 6; tidak boleh dobel", () => {
+    expect(trainingCreateSchema.parse({ title: "KPI", categoryIds: [CATEGORY] }).imageIds).toEqual([]);
+    const six = [1, 2, 3, 4, 5, 6].map(id);
+    expect(trainingCreateSchema.safeParse({ title: "KPI", categoryIds: [CATEGORY], imageIds: six }).success).toBe(true);
+    expect(
+      trainingCreateSchema.safeParse({ title: "KPI", categoryIds: [CATEGORY], imageIds: [...six, id(7)] }).success,
+    ).toBe(false);
+    expect(
+      trainingCreateSchema.safeParse({ title: "KPI", categoryIds: [CATEGORY], imageIds: [id(1), id(1)] }).success,
+    ).toBe(false);
+  });
+
+  it("update hanya galeri diterima", () => {
+    expect(trainingUpdateSchema.safeParse({ imageIds: [] }).success).toBe(true);
+  });
+});
+
 describe("trainingBulkSchema", () => {
   it("ganti kategori butuh categoryId; aksi lain ditolak", () => {
     expect(trainingBulkSchema.safeParse({ action: "set-category", ids: [CATEGORY] }).success).toBe(false);
