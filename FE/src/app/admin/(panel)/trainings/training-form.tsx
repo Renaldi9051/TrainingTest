@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { FormField } from "@/components/admin/form-field";
+import { GalleryEditor } from "@/components/admin/media/gallery-editor";
 import { MediaPicker } from "@/components/admin/media/media-picker";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { SEO_DESCRIPTION_MAX, SEO_TITLE_MAX, SeoPanel } from "@/components/admin/seo-panel";
@@ -66,6 +67,9 @@ import { trainingKeys } from "./training-keys";
 import { previewHref } from "./trainings-list";
 
 const NO_METHOD = "none";
+// Galeri foto kegiatan (sama dengan BE TRAINING_IMAGES_MAX); hint 4-6, kosong boleh.
+const IMAGES_MAX = 6;
+const IMAGES_MIN_HINT = 4;
 const NO_LEVEL = "none";
 // Sertifikat: belum diisi (null) / ya / tidak. Belum diisi = fakta tidak tampil di situs.
 const CERTIFICATE_OPTIONS = [
@@ -137,6 +141,7 @@ const schema = z
     priceText: z.string().trim().max(200, { error: "Investasi maksimal 200 karakter." }),
     showPrice: z.boolean(),
     coverId: z.string().nullable(),
+    imageIds: z.array(z.string()).max(IMAGES_MAX, { error: `Galeri maksimal ${IMAGES_MAX} gambar.` }),
     categoryIds: z.array(z.string()).min(1, { error: "Pilih minimal satu kategori." }),
     status: z.enum(["DRAFT", "PUBLISHED"]),
     publishedAt: z.string(),
@@ -184,6 +189,7 @@ function toFormValues(training: Training | null): FormValues {
     priceText: training?.priceText ?? "",
     showPrice: training?.showPrice ?? false,
     coverId: training?.coverId ?? null,
+    imageIds: training?.imageIds ?? [],
     categoryIds: training?.categories.map((category) => category.id) ?? [],
     status: training?.status ?? "DRAFT",
     publishedAt: toWibInputValue(training?.publishedAt ?? null),
@@ -214,6 +220,7 @@ function toBody(values: FormValues, autoSlug: boolean) {
     priceText: values.priceText || null,
     showPrice: values.showPrice,
     coverId: values.coverId,
+    imageIds: values.imageIds,
     categoryIds: values.categoryIds,
     status: values.status,
     publishedAt: fromWibInputValue(values.publishedAt),
@@ -241,6 +248,10 @@ export function TrainingForm({ training }: { training: Training | null }) {
   const dirty = form.formState.isDirty;
   useUnsavedChangesGuard(dirty);
   const errors = form.formState.errors;
+  const imageErrors = errors.imageIds;
+  const imageItemErrors = Array.isArray(imageErrors)
+    ? Array.from({ length: imageErrors.length }, (_, index) => imageErrors[index]?.message)
+    : [];
   const title = useWatch({ control: form.control, name: "title" });
   const summary = useWatch({ control: form.control, name: "summary" });
   const showPrice = useWatch({ control: form.control, name: "showPrice" });
@@ -607,6 +618,39 @@ export function TrainingForm({ training }: { training: Training | null }) {
               )}
             />
           </div>
+
+          <fieldset className="space-y-3 border-t border-border pt-6">
+            <legend className="sr-only">Galeri</legend>
+            <div>
+              <h2 className="text-sm font-medium">Galeri</h2>
+              <p className="mt-1 text-small text-fg-muted">
+                Foto kegiatan pelatihan, disarankan {IMAGES_MIN_HINT}-{IMAGES_MAX} gambar. Urutan di sini dipakai di
+                situs. Setiap gambar wajib punya alt text.
+              </p>
+              {imageErrors?.message ?? imageErrors?.root?.message ? (
+                <p role="alert" className="mt-1 text-small text-status-error">
+                  {imageErrors?.message ?? imageErrors?.root?.message}
+                </p>
+              ) : null}
+            </div>
+            <Controller
+              control={form.control}
+              name="imageIds"
+              render={({ field }) => (
+                <GalleryEditor
+                  value={field.value}
+                  onChange={(ids) => {
+                    // Error per index dari simpan sebelumnya tidak berlaku lagi setelah urutan berubah.
+                    form.clearErrors("imageIds");
+                    field.onChange(ids);
+                  }}
+                  initialMedia={training?.images}
+                  itemErrors={imageItemErrors}
+                  max={IMAGES_MAX}
+                />
+              )}
+            />
+          </fieldset>
         </div>
 
         <aside className="space-y-8 lg:border-l lg:border-border lg:pl-8">
@@ -627,7 +671,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
               <FormField
                 id={sid("cover")}
                 label="Gambar sampul"
-                description="Rasio 4:3. Tampil grayscale di situs."
+                description="Rasio 4:3. Dipakai di kartu dan kepala halaman, terpisah dari galeri."
                 error={fieldState.error?.message}
               >
                 <MediaPicker

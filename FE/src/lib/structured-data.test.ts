@@ -34,6 +34,7 @@ const training: PublicTrainingDetail = {
   investment: null,
   nextSchedule: null,
   seo: { title: "", description: "", ogImage: null },
+  images: [],
   schedules: [
     { id: "s1", startDate: "2026-11-17", endDate: "2026-11-18", city: "Jakarta", venue: null, method: "OFFLINE", price: null, status: "OPEN" },
     { id: "s2", startDate: "2026-10-01", endDate: "2026-10-02", city: null, venue: null, method: "ONLINE", price: null, status: "COMPLETED" },

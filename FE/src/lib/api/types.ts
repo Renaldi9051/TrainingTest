@@ -411,6 +411,9 @@ export type Training = TrainingListItem & {
   priceText: string | null;
   showPrice: boolean;
   coverId: string | null;
+  // Galeri foto kegiatan (maks 6), terpisah dari sampul.
+  imageIds: string[];
+  images: Media[];
   seo: TrainingSeo;
   ogImage: Media | null;
   createdAt: string;
@@ -482,6 +485,8 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   // null = "Jadwal menyesuaikan".
   nextSchedule: Pick<PublicTrainingSchedule, "startDate" | "endDate" | "city" | "method"> | null;
   seo: { title: string; description: string; ogImage: PublicImage | null };
+  // Galeri foto kegiatan; kosong = blok disembunyikan.
+  images: PublicImage[];
   schedules: PublicTrainingSchedule[];
   related: PublicTrainingCard[];
   updatedAt: string;
