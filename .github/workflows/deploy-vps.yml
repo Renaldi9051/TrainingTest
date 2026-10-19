@@ -1,4 +1,4 @@
-# Deploy otomatis ke VPS (https://pelatihanjogpro.duckdns.org) setiap push ke main.
+# Deploy otomatis ke VPS (https://jogprotraining.duckdns.org) setiap push ke main.
 #
 # Cara kerja: workflow SSH ke VPS memakai key khusus. Di VPS key itu dibatasi
 # (authorized_keys: restrict,command="/opt/training/deploy.sh"), jadi apa pun perintah yang dikirim,
@@ -71,7 +71,7 @@ jobs:
         if: steps.secrets.outputs.ready == 'true'
         run: |
           for i in $(seq 1 12); do
-            if curl -fsS -m 15 https://pelatihanjogpro.duckdns.org/api/health; then exit 0; fi
+            if curl -fsS -m 15 https://jogprotraining.duckdns.org/api/health; then exit 0; fi
             sleep 10
           done
           echo "Situs tidak merespons sehat setelah deploy" >&2
