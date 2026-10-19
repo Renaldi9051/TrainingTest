@@ -15,6 +15,8 @@ import { seedBulk } from "./seed-bulk";
 import { type ContentSeedResult, seedContent } from "./seed-content";
 import { seedCovers } from "./seed-covers";
 import { seedGallery } from "./seed-gallery";
+import { seedHomeImages } from "./seed-home-images";
+import { seedManifestGallery } from "./seed-manifest-gallery";
 import { buildProfileBlocks, buildSettings } from "./seed-data/build";
 import { writeCatalog } from "./seed-data/catalog-writer";
 import { profilePage } from "./seed-data/content";
@@ -146,9 +148,13 @@ async function main() {
   // Cover dari seed-data/covers/<slug>.jpg: dipasang ke pelatihan yang slug-nya cocok dan belum punya
   // cover (berlaku untuk katalog demo maupun katalog referensi). Idempotent & aman diulang.
   const coverResult = MINIMAL ? null : await seedCovers();
-  // Galeri foto (accounting & administrative): 4 foto per pelatihan dari pool kategori ke TrainingImage,
-  // foto pertama jadi cover kalau cover masih kosong.
+  // Foto manifest (accounting): gambar kategori, sampul & galeri yang kosong atau masih foto pool lama.
+  const manifestResult = MINIMAL ? null : await seedManifestGallery();
+  // Galeri foto administrative: 4 foto per pelatihan dari pool kategori ke TrainingImage, foto pertama
+  // jadi cover kalau cover masih kosong.
   const galleryResult = MINIMAL ? null : await seedGallery();
+  // Slide hero & gambar kategori yang masih kosong (database tanpa gambar, mis. VPS).
+  const homeImageResult = MINIMAL ? null : await seedHomeImages();
   // Seed bulk mencetak ringkasannya sendiri.
   if (BULK) await seedBulk();
 
@@ -184,9 +190,19 @@ async function main() {
       `Cover pelatihan: ${coverResult === "dilewati" ? "dilewati" : `${coverResult} dipasang`} (hanya pelatihan yang belum punya cover).`,
     );
   }
+  if (manifestResult !== null) {
+    console.info(
+      `Foto manifest: ${manifestResult === "dilewati" ? "dilewati (sudah terpasang)" : `${manifestResult.categories} kategori, ${manifestResult.trainings} pelatihan`}.`,
+    );
+  }
   if (galleryResult !== null) {
     console.info(
-      `Galeri foto: ${galleryResult === "dilewati" ? "dilewati" : `${galleryResult} pelatihan`} (accounting & administrative, hanya yang galerinya kosong).`,
+      `Galeri foto: ${galleryResult === "dilewati" ? "dilewati" : `${galleryResult} pelatihan`} (administrative, hanya yang galerinya kosong).`,
+    );
+  }
+  if (homeImageResult !== null) {
+    console.info(
+      `Gambar beranda: ${homeImageResult === "dilewati" ? "dilewati (sudah berisi)" : `${homeImageResult.heroSlides} slide hero, ${homeImageResult.categories} gambar kategori`}.`,
     );
   }
   // Bila FE sudah berjalan saat seed manual, tampilkan dropdown baru tanpa perlu restart.

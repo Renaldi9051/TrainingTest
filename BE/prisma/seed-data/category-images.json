@@ -1,0 +1,178 @@
+{
+  "tax": {
+    "alt": "Cover pelatihan Bukti Potong dan Faktur Pajak Elektronik",
+    "file": "bukti-potong-dan-faktur-pajak-elektronik.jpg"
+  },
+  "web": {
+    "alt": "Cover pelatihan Desain Antarmuka Aplikasi untuk Pemula",
+    "file": "desain-antarmuka-aplikasi-untuk-pemula.jpg"
+  },
+  "food": {
+    "alt": "Cover pelatihan Fotografi Makanan",
+    "file": "fotografi-makanan.jpg"
+  },
+  "audit": {
+    "alt": "Cover pelatihan Membaca Laporan Keuangan",
+    "file": "membaca-laporan-keuangan.jpg"
+  },
+  "drone": {
+    "alt": "Cover pelatihan Dasar Menerbangkan Drone Multirotor",
+    "file": "dasar-menerbangkan-drone-multirotor.jpg"
+  },
+  "event": {
+    "alt": "Cover pelatihan Fotografi Acara dan Dokumentasi Perusahaan",
+    "file": "fotografi-acara-dan-dokumentasi-perusahaan.jpg"
+  },
+  "hutan": {
+    "alt": "Cover pelatihan Analisis Indeks Vegetasi NDVI",
+    "file": "analisis-indeks-vegetasi-ndvi.jpg"
+  },
+  "media": {
+    "alt": "Cover pelatihan Dasar Pembuatan Konten Media Sosial",
+    "file": "dasar-pembuatan-konten-media-sosial.jpg"
+  },
+  "migas": {
+    "alt": "Cover pelatihan Inspeksi Jalur Pipa Migas dengan Drone",
+    "file": "inspeksi-jalur-pipa-migas-dengan-drone.jpg"
+  },
+  "pajak": {
+    "alt": "Cover pelatihan Akuntansi Pajak",
+    "file": "akuntansi-pajak.jpg"
+  },
+  "design": {
+    "alt": "Cover pelatihan Dasar Desain Grafis untuk Pemula",
+    "file": "dasar-desain-grafis-untuk-pemula.jpg"
+  },
+  "energy": {
+    "alt": "Cover pelatihan Inspeksi Panel Surya dengan Kamera Termal",
+    "file": "inspeksi-panel-surya-dengan-kamera-termal.jpg"
+  },
+  "gedung": {
+    "alt": "Cover pelatihan Inspeksi Atap dan Fasad Bangunan",
+    "file": "inspeksi-atap-dan-fasad-bangunan.jpg"
+  },
+  "proyek": {
+    "alt": "Cover pelatihan Manajemen Proyek Pemetaan Skala Besar",
+    "file": "manajemen-proyek-pemetaan-skala-besar.jpg"
+  },
+  "banking": {
+    "alt": "Cover pelatihan Manajemen Treasuri",
+    "file": "manajemen-treasuri.jpg"
+  },
+  "economy": {
+    "alt": "Cover pelatihan Keuangan untuk Non-Keuangan",
+    "file": "keuangan-untuk-non-keuangan.jpg"
+  },
+  "finance": {
+    "alt": "Cover pelatihan Dasar Manajemen Keuangan",
+    "file": "dasar-manajemen-keuangan.jpg"
+  },
+  "geology": {
+    "alt": "Cover pelatihan Membaca Peta Hasil Survei Drone",
+    "file": "membaca-peta-hasil-survei-drone.jpg"
+  },
+  "laporan": {
+    "alt": "Cover pelatihan Analisis Laporan Keuangan Lanjut",
+    "file": "analisis-laporan-keuangan-lanjut.jpg"
+  },
+  "budgeting": {
+    "alt": "Cover pelatihan Cash Flow Forecasting",
+    "file": "cash-flow-forecasting.jpg"
+  },
+  "education": {
+    "alt": "Cover pelatihan Konten Edukasi untuk Lembaga",
+    "file": "konten-edukasi-untuk-lembaga.jpg"
+  },
+  "investasi": {
+    "alt": "Cover pelatihan Analisis Kelayakan Investasi",
+    "file": "analisis-kelayakan-investasi.jpg"
+  },
+  "marketing": {
+    "alt": "Cover pelatihan Content Marketing untuk Website",
+    "file": "content-marketing-untuk-website.jpg"
+  },
+  "agrobisnis": {
+    "alt": "Cover pelatihan Drone untuk Perkebunan Kelapa Sawit",
+    "file": "drone-untuk-perkebunan-kelapa-sawit.jpg"
+  },
+  "arsitektur": {
+    "alt": "Cover pelatihan Fotografi Arsitektur dan Interior",
+    "file": "fotografi-arsitektur-dan-interior.jpg"
+  },
+  "electrical": {
+    "alt": "Cover pelatihan Inspeksi Jaringan Transmisi Listrik",
+    "file": "inspeksi-jaringan-transmisi-listrik.jpg"
+  },
+  "industrial": {
+    "alt": "Cover pelatihan Inspeksi Cerobong dan Tangki Industri",
+    "file": "inspeksi-cerobong-dan-tangki-industri.jpg"
+  },
+  "pembayaran": {
+    "alt": "Cover pelatihan Manajemen Kas Harian",
+    "file": "manajemen-kas-harian.jpg"
+  },
+  "perpajakan": {
+    "alt": "Cover pelatihan Mengenal NPWP dan Kewajiban Wajib Pajak",
+    "file": "mengenal-npwp-dan-kewajiban-wajib-pajak.jpg"
+  },
+  "properties": {
+    "alt": "Cover pelatihan Fotografi Udara untuk Properti dan Real Estat",
+    "file": "fotografi-udara-untuk-properti-dan-real-estat.jpg"
+  },
+  "environment": {
+    "alt": "Cover pelatihan Analisis Perubahan Lahan Multi-Waktu",
+    "file": "analisis-perubahan-lahan-multi-waktu.jpg"
+  },
+  "konsolidasi": {
+    "alt": "Cover pelatihan Konsolidasi Laporan Keuangan",
+    "file": "konsolidasi-laporan-keuangan.jpg"
+  },
+  "maintenance": {
+    "alt": "Cover pelatihan Manajemen Bengkel dan Suku Cadang Drone",
+    "file": "manajemen-bengkel-dan-suku-cadang-drone.jpg"
+  },
+  "mekatronika": {
+    "alt": "Cover pelatihan Konfigurasi Flight Controller",
+    "file": "konfigurasi-flight-controller.jpg"
+  },
+  "oil-and-gas": {
+    "alt": "Cover pelatihan Inspeksi Fasilitas Lepas Pantai",
+    "file": "inspeksi-fasilitas-lepas-pantai.jpg"
+  },
+  "photography": {
+    "alt": "Cover pelatihan Dasar Fotografi dengan Kamera Digital",
+    "file": "dasar-fotografi-dengan-kamera-digital.jpg"
+  },
+  "teknik-sipil": {
+    "alt": "Cover pelatihan Inspeksi Jembatan dan Struktur Beton",
+    "file": "inspeksi-jembatan-dan-struktur-beton.jpg"
+  },
+  "communication": {
+    "alt": "Cover pelatihan Dasar Copywriting Digital",
+    "file": "dasar-copywriting-digital.jpg"
+  },
+  "teknik-elektro": {
+    "alt": "Cover pelatihan Dasar Elektronika untuk Drone",
+    "file": "dasar-elektronika-untuk-drone.jpg"
+  },
+  "public-relation": {
+    "alt": "Cover pelatihan Manajemen Krisis di Media Sosial",
+    "file": "manajemen-krisis-di-media-sosial.jpg"
+  },
+  "risk-management": {
+    "alt": "Cover pelatihan Manajemen Risiko Keuangan",
+    "file": "manajemen-risiko-keuangan.jpg"
+  },
+  "digital-marketing": {
+    "alt": "Cover pelatihan Iklan Berbayar di Media Sosial",
+    "file": "iklan-berbayar-di-media-sosial.jpg"
+  },
+  "healthy-safety-environtmental": {
+    "alt": "Cover pelatihan Keselamatan Terbang di Area Industri",
+    "file": "keselamatan-terbang-di-area-industri.jpg"
+  },
+  "perusahaan-pembangkitan-listrik": {
+    "alt": "Cover pelatihan Inspeksi Turbin Angin",
+    "file": "inspeksi-turbin-angin.jpg"
+  }
+}
