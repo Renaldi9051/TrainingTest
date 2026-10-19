@@ -5,6 +5,7 @@ import snapshot from "./reference-catalog.json";
 import {
   hasReferenceTitle,
   POSTS_PER_CATEGORY,
+  POSTS_PER_CATEGORY_OVERRIDE,
   referenceCategories,
   referenceMenuCategories,
   referencePosts,
@@ -21,6 +22,9 @@ describe("snapshot katalog referensi", () => {
     }
     expect(perCategory.size).toBe(referenceCategories.length);
     expect(Math.max(...perCategory.values())).toBe(POSTS_PER_CATEGORY);
+    for (const [slug, cap] of Object.entries(POSTS_PER_CATEGORY_OVERRIDE)) {
+      expect(perCategory.get(slug), slug).toBe(cap);
+    }
     expect(referencePosts.length).toBeLessThan(1000);
     for (const category of referenceCategories) {
       expect(perCategory.get(category.slug) ?? 0, category.slug).toBeGreaterThan(0);

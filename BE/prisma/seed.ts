@@ -14,6 +14,7 @@ import { REFERENCE_SEED_KEY, REFERENCE_SEED_VERSION, seedReferenceCatalog } from
 import { seedBulk } from "./seed-bulk";
 import { type ContentSeedResult, seedContent } from "./seed-content";
 import { seedCovers } from "./seed-covers";
+import { seedGallery } from "./seed-gallery";
 import { buildProfileBlocks, buildSettings } from "./seed-data/build";
 import { writeCatalog } from "./seed-data/catalog-writer";
 import { profilePage } from "./seed-data/content";
@@ -142,7 +143,12 @@ async function main() {
   // portofolio, JPG contoh untuk sampul pelatihan. Database yang sudah berisi:
   // `npm run db:sync-content -- --only=images`. Mode minimal (e2e) tanpa gambar.
   const imageResult = MINIMAL ? null : await seedImages(contentResult);
-  const coverResult = MINIMAL || !catalog ? null : await seedCovers();
+  // Cover dari seed-data/covers/<slug>.jpg: dipasang ke pelatihan yang slug-nya cocok dan belum punya
+  // cover (berlaku untuk katalog demo maupun katalog referensi). Idempotent & aman diulang.
+  const coverResult = MINIMAL ? null : await seedCovers();
+  // Galeri foto (accounting & administrative): 4 foto per pelatihan dari pool kategori ke TrainingImage,
+  // foto pertama jadi cover kalau cover masih kosong.
+  const galleryResult = MINIMAL ? null : await seedGallery();
   // Seed bulk mencetak ringkasannya sendiri.
   if (BULK) await seedBulk();
 
@@ -176,6 +182,11 @@ async function main() {
   if (coverResult !== null) {
     console.info(
       `Cover pelatihan: ${coverResult === "dilewati" ? "dilewati" : `${coverResult} dipasang`} (hanya pelatihan yang belum punya cover).`,
+    );
+  }
+  if (galleryResult !== null) {
+    console.info(
+      `Galeri foto: ${galleryResult === "dilewati" ? "dilewati" : `${galleryResult} pelatihan`} (accounting & administrative, hanya yang galerinya kosong).`,
     );
   }
   // Bila FE sudah berjalan saat seed manual, tampilkan dropdown baru tanpa perlu restart.

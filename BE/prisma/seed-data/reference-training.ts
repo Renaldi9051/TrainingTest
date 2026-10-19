@@ -171,6 +171,8 @@ export function referenceTraining(post: ReferencePost) {
 // ditautkan ke kategori yang memilihnya, jadi kategori besar seperti Management tidak membengkak.
 // Hasilnya deterministik dan hanya bergantung pada snapshot.
 export const POSTS_PER_CATEGORY = 10;
+// Batas khusus per kategori (slug). Kategori yang tidak disebut pakai POSTS_PER_CATEGORY.
+export const POSTS_PER_CATEGORY_OVERRIDE: Record<string, number> = { accounting: 6, administrative: 6 };
 // Dua artikel ini dipakai tes dan punya naskah khusus, jadi selalu terpilih di kategorinya.
 const pinnedSlugs = new Set(["training-finance-treasury-management", "training-evaluasi-etika-dan-kepatuhan"]);
 
@@ -185,6 +187,10 @@ function selectPostsPerCategory(posts: ReferencePost[]): ReferencePost[] {
   for (const item of usable) {
     for (const id of item.categoryIds) byCategory.set(id, [...(byCategory.get(id) ?? []), item]);
   }
+  const capFor = (categoryId: number) => {
+    const slug = snapshot.categories.find((category) => category.id === categoryId)?.slug;
+    return (slug && POSTS_PER_CATEGORY_OVERRIDE[slug]) || POSTS_PER_CATEGORY;
+  };
   const linked = new Map<string, Set<number>>();
   const order = [...byCategory.entries()].sort((a, b) => a[1].length - b[1].length || a[0] - b[0]);
   for (const [categoryId, candidates] of order) {
@@ -195,7 +201,7 @@ function selectPostsPerCategory(posts: ReferencePost[]): ReferencePost[] {
         b.post.date.localeCompare(a.post.date) ||
         a.post.slug.localeCompare(b.post.slug),
     );
-    for (const { post } of ranked.slice(0, POSTS_PER_CATEGORY)) {
+    for (const { post } of ranked.slice(0, capFor(categoryId))) {
       linked.set(post.slug, (linked.get(post.slug) ?? new Set<number>()).add(categoryId));
     }
   }
