@@ -6,6 +6,85 @@
 @source not "../components/admin";
 @import "./theme.css";
 
+/* Header publik (components/public/site-header.tsx). Garis tombol "Cari" & hover ikut mode header. */
+.site-header {
+  --header-line: var(--border-strong);
+  --header-hover: var(--bg-subtle);
+}
+/* CTA header (desktop & menu mobile) sama di semua halaman: --accent dengan teks gelap, seperti di atas
+   foto hero (keputusan pemilik 19 Okt 2026). Fallback netral = tombol primer. */
+.site-header .site-header-cta {
+  background: var(--cta, var(--primary));
+  color: var(--on-cta, var(--on-primary));
+}
+.site-header .site-header-cta:hover {
+  background: var(--cta-hover, var(--primary-hover));
+}
+
+/* Di atas foto hero beranda (elemen [data-header-over], lib/hero-marker.ts; DESIGN.md 8.1): header
+   transparan berteks terang dan ikut tergulir bersama hero (bukan sticky), seperti mockup. Murni CSS,
+   jadi benar sejak render pertama dan tetap terbaca tanpa JS. Tidak berlaku saat banner pratinjau admin
+   tampil di atas hero ([data-preview-banner]): header tetap putih dan tidak menutupi banner. Juga tidak
+   berlaku di html[data-hero-hidden]: hero beranda masih di DOM tapi tersembunyi setelah pindah halaman. */
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  background: transparent;
+  color: var(--inverse-fg);
+  border-color: color-mix(in srgb, var(--inverse-fg) 16%, transparent);
+  --header-line: color-mix(in srgb, var(--inverse-fg) 40%, transparent);
+  --header-hover: color-mix(in srgb, var(--inverse-fg) 12%, transparent);
+}
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header .site-brand-light {
+  display: none;
+}
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header .site-brand-dark {
+  display: flex;
+}
+/* Di atas foto hero: CTA --accent dengan teks gelap (palet C; fallback netral = terang/teks gelap). */
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header .site-header-cta {
+  background: var(--cta, var(--inverse-fg));
+  color: var(--on-cta, var(--fg-strong));
+}
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header .site-header-cta:hover {
+  background: var(--cta-hover, var(--bg-muted));
+}
+
+/* Floating contact di halaman ber-hero: baru muncul setelah hero lewat (DESIGN.md 8.11, HeroSlideshow
+   menandai html[data-past-hero]), supaya tidak bertabrakan dengan badge berputar di hero. */
+.floating-contact {
+  transition:
+    opacity 300ms var(--ease-standard),
+    translate 300ms var(--ease-standard),
+    scale 300ms var(--ease-standard),
+    visibility 300ms allow-discrete;
+}
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])):not([data-past-hero]) .floating-contact {
+  opacity: 0;
+  translate: 0 16px;
+  scale: 0.9;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Overlay indeks A-Z (components/public/index-overlay.tsx): muncul/hilang 300 ms, hanya opacity. */
+.index-overlay {
+  opacity: 0;
+  transition:
+    opacity 300ms var(--ease-standard),
+    overlay 300ms allow-discrete,
+    display 300ms allow-discrete;
+}
+.index-overlay[open] {
+  opacity: 1;
+}
+@starting-style {
+  .index-overlay[open] {
+    opacity: 0;
+  }
+}
+
 /* Floating contact (components/public/floating-contact.tsx). Pembuka panel dirender dua kali:
    <button popovertarget> dan tautan ke /kontak. Browser yang mendukung popover memakai tombol;
    selain itu (atau html[data-popover="off"] dari FloatingContactSync) memakai tautan. */
@@ -81,5 +160,47 @@
     .contact-panel:popover-open {
       transform: translateY(8px);
     }
+  }
+}
+
+/* Hero slideshow (components/motion/hero-slideshow.tsx, DESIGN.md 8.1). Slide baru masuk dengan wipe
+   clip-path dari bawah 900 ms di atas slide sebelumnya; slide lain tertutup. Selama tampil, gambar
+   zoom pelan 1,08 -> 1 sepanjang interval (Ken Burns, hanya transform), berhenti saat dijeda. Reduced
+   motion: tanpa Ken Burns, ganti slide langsung (transisi global 0.01ms). */
+.hero-slide {
+  clip-path: inset(100% 0 0 0);
+}
+.hero-slide[data-state="prev"] {
+  clip-path: inset(0);
+  z-index: 1;
+}
+.hero-slide[data-state="active"] {
+  clip-path: inset(0);
+  z-index: 2;
+  transition: clip-path 900ms var(--ease-standard);
+}
+@keyframes hero-kenburns {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero-stage[data-slideshow] .hero-slide[data-state="active"] img {
+    animation: hero-kenburns var(--hero-interval, 6000ms) linear both;
+  }
+  .hero-stage[data-paused] .hero-slide[data-state="active"] img {
+    animation-play-state: paused;
+  }
+}
+
+/* Panel filter katalog (components/public/catalog-filters.tsx): di desktop selalu terbuka sebagai
+   sidebar, juga sebelum hydrate (browser yang mendukung ::details-content). */
+@media (min-width: 64rem) {
+  .filter-disclosure::details-content {
+    content-visibility: visible;
+    display: contents;
   }
 }

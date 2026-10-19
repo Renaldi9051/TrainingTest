@@ -3,8 +3,8 @@
 import type { ReactNode } from "react";
 import { Controller, get, useFormContext, useWatch } from "react-hook-form";
 import { FormField } from "@/components/admin/form-field";
+import { HeroSlidesEditor } from "@/components/admin/hero-slides-editor";
 import { ListEditor } from "@/components/admin/list-editor";
-import { MediaPicker } from "@/components/admin/media/media-picker";
 import { OptionMultiPicker } from "@/components/admin/option-multi-picker";
 import { StringListEditor } from "@/components/admin/training-editors";
 import { Checkbox } from "@/components/admin/ui/checkbox";
@@ -14,8 +14,11 @@ import { Switch } from "@/components/admin/ui/switch";
 import { Textarea } from "@/components/admin/ui/textarea";
 import { useScopedId } from "@/hooks/use-scoped-id";
 import { categoryOptionSource, resourceOptionSource, type OptionSource } from "@/lib/admin-resources";
-import type { Cta, HomeSectionType, Media } from "@/lib/api/types";
+import type { Cta, HeroSlide, HomeSectionType, Media } from "@/lib/api/types";
 import {
+  HERO_INTERVAL_MAX_MS,
+  HERO_INTERVAL_MIN_MS,
+  HERO_SLIDES_MAX,
   MARQUEE_ITEMS_MAX,
   MARQUEE_ITEMS_MIN,
   ROTATING_WORDS_MAX,
@@ -99,6 +102,138 @@ function NumberField({ name, label, min, max, description }: { name: `content.${
         </FormField>
       )}
     />
+  );
+}
+
+// Pilihan satu dari beberapa (radio berbingkai), mis. layout hero.
+function RadioCards<T extends string>({ name, legend, options }: { name: `content.${string}`; legend: string; options: readonly (readonly [T, string, string])[] }) {
+  const sid = useScopedId("radio");
+  const { control } = useFormContext<SectionFormValues>();
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium">{legend}</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {options.map(([value, label, help]) => (
+              <label key={value} className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 has-checked:border-fg-strong">
+                <input
+                  type="radio"
+                  name={sid(name)}
+                  checked={field.value === value}
+                  onChange={() => field.onChange(value)}
+                  className="mt-1 accent-[var(--fg-strong)]"
+                />
+                <span>
+                  <span className="block text-sm font-medium">{label}</span>
+                  <span className="block text-small text-fg-muted">{help}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+    />
+  );
+}
+
+function SwitchField({ name, label, description }: { name: `content.${string}`; label: string; description?: string }) {
+  const sid = useScopedId("switch");
+  const { control } = useFormContext<SectionFormValues>();
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <div className="flex items-start gap-3">
+          <Switch
+            id={sid(name)}
+            checked={Boolean(field.value)}
+            onCheckedChange={field.onChange}
+            aria-describedby={description ? sid(`${name}-help`) : undefined}
+          />
+          <div>
+            <Label htmlFor={sid(name)}>{label}</Label>
+            {description ? (
+              <p id={sid(`${name}-help`)} className="mt-1 text-small text-fg-muted">
+                {description}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      )}
+    />
+  );
+}
+
+// Interval slideshow 4-10 detik (disimpan dalam ms).
+function IntervalField() {
+  const sid = useScopedId("interval");
+  const { control } = useFormContext<SectionFormValues>();
+  const error = useFieldError("content.intervalMs");
+  return (
+    <Controller
+      control={control}
+      name="content.intervalMs"
+      render={({ field }) => {
+        const seconds = Math.round(((field.value as number) || 6000) / 1000);
+        return (
+          <FormField id={sid("range")} label={`Ganti slide tiap ${seconds} detik`} description="4-10 detik. Pengunjung bisa menjeda." error={error}>
+            <input
+              type="range"
+              min={HERO_INTERVAL_MIN_MS / 1000}
+              max={HERO_INTERVAL_MAX_MS / 1000}
+              step={1}
+              value={seconds}
+              onChange={(event) => field.onChange(event.target.valueAsNumber * 1000)}
+              onBlur={field.onBlur}
+              aria-valuetext={`${seconds} detik`}
+              className="w-full max-w-sm accent-[var(--fg-strong)]"
+            />
+          </FormField>
+        );
+      }}
+    />
+  );
+}
+
+function HeroSlidesField({ media }: { media: Record<string, Media> }) {
+  const { control, formState } = useFormContext<SectionFormValues>();
+  return (
+    <Controller
+      control={control}
+      name="content.slides"
+      render={({ field }) => (
+        <HeroSlidesEditor
+          value={(field.value as HeroSlide[]) ?? []}
+          onChange={field.onChange}
+          media={media}
+          max={HERO_SLIDES_MAX}
+          errorFor={(index, key) => {
+            const entry = get(formState.errors, key ? `content.slides.${index}.${key}` : `content.slides.${index}`) as { message?: string } | undefined;
+            return entry?.message;
+          }}
+        />
+      )}
+    />
+  );
+}
+
+function HeroBadgeFields() {
+  const { control } = useFormContext<SectionFormValues>();
+  const showBadge = Boolean(useWatch({ control, name: "content.showBadge" }));
+  return (
+    <>
+      <SwitchField name="content.showBadge" label="Tampilkan badge berputar" description="Lingkaran teks berputar berisi tautan, di pojok hero." />
+      {showBadge ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField name="content.badgeText" label="Teks badge" required description="Mis. Konsultasi gratis • Hubungi kami" />
+          <TextField name="content.badgeHref" label="Tautan badge" required description="Mis. /kontak" />
+        </div>
+      ) : null}
+    </>
   );
 }
 
@@ -317,7 +452,6 @@ function SelectionFields({ type }: { type: SelectionSectionType }) {
 export function SectionFields({ type, media }: { type: HomeSectionType; media: Record<string, Media> }) {
   const sid = useScopedId("section-fields");
   const { control } = useFormContext<SectionFormValues>();
-  const imageError = useFieldError("content.image");
 
   switch (type) {
     case "HERO":
@@ -329,7 +463,7 @@ export function SectionFields({ type, media }: { type: HomeSectionType; media: R
             <div className="space-y-2">
               <p className="text-sm font-medium">Kata kunci berganti</p>
               <p className="text-small text-fg-muted">
-                Opsional, maks {ROTATING_WORDS_MAX}. Kata pertama bagian dari headline; kata lain bergantian satu putaran (selesai maks. 5 detik), lalu kembali ke kata pertama.
+                Opsional, maks {ROTATING_WORDS_MAX}. Kata pertama bagian dari headline; kata lain bergantian tiap 2 detik. Pengunjung bisa menjedanya, dan kata tidak berganti untuk pengunjung yang mengurangi animasi.
               </p>
               <StringList
                 name="content.rotatingWords"
@@ -359,30 +493,32 @@ export function SectionFields({ type, media }: { type: HomeSectionType; media: R
             <CtaField name="content.primaryCta" label="Tombol utama" optional />
             <CtaField name="content.secondaryCta" label="Tombol kedua" optional />
           </Fieldset>
-          <Fieldset title="Gambar">
-            <Controller
-              control={control}
-              name="content.image"
-              render={({ field }) => {
-                const value = field.value as { mediaId: string } | null;
-                return (
-                  <FormField
-                    id={sid("image")}
-                    label="Gambar hero"
-                    description="Opsional, rasio 16:9, wajib punya alt text."
-                    error={imageError}
-                  >
-                    <MediaPicker
-                      value={value?.mediaId ?? null}
-                      onChange={(id) => field.onChange(id ? { mediaId: id } : null)}
-                      initialMedia={value ? media[value.mediaId] : undefined}
-                      aspect="16/9"
-                      dialogTitle="Pilih gambar hero"
-                    />
-                  </FormField>
-                );
-              }}
+          <Fieldset
+            title="Slide"
+            description="0 slide = hero teks di latar putih. 1 slide = foto statis. 2-6 slide = berganti otomatis. Gambar asli tidak diubah."
+          >
+            <HeroSlidesField media={media} />
+          </Fieldset>
+          <Fieldset title="Tampilan slide">
+            <RadioCards
+              name="content.layout"
+              legend="Layout"
+              options={[
+                ["fullbleed", "Penuh layar", "Foto memenuhi layar, teks terang di atasnya, header transparan."],
+                ["split", "Terbagi", "Teks di kiri, foto di kanan, latar putih."],
+              ]}
             />
+            <IntervalField />
+            <RadioCards
+              name="content.photoStyle"
+              legend="Warna foto"
+              options={[
+                ["color", "Berwarna", "Foto tampil apa adanya."],
+                ["grayscale", "Hitam putih", "Hanya tampilan; file asli tidak diubah."],
+              ]}
+            />
+            <SwitchField name="content.showViewfinder" label="Tampilkan bingkai viewfinder" description="Sudut bingkai, crosshair, dan label HUD di atas foto." />
+            <HeroBadgeFields />
           </Fieldset>
         </div>
       );

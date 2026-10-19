@@ -36,8 +36,8 @@ export function ReadingProgress() {
       ref={ref}
       aria-hidden
       data-reading-progress=""
-      // top-16 = tinggi header (h-16), di atas border bawah header.
-      className="pointer-events-none fixed inset-x-0 top-16 z-40 h-0.5 origin-left -translate-y-px scale-x-0 bg-fg-strong"
+      // top-18 = tinggi header (h-18, 72 px), di atas border bawah header.
+      className="pointer-events-none fixed inset-x-0 top-18 z-40 h-0.5 origin-left -translate-y-px scale-x-0 bg-accent"
     />
   );
 }

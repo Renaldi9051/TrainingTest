@@ -9,12 +9,13 @@ type EyebrowProps = ComponentProps<"p"> & {
   scramble?: boolean;
 };
 
-// Label mono kecil di atas judul section (DESIGN.md 3).
+// Label mono kecil di atas judul section (DESIGN.md 3), warna --accent-ink (palet C; di section gelap
+// timpa dengan text-accent-on-dark).
 export function Eyebrow({ index, scramble, className, children, ...props }: EyebrowProps) {
   return (
     <p
       className={cn(
-        "font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted",
+        "font-mono text-label font-medium uppercase tracking-[0.08em] text-accent-ink",
         className,
       )}
       {...props}

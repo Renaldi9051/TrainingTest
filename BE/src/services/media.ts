@@ -384,6 +384,7 @@ export async function updateMedia(
 export type MediaUsage = {
   entity:
     | "Training"
+    | "Category"
     | "Service"
     | "Client"
     | "Testimonial"
@@ -453,7 +454,7 @@ function pageUsages(rows: PageRow[], mediaId: string): MediaUsage[] {
   });
 }
 
-// Semua referensi ke Media: relasi di skema (cover, image, logo, photo, galeri), mediaId di JSON
+// Semua referensi ke Media: relasi di skema (cover, gambar kategori/layanan, logo, photo, galeri), mediaId di JSON
 // (SEO pelatihan/layanan/halaman, pengaturan situs, isi section beranda, blok halaman),
 // termasuk item di Sampah.
 export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
@@ -461,6 +462,8 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
   const [
     trainings,
     trainingSeo,
+    trainingGallery,
+    categories,
     services,
     serviceSeo,
     pageSeo,
@@ -479,6 +482,14 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
     db.training.findMany({
       where: { seo: { path: ["ogImageId"], equals: mediaId } },
       select: { id: true, title: true, deletedAt: true },
+    }),
+    db.trainingImage.findMany({
+      where: { mediaId },
+      select: { training: { select: { id: true, title: true, deletedAt: true } } },
+    }),
+    db.category.findMany({
+      where: { imageId: mediaId },
+      select: { id: true, name: true, deletedAt: true },
     }),
     db.service.findMany({
       where: { imageId: mediaId },
@@ -554,6 +565,22 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
       id: row.id,
       label: row.title,
       field: "Gambar OG",
+      inTrash: row.deletedAt !== null,
+    })),
+    ...trainingGallery.map(({ training: row }) => ({
+      entity: "Training" as const,
+      entityLabel: "Pelatihan",
+      id: row.id,
+      label: row.title,
+      field: "Galeri",
+      inTrash: row.deletedAt !== null,
+    })),
+    ...categories.map((row) => ({
+      entity: "Category" as const,
+      entityLabel: "Kategori",
+      id: row.id,
+      label: row.name,
+      field: "Gambar",
       inTrash: row.deletedAt !== null,
     })),
     ...services.map((row) => ({

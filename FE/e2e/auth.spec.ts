@@ -3,19 +3,16 @@ import { adminCredentials, loginViaApi, loginViaUi } from "./helpers";
 
 test.describe("auth admin", () => {
   test("login sukses masuk ke dashboard", async ({ page }) => {
-    const { email, password } = adminCredentials();
-    await loginViaUi(page, email, password);
+    await loginViaUi(page, adminCredentials().password);
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
   });
 
   test("login gagal menampilkan pesan umum", async ({ page }) => {
-    // Email tidak terdaftar (unik per run): rate limit dihitung per IP+email, jadi kegagalan di sini
-    // tidak pernah mengunci akun admin yang dipakai test lain.
-    await loginViaUi(page, `tidak-terdaftar-${Date.now()}@example.com`, "kata-sandi-salah");
-    await expect(
-      page.getByRole("alert").filter({ hasText: "Email atau kata sandi salah." }),
-    ).toBeVisible();
+    // Rate limit dihitung per IP (5x gagal). Satu kegagalan di sini tidak mengunci test lain, dan
+    // login sukses berikutnya mereset hitungannya.
+    await loginViaUi(page, "kata-sandi-salah");
+    await expect(page.getByRole("alert").filter({ hasText: "Kata sandi salah." })).toBeVisible();
     await expect(page).toHaveURL(/\/admin\/login/);
   });
 

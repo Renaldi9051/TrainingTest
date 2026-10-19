@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { RevealRows } from "@/components/motion/reveal-rows";
 import type { ScheduleStatus, TrainingMethod } from "@/lib/api/types";
-import { formatDateRange, formatRupiah } from "@/lib/format";
+import { dateBadgeParts, formatDateRange, formatRupiah } from "@/lib/format";
+import { displayTitle } from "@/lib/display-title";
 import { METHOD_LABELS } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 
 export type ScheduleRow = {
   id: string;
@@ -18,6 +20,8 @@ export type ScheduleRow = {
 
 // Status ditulis teks mono tanpa warna (DESIGN 7).
 const STATUS_TEXT: Record<ScheduleStatus, string> = { OPEN: "DIBUKA", FULL: "PENUH", COMPLETED: "SELESAI" };
+// Palet C: titik status (dekoratif) di samping label teks; DIBUKA --ok, PENUH --fg-muted.
+const STATUS_DOT: Record<ScheduleStatus, string> = { OPEN: "bg-ok", FULL: "bg-fg-muted", COMPLETED: "bg-border-strong" };
 
 const PRICE_HIDDEN = "Hubungi marketing";
 
@@ -25,14 +29,18 @@ const PRICE_HIDDEN = "Hubungi marketing";
 // Di layar kecil tiap baris jadi blok bertumpuk (tanpa scroll horizontal). Masuk: baris dari kiri,
 // per baris saat barisnya masuk viewport (RevealRows).
 // showPrice false (atau harga kosong): tampil "Hubungi marketing".
+// bigDate: tanggal mulai besar (hari + bulan mono) di kolom kiri, rentang tanggal di bawahnya
+// (DESIGN.md 8.8 & 13, beranda).
 export function ScheduleTable({
   rows,
   caption,
   showTraining = false,
+  bigDate = false,
 }: {
   rows: ScheduleRow[];
   caption: string;
   showTraining?: boolean;
+  bigDate?: boolean;
 }) {
   return (
     <table className="w-full border-collapse text-left">
@@ -68,7 +76,7 @@ export function ScheduleTable({
             className="grid grid-cols-2 gap-x-4 gap-y-1 border-b border-border py-4 transition-[background-color,transform] duration-150 ease-standard hover:bg-bg-subtle motion-safe:hover:translate-x-2 motion-safe:focus-within:translate-x-2 md:table-row md:py-0"
           >
             <td className="col-span-2 font-medium text-fg-strong md:py-4 md:pr-4 md:whitespace-nowrap">
-              {formatDateRange(row.startDate, row.endDate)}
+              {bigDate ? <BigDate start={row.startDate} end={row.endDate} /> : formatDateRange(row.startDate, row.endDate)}
             </td>
             {showTraining && row.training ? (
               <td className="col-span-2 md:py-4 md:pr-4">
@@ -76,7 +84,7 @@ export function ScheduleTable({
                   href={`/pelatihan/${row.training.slug}`}
                   className="underline-offset-4 outline-none hover:underline focus-visible:underline"
                 >
-                  {row.training.title}
+                  {displayTitle(row.training.title)}
                 </Link>
               </td>
             ) : null}
@@ -88,13 +96,33 @@ export function ScheduleTable({
               {row.price === null ? <span className="text-fg-muted">{PRICE_HIDDEN}</span> : formatRupiah(row.price)}
             </td>
             <td className="col-span-2 font-mono text-label uppercase tracking-[0.08em] text-fg-strong md:py-4">
-              <span className="sr-only md:hidden">Status: </span>
-              {STATUS_TEXT[row.status]}
+              <span className="inline-flex items-center gap-2">
+                <span aria-hidden className={cn("size-2 shrink-0 rounded-full", STATUS_DOT[row.status])} />
+                <span>
+                  <span className="sr-only md:hidden">Status: </span>
+                  {STATUS_TEXT[row.status]}
+                </span>
+              </span>
             </td>
           </tr>
         ))}
       </RevealRows>
     </table>
+  );
+}
+
+function BigDate({ start, end }: { start: string; end: string }) {
+  const { day, monthYear } = dateBadgeParts(start);
+  return (
+    <span className="flex flex-col items-start gap-2">
+      {/* Palet C: kotak tanggal --primary / --on-primary. */}
+      <span aria-hidden className="flex w-20 flex-col items-center gap-1 rounded-md bg-primary px-2 py-2.5 text-on-primary">
+        <span className="text-[28px] leading-none font-semibold tracking-[-0.03em]">{day}</span>
+        <span className="font-mono text-[11px] leading-none font-medium uppercase tracking-[0.08em]">{monthYear}</span>
+      </span>
+      {/* Rentang lengkap tetap dibaca pembaca layar dan tampil kecil. */}
+      <span className="text-small font-normal text-fg-muted">{formatDateRange(start, end)}</span>
+    </span>
   );
 }
 

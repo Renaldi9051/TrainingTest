@@ -24,8 +24,20 @@ describe("trainingCreateSchema", () => {
       audience: [],
       facilities: null,
       faq: [],
+      level: null,
+      certificate: null,
       seo: { title: "", description: "", ogImageId: null },
     });
+  });
+
+  it("tingkat & sertifikat opsional (null = belum diisi)", () => {
+    expect(trainingCreateSchema.parse({ ...base, level: "BEGINNER", certificate: true })).toMatchObject({
+      level: "BEGINNER",
+      certificate: true,
+    });
+    expect(trainingCreateSchema.parse({ ...base, level: null, certificate: false })).toMatchObject({ level: null, certificate: false });
+    expect(trainingCreateSchema.safeParse({ ...base, level: "EXPERT" }).success).toBe(false);
+    expect(trainingCreateSchema.safeParse({ ...base, certificate: "ya" }).success).toBe(false);
   });
 
   it("minimal 1 kategori dan judul wajib", () => {
@@ -75,6 +87,31 @@ describe("trainingCreateSchema", () => {
   it("update kosong ditolak; update parsial diterima", () => {
     expect(trainingUpdateSchema.safeParse({}).success).toBe(false);
     expect(trainingUpdateSchema.parse({ title: "Baru" })).toMatchObject({ title: "Baru" });
+    // Field yang tidak dikirim tetap undefined (nilai lama di DB tidak disentuh).
+    const partial = trainingUpdateSchema.parse({ title: "Baru" });
+    expect(partial.level).toBeUndefined();
+    expect(partial.certificate).toBeUndefined();
+    expect(trainingUpdateSchema.parse({ level: null, certificate: null })).toMatchObject({ level: null, certificate: null });
+  });
+});
+
+describe("galeri pelatihan (imageIds)", () => {
+  const id = (n: number) => `0199b4d0-0000-7000-8000-0000000000${String(n).padStart(2, "0")}`;
+
+  it("default kosong; maks 6; tidak boleh dobel", () => {
+    expect(trainingCreateSchema.parse({ title: "KPI", categoryIds: [CATEGORY] }).imageIds).toEqual([]);
+    const six = [1, 2, 3, 4, 5, 6].map(id);
+    expect(trainingCreateSchema.safeParse({ title: "KPI", categoryIds: [CATEGORY], imageIds: six }).success).toBe(true);
+    expect(
+      trainingCreateSchema.safeParse({ title: "KPI", categoryIds: [CATEGORY], imageIds: [...six, id(7)] }).success,
+    ).toBe(false);
+    expect(
+      trainingCreateSchema.safeParse({ title: "KPI", categoryIds: [CATEGORY], imageIds: [id(1), id(1)] }).success,
+    ).toBe(false);
+  });
+
+  it("update hanya galeri diterima", () => {
+    expect(trainingUpdateSchema.safeParse({ imageIds: [] }).success).toBe(true);
   });
 });
 

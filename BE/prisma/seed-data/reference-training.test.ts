@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { slugSchema } from "../../src/lib/slug";
+import { trainingCreateSchema } from "../../src/lib/validators/training";
+import snapshot from "./reference-catalog.json";
 import {
+  hasReferenceTitle,
   POSTS_PER_CATEGORY,
   referenceCategories,
   referenceMenuCategories,
@@ -37,6 +40,20 @@ describe("snapshot katalog referensi", () => {
       expect(slugSchema.safeParse(post.slug).success, post.slug).toBe(true);
       expect(referenceTraining(post).categorySlugs.every((slug) => categories.has(slug)), post.slug).toBe(true);
     }
+  });
+
+  it("post tanpa judul tidak diimpor; yang lain lolos aturan judul admin", () => {
+    const untitled = snapshot.posts.filter((post) => !hasReferenceTitle(post)).map((post) => post.slug);
+    expect(untitled).toHaveLength(10);
+    expect(untitled).toContain("51634-2");
+    // Seed melewati post tanpa judul (seed-reference.ts); pilihan 10 per kategori juga tidak memuatnya.
+    expect(referencePosts.filter((post) => !hasReferenceTitle(post))).toEqual([]);
+    expect(hasReferenceTitle({ title: "  <b> </b> " })).toBe(false);
+    expect(hasReferenceTitle({ title: "Training KPI" })).toBe(true);
+    // Validator admin menolak judul kosong / spasi saja.
+    const CATEGORY = "0199b4d0-0000-7000-8000-000000000001";
+    expect(trainingCreateSchema.safeParse({ title: "", categoryIds: [CATEGORY] }).success).toBe(false);
+    expect(trainingCreateSchema.safeParse({ title: "   ", categoryIds: [CATEGORY] }).success).toBe(false);
   });
 
   it("menu Accounting menuju kategori yang ada dan artikel Finance & Treasury memiliki isi khusus", () => {

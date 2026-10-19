@@ -53,6 +53,7 @@ function row(extra: Record<string, unknown> = {}) {
     deletedAt: null,
     updatedById: null,
     categories: [{ categoryId: CATEGORY, category: { id: CATEGORY, slug: "sdm", name: "SDM", order: 0, deletedAt: null } }],
+    images: [],
     _count: { schedules: 0 },
     ...extra,
   };
@@ -73,6 +74,7 @@ beforeEach(() => {
   mock.training.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => {
     const fields = { ...data };
     delete fields.categories;
+    delete fields.images;
     return row(fields);
   });
   mock.training.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => row(data));
@@ -204,6 +206,82 @@ describe("updateTraining", () => {
     await updateTraining(ID, { categoryIds: [CATEGORY] }, "u1", now);
     expect(mock.trainingCategory.deleteMany).toHaveBeenCalledWith({ where: { trainingId: ID } });
     expect(mock.trainingCategory.createMany).toHaveBeenCalledWith({ data: [{ trainingId: ID, categoryId: CATEGORY }] });
+  });
+});
+
+describe("galeri pelatihan", () => {
+  const IMG = ["0199b4d0-0000-7000-8000-0000000000e1", "0199b4d0-0000-7000-8000-0000000000e2"];
+  const media = (id: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    path: `2026/10/${id}.webp`,
+    originalName: `${id}.jpg`,
+    mime: "image/webp",
+    size: 100,
+    width: 1600,
+    height: 1200,
+    alt: `Alt ${id}`,
+    folder: null,
+    variants: null,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+    updatedById: null,
+    ...extra,
+  });
+
+  it("create: galeri disimpan berurutan; gambar tanpa alt ditolak per index", async () => {
+    mock.media.findMany.mockResolvedValue(IMG.map((id) => ({ id, mime: "image/webp", alt: "Ada" })));
+    await createTraining(input({ imageIds: IMG }), "u1", now);
+    expect(mock.training.create.mock.calls[0][0].data.images).toEqual({
+      create: [
+        { mediaId: IMG[0], order: 0 },
+        { mediaId: IMG[1], order: 1 },
+      ],
+    });
+
+    mock.media.findMany.mockResolvedValue([
+      { id: IMG[0], mime: "image/webp", alt: "Ada" },
+      { id: IMG[1], mime: "image/webp", alt: "" },
+    ]);
+    await expect(createTraining(input({ imageIds: IMG }), "u1", now)).rejects.toMatchObject({
+      status: 422,
+      fields: { "imageIds.1": [expect.any(String)] },
+    });
+  });
+
+  it("update: galeri diganti utuh dalam transaksi; tanpa imageIds galeri tidak disentuh", async () => {
+    mock.media.findMany.mockResolvedValue(IMG.map((id) => ({ id, mime: "image/webp", alt: "Ada" })));
+    mock.training.findFirst.mockResolvedValueOnce(row());
+    await updateTraining(ID, { imageIds: [IMG[1], IMG[0]] }, "u1", now);
+    expect(mock.trainingImage.deleteMany).toHaveBeenCalledWith({ where: { trainingId: ID } });
+    expect(mock.trainingImage.createMany).toHaveBeenCalledWith({
+      data: [
+        { trainingId: ID, mediaId: IMG[1], order: 0 },
+        { trainingId: ID, mediaId: IMG[0], order: 1 },
+      ],
+    });
+
+    mock.trainingImage.deleteMany.mockClear();
+    mock.training.findFirst.mockResolvedValueOnce(row());
+    await updateTraining(ID, { title: "KPI baru" }, "u1", now);
+    expect(mock.trainingImage.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("DTO: gambar galeri di Sampah tidak ikut; duplikasi menyalin galeri aktif", async () => {
+    const images = [
+      { trainingId: ID, mediaId: IMG[0], order: 0, media: media(IMG[0], { deletedAt: now }) },
+      { trainingId: ID, mediaId: IMG[1], order: 1, media: media(IMG[1]) },
+    ];
+    mock.training.findFirst.mockResolvedValueOnce(row({ images })).mockResolvedValue(null);
+    const copy = await duplicateTraining(ID, "u1");
+    expect(mock.training.create.mock.calls[0][0].data.images).toEqual({ create: [{ mediaId: IMG[1], order: 0 }] });
+    expect(copy.imageIds).toEqual([]);
+
+    mock.training.findFirst.mockResolvedValueOnce(row({ images }));
+    mock.training.update.mockImplementationOnce(async () => row({ images }));
+    const updated = await updateTraining(ID, { title: "KPI" }, "u1", now);
+    expect(updated.imageIds).toEqual([IMG[1]]);
+    expect(updated.images.map((image) => image.alt)).toEqual([`Alt ${IMG[1]}`]);
   });
 });
 

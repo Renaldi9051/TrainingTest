@@ -45,9 +45,9 @@ export function getEnv(): Env {
   return cached;
 }
 
-// Hanya dipakai seed untuk membuat admin pertama, bukan syarat runtime server.
+// Hanya dipakai seed untuk membuat admin, bukan syarat runtime server. Tanpa email: hanya ada satu
+// admin dan login cukup dengan kata sandi.
 const seedEnvSchema = z.object({
-  ADMIN_EMAIL: z.email(),
   ADMIN_PASSWORD: z.string().min(12, "minimal 12 karakter"),
   ADMIN_NAME: z.string().trim().min(1),
 });

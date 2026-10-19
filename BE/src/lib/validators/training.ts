@@ -15,9 +15,13 @@ import {
 
 export const TRAINING_METHODS = ["ONLINE", "OFFLINE", "HYBRID"] as const;
 export const TRAINING_TYPES = ["PUBLIC", "IN_HOUSE"] as const;
+// null = belum diisi; publik menyembunyikan label tingkat.
+export const TRAINING_LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
+export type TrainingLevel = (typeof TRAINING_LEVELS)[number];
 
 const methodSchema = z.enum(TRAINING_METHODS, { error: "Metode tidak dikenal." });
 const typeSchema = z.enum(TRAINING_TYPES, { error: "Tipe tidak dikenal." });
+const levelSchema = z.enum(TRAINING_LEVELS, { error: "Tingkat tidak dikenal." });
 
 const categoryIdsSchema = z
   .array(idSchema)
@@ -30,6 +34,14 @@ const publishedAtSchema = z.iso
   .datetime({ offset: true, error: "Waktu publish tidak valid." })
   .transform((value) => new Date(value))
   .nullable();
+
+// Galeri foto kegiatan, terpisah dari sampul. Disimpan di tabel TrainingImage (urutan = urutan imageIds).
+// Admin diberi hint 4-6 gambar; galeri kosong boleh (blok disembunyikan di publik).
+export const TRAINING_IMAGES_MAX = 6;
+const imageIdsSchema = z
+  .array(idSchema)
+  .max(TRAINING_IMAGES_MAX, { error: `Galeri maksimal ${TRAINING_IMAGES_MAX} gambar.` })
+  .refine((ids) => new Set(ids).size === ids.length, { error: "Gambar tidak boleh dobel." });
 
 const trainingFields = {
   title: requiredText("Judul", 200),
@@ -45,9 +57,13 @@ const trainingFields = {
   duration: nullableText("Durasi", 100),
   method: methodSchema.nullable(),
   types: z.array(typeSchema).max(10).transform((types) => [...new Set(types)]),
+  level: levelSchema.nullable(),
+  // null = belum diisi; publik menyembunyikan fakta "Sertifikat".
+  certificate: z.boolean({ error: "Sertifikat harus ya atau tidak." }).nullable(),
   priceText: nullableText("Investasi", 200),
   showPrice: z.boolean(),
   coverId: idSchema.nullable(),
+  imageIds: imageIdsSchema,
   categoryIds: categoryIdsSchema,
   status: z.enum(["DRAFT", "PUBLISHED"], { error: "Status tidak dikenal." }),
   publishedAt: publishedAtSchema,
@@ -70,9 +86,12 @@ export const trainingCreateSchema = z.object({
   duration: trainingFields.duration.default(null),
   method: trainingFields.method.default(null),
   types: trainingFields.types.default([]),
+  level: trainingFields.level.default(null),
+  certificate: trainingFields.certificate.default(null),
   priceText: trainingFields.priceText.default(null),
   showPrice: trainingFields.showPrice.default(false),
   coverId: trainingFields.coverId.default(null),
+  imageIds: trainingFields.imageIds.default([]),
   status: trainingFields.status.default("DRAFT"),
   publishedAt: trainingFields.publishedAt.default(null),
   seo: seoSchema.default({ title: "", description: "", ogImageId: null }),
@@ -94,9 +113,12 @@ export const trainingUpdateSchema = z
     duration: trainingFields.duration,
     method: trainingFields.method.optional(),
     types: trainingFields.types.optional(),
+    level: trainingFields.level.optional(),
+    certificate: trainingFields.certificate.optional(),
     priceText: trainingFields.priceText,
     showPrice: trainingFields.showPrice.optional(),
     coverId: trainingFields.coverId.optional(),
+    imageIds: trainingFields.imageIds.optional(),
     categoryIds: trainingFields.categoryIds.optional(),
     status: trainingFields.status.optional(),
     publishedAt: trainingFields.publishedAt.optional(),

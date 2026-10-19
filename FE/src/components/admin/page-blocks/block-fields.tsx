@@ -292,7 +292,7 @@ export function BlockFields({ block, onChange, errors, media }: FieldsProps<Page
 const NO_ICON = "__none";
 
 // Pilihan ikon ringkas untuk item keunggulan (daftar ikon sama dengan kategori).
-function IconSelect({ id, value, onChange }: { id: string; value: string | null; onChange: (icon: string | null) => void }) {
+export function IconSelect({ id, value, onChange }: { id: string; value: string | null; onChange: (icon: string | null) => void }) {
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>Ikon</Label>

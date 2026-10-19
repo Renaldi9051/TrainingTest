@@ -76,15 +76,18 @@ describe("parseEnv", () => {
 });
 
 describe("parseSeedEnv", () => {
-  const seedEnv = { ADMIN_EMAIL: "admin@example.com", ADMIN_PASSWORD: "p".repeat(12), ADMIN_NAME: "Admin" };
+  const seedEnv = { ADMIN_PASSWORD: "p".repeat(12), ADMIN_NAME: "Admin" };
 
   it("menerima env admin yang lengkap", () => {
     expect(parseSeedEnv(seedEnv)).toEqual(seedEnv);
   });
 
-  it("menolak password pendek dan email tidak valid", () => {
-    expect(() => parseSeedEnv({ ...seedEnv, ADMIN_PASSWORD: "pendek" })).toThrow(/ADMIN_PASSWORD/);
-    expect(() => parseSeedEnv({ ...seedEnv, ADMIN_EMAIL: "bukan-email" })).toThrow(/ADMIN_EMAIL/);
+  it("menolak password di bawah 12 karakter", () => {
+    expect(() => parseSeedEnv({ ...seedEnv, ADMIN_PASSWORD: "p".repeat(11) })).toThrow(/ADMIN_PASSWORD/);
+  });
+
+  it("ADMIN_EMAIL tidak wajib lagi dan diabaikan kalau masih ada di .env lama", () => {
+    expect(parseSeedEnv({ ...seedEnv, ADMIN_EMAIL: "bukan-email" })).toEqual(seedEnv);
   });
 });
 

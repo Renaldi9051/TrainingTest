@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
-import { PageBlocks } from "@/components/public/page-blocks";
-import { PageIntro } from "@/components/public/page-intro";
+import { PageHero } from "@/components/public/page-hero";
+import { ProfileBlocks } from "@/components/public/profile-blocks";
 import { PreviewBanner } from "@/components/public/preview-banner";
-import { getPage } from "@/lib/api/public";
+import { getCategories, getPage } from "@/lib/api/public";
 import { getPagePreview } from "@/lib/api/preview";
 import type { PublicPage } from "@/lib/api/types";
 import { pageMetadata } from "@/lib/page-metadata";
@@ -28,14 +28,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProfilePage() {
-  const loaded = await loadProfile();
+  const [loaded, categories] = await Promise.all([loadProfile(), getCategories()]);
   if (!loaded) notFound();
   const { page, preview } = loaded;
+  // Chip "bidang unggulan" yang namanya sama dengan kategori jadi tautan ke landing kategori.
+  const categoryHrefs = new Map(
+    categories.map((category) => [category.name.trim().toLowerCase(), `/pelatihan/kategori/${category.slug}`]),
+  );
   return (
     <>
       {preview ? <PreviewBanner path="/profil" /> : null}
-      <PageIntro title={page.title} />
-      <PageBlocks blocks={page.blocks} />
+      <PageHero crumbs={[{ label: page.title }]} title={page.title} outline="Profil" />
+      <ProfileBlocks blocks={page.blocks} categoryHrefs={categoryHrefs} />
     </>
   );
 }

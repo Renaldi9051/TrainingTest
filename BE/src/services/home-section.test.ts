@@ -122,14 +122,14 @@ describe("updateHomeSection", () => {
     });
   });
 
-  it("gambar hero wajib alt: error di content.image", async () => {
+  it("slide hero tanpa alt (slide & media kosong): error di slide itu", async () => {
     mock.homeSection.findFirst.mockResolvedValue(section("HERO", { headline: "x" }, { id: ID }));
     mock.media.findMany.mockResolvedValue([{ id: MEDIA, mime: "image/webp", alt: "" }]);
     await expect(
-      updateHomeSection(ID, { content: { headline: "x", image: { mediaId: MEDIA } } }, "u1"),
+      updateHomeSection(ID, { content: { headline: "x", slides: [{ mediaId: MEDIA }] } }, "u1"),
     ).rejects.toMatchObject({
       status: 422,
-      fields: { "content.image": ["Gambar belum punya teks alt. Isi alt di media library dulu."] },
+      fields: { "content.slides.0": ["Gambar belum punya teks alt. Isi alt di media library dulu."] },
     });
   });
 
@@ -158,7 +158,7 @@ function queryCounts() {
 
 function manySections(copies: number) {
   return Array.from({ length: copies }, () => [
-    section("HERO", { headline: "x", image: { mediaId: MEDIA } }),
+    section("HERO", { headline: "x", slides: [{ mediaId: MEDIA }] }),
     section("SERVICES", { mode: "manual", ids: [uuid(1)] }),
     section("SERVICES", { mode: "auto", limit: 3 }),
     section("CATEGORIES", { mode: "auto", limit: 8 }),
@@ -241,6 +241,72 @@ describe("resolveHomeSections: isi", () => {
   it("isi tersimpan yang rusak dilewati", async () => {
     const result = await resolveHomeSections([section("CTA", { heading: 1 }), section("STATS", { items: [{ value: 2, label: "y" }] })], now);
     expect(result.map((item) => item.type)).toEqual(["STATS"]);
+  });
+});
+
+describe("resolveHomeSections: slide hero", () => {
+  const mediaRow = (id: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    path: `2026/10/${id}.webp`,
+    originalName: `${id}.jpg`,
+    mime: "image/webp",
+    size: 1000,
+    width: 2400,
+    height: 1350,
+    alt: "Alt dari media library",
+    folder: null,
+    variants: null,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+    updatedById: null,
+    ...extra,
+  });
+
+  it("slide di-resolve ke gambar publik; alt slide atau alt media; tautan kosong = null", async () => {
+    mock.media.findMany.mockResolvedValue([mediaRow(uuid(901)), mediaRow(uuid(902))]);
+    const [hero] = await resolveHomeSections(
+      [
+        section("HERO", {
+          headline: "Halo",
+          slides: [
+            { mediaId: uuid(901), alt: "", caption: "Pilot drone", href: "/pelatihan", hudLabel: "LOKASI / SLEMAN", focalX: 30, focalY: 70 },
+            { mediaId: uuid(902), alt: "Alt khusus slide" },
+          ],
+        }),
+      ],
+      now,
+    );
+    expect(hero.type).toBe("HERO");
+    if (hero.type !== "HERO") return;
+    expect(hero.slides).toHaveLength(2);
+    expect(hero.slides[0]).toMatchObject({
+      alt: "Alt dari media library",
+      caption: "Pilot drone",
+      href: "/pelatihan",
+      hudLabel: "LOKASI / SLEMAN",
+      focalX: 30,
+      focalY: 70,
+      image: { width: 2400, height: 1350, mime: "image/webp" },
+    });
+    expect(hero.slides[0].image.url).toContain(`${uuid(901)}.webp`);
+    expect(hero.slides[1]).toMatchObject({ alt: "Alt khusus slide", href: null, focalX: 50, focalY: 50 });
+    expect(hero).not.toHaveProperty("image");
+  });
+
+  it("slide dengan media terhapus atau bukan gambar dibuang", async () => {
+    mock.media.findMany.mockResolvedValue([mediaRow(uuid(903), { mime: "application/pdf" })]);
+    const [hero] = await resolveHomeSections(
+      [section("HERO", { headline: "Halo", slides: [{ mediaId: uuid(903) }, { mediaId: uuid(904) }] })],
+      now,
+    );
+    expect(hero.type === "HERO" && hero.slides).toEqual([]);
+  });
+
+  it("hero lama { image } dibaca sebagai satu slide", async () => {
+    mock.media.findMany.mockResolvedValue([mediaRow(uuid(905))]);
+    const [hero] = await resolveHomeSections([section("HERO", { headline: "Halo", image: { mediaId: uuid(905) } })], now);
+    expect(hero.type === "HERO" && hero.slides.map((slide) => slide.image.url)).toEqual([expect.stringContaining(uuid(905))]);
   });
 });
 

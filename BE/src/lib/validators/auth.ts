@@ -1,11 +1,7 @@
 import { z } from "zod";
 
+// Hanya kata sandi: panel admin dipakai satu admin, jadi tidak ada email untuk memilih akun.
 export const loginSchema = z.object({
-  email: z
-    .string({ error: "Email wajib diisi." })
-    .trim()
-    .toLowerCase()
-    .pipe(z.email({ error: "Format email tidak valid." })),
   password: z
     .string({ error: "Kata sandi wajib diisi." })
     .min(1, { error: "Kata sandi wajib diisi." })

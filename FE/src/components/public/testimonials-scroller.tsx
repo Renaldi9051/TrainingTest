@@ -2,13 +2,23 @@
 
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useId, useRef } from "react";
+import { IndexNumber } from "@/components/decor/index-number";
 import type { PublicTestimonial } from "@/lib/api/types";
 import { PublicImage } from "./public-image";
 
 // Testimoni dalam baris scroll-snap horizontal, tanpa autoplay (DESIGN 8.3). Bisa dipakai dengan
 // keyboard: wilayah scroll bisa difokus (panah kiri/kanan menggulir) dan tombol Sebelumnya/
 // Berikutnya menggulir satu kartu. Gulir halus dimatikan untuk prefers-reduced-motion.
-export function TestimonialsScroller({ testimonials, label }: { testimonials: PublicTestimonial[]; label: string }) {
+// decor: nomor raksasa mono di atas tiap kutipan (DESIGN.md 13).
+export function TestimonialsScroller({
+  testimonials,
+  label,
+  decor = true,
+}: {
+  testimonials: PublicTestimonial[];
+  label: string;
+  decor?: boolean;
+}) {
   const listId = useId();
   const scroller = useRef<HTMLUListElement>(null);
 
@@ -27,7 +37,7 @@ export function TestimonialsScroller({ testimonials, label }: { testimonials: Pu
         ref={scroller}
         tabIndex={0}
         aria-label={`${label}, gulir ke samping`}
-        className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-4 [scrollbar-width:thin]"
+        className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 [scrollbar-width:thin]"
       >
         {testimonials.map((testimonial, index) => (
           <li
@@ -35,6 +45,7 @@ export function TestimonialsScroller({ testimonials, label }: { testimonials: Pu
             className="w-[85%] shrink-0 snap-start border-t border-border pt-6 sm:w-[60%] lg:w-[calc((100%-48px)/3)]"
           >
             <figure className="flex h-full flex-col gap-6">
+              {decor ? <IndexNumber position={index + 1} /> : null}
               <blockquote className="text-body-lg text-fg">
                 <p>&ldquo;{testimonial.quote}&rdquo;</p>
               </blockquote>
@@ -61,7 +72,7 @@ export function TestimonialsScroller({ testimonials, label }: { testimonials: Pu
             type="button"
             aria-controls={listId}
             onClick={() => scrollByCard(-1)}
-            className="inline-flex size-10 items-center justify-center rounded-md border border-border-strong text-fg outline-none transition-colors duration-150 hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+            className="inline-flex size-10 items-center justify-center rounded-md border border-border-strong text-fg outline-none transition-colors duration-150 hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             <ChevronLeftIcon className="size-5" strokeWidth={1.5} aria-hidden />
             <span className="sr-only">Testimoni sebelumnya</span>
@@ -70,7 +81,7 @@ export function TestimonialsScroller({ testimonials, label }: { testimonials: Pu
             type="button"
             aria-controls={listId}
             onClick={() => scrollByCard(1)}
-            className="inline-flex size-10 items-center justify-center rounded-md border border-border-strong text-fg outline-none transition-colors duration-150 hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+            className="inline-flex size-10 items-center justify-center rounded-md border border-border-strong text-fg outline-none transition-colors duration-150 hover:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             <ChevronRightIcon className="size-5" strokeWidth={1.5} aria-hidden />
             <span className="sr-only">Testimoni berikutnya</span>

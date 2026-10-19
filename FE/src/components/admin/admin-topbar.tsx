@@ -104,7 +104,6 @@ function UserMenu({ user }: { user: AuthUser }) {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
           <p className="truncate text-small font-medium text-fg-strong">{user.name}</p>
-          <p className="truncate text-xs text-fg-muted">{user.email}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled={loggingOut} onSelect={() => void logout()}>

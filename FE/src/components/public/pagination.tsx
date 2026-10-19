@@ -11,7 +11,7 @@ export function pageWindow(page: number, totalPages: number): (number | "gap")[]
 }
 
 const itemClass =
-  "inline-flex h-10 min-w-10 items-center justify-center rounded-md px-3 font-mono text-small outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2";
+  "inline-flex h-10 min-w-10 items-center justify-center rounded-md px-3 font-mono text-small outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2";
 
 // Paginasi berbasis link (state di URL). hrefFor membentuk URL untuk nomor halaman tertentu.
 export function Pagination({ meta, hrefFor }: { meta: PaginationMeta; hrefFor: (page: number) => string }) {
@@ -21,7 +21,7 @@ export function Pagination({ meta, hrefFor }: { meta: PaginationMeta; hrefFor: (
   return (
     <nav aria-label="Halaman" className="flex items-center justify-between gap-4 border-t border-border pt-6">
       {page > 1 ? (
-        <Link href={hrefFor(page - 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:bg-bg-subtle")}>
+        <Link href={hrefFor(page - 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary")}>
           <ArrowLeftIcon className="size-4" strokeWidth={1.5} aria-hidden />
           <span className="font-sans">Sebelumnya</span>
         </Link>
@@ -40,7 +40,7 @@ export function Pagination({ meta, hrefFor }: { meta: PaginationMeta; hrefFor: (
                 href={hrefFor(item)}
                 aria-current={item === page ? "page" : undefined}
                 aria-label={`Halaman ${item}`}
-                className={cn(itemClass, item === page ? "bg-fg-strong text-inverse-fg" : "hover:bg-bg-subtle")}
+                className={cn(itemClass, item === page ? "bg-primary text-on-primary" : "hover:bg-bg-subtle hover:text-primary")}
               >
                 {item}
               </Link>
@@ -52,7 +52,7 @@ export function Pagination({ meta, hrefFor }: { meta: PaginationMeta; hrefFor: (
         {page} / {totalPages}
       </p>
       {page < totalPages ? (
-        <Link href={hrefFor(page + 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:bg-bg-subtle")}>
+        <Link href={hrefFor(page + 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary")}>
           <span className="font-sans">Berikutnya</span>
           <ArrowRightIcon className="size-4" strokeWidth={1.5} aria-hidden />
         </Link>

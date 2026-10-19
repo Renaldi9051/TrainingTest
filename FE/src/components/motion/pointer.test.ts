@@ -35,6 +35,10 @@ describe("indicatorBox", () => {
   it("line: garis 1 px tepat di bawah elemen aktif", () => {
     expect(indicatorBox("line", chip)).toEqual({ left: 40, top: 40, width: 72, height: 1 });
   });
+  it("line: tebal garis bisa diatur (palet C: menu 2 px, tab 3 px), tetap tepat di bawah", () => {
+    expect(indicatorBox("line", chip, 3)).toEqual({ left: 40, top: 40, width: 72, height: 3 });
+    expect(indicatorBox("pill", chip, 3)).toEqual(chip);
+  });
 });
 
 describe("flipTransform", () => {

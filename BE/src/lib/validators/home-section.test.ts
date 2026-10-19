@@ -7,6 +7,7 @@ import {
   homeSectionCreateSchema,
   homeSectionMediaRefs,
   homeSectionUpdateSchema,
+  legacyHeroToSlides,
   parseHomeSectionContent,
   safeParseHomeSectionContent,
   SINGLE_INSTANCE_TYPES,
@@ -15,6 +16,7 @@ import {
 const ID_A = "0199b4d0-0000-7000-8000-00000000000a";
 const ID_B = "0199b4d0-0000-7000-8000-00000000000b";
 const MEDIA = "0199b4d0-0000-7000-8000-0000000000aa";
+const MEDIA_2 = "0199b4d0-0000-7000-8000-0000000000bb";
 
 // Contoh isi terlengkap per type (semua field, termasuk media) untuk test kesesuaian ekstraktor.
 const FULL: Record<(typeof HOME_SECTION_TYPES)[number], unknown> = {
@@ -27,7 +29,18 @@ const FULL: Record<(typeof HOME_SECTION_TYPES)[number], unknown> = {
     searchPlaceholder: "Cari pelatihan",
     primaryCta: { label: "Lihat pelatihan", href: "/pelatihan" },
     secondaryCta: { label: "Hubungi kami", href: "mailto:halo@example.com" },
-    image: { mediaId: MEDIA },
+    layout: "split",
+    intervalMs: 8000,
+    photoStyle: "grayscale",
+    showViewfinder: false,
+    showBadge: true,
+    badgeText: "Konsultasi gratis",
+    badgeHref: "/kontak",
+    slides: [
+      { mediaId: MEDIA, alt: "", caption: "Pilot drone dasar", href: "/pelatihan", hudLabel: "LOKASI / SLEMAN", focalX: 40, focalY: 60 },
+      { mediaId: MEDIA_2, alt: "Kelas di studio", caption: "", href: "", hudLabel: "", focalX: 50, focalY: 50 },
+    ],
+    decor: false,
   },
   STATS: { eyebrow: "", heading: "Angka", items: [{ value: 100, prefix: "", suffix: "+", label: "Trainer" }] },
   SERVICES: { heading: "Layanan", mode: "manual", ids: [ID_A, ID_B], limit: 4, cta: { label: "Semua", href: "/layanan" } },
@@ -63,17 +76,24 @@ describe("skema per type", () => {
       limit: 4,
       ids: [],
       cta: null,
+      decor: true,
     });
     expect(parseHomeSectionContent("HERO", { headline: "Halo" })).toMatchObject({
       headline: "Halo",
       rotatingWords: [],
       showSearch: true,
       primaryCta: null,
-      image: null,
+      layout: "fullbleed",
+      intervalMs: 6000,
+      photoStyle: "color",
+      showViewfinder: true,
+      showBadge: false,
+      slides: [],
+      decor: true,
     });
     expect(parseHomeSectionContent("UPCOMING_SCHEDULES", {})).toMatchObject({ limit: 5, cta: null });
     // Dari judul layanan: tanpa teks sendiri tetap valid.
-    expect(parseHomeSectionContent("MARQUEE", { source: "services" })).toEqual({ heading: "", source: "services", items: [], limit: 6 });
+    expect(parseHomeSectionContent("MARQUEE", { source: "services" })).toEqual({ heading: "", source: "services", items: [], limit: 6, decor: true });
   });
 
   it("type tidak dikenal ditolak", () => {
@@ -106,7 +126,15 @@ describe("validasi isi", () => {
       { headline: "x", secondaryCta: { label: "Klik", href: "data:text/html,x" } },
       ["secondaryCta", "href"],
     ],
-    ["HERO gambar bukan uuid", "HERO", { headline: "x", image: { mediaId: "logo.png" } }, ["image", "mediaId"]],
+    ["HERO gambar slide bukan uuid", "HERO", { headline: "x", slides: [{ mediaId: "logo.png" }] }, ["slides", 0, "mediaId"]],
+    ["HERO interval < 4 detik", "HERO", { headline: "x", intervalMs: 3000 }, ["intervalMs"]],
+    ["HERO interval > 10 detik", "HERO", { headline: "x", intervalMs: 12000 }, ["intervalMs"]],
+    ["HERO titik fokus > 100", "HERO", { headline: "x", slides: [{ mediaId: MEDIA, focalX: 120 }] }, ["slides", 0, "focalX"]],
+    ["HERO tautan slide javascript:", "HERO", { headline: "x", slides: [{ mediaId: MEDIA, href: "javascript:alert(1)" }] }, ["slides", 0, "href"]],
+    ["HERO badge tanpa teks", "HERO", { headline: "x", showBadge: true, badgeHref: "/kontak" }, ["badgeText"]],
+    ["HERO badge tanpa tautan", "HERO", { headline: "x", showBadge: true, badgeText: "Konsultasi" }, ["badgeHref"]],
+    ["HERO gambar dobel", "HERO", { headline: "x", slides: [{ mediaId: MEDIA }, { mediaId: MEDIA }] }, ["slides", 1, "mediaId"]],
+    ["HERO layout tidak dikenal", "HERO", { headline: "x", layout: "carousel" }, ["layout"]],
     ["STATS kosong", "STATS", { items: [] }, ["items"]],
     ["STATS angka negatif", "STATS", { items: [{ value: -1, label: "x" }] }, ["items", 0, "value"]],
     ["STATS > 6", "STATS", { items: Array.from({ length: 7 }, () => ({ value: 1, label: "x" })) }, ["items"]],
@@ -199,10 +227,81 @@ describe("homeSectionMediaRefs", () => {
     }
   });
 
-  it("gambar hero bertipe image dan wajib alt", () => {
+  it("gambar slide hero bertipe image; alt media wajib hanya kalau alt slide kosong", () => {
     const section = homeSectionContentSchema.parse({ type: "HERO", content: FULL.HERO });
     expect(homeSectionMediaRefs(section)).toEqual([
-      { path: "image", mediaId: MEDIA, kind: "image", requireAlt: true },
+      { path: "slides.0", mediaId: MEDIA, kind: "image", requireAlt: true },
+      { path: "slides.1", mediaId: MEDIA_2, kind: "image", requireAlt: false },
     ]);
+  });
+});
+
+// Data hero lama (Fase 3 v0.1) dibaca sebagai bentuk slides tanpa kehilangan teks atau CTA.
+describe("hero lama -> slides (preprocess)", () => {
+  // Persis isi hero di training_dev (15 Okt 2026): tanpa gambar.
+  const DEV_HERO = {
+    image: null,
+    eyebrow: "Training provider",
+    headline: "Tambah pengetahuan, tingkatkan kemampuan",
+    primaryCta: { href: "/pelatihan", label: "Dapatkan harga spesial" },
+    showSearch: true,
+    subheadline: "Pelatihan drone dan industri kreatif, dari pilot drone dan pemetaan udara sampai fotografi, videografi, dan desain, dipandu praktisi aktif.",
+    secondaryCta: null,
+    rotatingWords: ["terbang", "berkarya", "berbisnis"],
+    searchPlaceholder: "Cari pelatihan, mis. pemetaan drone",
+  };
+
+  it("hero dev tanpa gambar: slides kosong, semua teks & CTA utuh, field baru default", () => {
+    const text = Object.fromEntries(Object.entries(DEV_HERO).filter(([key]) => key !== "image"));
+    expect(parseHomeSectionContent("HERO", DEV_HERO)).toEqual({
+      ...text,
+      layout: "fullbleed",
+      intervalMs: 6000,
+      photoStyle: "color",
+      showViewfinder: true,
+      showBadge: false,
+      badgeText: "",
+      badgeHref: "",
+      slides: [],
+      decor: true,
+    });
+  });
+
+  it("hero lama dengan gambar: gambar jadi slides[0] (alt kosong = alt media), teks utuh", () => {
+    const parsed = parseHomeSectionContent("HERO", { ...DEV_HERO, image: { mediaId: MEDIA } });
+    expect(parsed.slides).toEqual([{ mediaId: MEDIA, alt: "", caption: "", href: "", hudLabel: "", focalX: 50, focalY: 50 }]);
+    expect(parsed).toMatchObject({ headline: DEV_HERO.headline, primaryCta: DEV_HERO.primaryCta, rotatingWords: DEV_HERO.rotatingWords });
+    expect(parsed).not.toHaveProperty("image");
+  });
+
+  it("isi yang sudah memakai slides tidak diubah preprocess", () => {
+    const value = { headline: "x", slides: [], image: { mediaId: MEDIA } };
+    expect(legacyHeroToSlides(value)).toBe(value);
+  });
+
+  it("isi tersimpan yang rusak tetap null (dilewati di publik)", () => {
+    expect(safeParseHomeSectionContent("HERO", { image: { mediaId: MEDIA } })).toBeNull();
+  });
+});
+
+describe("decor per section", () => {
+  it("semua type punya decor, default menyala (data lama tanpa field)", () => {
+    const minimal: Record<(typeof HOME_SECTION_TYPES)[number], unknown> = {
+      HERO: { headline: "x" },
+      STATS: { items: [{ value: 1, label: "Satu" }] },
+      SERVICES: {},
+      CATEGORIES: {},
+      LATEST_TRAININGS: {},
+      UPCOMING_SCHEDULES: {},
+      CLIENTS: {},
+      VISION_MISSION: { vision: "Visi", mission: ["Misi"] },
+      TESTIMONIALS: {},
+      CTA: { heading: "Judul", primaryCta: { label: "Hubungi", href: "/kontak" } },
+      MARQUEE: { source: "services" },
+    };
+    for (const type of HOME_SECTION_TYPES) {
+      expect(parseHomeSectionContent(type, minimal[type]), type).toHaveProperty("decor", true);
+      expect(parseHomeSectionContent(type, { ...(minimal[type] as object), decor: false }), type).toHaveProperty("decor", false);
+    }
   });
 });

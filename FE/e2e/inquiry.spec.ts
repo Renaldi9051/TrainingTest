@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { E2E_BE_ORIGIN } from "./e2e-env";
 import { createTraining, deleteTraining, firstCategory, loginViaApi, ORIGIN, runId, type CreatedTraining } from "./helpers";
 
-// Inquiry (Fase 4.2): form di detail pelatihan (dialog, pelatihan terisi) dan /kontak, persetujuan
+// Inquiry (Fase 4.2): form di detail pelatihan (section inline #inquiry, pelatihan terisi) dan /kontak, persetujuan
 // data wajib, error per field dari BE, honeypot, rate limit per IP, admin (status, catatan, CSV)
 // dan dashboard. Rate limit BE in-memory: tes API (honeypot, rate limit) memanggil BE e2e langsung
 // dengan X-Forwarded-For sendiri (TRUST_PROXY_HOPS=1), supaya tidak menghabiskan jatah IP browser.
@@ -44,34 +44,39 @@ test.describe("inquiry", () => {
     if (privacyPageId) await request.delete(`/api/admin/pages/${privacyPageId}`, { headers: HEADERS });
   });
 
-  test("detail pelatihan: dialog dengan pelatihan terisi, persetujuan wajib, error WA dari BE, terkirim, Esc mengembalikan fokus", async ({ page }) => {
+  test("detail pelatihan: form inline #inquiry dengan pelatihan terisi, persetujuan wajib, error WA dari BE, terkirim", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`/pelatihan/${training.slug}`);
-    const trigger = page.getByRole("complementary", { name: "Daftar & konsultasi" }).getByRole("button", { name: "Minta penawaran in-house" });
-    await trigger.click();
-    const dialog = page.getByRole("dialog", { name: "Minta penawaran in-house" });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByText(`[UJI] Inquiry ${id}`)).toBeVisible();
-    await expect(dialog.getByRole("link", { name: "Kebijakan Privasi" })).toHaveAttribute("href", "/kebijakan-privasi");
+    // Tombol "Kirim inquiry" di kartu samping menuju section inline (bukan dialog).
+    await page.getByRole("complementary", { name: "Ringkasan pendaftaran" }).getByRole("link", { name: "Kirim inquiry" }).click();
+    await expect(page).toHaveURL(/#inquiry$/);
+    const section = page.locator("#inquiry");
+    await expect(section.getByRole("heading", { level: 2, name: "Tanya atau daftar pelatihan ini" })).toBeInViewport();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(section.getByText(`[UJI] Inquiry ${id}`)).toBeVisible();
+    await expect(section.getByRole("link", { name: "Kebijakan Privasi" })).toHaveAttribute("href", "/kebijakan-privasi");
+    // Pelatihan tanpa sesi: pilihan sesi tidak tampil.
+    await expect(section.getByLabel("Sesi (opsional)")).toHaveCount(0);
 
-    await fill(page, dialog, { name: `[UJI] Pengirim ${id}`, email: `uji-${id}@example.com`, phone: "12ab", message: "=1+1 tolong penawaran" });
+    await fill(page, section, { name: `[UJI] Pengirim ${id}`, email: `uji-${id}@example.com`, phone: "12ab", message: "=1+1 tolong penawaran" });
     // Tanpa centang persetujuan: browser menahan kirim (required).
-    await dialog.getByRole("button", { name: "Kirim pesan" }).click();
-    await expect(dialog.getByRole("checkbox")).toHaveJSProperty("validity.valueMissing", true);
-    await dialog.getByRole("checkbox").check();
-    await dialog.getByRole("button", { name: "Kirim pesan" }).click();
+    await section.getByRole("button", { name: "Kirim pesan" }).click();
+    await expect(section.getByRole("checkbox")).toHaveJSProperty("validity.valueMissing", true);
+    await section.getByRole("checkbox").check();
+    await section.getByRole("button", { name: "Kirim pesan" }).click();
     // Error per field dari BE (format WA), fokus ke field itu.
-    const phone = dialog.getByLabel("Nomor WhatsApp (opsional)");
+    const phone = section.getByLabel("Nomor WhatsApp (opsional)");
     await expect(phone).toHaveAttribute("aria-invalid", "true");
     await expect(phone).toBeFocused();
-    await expect(dialog.getByText(/Nomor WhatsApp hanya boleh/)).toBeVisible();
+    await expect(section.getByText(/Nomor WhatsApp hanya boleh/)).toBeVisible();
 
     await phone.fill("0812-0000-0099");
-    await dialog.getByRole("button", { name: "Kirim pesan" }).click();
-    await expect(dialog.getByRole("status")).toContainText("Terima kasih, pesan terkirim.");
-    await page.keyboard.press("Escape");
-    await expect(dialog).toBeHidden();
-    await expect(trigger).toBeFocused();
+    await section.getByRole("button", { name: "Kirim pesan" }).click();
+    // Status TERKIRIM (tanpa nomor inquiry), lalu bisa kirim pesan lain.
+    await expect(section.getByRole("status")).toContainText("Terkirim");
+    await expect(section.getByRole("status")).toContainText("Terima kasih, pesan terkirim.");
+    await section.getByRole("button", { name: "Kirim pesan lain" }).click();
+    await expect(section.getByRole("button", { name: "Kirim pesan" })).toBeVisible();
   });
 
   test("/kontak?pelatihan=<slug>: pelatihan terisi otomatis dan bisa dilepas", async ({ page }) => {

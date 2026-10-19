@@ -14,6 +14,7 @@ import type { RestoreInput, SeoInput } from "@/lib/validators/common";
 import type {
   TrainingBulkInput,
   TrainingCreateInput,
+  TrainingLevel,
   TrainingListQuery,
   TrainingUpdateInput,
 } from "@/lib/validators/training";
@@ -29,7 +30,14 @@ import {
 } from "@/lib/validators/training-content";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
 import type { OptionsQuery } from "@/lib/validators/options";
-import { assertMediaRefs, getMediaMap, thumbnailUrl, toMediaDto, type MediaDto } from "@/services/media";
+import {
+  activeMediaDto,
+  assertMediaRefs,
+  getMediaMap,
+  thumbnailUrl,
+  toMediaDto,
+  type MediaDto,
+} from "@/services/media";
 import { withSelected, type OptionItem } from "@/services/options";
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
 import { trainingIssueWhere } from "@/services/dashboard";
@@ -51,9 +59,12 @@ const AUDIT_FIELDS = [
   "duration",
   "method",
   "types",
+  "level",
+  "certificate",
   "priceText",
   "showPrice",
   "coverId",
+  "imageIds",
   "status",
   "publishedAt",
   "seo",
@@ -62,6 +73,7 @@ const AUDIT_FIELDS = [
 
 const adminInclude = {
   cover: true,
+  images: { orderBy: { order: "asc" }, include: { media: true } },
   categories: {
     include: { category: { select: { id: true, slug: true, name: true, order: true, deletedAt: true } } },
   },
@@ -102,9 +114,14 @@ export type TrainingDto = TrainingListItem & {
   facilities: string[] | null;
   faq: FaqItem[];
   duration: string | null;
+  level: TrainingLevel | null;
+  certificate: boolean | null;
   priceText: string | null;
   showPrice: boolean;
   coverId: string | null;
+  // Galeri berurutan, terpisah dari sampul; gambar yang sudah di Sampah tidak ikut.
+  imageIds: string[];
+  images: MediaDto[];
   seo: TrainingSeo;
   ogImage: MediaDto | null;
   createdAt: Date;
@@ -152,9 +169,14 @@ function toListItem(row: TrainingRow, now: Date): TrainingListItem {
   };
 }
 
+function activeImages(row: TrainingRow): MediaDto[] {
+  return row.images.flatMap((link) => activeMediaDto(link.media) ?? []);
+}
+
 async function toDto(row: TrainingRow, now = new Date()): Promise<TrainingDto> {
   const seo = parseSeo(row.seo);
   const media = await getMediaMap([seo.ogImageId]);
+  const images = activeImages(row);
   return {
     ...toListItem(row, now),
     summary: row.summary,
@@ -166,9 +188,13 @@ async function toDto(row: TrainingRow, now = new Date()): Promise<TrainingDto> {
     facilities: readFacilities(row.facilities),
     faq: readFaq(row.faq),
     duration: row.duration,
+    level: row.level,
+    certificate: row.certificate,
     priceText: row.priceText,
     showPrice: row.showPrice,
     coverId: row.coverId,
+    imageIds: images.map((image) => image.id),
+    images,
     seo,
     ogImage: seo.ogImageId ? (media.get(seo.ogImageId) ?? null) : null,
     createdAt: row.createdAt,
@@ -183,10 +209,24 @@ export const trainingSlugLookup: SlugLookup = async (args) =>
 
 const slugLookup = trainingSlugLookup;
 
-// Bentuk untuk audit/diff: kolom + daftar id kategori.
+// Bentuk untuk audit/diff: kolom + daftar id kategori & galeri.
 function auditShape(row: TrainingRow | null) {
   if (!row) return null;
-  return { ...row, categoryIds: activeCategories(row).map((category) => category.id) };
+  return {
+    ...row,
+    categoryIds: activeCategories(row).map((category) => category.id),
+    imageIds: activeImages(row).map((image) => image.id),
+  };
+}
+
+// Setiap gambar galeri: media gambar aktif yang sudah punya alt. Error per index, mis. imageIds.2.
+function galleryRefs(imageIds: string[] | undefined) {
+  return (imageIds ?? []).map((mediaId, index) => ({
+    field: `imageIds.${index}`,
+    mediaId,
+    kind: "image" as const,
+    requireAlt: true,
+  }));
 }
 
 // ===== List & detail =====
@@ -306,6 +346,7 @@ export async function createTraining(
   await assertMediaRefs([
     { field: "coverId", mediaId: input.coverId, kind: "image", requireAlt: true },
     { field: "seo.ogImageId", mediaId: input.seo.ogImageId, kind: "image" },
+    ...galleryRefs(input.imageIds),
   ]);
 
   const slug = input.slug ?? (await nextAvailableSlug(slugLookup, slugify(input.title) || "pelatihan"));
@@ -329,6 +370,8 @@ export async function createTraining(
           duration: input.duration,
           method: input.method,
           types: input.types,
+          level: input.level,
+          certificate: input.certificate,
           priceText: input.priceText,
           showPrice: input.showPrice,
           coverId: input.coverId,
@@ -337,6 +380,7 @@ export async function createTraining(
           seo: seoJson(input.seo),
           updatedById: userId,
           categories: { create: input.categoryIds.map((categoryId) => ({ categoryId })) },
+          images: { create: input.imageIds.map((mediaId, index) => ({ mediaId, order: index })) },
         },
         include: adminInclude,
       });
@@ -373,6 +417,7 @@ export async function updateTraining(
   await assertMediaRefs([
     { field: "coverId", mediaId: input.coverId, kind: "image", requireAlt: true },
     { field: "seo.ogImageId", mediaId: input.seo?.ogImageId, kind: "image" },
+    ...galleryRefs(input.imageIds),
   ]);
 
   const status = input.status ?? before.status;
@@ -405,6 +450,8 @@ export async function updateTraining(
   if (input.duration !== undefined) data.duration = input.duration;
   if (input.method !== undefined) data.method = input.method;
   if (input.types !== undefined) data.types = input.types;
+  if (input.level !== undefined) data.level = input.level;
+  if (input.certificate !== undefined) data.certificate = input.certificate;
   if (input.priceText !== undefined) data.priceText = input.priceText;
   if (input.showPrice !== undefined) data.showPrice = input.showPrice;
   if (input.coverId !== undefined) data.coverId = input.coverId;
@@ -416,6 +463,13 @@ export async function updateTraining(
         await tx.trainingCategory.deleteMany({ where: { trainingId: id } });
         await tx.trainingCategory.createMany({
           data: input.categoryIds.map((categoryId) => ({ trainingId: id, categoryId })),
+        });
+      }
+      // Galeri diganti utuh sesuai urutan imageIds.
+      if (input.imageIds) {
+        await tx.trainingImage.deleteMany({ where: { trainingId: id } });
+        await tx.trainingImage.createMany({
+          data: input.imageIds.map((mediaId, index) => ({ trainingId: id, mediaId, order: index })),
         });
       }
       const row = await tx.training.update({ where: { id }, data, include: adminInclude });
@@ -515,6 +569,8 @@ export async function duplicateTraining(id: string, userId: string): Promise<Tra
           duration: source.duration,
           method: source.method,
           types: source.types,
+          level: source.level,
+          certificate: source.certificate,
           priceText: source.priceText,
           showPrice: source.showPrice,
           coverId: source.coverId,
@@ -524,6 +580,9 @@ export async function duplicateTraining(id: string, userId: string): Promise<Tra
           updatedById: userId,
           categories: {
             create: activeCategories(source).map((category) => ({ categoryId: category.id })),
+          },
+          images: {
+            create: activeImages(source).map((image, index) => ({ mediaId: image.id, order: index })),
           },
         },
         include: adminInclude,

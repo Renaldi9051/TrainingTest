@@ -36,7 +36,7 @@ const eslintConfig = defineConfig([
   { rules: boundaryRules },
   {
     // Satu-satunya tempat yang boleh membaca process.env (plus tooling e2e, bukan kode app).
-    files: ["src/lib/env.ts", "next.config.ts", "playwright.config.ts", "e2e/**"],
+    files: ["src/lib/env.ts", "next.config.ts", "playwright.config.ts", "playwright.screens.config.ts", "e2e/**"],
     rules: { "no-restricted-properties": "off" },
   },
   // Override default ignores of eslint-config-next.

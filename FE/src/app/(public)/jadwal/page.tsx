@@ -1,33 +1,50 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { PageHero } from "@/components/public/page-hero";
 import { ScheduleTableSkeleton } from "@/components/public/schedule-table";
 import { Container } from "@/components/ui/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { ScheduleList } from "./schedule-list";
+import { getSettings } from "@/lib/api/public";
+import { ScheduleList, ScheduleStats } from "./schedule-list";
 
 export const metadata: Metadata = {
   title: "Jadwal pelatihan",
   alternates: { canonical: "/jadwal" },
 };
 
-// Tampilan list + filter bulan, kota, kategori. Tampilan kalender menyusul (Fase 4).
-export default function SchedulePage({ searchParams }: PageProps<"/jadwal">) {
+// Label UI bawaan; diganti isi Pengaturan > Kepala halaman kalau diisi.
+const DEFAULT_TITLE = "Jadwal pelatihan";
+
+// Jadwal (mockup jadwal.html): filter bulan, kota, kategori; tampilan list atau kalender bulanan.
+export default async function SchedulePage({ searchParams }: PageProps<"/jadwal">) {
+  const settings = await getSettings();
+  const header = settings.pageHeaders.jadwal;
   return (
-    <Container className="py-16 md:py-24">
-      <Eyebrow data-page-enter="">Jadwal</Eyebrow>
-      <h1 data-page-enter="" className="mt-4 text-[36px] leading-[1.05] font-semibold tracking-[-0.03em] text-fg-strong md:text-[56px]">
-        Jadwal pelatihan
-      </h1>
-      <Suspense
-        fallback={
-          <div className="mt-10 space-y-8">
-            <div className="h-20 max-w-3xl bg-bg-muted" />
-            <ScheduleTableSkeleton rows={8} />
-          </div>
+    <>
+      <PageHero
+        crumbs={[{ label: "Jadwal" }]}
+        eyebrow={header.eyebrow || undefined}
+        title={header.heading || DEFAULT_TITLE}
+        lead={header.lead || null}
+        outline="Jadwal"
+        aside={
+          // Angka bergantung pada tanggal hari ini: di-stream; kosong (0) tidak tampil.
+          <Suspense fallback={null}>
+            <ScheduleStats />
+          </Suspense>
         }
-      >
-        <ScheduleList searchParams={searchParams} />
-      </Suspense>
-    </Container>
+      />
+      <Container className="pt-8 pb-24 md:pb-32">
+        <Suspense
+          fallback={
+            <div className="space-y-8">
+              <div className="h-20 max-w-3xl bg-bg-muted" />
+              <ScheduleTableSkeleton rows={8} />
+            </div>
+          }
+        >
+          <ScheduleList searchParams={searchParams} />
+        </Suspense>
+      </Container>
+    </>
   );
 }

@@ -23,7 +23,7 @@ import { nextOrder } from "@/services/reorder";
 import { whatsappUrl } from "@/services/settings";
 
 const ENTITY = "MarketingContact";
-const AUDIT_FIELDS = ["name", "photoId", "phone", "defaultMessage", "active"] as const;
+const AUDIT_FIELDS = ["name", "area", "photoId", "phone", "defaultMessage", "active"] as const;
 
 type MarketingRow = MarketingContact & { photo: Media | null };
 const include = { photo: true } satisfies Prisma.MarketingContactInclude;
@@ -31,6 +31,7 @@ const include = { photo: true } satisfies Prisma.MarketingContactInclude;
 export type MarketingDto = {
   id: string;
   name: string;
+  area: string | null;
   phone: string;
   defaultMessage: string | null;
   photoId: string | null;
@@ -45,6 +46,7 @@ function toDto(row: MarketingRow): MarketingDto {
   return {
     id: row.id,
     name: row.name,
+    area: row.area,
     phone: row.phone,
     defaultMessage: row.defaultMessage,
     photoId: row.photoId,
@@ -121,6 +123,7 @@ export async function createMarketing(input: MarketingCreateInput, userId: strin
     const row = await tx.marketingContact.create({
       data: {
         name: input.name,
+        area: input.area,
         photoId: input.photoId,
         phone: input.phone,
         defaultMessage: input.defaultMessage,
@@ -151,6 +154,7 @@ export async function updateMarketing(id: string, input: MarketingUpdateInput, u
   await assertImageMedia({ photoId: input.photoId ?? null });
   const data: Prisma.MarketingContactUncheckedUpdateInput = { updatedById: userId };
   if (input.name !== undefined) data.name = input.name;
+  if (input.area !== undefined) data.area = input.area;
   if (input.photoId !== undefined) data.photoId = input.photoId;
   if (input.phone !== undefined) data.phone = input.phone;
   if (input.defaultMessage !== undefined) data.defaultMessage = input.defaultMessage;
@@ -208,6 +212,8 @@ export async function restoreMarketing(id: string, userId: string): Promise<Mark
 // Hanya kontak aktif. Nomor dipakai untuk tautan WhatsApp, jadi memang publik.
 export type PublicMarketingContact = {
   name: string;
+  // null = tidak tampil.
+  area: string | null;
   phone: string;
   whatsappUrl: string | null;
   defaultMessage: string | null;
@@ -217,6 +223,7 @@ export type PublicMarketingContact = {
 export function toPublicMarketing(row: MarketingRow): PublicMarketingContact {
   return {
     name: row.name,
+    area: row.area,
     phone: row.phone,
     whatsappUrl: whatsappUrl(row.phone, row.defaultMessage ?? undefined),
     defaultMessage: row.defaultMessage,

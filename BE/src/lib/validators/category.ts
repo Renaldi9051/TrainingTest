@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { listQuerySchema } from "@/lib/list-query";
 import { optionalSlugSchema } from "@/lib/slug";
-import { nullableText, requiredText } from "@/lib/validators/common";
+import { idSchema, nullableText, requiredText } from "@/lib/validators/common";
 
 // Nama ikon lucide (kebab-case) yang boleh dipakai kategori. FE memetakan nama yang sama ke
 // komponen ikon di FE/src/lib/category-icons.ts; ubah keduanya bersamaan.
@@ -68,6 +68,8 @@ export const categoryCreateSchema = z.object({
   description: nullableText("Deskripsi", 1000).default(null),
   icon: iconSchema.default(null),
   featured: z.boolean().default(false),
+  // Gambar kategori (media library, alt wajib): fallback sampul pelatihan tanpa cover.
+  imageId: idSchema.nullable().default(null),
 });
 export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
 
@@ -78,13 +80,15 @@ export const categoryUpdateSchema = z
     description: nullableText("Deskripsi", 1000),
     icon: iconSchema.optional(),
     featured: z.boolean().optional(),
+    imageId: idSchema.nullable().optional(),
   })
   .refine((value) => Object.values(value).some((field) => field !== undefined), {
     error: "Tidak ada perubahan yang dikirim.",
   });
 export type CategoryUpdateInput = z.infer<typeof categoryUpdateSchema>;
 
-export const CATEGORY_SORT_FIELDS = ["order", "name", "updatedAt", "createdAt"] as const;
+// trainingCount = jumlah pelatihan aktif (bukan di Sampah), dihitung di service.
+export const CATEGORY_SORT_FIELDS = ["order", "name", "updatedAt", "createdAt", "trainingCount"] as const;
 
 export const categoryListQuerySchema = listQuerySchema({
   sortFields: CATEGORY_SORT_FIELDS,
@@ -94,6 +98,8 @@ export const categoryListQuerySchema = listQuerySchema({
       .enum(["true", "false"])
       .optional()
       .transform((value) => (value === undefined ? undefined : value === "true")),
+    // issue=no-image: kategori tanpa gambar.
+    issue: z.enum(["no-image"]).optional(),
   },
 });
 export type CategoryListQuery = z.infer<typeof categoryListQuerySchema>;

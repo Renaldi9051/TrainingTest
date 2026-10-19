@@ -13,7 +13,17 @@ import {
 } from "@/lib/slug";
 import type { ReorderInput, RestoreInput, SeoInput } from "@/lib/validators/common";
 import type { OptionsQuery } from "@/lib/validators/options";
-import type { ServiceCreateInput, ServiceListQuery, ServiceUpdateInput } from "@/lib/validators/service";
+import {
+  readServiceBenefits,
+  readServiceFaqs,
+  readServiceTrainingSelection,
+  type ServiceBenefit,
+  type ServiceCreateInput,
+  type ServiceFaq,
+  type ServiceListQuery,
+  type ServiceTrainingSelection,
+  type ServiceUpdateInput,
+} from "@/lib/validators/service";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
 import {
   activeMediaDto,
@@ -29,9 +39,24 @@ import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/
 import { nextOrder, reorderResource } from "@/services/reorder";
 import { resolveSelections, type Selection } from "@/services/selection";
 import { parseSeo, type TrainingSeo } from "@/services/training";
+import { cardInclude, toCard, type PublicTrainingCard } from "@/services/training-public";
+import { publicTrainingWhere } from "@/services/training-visibility";
 
 const ENTITY = "Service";
-const AUDIT_FIELDS = ["slug", "title", "icon", "summary", "imageId", "status", "body", "seo"] as const;
+const AUDIT_FIELDS = [
+  "slug",
+  "title",
+  "tagline",
+  "icon",
+  "summary",
+  "imageId",
+  "status",
+  "body",
+  "benefits",
+  "faqs",
+  "trainingSelection",
+  "seo",
+] as const;
 
 type ServiceRow = Service & { image: Media | null };
 const include = { image: true } satisfies Prisma.ServiceInclude;
@@ -42,6 +67,7 @@ export type ServiceListItem = {
   id: string;
   slug: string;
   title: string;
+  tagline: string | null;
   icon: string | null;
   summary: string | null;
   image: MediaDto | null;
@@ -53,6 +79,9 @@ export type ServiceListItem = {
 export type ServiceDto = ServiceListItem & {
   body: RichTextDoc | null;
   imageId: string | null;
+  benefits: ServiceBenefit[];
+  faqs: ServiceFaq[];
+  trainingSelection: ServiceTrainingSelection;
   seo: TrainingSeo;
   ogImage: MediaDto | null;
   createdAt: Date;
@@ -63,6 +92,7 @@ function toListItem(row: ServiceRow): ServiceListItem {
     id: row.id,
     slug: row.slug,
     title: row.title,
+    tagline: row.tagline,
     icon: row.icon,
     summary: row.summary,
     image: activeMediaDto(row.image),
@@ -80,6 +110,9 @@ async function toDto(row: ServiceRow): Promise<ServiceDto> {
     // Disimpan setelah lolos allowlist rich text; dibaca apa adanya untuk editor.
     body: (row.body ?? null) as RichTextDoc | null,
     imageId: row.imageId,
+    benefits: readServiceBenefits(row.benefits),
+    faqs: readServiceFaqs(row.faqs),
+    trainingSelection: readServiceTrainingSelection(row.trainingSelection),
     seo,
     ogImage: seo.ogImageId ? (media.get(seo.ogImageId) ?? null) : null,
     createdAt: row.createdAt,
@@ -94,15 +127,23 @@ function bodyJson(body: RichTextDoc | null | undefined): Prisma.InputJsonValue |
   return body ? (body as unknown as Prisma.InputJsonValue) : Prisma.DbNull;
 }
 
+function selectionJson(selection: ServiceTrainingSelection): Prisma.InputJsonValue | typeof Prisma.DbNull {
+  return selection ? { mode: selection.mode, ids: selection.ids } : Prisma.DbNull;
+}
+
 function auditShape(row: Service) {
   return {
     slug: row.slug,
     title: row.title,
+    tagline: row.tagline,
     icon: row.icon,
     summary: row.summary,
     imageId: row.imageId,
     status: row.status,
     body: row.body,
+    benefits: row.benefits,
+    faqs: row.faqs,
+    trainingSelection: row.trainingSelection,
     seo: row.seo,
   };
 }
@@ -186,10 +227,14 @@ export async function createService(input: ServiceCreateInput, userId: string): 
         data: {
           slug,
           title: input.title,
+          tagline: input.tagline,
           icon: input.icon,
           summary: input.summary,
           body: bodyJson(input.body),
           imageId: input.imageId,
+          benefits: input.benefits,
+          faqs: input.faqs,
+          trainingSelection: selectionJson(input.trainingSelection),
           order,
           status: input.status,
           seo: seoJson(input.seo),
@@ -228,10 +273,14 @@ export async function updateService(id: string, input: ServiceUpdateInput, userI
   const data: Prisma.ServiceUncheckedUpdateInput = { updatedById: userId };
   if (input.title !== undefined) data.title = input.title;
   if (slugChanged) data.slug = input.slug;
+  if (input.tagline !== undefined) data.tagline = input.tagline;
   if (input.icon !== undefined) data.icon = input.icon;
   if (input.summary !== undefined) data.summary = input.summary;
   if (input.body !== undefined) data.body = bodyJson(input.body);
   if (input.imageId !== undefined) data.imageId = input.imageId;
+  if (input.benefits !== undefined) data.benefits = input.benefits;
+  if (input.faqs !== undefined) data.faqs = input.faqs;
+  if (input.trainingSelection !== undefined) data.trainingSelection = selectionJson(input.trainingSelection);
   if (input.status !== undefined) data.status = input.status;
   if (input.seo !== undefined) data.seo = seoJson(input.seo);
 
@@ -321,6 +370,8 @@ export async function reorderServices(input: ReorderInput, userId: string): Prom
 export type PublicServiceCard = {
   slug: string;
   title: string;
+  // null = tidak tampil.
+  tagline: string | null;
   icon: string | null;
   summary: string | null;
   image: PublicImage | null;
@@ -328,6 +379,11 @@ export type PublicServiceCard = {
 
 export type PublicServiceDetail = PublicServiceCard & {
   bodyHtml: string | null;
+  // Kosong = section disembunyikan.
+  benefits: ServiceBenefit[];
+  faqs: ServiceFaq[];
+  // Pelatihan terkait yang tampil publik, urutan pilihan admin (draft/terhapus tersaring).
+  trainings: PublicTrainingCard[];
   seo: { title: string; description: string; ogImage: PublicImage | null };
   updatedAt: Date;
 };
@@ -338,19 +394,40 @@ export function toPublicServiceCard(row: ServiceRow): PublicServiceCard {
   return {
     slug: row.slug,
     title: row.title,
+    tagline: row.tagline,
     icon: row.icon,
     summary: row.summary,
     image: toPublicImage(activeMediaDto(row.image)),
   };
 }
 
-async function toPublicDetail(row: ServiceRow): Promise<PublicServiceDetail> {
+// Pelatihan terkait (pilihan manual): hanya yang tampil publik saat ini, urutan pilihan dijaga.
+async function relatedTrainings(selection: ServiceTrainingSelection, now: Date): Promise<PublicTrainingCard[]> {
+  if (!selection) return [];
+  const rows = await getDb().training.findMany({
+    where: { id: { in: selection.ids }, ...publicTrainingWhere(now) },
+    include: cardInclude,
+  });
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  return selection.ids.flatMap((id) => {
+    const row = byId.get(id);
+    return row ? [toCard(row)] : [];
+  });
+}
+
+async function toPublicDetail(row: ServiceRow, now = new Date()): Promise<PublicServiceDetail> {
   const card = toPublicServiceCard(row);
   const seo = parseSeo(row.seo);
-  const media = await getMediaMap([seo.ogImageId]);
+  const [media, trainings] = await Promise.all([
+    getMediaMap([seo.ogImageId]),
+    relatedTrainings(readServiceTrainingSelection(row.trainingSelection), now),
+  ]);
   return {
     ...card,
     bodyHtml: renderRichText(row.body),
+    benefits: readServiceBenefits(row.benefits),
+    faqs: readServiceFaqs(row.faqs),
+    trainings,
     seo: {
       title: seo.title,
       description: seo.description,

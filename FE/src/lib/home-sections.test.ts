@@ -4,6 +4,11 @@ import { describe, expect, it } from "vitest";
 import { indexesFromFieldKeys } from "@/lib/form-errors";
 import {
   defaultContent,
+  focalFromPoint,
+  HERO_INTERVAL_DEFAULT_MS,
+  HERO_INTERVAL_MAX_MS,
+  HERO_INTERVAL_MIN_MS,
+  HERO_SLIDES_MAX,
   HOME_SECTION_TYPES,
   isContentHref,
   ROTATING_WORDS_MAX,
@@ -20,6 +25,10 @@ describe("sinkron dengan BE", () => {
   it("batas kata kunci, statistik, dan limit pilihan", () => {
     expect(be).toMatch(new RegExp(`export const ROTATING_WORDS_MAX = ${ROTATING_WORDS_MAX};`));
     expect(be).toMatch(new RegExp(`export const STATS_MAX = ${STATS_MAX};`));
+    expect(be).toContain(`export const HERO_SLIDES_MAX = ${HERO_SLIDES_MAX};`);
+    expect(be).toContain(`export const HERO_INTERVAL_MIN_MS = ${HERO_INTERVAL_MIN_MS};`);
+    expect(be).toContain(`export const HERO_INTERVAL_MAX_MS = ${HERO_INTERVAL_MAX_MS};`);
+    expect(be).toContain(`export const HERO_INTERVAL_DEFAULT_MS = ${HERO_INTERVAL_DEFAULT_MS};`);
     for (const { defaultLimit, maxLimit } of Object.values(SELECTION_LIMITS)) {
       expect(be).toContain(`selectionFields({ defaultLimit: ${defaultLimit}, maxLimit: ${maxLimit} })`);
     }
@@ -49,7 +58,7 @@ describe("validasi form", () => {
     expect(sectionFormSchema("MARQUEE").safeParse({ ...base, content: defaultContent("MARQUEE") }).success).toBe(true);
     const custom = sectionFormSchema("MARQUEE").safeParse({
       ...base,
-      content: { heading: "", source: "custom", items: ["BNSP"], limit: 6 },
+      content: { heading: "", source: "custom", items: ["BNSP"], limit: 6, decor: true },
     });
     expect(custom.error?.issues.map((issue) => issue.path.join("."))).toEqual(["content.items"]);
   });
@@ -104,5 +113,35 @@ describe("sectionSummary", () => {
       "Layanan · 2 dipilih",
     );
     expect(sectionSummary({ type: "HERO", content: null })).toBe("Isi perlu diperbarui");
+  });
+});
+
+describe("hero: slide & elemen dekoratif", () => {
+  it("titik fokus dari klik di pratinjau: persen bulat, dibatasi 0-100", () => {
+    const box = { left: 100, top: 50, width: 400, height: 200 };
+    expect(focalFromPoint(300, 150, box)).toEqual({ focalX: 50, focalY: 50 });
+    expect(focalFromPoint(100, 50, box)).toEqual({ focalX: 0, focalY: 0 });
+    expect(focalFromPoint(900, -20, box)).toEqual({ focalX: 100, focalY: 0 });
+    expect(focalFromPoint(10, 10, { left: 0, top: 0, width: 0, height: 0 })).toEqual({ focalX: 50, focalY: 50 });
+  });
+
+  it("section baru: decor menyala; hero tanpa slide, interval 6 detik, badge mati", () => {
+    for (const type of HOME_SECTION_TYPES) expect(defaultContent(type), type).toHaveProperty("decor", true);
+    expect(defaultContent("HERO")).toMatchObject({ slides: [], intervalMs: 6000, layout: "fullbleed", showBadge: false });
+  });
+
+  it("form hero: slide kosong valid; badge aktif wajib teks & tautan; interval 4-10 detik", () => {
+    const base = { ...defaultContent("HERO"), headline: "Halo" };
+    expect(sectionFormSchema("HERO").safeParse({ title: "", visible: true, content: base }).success).toBe(true);
+    const issues = (content: object) =>
+      sectionFormSchema("HERO")
+        .safeParse({ title: "", visible: true, content: { ...base, ...content } })
+        .error?.issues.map((issue) => issue.path.join("."));
+    expect(issues({ showBadge: true })).toEqual(["content.badgeText", "content.badgeHref"]);
+    expect(issues({ intervalMs: 3000 })).toEqual(["content.intervalMs"]);
+    expect(issues({ slides: [{ mediaId: "m", alt: "", caption: "", href: "javascript:x", hudLabel: "", focalX: 50, focalY: 120 }] })).toEqual([
+      "content.slides.0.href",
+      "content.slides.0.focalY",
+    ]);
   });
 });

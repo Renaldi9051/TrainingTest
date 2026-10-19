@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDownIcon, MenuIcon, SearchIcon, XIcon } from "lucide-react";
+import { ArrowRightIcon, ChevronDownIcon, LayoutGridIcon, MenuIcon, SearchIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
@@ -8,11 +8,16 @@ import type { PublicNavItem } from "@/lib/api/types";
 import { IndicatorMark, useActiveIndicator } from "@/components/motion/active-indicator";
 import { OPEN_PUBLIC_SEARCH_EVENT } from "@/lib/public-search-event";
 import { cn } from "@/lib/utils";
+import { IndexOverlay } from "./index-overlay";
 
 type HeaderNavProps = {
   items: PublicNavItem[];
   cta: { label: string; href: string } | null;
 };
+
+// Submenu lebih panjang dari ini tidak memakai dropdown, tapi overlay indeks A-Z (PRD 5.2: kategori
+// 70+ tidak boleh jadi dropdown panjang).
+export const DROPDOWN_MAX_ITEMS = 8;
 
 const isExternal = (href: string) => /^https?:\/\//.test(href);
 
@@ -47,23 +52,32 @@ function NavLink({
   );
 }
 
-// Garis bawah memanjang dari kiri saat hover; menu aktif bergaris penuh. Di menu desktop, setelah
-// JS siap, garis menu aktif digantikan indikator yang bergeser antar menu (useActiveIndicator).
+// Warna mengikuti header (gelap di header putih, terang di atas foto hero). Garis bawah memanjang
+// dari kiri saat hover; menu aktif bergaris penuh + medium. Di menu desktop, setelah JS siap, garis
+// menu aktif digantikan indikator yang bergeser antar menu (useActiveIndicator).
 const linkClass =
-  "relative rounded-sm py-1 text-small text-fg outline-none transition-colors duration-150 hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 aria-[current=page]:text-fg-strong after:absolute after:inset-x-0 after:-bottom-px after:h-px after:origin-left after:scale-x-0 after:bg-fg-strong after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100 aria-[current=page]:after:scale-x-100 [[data-indicator-ready]_&]:aria-[current=page]:after:scale-x-0";
+  "relative inline-flex items-center rounded-sm py-1.5 text-small text-current outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-transparent aria-[current=page]:font-medium after:absolute after:inset-x-0 after:-bottom-px after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100 aria-[current=page]:after:scale-x-100 [[data-indicator-ready]_&]:aria-[current=page]:after:scale-x-0";
+
+const toggleClass =
+  "inline-flex size-6 items-center justify-center rounded-sm text-current opacity-70 outline-none transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-current";
 
 // Hanya menu tingkat atas (bukan link di panel submenu). Menu dengan submenu: link label di
 // dalam split button.
 const TOP_LEVEL_ACTIVE = ":scope > ul > li > a[aria-current], :scope > ul > li > div > a[aria-current]";
 
-// Menu desktop (dropdown 1 level) dan menu mobile layar penuh. Semua bisa dipakai dengan keyboard.
+const indexItems = (item: PublicNavItem) => item.children.map((child) => ({ label: child.label, href: child.href }));
+
+// Menu desktop (dropdown 1 level / overlay A-Z) dan menu mobile layar penuh. Semua bisa dipakai
+// dengan keyboard.
 export function HeaderNav({ items, cta }: HeaderNavProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Menu yang overlay indeksnya sedang terbuka (href induk).
+  const [indexFor, setIndexFor] = useState<PublicNavItem | null>(null);
   const mobileId = useId();
   const desktopNavRef = useRef<HTMLElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
-  useActiveIndicator(desktopNavRef, indicatorRef, { variant: "line", selector: TOP_LEVEL_ACTIVE });
+  useActiveIndicator(desktopNavRef, indicatorRef, { variant: "line", selector: TOP_LEVEL_ACTIVE, thickness: 2 });
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -82,10 +96,23 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
     <>
       <nav ref={desktopNavRef} aria-label="Menu utama" className="relative hidden lg:block">
         <IndicatorMark variant="line" ref={indicatorRef} />
-        <ul className="flex items-center gap-6">
+        <ul className="flex items-center gap-7 xl:gap-8">
           {items.map((item) => (
-            <li key={`${item.label}-${item.href}`}>
-              {item.children.length > 0 ? (
+            <li key={`${item.label}-${item.href}`} className="flex items-center">
+              {item.children.length > DROPDOWN_MAX_ITEMS ? (
+                <div className="flex items-center gap-0.5">
+                  <NavLink item={item} pathname={pathname} className={linkClass} />
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-label={`Indeks ${item.label}`}
+                    onClick={() => setIndexFor(item)}
+                    className={toggleClass}
+                  >
+                    <LayoutGridIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
+                  </button>
+                </div>
+              ) : item.children.length > 0 ? (
                 <Dropdown item={item} pathname={pathname} />
               ) : (
                 <NavLink item={item} pathname={pathname} className={linkClass} />
@@ -97,7 +124,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
 
       <button
         type="button"
-        className="ml-auto inline-flex size-10 items-center justify-center rounded-md text-fg-strong outline-none focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2 lg:hidden"
+        className="ml-auto inline-flex size-10 items-center justify-center rounded-md text-current outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 lg:hidden"
         aria-expanded={mobileOpen}
         aria-controls={mobileId}
         aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}
@@ -109,7 +136,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
       <div
         id={mobileId}
         hidden={!mobileOpen}
-        className="fixed inset-x-0 top-16 bottom-0 z-40 overflow-y-auto bg-bg lg:hidden"
+        className="fixed inset-x-0 top-18 bottom-0 z-40 overflow-y-auto bg-bg text-fg lg:hidden"
       >
         <nav aria-label="Menu utama (mobile)" className="px-4 py-6">
           <ul className="divide-y divide-border border-y border-border">
@@ -119,9 +146,19 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
                   item={item}
                   pathname={pathname}
                   onNavigate={() => setMobileOpen(false)}
-                  className="block text-[20px] leading-[1.25] font-medium text-fg-strong aria-[current=page]:underline"
+                  className="block text-h3 text-fg-strong underline-offset-4 aria-[current=page]:underline"
                 />
-                {item.children.length > 0 ? (
+                {item.children.length > DROPDOWN_MAX_ITEMS ? (
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    onClick={() => setIndexFor(item)}
+                    className="mt-2 inline-flex items-center gap-2 rounded-sm py-1 font-mono text-label uppercase tracking-[0.08em] text-fg-muted outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-focus"
+                  >
+                    Indeks {item.label} ({item.children.length})
+                    <ArrowRightIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
+                  </button>
+                ) : item.children.length > 0 ? (
                   <ul className="mt-2 space-y-2 pl-4">
                     {item.children.map((child) => (
                       <li key={`${child.label}-${child.href}`}>
@@ -129,7 +166,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
                           item={child}
                           pathname={pathname}
                           onNavigate={() => setMobileOpen(false)}
-                          className="block text-body text-fg aria-[current=page]:underline"
+                          className="block text-body text-fg underline-offset-4 aria-[current=page]:underline"
                         />
                       </li>
                     ))}
@@ -158,7 +195,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
               <Link
                 href={cta.href}
                 onClick={() => setMobileOpen(false)}
-                className="inline-flex h-12 items-center justify-center rounded-md bg-fg-strong px-4 text-body font-medium text-inverse-fg"
+                className="site-header-cta inline-flex h-12 items-center justify-center rounded-md px-4 text-body font-medium transition-colors duration-150 ease-standard"
               >
                 {cta.label}
               </Link>
@@ -166,6 +203,14 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
           </div>
         </nav>
       </div>
+
+      <IndexOverlay
+        open={indexFor !== null}
+        onClose={() => setIndexFor(null)}
+        items={indexFor ? indexItems(indexFor) : []}
+        allHref={indexFor?.href}
+        allLabel={indexFor ? `Semua ${indexFor.label.toLowerCase()}` : undefined}
+      />
     </>
   );
 }
@@ -175,7 +220,6 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
   const panelId = useId();
   const ref = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const active = isActive(pathname, item.href) || item.children.some((child) => isActive(pathname, child.href));
 
   useEffect(() => {
     if (!open) return;
@@ -205,7 +249,7 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
       }}
     >
       {/* Split button: label = link ke halaman induk, panah = buka/tutup submenu (area klik 24x24 px). */}
-      <NavLink item={item} pathname={pathname} onNavigate={() => setOpen(false)} className={cn(linkClass, active && (item.href === "/pelatihan" ? "!text-[#0b417f]" : "text-fg-strong"))} />
+      <NavLink item={item} pathname={pathname} onNavigate={() => setOpen(false)} className={linkClass} />
       <button
         ref={toggleRef}
         type="button"
@@ -213,7 +257,7 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
         aria-controls={panelId}
         aria-label={`Submenu ${item.label}`}
         onClick={() => setOpen((current) => !current)}
-        className="inline-flex size-6 items-center justify-center rounded-sm text-fg outline-none transition-colors duration-150 hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-fg-strong focus-visible:ring-offset-2"
+        className={toggleClass}
       >
         <ChevronDownIcon
           className={cn("size-4 transition-transform duration-150", open && "rotate-180")}
@@ -221,7 +265,12 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
           aria-hidden
         />
       </button>
-      <div id={panelId} hidden={!open} className="absolute top-full left-0 z-50 max-h-[75vh] w-[320px] overflow-y-auto rounded-2xl bg-white py-2 shadow-[0_3px_18px_rgb(0_0_0_/_0.18)]">
+      {/* Panel monokrom tanpa bayangan (DESIGN.md 5): garis 1 px. */}
+      <div
+        id={panelId}
+        hidden={!open}
+        className="absolute top-full left-0 z-50 mt-3 w-64 rounded-md border border-border bg-bg py-2 text-fg"
+      >
         <ul>
           {item.children.map((child) => (
             <li key={`${child.label}-${child.href}`}>
@@ -229,7 +278,7 @@ function Dropdown({ item, pathname }: { item: PublicNavItem; pathname: string })
                 item={child}
                 pathname={pathname}
                 onNavigate={() => setOpen(false)}
-                className="block px-8 py-4 text-[16px] text-[#151515] outline-none hover:bg-[#f3f6fa] hover:text-[#0b417f] focus-visible:bg-[#f3f6fa] aria-[current=page]:font-semibold"
+                className="block px-4 py-2 text-small text-fg outline-none transition-colors duration-150 hover:bg-bg-subtle hover:text-fg-strong focus-visible:bg-bg-subtle aria-[current=page]:font-medium"
               />
             </li>
           ))}

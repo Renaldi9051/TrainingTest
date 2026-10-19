@@ -84,15 +84,13 @@ const MINIMAL = process.argv.includes("--minimal");
 const BULK = process.argv.includes("--bulk");
 const USE_REFERENCE = !MINIMAL && !BULK;
 
-// Admin pertama dari ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME. Hanya dibuat kalau email belum ada;
-// password admin yang sudah ada tidak pernah ditimpa.
+// Satu admin dari ADMIN_PASSWORD/ADMIN_NAME. Hanya dibuat kalau belum ada admin sama sekali;
+// admin yang sudah ada (termasuk password-nya) tidak pernah ditimpa.
 async function seedAdmin(): Promise<"created" | "exists"> {
+  if ((await db.user.count()) > 0) return "exists";
   const admin = parseSeedEnv(process.env);
-  const email = admin.ADMIN_EMAIL.toLowerCase();
-  const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
-  if (existing) return "exists";
   await db.user.create({
-    data: { email, name: admin.ADMIN_NAME, passwordHash: await hashPassword(admin.ADMIN_PASSWORD) },
+    data: { name: admin.ADMIN_NAME, passwordHash: await hashPassword(admin.ADMIN_PASSWORD) },
   });
   return "created";
 }
@@ -194,7 +192,7 @@ async function seedImages(content: ContentSeedResult | null) {
     portfolio: created("portofolio") ? targets.portfolio : [],
   };
   if (plannedMediaCount(scoped) === 0) return { services: 0, portfolio: 0, media: 0 };
-  const admin = await db.user.findUniqueOrThrow({ where: { email: parseSeedEnv(process.env).ADMIN_EMAIL.toLowerCase() }, select: { id: true } });
+  const admin = await db.user.findFirstOrThrow({ orderBy: { createdAt: "asc" }, select: { id: true } });
   return seedPlaceholderImages(scoped, admin.id, db);
 }
 

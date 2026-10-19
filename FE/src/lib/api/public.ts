@@ -86,14 +86,14 @@ export async function getNav(): Promise<PublicNav> {
 export async function getCategories(): Promise<PublicCategory[]> {
   "use cache";
   cacheLife("content");
-  cacheTag(Tag.CATEGORIES, Tag.TRAININGS);
+  cacheTag(Tag.CATEGORIES, Tag.TRAININGS, Tag.MEDIA);
   return getRequired<PublicCategory[]>("/categories");
 }
 
 export async function getCategory(slug: string): Promise<PublicCategory | null> {
   "use cache";
   cacheLife("content");
-  cacheTag(Tag.CATEGORIES, Tag.category(slug), Tag.TRAININGS);
+  cacheTag(Tag.CATEGORIES, Tag.category(slug), Tag.TRAININGS, Tag.MEDIA);
   return (await getJson<PublicCategory>(`/categories/${encodeURIComponent(slug)}`))?.data ?? null;
 }
 
@@ -151,7 +151,8 @@ export async function getTrainingSlugs(limit: number): Promise<string[]> {
   return getRequired<string[]>(`/training-slugs?limit=${limit}`);
 }
 
-export type ScheduleParams = { bulan?: string; kota?: string; kategori?: string; hal?: number };
+// per: jumlah per halaman (BE maks 100); kalender sebulan memakai 100.
+export type ScheduleParams = { bulan?: string; kota?: string; kategori?: string; hal?: number; per?: number };
 
 export type ScheduleList = { items: PublicSchedule[]; meta: PublicScheduleMeta };
 
@@ -170,6 +171,7 @@ export function getSchedules(params: ScheduleParams): Promise<ScheduleList> {
   if (params.kota) search.set("kota", params.kota);
   if (params.kategori) search.set("kategori", params.kategori);
   if (params.hal && params.hal > 1) search.set("hal", String(params.hal));
+  if (params.per) search.set("per", String(params.per));
   return getSchedulesByQuery(search.toString());
 }
 
@@ -209,7 +211,8 @@ export async function getServices(): Promise<PublicServiceCard[]> {
 export async function getService(slug: string): Promise<PublicServiceDetail | null> {
   "use cache";
   cacheLife("content");
-  cacheTag(Tag.service(slug), Tag.SERVICES, Tag.MEDIA);
+  // TRAININGS: pelatihan terkait ikut berubah saat pelatihan diubah, ditayangkan, atau dihapus.
+  cacheTag(Tag.service(slug), Tag.SERVICES, Tag.TRAININGS, Tag.MEDIA);
   return (await getJson<PublicServiceDetail>(`/services/${encodeURIComponent(slug)}`))?.data ?? null;
 }
 

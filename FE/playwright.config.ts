@@ -6,7 +6,7 @@ import { E2E_BE_ORIGIN, E2E_FE_ORIGIN } from "./e2e/e2e-env";
 // E2E tidak pernah memakai training_dev. Playwright menyalakan BE (4100) & FE (3100) khusus e2e yang
 // memakai database training_e2e (DATABASE_URL_E2E), lalu global setup me-reset + seed database itu.
 // Butuh container Postgres (npm run db:up dari BE/). Kredensial admin dibaca dari .env root
-// (ADMIN_EMAIL, ADMIN_PASSWORD) khusus untuk test; kode app FE tidak membacanya.
+// (ADMIN_PASSWORD) khusus untuk test; kode app FE tidak membacanya.
 const rootEnv = path.resolve(__dirname, "../.env");
 if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 

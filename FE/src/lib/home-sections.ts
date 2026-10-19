@@ -50,6 +50,11 @@ export const HOME_SECTION_DESCRIPTIONS: Record<HomeSectionType, string> = {
 
 export const ROTATING_WORDS_MAX = 5;
 export const STATS_MAX = 6;
+// Hero slideshow (sama dengan BE, dijaga test "sinkron dengan BE").
+export const HERO_SLIDES_MAX = 6;
+export const HERO_INTERVAL_MIN_MS = 4000;
+export const HERO_INTERVAL_MAX_MS = 10000;
+export const HERO_INTERVAL_DEFAULT_MS = 6000;
 export const MARQUEE_ITEMS_MIN = 2;
 export const MARQUEE_ITEMS_MAX = 12;
 
@@ -80,11 +85,19 @@ export function unavailableTypes(sections: Pick<HomeSection, "type">[]): Partial
 }
 
 const heading = { eyebrow: "", heading: "" };
+// Elemen dekoratif menyala untuk section baru (DESIGN.md 6.2).
+const decor = true;
 const selection = (type: SelectionSectionType) => ({
   mode: "auto" as const,
   limit: SELECTION_LIMITS[type].defaultLimit,
   ids: [] as string[],
 });
+
+// Titik fokus slide hero dari klik di pratinjau gambar: persen 0-100 (bulat), dibatasi ke dalam gambar.
+export function focalFromPoint(x: number, y: number, box: { left: number; top: number; width: number; height: number }): { focalX: number; focalY: number } {
+  const percent = (value: number, size: number) => (size > 0 ? Math.round(Math.min(100, Math.max(0, (value / size) * 100))) : 50);
+  return { focalX: percent(x - box.left, box.width), focalY: percent(y - box.top, box.height) };
+}
 
 // Isi awal saat menambah section (field wajib masih kosong, diisi admin sebelum simpan).
 export function defaultContent<K extends HomeSectionType>(type: K): HomeSectionContentMap[K] {
@@ -98,18 +111,26 @@ export function defaultContent<K extends HomeSectionType>(type: K): HomeSectionC
       searchPlaceholder: "",
       primaryCta: null,
       secondaryCta: null,
-      image: null,
+      layout: "fullbleed",
+      intervalMs: HERO_INTERVAL_DEFAULT_MS,
+      photoStyle: "color",
+      showViewfinder: true,
+      showBadge: false,
+      badgeText: "",
+      badgeHref: "",
+      slides: [],
+      decor,
     },
-    STATS: { ...heading, items: [{ value: 0, prefix: "", suffix: "", label: "" }] },
-    SERVICES: { ...heading, intro: "", ...selection("SERVICES"), cta: null },
-    CATEGORIES: { ...heading, intro: "", ...selection("CATEGORIES"), cta: null },
-    LATEST_TRAININGS: { ...heading, intro: "", ...selection("LATEST_TRAININGS"), cta: null },
-    UPCOMING_SCHEDULES: { ...heading, intro: "", limit: 5, cta: null },
-    CLIENTS: { ...heading, intro: "", ...selection("CLIENTS") },
-    VISION_MISSION: { eyebrow: "", vision: "", mission: [""], motto: "" },
-    TESTIMONIALS: { ...heading, intro: "", ...selection("TESTIMONIALS") },
-    CTA: { eyebrow: "", heading: "", body: "", primaryCta: { label: "", href: "" }, secondaryCta: null },
-    MARQUEE: { heading: "", source: "services", items: [], limit: 6 },
+    STATS: { ...heading, items: [{ value: 0, prefix: "", suffix: "", label: "" }], decor },
+    SERVICES: { ...heading, intro: "", ...selection("SERVICES"), cta: null, decor },
+    CATEGORIES: { ...heading, intro: "", ...selection("CATEGORIES"), cta: null, decor },
+    LATEST_TRAININGS: { ...heading, intro: "", ...selection("LATEST_TRAININGS"), cta: null, decor },
+    UPCOMING_SCHEDULES: { ...heading, intro: "", limit: 5, cta: null, decor },
+    CLIENTS: { ...heading, intro: "", ...selection("CLIENTS"), decor },
+    VISION_MISSION: { eyebrow: "", vision: "", mission: [""], motto: "", decor },
+    TESTIMONIALS: { ...heading, intro: "", ...selection("TESTIMONIALS"), decor },
+    CTA: { eyebrow: "", heading: "", body: "", primaryCta: { label: "", href: "" }, secondaryCta: null, decor },
+    MARQUEE: { heading: "", source: "services", items: [], limit: 6, decor },
   };
   return content[type];
 }
@@ -175,6 +196,27 @@ const cta = z.object({
     .refine(isContentHref, { error: CONTENT_HREF_ERROR }),
 });
 const headingFields = { eyebrow: optionalText("Eyebrow", 40), heading: optionalText("Judul", 120) };
+const decorField = { decor: z.boolean() };
+// Tautan opsional: kosong = tanpa tautan.
+const optionalHref = z
+  .string()
+  .trim()
+  .max(500, { error: "Tautan maksimal 500 karakter." })
+  .refine((value) => value === "" || isContentHref(value), { error: CONTENT_HREF_ERROR });
+const focal = (label: string) =>
+  z
+    .number({ error: `${label} harus berupa angka.` })
+    .min(0, { error: `${label} minimal 0.` })
+    .max(100, { error: `${label} maksimal 100.` });
+const heroSlide = z.object({
+  mediaId: z.string().min(1, { error: "Pilih gambar." }),
+  alt: optionalText("Alt slide", 200),
+  caption: optionalText("Keterangan", 80),
+  href: optionalHref,
+  hudLabel: optionalText("Label HUD", 40),
+  focalX: focal("Titik fokus horizontal"),
+  focalY: focal("Titik fokus vertikal"),
+});
 const intro = optionalText("Pengantar", 300);
 const limit = (max: number) =>
   z
@@ -193,6 +235,7 @@ function selectionSchema(type: SelectionSectionType, extra: z.ZodRawShape) {
       limit: limit(maxLimit),
       ids: z.array(z.string()).max(maxLimit, { error: `Maksimal ${maxLimit} item.` }),
       ...extra,
+      ...decorField,
     })
     .superRefine((value, ctx) => {
       if (value.mode === "manual" && value.ids.length === 0) {
@@ -213,10 +256,30 @@ export const HOME_CONTENT_FORM_SCHEMAS = {
     searchPlaceholder: optionalText("Placeholder pencarian", 80),
     primaryCta: cta.nullable(),
     secondaryCta: cta.nullable(),
-    image: z.object({ mediaId: z.string() }).nullable(),
+    layout: z.enum(["fullbleed", "split"]),
+    intervalMs: z
+      .number({ error: "Interval harus berupa angka." })
+      .int({ error: "Interval harus bilangan bulat." })
+      .min(HERO_INTERVAL_MIN_MS, { error: "Interval minimal 4 detik." })
+      .max(HERO_INTERVAL_MAX_MS, { error: "Interval maksimal 10 detik." }),
+    photoStyle: z.enum(["color", "grayscale"]),
+    showViewfinder: z.boolean(),
+    showBadge: z.boolean(),
+    badgeText: optionalText("Teks badge", 60),
+    badgeHref: optionalHref,
+    slides: z.array(heroSlide).max(HERO_SLIDES_MAX, { error: `Slide maksimal ${HERO_SLIDES_MAX}.` }),
+    ...decorField,
+  }).superRefine((value, ctx) => {
+    if (value.showBadge && !value.badgeText.trim()) {
+      ctx.addIssue({ code: "custom", path: ["badgeText"], message: "Isi teks badge, atau matikan badge." });
+    }
+    if (value.showBadge && !value.badgeHref.trim()) {
+      ctx.addIssue({ code: "custom", path: ["badgeHref"], message: "Isi tautan badge, atau matikan badge." });
+    }
   }),
   STATS: z.object({
     ...headingFields,
+    ...decorField,
     items: z
       .array(
         z.object({
@@ -235,13 +298,14 @@ export const HOME_CONTENT_FORM_SCHEMAS = {
   SERVICES: selectionSchema("SERVICES", { cta: cta.nullable() }),
   CATEGORIES: selectionSchema("CATEGORIES", { cta: cta.nullable() }),
   LATEST_TRAININGS: selectionSchema("LATEST_TRAININGS", { cta: cta.nullable() }),
-  UPCOMING_SCHEDULES: z.object({ ...headingFields, intro, limit: limit(UPCOMING_LIMIT_MAX), cta: cta.nullable() }),
+  UPCOMING_SCHEDULES: z.object({ ...headingFields, intro, limit: limit(UPCOMING_LIMIT_MAX), cta: cta.nullable(), ...decorField }),
   CLIENTS: selectionSchema("CLIENTS", {}),
   VISION_MISSION: z.object({
     eyebrow: optionalText("Eyebrow", 40),
     vision: requiredText("Visi", 600),
     mission: z.array(requiredText("Misi", 300)).min(1, { error: "Isi minimal satu misi." }).max(10),
     motto: optionalText("Moto", 200),
+    ...decorField,
   }),
   TESTIMONIALS: selectionSchema("TESTIMONIALS", {}),
   CTA: z.object({
@@ -250,6 +314,7 @@ export const HOME_CONTENT_FORM_SCHEMAS = {
     body: optionalText("Isi", 400),
     primaryCta: cta,
     secondaryCta: cta.nullable(),
+    ...decorField,
   }),
   MARQUEE: z
     .object({
@@ -261,6 +326,7 @@ export const HOME_CONTENT_FORM_SCHEMAS = {
         .int({ error: "Jumlah harus bilangan bulat." })
         .min(MARQUEE_ITEMS_MIN, { error: `Jumlah minimal ${MARQUEE_ITEMS_MIN}.` })
         .max(MARQUEE_ITEMS_MAX, { error: `Jumlah maksimal ${MARQUEE_ITEMS_MAX}.` }),
+      ...decorField,
     })
     .superRefine((value, ctx) => {
       if (value.source === "custom" && value.items.length < MARQUEE_ITEMS_MIN) {

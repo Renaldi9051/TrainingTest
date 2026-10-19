@@ -21,7 +21,7 @@ beforeEach(() => {
 });
 
 const CASES: [ReorderResource, keyof MockDb, string, string[]][] = [
-  ["categories", "category", "Category", ["categories", "home"]],
+  ["categories", "category", "Category", ["categories", "home", "trainings"]],
   ["services", "service", "Service", ["services", "home", "pages"]],
   ["clients", "client", "Client", ["clients", "home"]],
   ["testimonials", "testimonial", "Testimonial", ["testimonials", "home"]],

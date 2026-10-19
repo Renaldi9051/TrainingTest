@@ -1,11 +1,44 @@
-import { expect, test } from "@playwright/test";
-import { createTraining, deleteTraining, firstCategory, loginViaApi, runId, type CreatedTraining } from "./helpers";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import {
+  createTraining,
+  deleteTraining,
+  firstCategory,
+  loginViaApi,
+  ORIGIN,
+  runId,
+  type CreatedTraining,
+} from "./helpers";
 
 const created: CreatedTraining[] = [];
 
 test.afterEach(async ({ page }) => {
   for (const training of created.splice(0)) await deleteTraining(page.request, training.id);
 });
+
+async function uploadImage(request: APIRequestContext, name: string, alt: string): Promise<string> {
+  const buffer = await readFile(path.join(__dirname, "fixtures", "sample.png"));
+  const headers = { Origin: ORIGIN };
+  const response = await request.post("/api/admin/media", {
+    headers,
+    multipart: { files: { name, mimeType: "image/png", buffer }, folder: "uji" },
+  });
+  expect(response.status(), await response.text()).toBe(201);
+  const id = ((await response.json()) as { data: { created: { id: string }[] } }).data.created[0].id;
+  expect((await request.patch(`/api/admin/media/${id}`, { headers, data: { alt } })).status()).toBe(200);
+  return id;
+}
+
+// Pilih media lewat dialog picker (tombol dicari lewat teksnya karena nama aksesibelnya = label).
+async function pickMedia(page: Page, buttonText: string, fileName: string) {
+  await page.locator("button", { hasText: buttonText }).first().click();
+  const dialog = page.getByRole("dialog").filter({ has: page.getByRole("button", { name: /^Pakai / }) });
+  await dialog.getByRole("searchbox").fill(fileName.replace(/\.png$/, ""));
+  await dialog.getByRole("button", { name: `Pilih ${fileName}`, exact: true }).click();
+  await dialog.getByRole("button", { name: /^Pakai / }).click();
+  await expect(page.getByRole("button", { name: /^Pakai / })).toHaveCount(0);
+}
 
 test.describe("detail pelatihan terstruktur", () => {
   test("daftar isi hanya dari bagian berisi, materi accordion bisa dengan keyboard dan Buka semua", async ({ page }) => {
@@ -36,7 +69,7 @@ test.describe("detail pelatihan terstruktur", () => {
     await expect(facts.filter({ hasText: "Hubungi marketing" })).toHaveCount(1);
 
     // Daftar isi (desktop): tanpa Deskripsi (kosong); #jadwal selalu ada.
-    const toc = page.getByRole("navigation", { name: "Daftar isi", exact: true });
+    const toc = page.getByRole("navigation", { name: "Isi pelatihan", exact: true });
     await expect(toc.getByRole("link")).toHaveText([
       "Hasil belajar",
       "Materi",
@@ -65,6 +98,59 @@ test.describe("detail pelatihan terstruktur", () => {
 
     // FAQ pelatihan tampil sebelum FAQ umum.
     await expect(page.locator("#faq summary").first()).toContainText("Pertanyaan khusus uji?");
+  });
+
+  test("galeri: diisi dan diurutkan di form admin, tampil di detail terpisah dari sampul", async ({ page }) => {
+    await loginViaApi(page.request);
+    const category = await firstCategory(page.request);
+    const id = runId();
+    const files = [1, 2, 3].map((n) => `[UJI]-galeri-pelatihan-${n}-${id}.png`);
+    const mediaIds: string[] = [];
+    for (const [index, file] of files.entries()) {
+      mediaIds.push(await uploadImage(page.request, file, `[UJI] kegiatan ${index + 1} ${id}`));
+    }
+    const training = await createTraining(page.request, {
+      title: `Galeri Pelatihan ${id}`,
+      categoryIds: [category.id],
+      status: "PUBLISHED",
+      modules: [{ title: "Modul galeri", points: ["Poin"], durationMinutes: null }],
+    });
+    created.push(training);
+
+    // Tanpa galeri: section dan tab Galeri tidak ada.
+    await page.goto(`/pelatihan/${training.slug}`);
+    await expect(page.locator("#galeri")).toHaveCount(0);
+
+    await page.goto(`/admin/trainings/${training.id}`);
+    for (const file of files) await pickMedia(page, "Tambah gambar", file);
+    // Urutan akhir: 3, 1 (gambar 3 naik dua kali, gambar 2 dilepas).
+    for (let step = 0; step < 2; step += 1) {
+      await page.getByRole("button", { name: `Ubah urutan gambar ${3 - step}`, exact: true }).focus();
+      await page.keyboard.press("Space");
+      await page.waitForTimeout(200);
+      await page.keyboard.press("ArrowUp");
+      await page.waitForTimeout(200);
+      await page.keyboard.press("Space");
+    }
+    await page.getByRole("button", { name: "Lepas gambar 3" }).click();
+    await page.getByRole("button", { name: "Simpan", exact: true }).click();
+    await expect
+      .poll(async () => {
+        const response = await page.request.get(`/api/admin/trainings/${training.id}`);
+        return ((await response.json()) as { data: { imageIds: string[] } }).data.imageIds;
+      })
+      .toEqual([mediaIds[2], mediaIds[0]]);
+
+    await page.goto(`/pelatihan/${training.slug}`);
+    const toc = page.getByRole("navigation", { name: "Isi pelatihan", exact: true });
+    await expect(toc.getByRole("link", { name: "Galeri" })).toBeVisible();
+    const gallery = page.locator("#galeri");
+    await expect(gallery.getByRole("heading", { level: 2 })).toContainText("Galeri");
+    await expect(gallery.locator("img")).toHaveCount(2);
+    await expect(gallery.locator("img").nth(0)).toHaveAttribute("alt", `[UJI] kegiatan 3 ${id}`);
+    await expect(gallery.locator("img").nth(1)).toHaveAttribute("alt", `[UJI] kegiatan 1 ${id}`);
+    // Sampul tidak diambil dari galeri.
+    await expect(page.locator('[data-cover-source="training"]')).toHaveCount(0);
   });
 
   test("tayang massal melewati pelatihan yang belum lengkap dan melaporkan judulnya", async ({ page }) => {

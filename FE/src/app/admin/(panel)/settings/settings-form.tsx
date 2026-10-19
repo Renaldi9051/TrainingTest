@@ -35,10 +35,10 @@ import { FaqEditor, StringListEditor } from "@/components/admin/training-editors
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { useScopedId } from "@/hooks/use-scoped-id";
 import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
-import type { AdminSettings, SettingKey, SettingValues, SocialPlatform } from "@/lib/api/types";
+import type { AdminSettings, PageHeaderPage, SettingKey, SettingValues, SocialPlatform } from "@/lib/api/types";
 import { FOCUS_ANCHOR_EVENT, focusAnchor } from "@/lib/anchor-focus";
 import { applyFieldErrors } from "@/lib/form-errors";
-import { parseSettingHash, settingAnchor, SETTING_TAB_LABELS } from "@/lib/settings-fields";
+import { PAGE_HEADER_LABELS, parseSettingHash, settingAnchor, SETTING_TAB_LABELS } from "@/lib/settings-fields";
 import { FACILITIES_MAX, FACILITY_MAX, FAQ_A_MAX, FAQ_Q_MAX } from "@/lib/training-content";
 
 export const settingsKey = ["admin", "settings"] as const;
@@ -158,6 +158,12 @@ export function SettingsForm() {
       <TabsContent value="seo.default" forceMount className="data-[state=inactive]:hidden">
         <SeoSection value={values["seo.default"]} {...sectionProps} />
       </TabsContent>
+      <TabsContent value="page.headers" forceMount className="data-[state=inactive]:hidden">
+        <PageHeadersSection value={values["page.headers"]} {...sectionProps} />
+      </TabsContent>
+      <TabsContent value="services.process" forceMount className="data-[state=inactive]:hidden">
+        <ServicesProcessSection value={values["services.process"]} {...sectionProps} />
+      </TabsContent>
     </Tabs>
   );
 }
@@ -175,6 +181,8 @@ function useSettingForm<K extends SettingKey, TValues extends FieldValues>(
   value: SettingValues[K],
   onDirtyChange: SectionProps<K>["onDirtyChange"],
   toForm: (value: SettingValues[K]) => TValues = (current) => current as unknown as TValues,
+  // Nilai form -> body PUT (mis. teks koordinat -> angka). Default: apa adanya.
+  toInput: (values: TValues) => unknown = (values) => values,
 ) {
   const queryClient = useQueryClient();
   const form = useForm<TValues>({
@@ -187,7 +195,7 @@ function useSettingForm<K extends SettingKey, TValues extends FieldValues>(
 
   const mutation = useMutation({
     mutationFn: async (input: TValues) =>
-      (await apiSend<AdminSettings>(`/admin/settings/${key}`, "PUT", input)).data,
+      (await apiSend<AdminSettings>(`/admin/settings/${key}`, "PUT", toInput(input))).data,
     onSuccess: (data) => {
       queryClient.setQueryData(settingsKey, data);
       form.reset(toForm(data.values[key]) as TValues);
@@ -338,6 +346,15 @@ function HeaderSection({ value, onDirtyChange }: SectionProps<"site.header">) {
 
 // ===== Kontak =====
 
+function coordinateText(label: string, limit: number) {
+  return z
+    .string()
+    .trim()
+    .refine((v) => v === "" || (/^-?\d+([.,]\d+)?$/.test(v) && Math.abs(Number(v.replace(",", "."))) <= limit), {
+      error: `${label} berupa angka antara -${limit} dan ${limit}, mis. -7.7156.`,
+    });
+}
+
 const contactSchema = z.object({
   phone: text("Telepon", 30).refine((v) => v === "" || /^[+\d][\d\s().-]*$/.test(v), {
     error: "Nomor telepon hanya boleh berisi angka, spasi, +, -, dan tanda kurung.",
@@ -355,10 +372,39 @@ const contactSchema = z.object({
   mapEmbedUrl: z.string().trim().max(2000).refine((v) => v === "" || v.startsWith("https://"), {
     error: "Tempel URL embed (https://...), bukan kode <iframe>.",
   }),
+  openingHours: text("Jam operasional", 300),
+  // Input teks (koma atau titik desimal), diubah ke angka saat disimpan.
+  latitude: coordinateText("Lintang", 90),
+  longitude: coordinateText("Bujur", 180),
+}).refine((value) => (value.latitude.trim() === "") === (value.longitude.trim() === ""), {
+  error: "Isi lintang dan bujur sekaligus, atau kosongkan keduanya.",
+  path: ["longitude"],
 });
 
+type ContactForm = z.infer<typeof contactSchema>;
+
+function toContactForm(value: SettingValues["site.contact"]): ContactForm {
+  return {
+    phone: value.phone,
+    email: value.email,
+    emailSecondary: value.emailSecondary,
+    whatsapp: value.whatsapp,
+    address: value.address,
+    mapEmbedUrl: value.mapEmbedUrl,
+    openingHours: value.openingHours ?? "",
+    latitude: value.latitude === null || value.latitude === undefined ? "" : String(value.latitude),
+    longitude: value.longitude === null || value.longitude === undefined ? "" : String(value.longitude),
+  };
+}
+
+const toCoordinate = (value: string) => (value.trim() === "" ? null : Number(value.trim().replace(",", ".")));
+
 function ContactSection({ value, onDirtyChange }: SectionProps<"site.contact">) {
-  const { form, formId, onSubmit, saveBar } = useSettingForm("site.contact", contactSchema, value, onDirtyChange);
+  const { form, formId, onSubmit, saveBar } = useSettingForm("site.contact", contactSchema, value, onDirtyChange, toContactForm, (input) => ({
+    ...input,
+    latitude: toCoordinate(input.latitude),
+    longitude: toCoordinate(input.longitude),
+  }));
   const errors = form.formState.errors;
   return (
     <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
@@ -399,6 +445,28 @@ function ContactSection({ value, onDirtyChange }: SectionProps<"site.contact">) 
       >
         <Input {...form.register("mapEmbedUrl")} placeholder="https://www.google.com/maps/embed?pb=..." />
       </FormField>
+      <FormField
+        id={`${formId}-hours`} anchor="site.contact.openingHours"
+        label="Jam operasional"
+        description="Tampil di halaman Kontak, mis. Senin-Jumat 08.00-16.00. Kosong = tidak tampil."
+        error={errors.openingHours?.message}
+      >
+        <Textarea rows={2} {...form.register("openingHours")} />
+      </FormField>
+      <fieldset data-anchor="site.contact.latitude" className="space-y-2">
+        <legend className="text-sm font-medium">Koordinat kantor</legend>
+        <p className="text-small text-fg-muted">
+          Untuk label LAT/LON di peta dan tombol Buka di Google Maps. Isi keduanya atau kosongkan.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField id={`${formId}-lat`} label="Lintang (latitude)" error={errors.latitude?.message}>
+            <Input inputMode="decimal" {...form.register("latitude")} placeholder="-7.7156" />
+          </FormField>
+          <FormField id={`${formId}-lon`} label="Bujur (longitude)" error={errors.longitude?.message}>
+            <Input inputMode="decimal" {...form.register("longitude")} placeholder="110.3550" />
+          </FormField>
+        </div>
+      </fieldset>
     </SectionForm>
   );
 }
@@ -688,6 +756,134 @@ function SeoFields({
           </FormField>
         )}
       />
+    </SectionForm>
+  );
+}
+
+// ===== Kepala halaman daftar =====
+
+const pageHeaderSchema = z.object({
+  eyebrow: text("Eyebrow", 60),
+  heading: text("Judul", 120),
+  lead: text("Pengantar", 300),
+});
+const pageHeadersSchema = z.object({
+  pelatihan: pageHeaderSchema,
+  layanan: pageHeaderSchema,
+  portofolio: pageHeaderSchema,
+  jadwal: pageHeaderSchema,
+  kontak: pageHeaderSchema,
+});
+// Anchor literal per halaman (search global admin).
+const PAGE_HEADER_ANCHORS: Record<PageHeaderPage, string> = {
+  pelatihan: "page.headers.pelatihan",
+  layanan: "page.headers.layanan",
+  portofolio: "page.headers.portofolio",
+  jadwal: "page.headers.jadwal",
+  kontak: "page.headers.kontak",
+};
+
+function PageHeadersSection({ value, onDirtyChange }: SectionProps<"page.headers">) {
+  const { form, formId, onSubmit, saveBar } = useSettingForm("page.headers", pageHeadersSchema, value, onDirtyChange);
+  const errors = form.formState.errors;
+  return (
+    <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
+      <p className="text-small text-fg-muted">
+        Eyebrow, judul, dan pengantar di kepala halaman daftar. Kosongkan untuk memakai teks bawaan halaman.
+      </p>
+      {(Object.keys(PAGE_HEADER_LABELS) as PageHeaderPage[]).map((page) => (
+        <fieldset key={page} data-anchor={PAGE_HEADER_ANCHORS[page]} className="space-y-4 border-t border-border pt-6">
+          <legend className="text-sm font-medium">{PAGE_HEADER_LABELS[page]}</legend>
+          <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
+            <FormField id={`${formId}-${page}-eyebrow`} label="Eyebrow" error={errors[page]?.eyebrow?.message}>
+              <Input {...form.register(`${page}.eyebrow`)} placeholder="Mis. 01 / Layanan" />
+            </FormField>
+            <FormField id={`${formId}-${page}-heading`} label="Judul" error={errors[page]?.heading?.message}>
+              <Input {...form.register(`${page}.heading`)} placeholder={PAGE_HEADER_LABELS[page]} />
+            </FormField>
+          </div>
+          <FormField id={`${formId}-${page}-lead`} label="Pengantar" error={errors[page]?.lead?.message}>
+            <Textarea rows={2} {...form.register(`${page}.lead`)} />
+          </FormField>
+        </fieldset>
+      ))}
+    </SectionForm>
+  );
+}
+
+// ===== Alur kerja sama (/layanan) =====
+
+const PROCESS_STEPS_MAX = 6;
+const servicesProcessSchema = z.object({
+  eyebrow: text("Eyebrow", 60),
+  heading: text("Judul", 120),
+  steps: z
+    .array(z.object({ title: requiredItem("Judul langkah", 80), description: text("Deskripsi langkah", 300) }))
+    .max(PROCESS_STEPS_MAX, { error: `Langkah maksimal ${PROCESS_STEPS_MAX}.` }),
+});
+
+function ServicesProcessSection({ value, onDirtyChange }: SectionProps<"services.process">) {
+  const { form, formId, onSubmit, saveBar } = useSettingForm("services.process", servicesProcessSchema, value, onDirtyChange);
+  const { fields, append, remove, move } = useFieldArray({ control: form.control, name: "steps" });
+  const errors = form.formState.errors;
+  return (
+    <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar} anchor="services.process.steps">
+      <p className="text-small text-fg-muted">Tampil di halaman Layanan. Tanpa langkah, bagian ini disembunyikan.</p>
+      <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
+        <FormField id={`${formId}-eyebrow`} label="Eyebrow" error={errors.eyebrow?.message}>
+          <Input {...form.register("eyebrow")} placeholder="Alur kerja sama" />
+        </FormField>
+        <FormField id={`${formId}-heading`} label="Judul" error={errors.heading?.message}>
+          <Input {...form.register("heading")} />
+        </FormField>
+      </div>
+      {fields.length === 0 ? <p className="text-small text-fg-muted">Belum ada langkah.</p> : null}
+      <ol className="space-y-4">
+        {fields.map((field, index) => (
+          <li key={field.id} className="space-y-3 rounded-md border border-border p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-medium text-fg-muted">Langkah {String(index + 1).padStart(2, "0")}</p>
+              <div className="flex gap-1">
+                <Button type="button" variant="ghost" size="sm" disabled={index === 0} onClick={() => move(index, index - 1)}>
+                  Naik
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={index === fields.length - 1}
+                  onClick={() => move(index, index + 1)}
+                >
+                  Turun
+                </Button>
+                <Button type="button" variant="ghost" size="icon" aria-label={`Hapus langkah ${index + 1}`} onClick={() => remove(index)}>
+                  <Trash2Icon strokeWidth={1.5} aria-hidden />
+                </Button>
+              </div>
+            </div>
+            <FormField id={`${formId}-step-${index}-title`} label={`Judul langkah ${index + 1}`} error={errors.steps?.[index]?.title?.message}>
+              <Input {...form.register(`steps.${index}.title`)} />
+            </FormField>
+            <FormField
+              id={`${formId}-step-${index}-description`}
+              label={`Deskripsi langkah ${index + 1}`}
+              error={errors.steps?.[index]?.description?.message}
+            >
+              <Textarea rows={2} {...form.register(`steps.${index}.description`)} />
+            </FormField>
+          </li>
+        ))}
+      </ol>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={fields.length >= PROCESS_STEPS_MAX}
+        onClick={() => append({ title: "", description: "" })}
+      >
+        <PlusIcon aria-hidden />
+        Tambah langkah
+      </Button>
     </SectionForm>
   );
 }
