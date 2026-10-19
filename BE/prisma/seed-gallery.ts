@@ -1,8 +1,9 @@
 // Galeri foto pelatihan dari seed-data/gallery/<kategori>-N.jpg (foto stok Unsplash, lisensi bebas).
-// Untuk tiap pelatihan di kategori accounting & administrative yang galerinya masih kosong, dipasang
-// 4 foto ke TrainingImage (dirotasi dari pool kategori); foto pertama jadi sampul hanya kalau sampulnya
-// masih kosong. Idempotent: pelatihan yang sudah punya galeri dilewati, dan foto pool yang sudah diunggah
-// (originalName sama) dipakai ulang, tidak diunggah lagi.
+// Untuk tiap pelatihan di kategori administrative yang galerinya masih kosong, dipasang 4 foto ke
+// TrainingImage (dirotasi dari pool kategori); foto pertama jadi sampul hanya kalau sampulnya masih
+// kosong. Idempotent: pelatihan yang sudah punya galeri dilewati, dan foto pool yang sudah diunggah
+// (originalName sama) dipakai ulang, tidak diunggah lagi. Accounting memakai foto manifest
+// (seed-manifest-gallery.ts), yang juga menggantikan foto pool accounting versi awal.
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { getDb } from "../src/lib/db";
@@ -11,10 +12,9 @@ import { uploadMedia } from "../src/services/media";
 const db = getDb();
 
 const GALLERY_DIR = path.join(__dirname, "seed-data", "gallery");
-const CATEGORY_SLUGS = ["accounting", "administrative"] as const;
+const CATEGORY_SLUGS = ["administrative"] as const;
 const GALLERY_SIZE = 4;
 const ALT: Record<string, string> = {
-  accounting: "Foto pelatihan accounting dan keuangan",
   administrative: "Foto pelatihan administrasi perkantoran",
 };
 
