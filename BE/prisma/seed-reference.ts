@@ -14,7 +14,7 @@ import {
 
 export const REFERENCE_SEED_KEY = "seed.referenceCatalog.version";
 // Naikkan versi ini setiap isi katalog berubah: seed dijalankan lagi sekali untuk database yang markernya lama.
-export const REFERENCE_SEED_VERSION = "2026-10-19-acc-adm-6";
+export const REFERENCE_SEED_VERSION = "2026-10-19-adm-6-acc-10";
 const batchSize = 100;
 const batches = <T>(items: T[], size = batchSize) =>
   Array.from({ length: Math.ceil(items.length / size) }, (_, index) => items.slice(index * size, (index + 1) * size));

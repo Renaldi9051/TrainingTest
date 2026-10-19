@@ -171,8 +171,10 @@ export function referenceTraining(post: ReferencePost) {
 // ditautkan ke kategori yang memilihnya, jadi kategori besar seperti Management tidak membengkak.
 // Hasilnya deterministik dan hanya bergantung pada snapshot.
 export const POSTS_PER_CATEGORY = 10;
-// Batas khusus per kategori (slug). Kategori yang tidak disebut pakai POSTS_PER_CATEGORY.
-export const POSTS_PER_CATEGORY_OVERRIDE: Record<string, number> = { accounting: 6, administrative: 6 };
+// Batas khusus per kategori (slug). Kategori yang tidak disebut pakai POSTS_PER_CATEGORY. Accounting
+// kembali 10 (pemilik, 19 Okt 2026): semuanya punya foto manifest, dan dengan 6 pelatihan accounting
+// tergeser dari 10 kategori teratas di sidebar katalog.
+export const POSTS_PER_CATEGORY_OVERRIDE: Record<string, number> = { administrative: 6 };
 // Dua artikel ini dipakai tes dan punya naskah khusus, jadi selalu terpilih di kategorinya.
 const pinnedSlugs = new Set(["training-finance-treasury-management", "training-evaluasi-etika-dan-kepatuhan"]);
 

@@ -30,6 +30,7 @@ async function main() {
       step.gallery
         ? `galeri ${step.gallery.length} foto${step.previousImageIds.length > 0 ? " (ganti foto pool lama)" : ""}`
         : `dilewati: galeri sudah berisi ${step.previousImageIds.length} foto`,
+      ...(step.categoryIds.length > 0 ? [`tautkan ke ${step.categoryIds.length} kategori manifest`] : []),
     ];
     console.info(`  [isi] ${step.title}: ${parts.join(", ")}`);
   }

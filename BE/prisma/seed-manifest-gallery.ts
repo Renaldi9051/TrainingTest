@@ -5,6 +5,9 @@
 // - Sampul dan galeri pelatihan hanya diisi kalau masih kosong atau masih berisi foto pool accounting
 //   versi awal (seed-gallery.ts sebelum 19 Okt 2026; pemilik minta accounting memakai foto manifest).
 //   Pilihan admin lainnya tidak tertimpa.
+// - Pelatihan di manifest ditautkan ke kategori manifest (accounting) kalau tautannya belum ada. Seed
+//   katalog referensi tidak lagi menautkannya karena langkah foto di atas mengisi updatedById, dan batas
+//   accounting 6 versi awal sempat melepas tautan 4 pelatihan (pemilik minta kembali 10).
 // - Foto yang sudah pernah diunggah (nama file asli sama, belum di Sampah) dipakai ulang, jadi aman
 //   dijalankan ulang.
 // Semua foto berlisensi CC0 (sumber per foto dicatat di manifest).
@@ -47,8 +50,12 @@ type TrainingStep = {
   gallery: Photo[] | null;
   previousCoverId: string | null;
   previousImageIds: string[];
+  // Kategori manifest yang belum tertaut ke pelatihan ini.
+  categoryIds: string[];
 };
 export type ManifestPlan = {
+  // Semua kategori manifest yang ada (untuk tautan & revalidate), terlepas dari perlu-tidaknya ganti gambar.
+  manifestCategories: { id: string; slug: string }[];
   categories: CategoryStep[];
   trainings: TrainingStep[];
   unchanged: { slug: string; reasons: string[] }[];
@@ -58,6 +65,7 @@ export type ManifestPlan = {
 export async function planManifestGallery(): Promise<ManifestPlan> {
   const manifest = manifestSchema.parse(JSON.parse(await readFile(path.join(GALLERY_DIR, "manifest.json"), "utf8")));
   const missing: string[] = [];
+  const manifestCategories: ManifestPlan["manifestCategories"] = [];
   const categories: CategoryStep[] = [];
   for (const [slug, photo] of Object.entries(manifest.categories)) {
     const row = await db.category.findFirst({ where: { slug, deletedAt: null }, include: { image: true } });
@@ -65,6 +73,7 @@ export async function planManifestGallery(): Promise<ManifestPlan> {
       missing.push(`kategori ${slug}`);
       continue;
     }
+    manifestCategories.push({ id: row.id, slug });
     if (row.image?.originalName === uploadName(photo) && row.image.deletedAt === null) continue;
     categories.push({ id: row.id, slug, name: row.name, photo, currentName: row.image?.originalName ?? null });
   }
@@ -80,6 +89,7 @@ export async function planManifestGallery(): Promise<ManifestPlan> {
         coverId: true,
         cover: { select: { originalName: true } },
         images: { select: { mediaId: true, media: { select: { originalName: true } } } },
+        categories: { select: { categoryId: true } },
       },
     });
     if (!row) {
@@ -96,13 +106,19 @@ export async function planManifestGallery(): Promise<ManifestPlan> {
       gallery: galleryFree ? entry.gallery : null,
       previousCoverId: row.coverId,
       previousImageIds: row.images.map((image) => image.mediaId),
+      categoryIds: manifestCategories
+        .map((category) => category.id)
+        .filter((id) => !row.categories.some((link) => link.categoryId === id)),
     };
-    if (step.cover || step.gallery) trainings.push(step);
+    if (step.cover || step.gallery || step.categoryIds.length > 0) trainings.push(step);
     else {
-      unchanged.push({ slug, reasons: ["sampul sudah ada", `galeri sudah berisi ${row.images.length} foto`] });
+      unchanged.push({
+        slug,
+        reasons: ["sampul sudah ada", `galeri sudah berisi ${row.images.length} foto`, "kategori sudah tertaut"],
+      });
     }
   }
-  return { categories, trainings, unchanged, missing };
+  return { manifestCategories, categories, trainings, unchanged, missing };
 }
 
 // Unggah foto yang belum ada di media library; kembalikan peta nama file -> id media.
@@ -161,7 +177,11 @@ export async function applyManifestGallery(steps: ManifestPlan): Promise<{ uploa
       );
     }
     for (const step of steps.trainings) {
-      const diff: { coverId?: { from: string | null; to: string }; imageIds?: { from: string[]; to: string[] } } = {};
+      const diff: {
+        coverId?: { from: string | null; to: string };
+        imageIds?: { from: string[]; to: string[] };
+        categoryIds?: { added: string[] };
+      } = {};
       if (step.cover) {
         await tx.training.update({ where: { id: step.id }, data: { coverId: mediaId(step.cover), updatedById: owner.id } });
         diff.coverId = { from: step.previousCoverId, to: mediaId(step.cover) };
@@ -174,6 +194,13 @@ export async function applyManifestGallery(steps: ManifestPlan): Promise<{ uploa
           data: imageIds.map((id, order) => ({ trainingId: step.id, mediaId: id, order })),
         });
         diff.imageIds = { from: step.previousImageIds, to: imageIds };
+      }
+      if (step.categoryIds.length > 0) {
+        await tx.trainingCategory.createMany({
+          data: step.categoryIds.map((categoryId) => ({ trainingId: step.id, categoryId })),
+          skipDuplicates: true,
+        });
+        diff.categoryIds = { added: step.categoryIds };
       }
       await writeAudit(
         { userId: owner.id, action: AuditAction.UPDATE, entity: "Training", entityId: step.id, diff },
@@ -190,7 +217,7 @@ export async function applyManifestGallery(steps: ManifestPlan): Promise<{ uploa
       RevalidateTag.MEDIA,
       RevalidateTag.CATEGORIES,
       RevalidateTag.TRAININGS,
-      ...steps.categories.map((step) => RevalidateTag.category(step.slug)),
+      ...steps.manifestCategories.map((category) => RevalidateTag.category(category.slug)),
       ...steps.trainings.map((step) => RevalidateTag.training(step.slug)),
     ]));
   return { uploaded, revalidated };
