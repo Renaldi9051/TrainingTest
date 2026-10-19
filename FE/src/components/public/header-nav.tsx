@@ -195,7 +195,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
               <Link
                 href={cta.href}
                 onClick={() => setMobileOpen(false)}
-                className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-4 text-body font-medium text-on-primary transition-colors duration-150 ease-standard hover:bg-primary-hover"
+                className="site-header-cta inline-flex h-12 items-center justify-center rounded-md px-4 text-body font-medium transition-colors duration-150 ease-standard"
               >
                 {cta.label}
               </Link>

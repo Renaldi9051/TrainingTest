@@ -11,6 +11,15 @@
   --header-line: var(--border-strong);
   --header-hover: var(--bg-subtle);
 }
+/* CTA header (desktop & menu mobile) sama di semua halaman: --accent dengan teks gelap, seperti di atas
+   foto hero (keputusan pemilik 19 Okt 2026). Fallback netral = tombol primer. */
+.site-header .site-header-cta {
+  background: var(--cta, var(--primary));
+  color: var(--on-cta, var(--on-primary));
+}
+.site-header .site-header-cta:hover {
+  background: var(--cta-hover, var(--primary-hover));
+}
 
 /* Di atas foto hero beranda (elemen [data-header-over], lib/hero-marker.ts; DESIGN.md 8.1): header
    transparan berteks terang dan ikut tergulir bersama hero (bukan sticky), seperti mockup. Murni CSS,
