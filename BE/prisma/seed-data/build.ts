@@ -17,6 +17,7 @@ import {
   homeSections,
   marketing,
   mediaPartners,
+  paymentPage,
   portfolio,
   profilePage,
   services,
@@ -51,6 +52,12 @@ export const buildStaticPages = () =>
     ]),
   }));
 
+export const buildPaymentPage = () => ({
+  slug: paymentPage.slug,
+  title: paymentPage.title,
+  blocks: pageBlocksSchema.parse(withIds(paymentPage.blocks)),
+});
+
 export const buildHomeSections = () => homeSections.map((section) => homeSectionCreateSchema.parse(section));
 
 export const buildSettings = () => ({
@@ -70,6 +77,7 @@ export function buildAll() {
     mediaPartners: buildMediaPartners(),
     profileBlocks: buildProfileBlocks(),
     staticPages: buildStaticPages(),
+    paymentPage: buildPaymentPage(),
     homeSections: buildHomeSections(),
     settings: buildSettings(),
   };

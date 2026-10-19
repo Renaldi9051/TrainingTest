@@ -252,6 +252,45 @@ export const footerNav: SeedNavItem[] = [
 
 const legalNote = "Isi halaman ini contoh. Sesuaikan dengan ketentuan resmi lembaga sebelum situs tayang.";
 
+// Halaman pembayaran: dibuat DRAFT dengan rekening bertanda [ISI]. Nomor rekening palsu di situs publik bisa
+// membuat orang salah transfer, jadi pemilik mengisi rekening resmi, menayangkan halaman, lalu menambah
+// menu "Pembayaran" lewat admin.
+export const PAYMENT_SLUG = "pembayaran";
+
+export const paymentPage = {
+  slug: PAYMENT_SLUG,
+  title: "Pembayaran",
+  blocks: [
+    {
+      type: "PAYMENT_ACCOUNTS",
+      eyebrow: "Transfer bank",
+      heading: "Rekening pembayaran",
+      intro: "Transfer sesuai nominal pada surat penawaran atau konfirmasi pendaftaran ke salah satu rekening resmi berikut.",
+      accounts: [
+        {
+          bank: "[ISI] Nama bank",
+          number: "0000000000",
+          holder: "[ISI] Nama pemilik rekening",
+          note: "Ganti dengan rekening resmi lembaga sebelum halaman ditayangkan.",
+        },
+      ],
+      confirm: { label: "Konfirmasi pembayaran", href: "/kontak" },
+    },
+    {
+      type: "LIST",
+      eyebrow: "",
+      heading: "Langkah pembayaran",
+      style: "bullet",
+      items: [
+        "Transfer sesuai nominal tagihan ke salah satu rekening di atas.",
+        "Tulis nama peserta dan judul pelatihan di berita transfer.",
+        "Simpan bukti transfer, lalu kirim lewat tombol konfirmasi pembayaran.",
+        "Tim kami mengirim konfirmasi pendaftaran paling lambat satu hari kerja.",
+      ],
+    },
+  ],
+};
+
 export const staticPages = [
   {
     slug: TERMS_SLUG,
