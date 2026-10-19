@@ -22,6 +22,7 @@
     "db:seed:reference": "dotenv -e ../.env -- tsx scripts/import-reference-catalog.ts",
     "db:reference:fetch": "node scripts/fetch-reference-catalog.mjs",
     "db:remove:evaluation": "dotenv -e ../.env -- tsx scripts/remove-evaluation.ts",
+    "db:reset-admin-password": "dotenv -e ../.env -- tsx scripts/reset-admin-password.ts",
     "db:e2e:reset": "tsx scripts/e2e-db-reset.ts",
     "db:e2e:blank-title": "tsx scripts/e2e-blank-title.ts",
     "demo": "tsx scripts/demo.ts",
