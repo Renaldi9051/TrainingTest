@@ -10,6 +10,7 @@ import { Viewfinder } from "@/components/decor/viewfinder";
 import { Reveal } from "@/components/motion/reveal";
 import { RevealImage } from "@/components/motion/reveal-parts";
 import { RollText } from "@/components/motion/roll-text";
+import { PaymentAccounts } from "@/components/public/payment-accounts";
 import { PublicImage } from "@/components/public/public-image";
 import { PublicSection } from "@/components/public/public-section";
 import { RichTextHtml } from "@/components/public/rich-text-html";
@@ -40,6 +41,7 @@ const FALLBACK_HEADINGS: Record<Block["type"], string> = {
   SERVICES: "Layanan",
   IMAGE: "Gambar",
   DOWNLOAD: "Unduhan",
+  PAYMENT_ACCOUNTS: "Rekening pembayaran",
 };
 
 const pad = (value: number) => String(value).padStart(2, "0");
@@ -91,6 +93,8 @@ function ProfileBlock({ block, categoryHrefs }: { block: Block; categoryHrefs: M
       return <PhotoBlock block={block} />;
     case "DOWNLOAD":
       return <DownloadSection block={block} />;
+    case "PAYMENT_ACCOUNTS":
+      return <PaymentSection block={block} />;
   }
 }
 
@@ -307,6 +311,20 @@ function DownloadSection({ block }: { block: Extract<Block, { type: "DOWNLOAD" }
             <span className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">PDF / {formatBytes(block.file.size)}</span>
           </div>
         </div>
+      </Container>
+    </section>
+  );
+}
+
+// Rekening pembayaran di halaman profil: section biasa, isi sama dengan halaman statis.
+function PaymentSection({ block }: { block: Extract<Block, { type: "PAYMENT_ACCOUNTS" }> }) {
+  const id = useId();
+  return (
+    <section id={block.id} aria-labelledby={id} className="border-t border-border py-20 md:py-32">
+      <Container className="space-y-8">
+        <HeadingOrHidden id={id} eyebrow={block.eyebrow} heading={block.heading} fallback={FALLBACK_HEADINGS.PAYMENT_ACCOUNTS} />
+        {block.intro ? <p className="max-w-[65ch] text-body-lg text-fg-muted">{block.intro}</p> : null}
+        <PaymentAccounts anchor={block.id} accounts={block.accounts} confirm={block.confirm} />
       </Container>
     </section>
   );

@@ -7,6 +7,7 @@ import { MediaPicker } from "@/components/admin/media/media-picker";
 import { OptionMultiPicker } from "@/components/admin/option-multi-picker";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { StringListEditor } from "@/components/admin/training-editors";
+import { Checkbox } from "@/components/admin/ui/checkbox";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import {
@@ -21,7 +22,14 @@ import { useScopedId } from "@/hooks/use-scoped-id";
 import { resourceOptionSource } from "@/lib/admin-resources";
 import type { Media, PageBlock } from "@/lib/api/types";
 import { CATEGORY_ICON_NAMES, CATEGORY_ICONS } from "@/lib/category-icons";
-import { FEATURES_MAX, LIST_ITEMS_MAX, MISSION_ITEMS_MAX, SERVICES_LIMIT_MAX } from "@/lib/page-blocks";
+import {
+  emptyPaymentAccount,
+  FEATURES_MAX,
+  LIST_ITEMS_MAX,
+  MISSION_ITEMS_MAX,
+  PAYMENT_ACCOUNTS_MAX,
+  SERVICES_LIMIT_MAX,
+} from "@/lib/page-blocks";
 
 const SERVICE_OPTIONS = resourceOptionSource("services");
 
@@ -285,6 +293,115 @@ export function BlockFields({ block, onChange, errors, media }: FieldsProps<Page
         </>
       );
       break;
+    case "PAYMENT_ACCOUNTS": {
+      const confirmErrors = errors?.confirm as BlockErrors;
+      fields = (
+        <>
+          <HeadingFields block={block} onChange={onChange} errors={errors} sid={sid} />
+          <FormField id={sid("intro")} label="Pengantar" description="Mis. transfer sesuai nominal di surat penawaran." error={message(errors, "intro")}>
+            <Textarea rows={2} value={block.intro} onChange={(event) => onChange({ ...block, intro: event.target.value })} />
+          </FormField>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Rekening</p>
+            {message(errors, "accounts") ? <p className="text-small text-status-error">{message(errors, "accounts")}</p> : null}
+            <ListEditor
+              value={block.accounts}
+              onChange={(accounts) => onChange({ ...block, accounts })}
+              createItem={emptyPaymentAccount}
+              max={PAYMENT_ACCOUNTS_MAX}
+              addLabel="Tambah rekening"
+              itemLabel={(item, index) => item.bank || `Rekening ${index + 1}`}
+              renderItem={({ item, index, update }) => {
+                const itemErrors = (errors?.accounts as Record<number, BlockErrors> | undefined)?.[index];
+                return (
+                  <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                    <FormField id={sid(`account-${index}-bank`)} label="Nama bank" required error={message(itemErrors, "bank")}>
+                      <Input value={item.bank} onChange={(event) => update({ ...item, bank: event.target.value })} />
+                    </FormField>
+                    <FormField
+                      id={sid(`account-${index}-number`)}
+                      label="Nomor rekening"
+                      required
+                      description="Angka, boleh dipisah spasi atau strip."
+                      error={message(itemErrors, "number")}
+                    >
+                      <Input
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={item.number}
+                        onChange={(event) => update({ ...item, number: event.target.value })}
+                      />
+                    </FormField>
+                    <FormField id={sid(`account-${index}-holder`)} label="Atas nama" required error={message(itemErrors, "holder")}>
+                      <Input value={item.holder} onChange={(event) => update({ ...item, holder: event.target.value })} />
+                    </FormField>
+                    <FormField
+                      id={sid(`account-${index}-note`)}
+                      label="Catatan"
+                      description="Opsional, mis. khusus pelatihan public."
+                      error={message(itemErrors, "note")}
+                    >
+                      <Input value={item.note} onChange={(event) => update({ ...item, note: event.target.value })} />
+                    </FormField>
+                    <FormField
+                      id={sid(`account-${index}-logo`)}
+                      label="Logo bank"
+                      description="Opsional. Nama bank tetap tampil sebagai teks."
+                      className="sm:col-span-2"
+                      error={message(itemErrors, "logo")}
+                    >
+                      <MediaPicker
+                        value={item.logo?.mediaId ?? null}
+                        onChange={(id) => update({ ...item, logo: id ? { mediaId: id } : null })}
+                        initialMedia={item.logo ? media[item.logo.mediaId] : undefined}
+                        aspect="3/1"
+                        fit="contain"
+                        dialogTitle="Pilih logo bank"
+                      />
+                    </FormField>
+                  </div>
+                );
+              }}
+            />
+          </div>
+          <div className="space-y-3 rounded-md border border-border p-4">
+            <div className="flex items-center gap-3">
+              <Checkbox
+                id={sid("confirm-enabled")}
+                checked={block.confirm !== null}
+                onCheckedChange={(checked) => onChange({ ...block, confirm: checked ? { label: "", href: "" } : null })}
+              />
+              <Label htmlFor={sid("confirm-enabled")} className="text-sm font-medium">
+                Tombol konfirmasi pembayaran
+              </Label>
+            </div>
+            {block.confirm ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField id={sid("confirm-label")} label="Label tombol" required error={message(confirmErrors, "label")}>
+                  <Input
+                    value={block.confirm.label}
+                    onChange={(event) => block.confirm && onChange({ ...block, confirm: { ...block.confirm, label: event.target.value } })}
+                  />
+                </FormField>
+                <FormField
+                  id={sid("confirm-href")}
+                  label="Tautan"
+                  required
+                  description="Mis. https://wa.me/62812xxxx atau /kontak."
+                  error={message(confirmErrors, "href")}
+                >
+                  <Input
+                    value={block.confirm.href}
+                    onChange={(event) => block.confirm && onChange({ ...block, confirm: { ...block.confirm, href: event.target.value } })}
+                  />
+                </FormField>
+              </div>
+            ) : null}
+          </div>
+        </>
+      );
+      break;
+    }
   }
   return <div className="space-y-5">{fields}</div>;
 }

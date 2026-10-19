@@ -2,7 +2,7 @@ import { z } from "zod";
 import { mediaRefObjectSchema, type TypedMediaRef } from "@/lib/media-refs";
 import { isRichTextEmpty, richTextSchema } from "@/lib/rich-text";
 import { iconSchema } from "@/lib/validators/category";
-import { plainText, requiredText } from "@/lib/validators/common";
+import { ctaSchema, plainText, requiredText } from "@/lib/validators/common";
 import {
   headingFields,
   INTRO_MAX,
@@ -24,6 +24,7 @@ export const PAGE_BLOCK_TYPES = [
   "SERVICES",
   "IMAGE",
   "DOWNLOAD",
+  "PAYMENT_ACCOUNTS",
 ] as const;
 export type PageBlockType = (typeof PAGE_BLOCK_TYPES)[number];
 
@@ -35,12 +36,14 @@ export const PAGE_BLOCK_LABELS: Record<PageBlockType, string> = {
   SERVICES: "Layanan",
   IMAGE: "Gambar",
   DOWNLOAD: "Unduhan",
+  PAYMENT_ACCOUNTS: "Rekening pembayaran",
 };
 
 export const PAGE_BLOCKS_MAX = 40;
 export const FEATURES_MAX = 12;
 export const LIST_ITEMS_MAX = 30;
 export const LIST_STYLES = ["bullet", "chips"] as const;
+export const PAYMENT_ACCOUNTS_MAX = 6;
 
 const blockId = z.uuid({ error: "ID blok tidak valid." });
 
@@ -112,9 +115,41 @@ const downloadBlock = z.object({
   file: mediaRefObjectSchema.nullable().default(null),
 });
 
+// Rekening tujuan transfer (halaman pembayaran). Nomor hanya angka dengan spasi/strip pemisah supaya
+// tombol Salin di publik menyalin nomor yang bisa langsung ditempel di aplikasi bank. Logo bank opsional
+// dan dekoratif (nama bank selalu tampil sebagai teks), jadi alt tidak wajib.
+const accountNumber = requiredText("Nomor rekening", 40).regex(/^\d(?:[\d -]*\d)?$/, {
+  error: "Nomor rekening hanya boleh berisi angka, spasi, atau strip.",
+});
+const digitsOnly = (value: string) => value.replace(/\D/g, "");
+
+const paymentAccountsBlock = z.object({
+  id: blockId,
+  type: z.literal("PAYMENT_ACCOUNTS"),
+  ...headingFields,
+  intro: plainText("Pengantar", INTRO_MAX),
+  accounts: z
+    .array(
+      z.object({
+        bank: requiredText("Nama bank", 60),
+        number: accountNumber,
+        holder: requiredText("Atas nama", 80),
+        note: plainText("Catatan", 120),
+        logo: mediaRefObjectSchema.nullable().default(null),
+      }),
+    )
+    .min(1, { error: "Isi minimal satu rekening." })
+    .max(PAYMENT_ACCOUNTS_MAX, { error: `Rekening maksimal ${PAYMENT_ACCOUNTS_MAX}.` })
+    .refine((accounts) => new Set(accounts.map((account) => digitsOnly(account.number))).size === accounts.length, {
+      error: "Nomor rekening tidak boleh dobel.",
+    }),
+  // Tombol konfirmasi (mis. https://wa.me/... atau /kontak). null = tanpa tombol.
+  confirm: ctaSchema.nullable().default(null),
+});
+
 export const pageBlockSchema = z.discriminatedUnion(
   "type",
-  [richTextBlock, visionMissionBlock, featuresBlock, listBlock, servicesBlock, imageBlock, downloadBlock],
+  [richTextBlock, visionMissionBlock, featuresBlock, listBlock, servicesBlock, imageBlock, downloadBlock, paymentAccountsBlock],
   { error: "Tipe blok tidak dikenal." },
 );
 export type PageBlock = z.infer<typeof pageBlockSchema>;
@@ -147,6 +182,12 @@ export function pageBlockMediaRefs(blocks: PageBlock[]): TypedMediaRef[] {
         return block.file
           ? [{ path: `${index}.file`, mediaId: block.file.mediaId, kind: "pdf", requireAlt: false }]
           : [];
+      case "PAYMENT_ACCOUNTS":
+        return block.accounts.flatMap((account, accountIndex) =>
+          account.logo
+            ? [{ path: `${index}.accounts.${accountIndex}.logo`, mediaId: account.logo.mediaId, kind: "image", requireAlt: false }]
+            : [],
+        );
       case "RICH_TEXT":
       case "VISION_MISSION":
       case "FEATURES":

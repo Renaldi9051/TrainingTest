@@ -316,6 +316,13 @@ export type PublicPageBlock =
       description: string;
       label: string;
       file: { url: string; size: number; mime: string };
+    } & HeadingFields)
+  | ({
+      id: string;
+      type: "PAYMENT_ACCOUNTS";
+      intro: string;
+      accounts: { bank: string; number: string; holder: string; note: string; logo: PublicImage | null }[];
+      confirm: { label: string; href: string } | null;
     } & HeadingFields);
 
 export type PublicPage = {
@@ -403,6 +410,22 @@ export async function resolvePageBlocks(stored: unknown): Promise<PublicPageBloc
           },
         ];
       }
+      case "PAYMENT_ACCOUNTS":
+        return [
+          {
+            id: block.id,
+            type: block.type,
+            eyebrow: block.eyebrow,
+            heading: block.heading,
+            intro: block.intro,
+            // Logo yang dihapus atau bukan gambar dilewati; rekeningnya tetap tampil.
+            accounts: block.accounts.map(({ logo, ...account }) => {
+              const image = logo ? media.get(logo.mediaId) : undefined;
+              return { ...account, logo: image?.mime.startsWith("image/") ? toPublicImage(image) : null };
+            }),
+            confirm: block.confirm,
+          },
+        ];
     }
   });
 }

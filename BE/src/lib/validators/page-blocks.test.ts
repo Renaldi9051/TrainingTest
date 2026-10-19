@@ -26,6 +26,15 @@ const FULL: Record<PageBlockType, Record<string, unknown>> = {
   SERVICES: { heading: "Layanan", mode: "manual", ids: [SERVICE_ID] },
   IMAGE: { image: { mediaId: MEDIA_IMAGE }, caption: "Kegiatan" },
   DOWNLOAD: { heading: "Company profile", label: "Unduh PDF", file: { mediaId: MEDIA_PDF } },
+  PAYMENT_ACCOUNTS: {
+    heading: "Rekening pembayaran",
+    intro: "Transfer sesuai nominal di surat penawaran.",
+    accounts: [
+      { bank: "Bank Contoh", number: "123 456 7890", holder: "PT Contoh", note: "Pelatihan public", logo: { mediaId: MEDIA_IMAGE } },
+      { bank: "Bank Lain", number: "0987-654-321", holder: "PT Contoh" },
+    ],
+    confirm: { label: "Konfirmasi pembayaran", href: "https://wa.me/6281200000000" },
+  },
 };
 
 const fullBlocks = () => PAGE_BLOCK_TYPES.map((type, index) => ({ id: id(index + 1), type, ...FULL[type] }));
@@ -48,6 +57,9 @@ describe("pageBlockSchema", () => {
     expect(pageBlockSchema.parse({ id: id(1), type: "FEATURES", items: [{ title: "x" }] })).toMatchObject({
       items: [{ title: "x", description: "", icon: null }],
     });
+    expect(
+      pageBlockSchema.parse({ id: id(1), type: "PAYMENT_ACCOUNTS", accounts: [{ bank: " B ", number: " 123 ", holder: "PT" }] }),
+    ).toMatchObject({ intro: "", confirm: null, accounts: [{ bank: "B", number: "123", note: "", logo: null }] });
   });
 
   it.each([
@@ -84,6 +96,44 @@ describe("pageBlockSchema", () => {
     ["IMAGE gambar null", { id: id(1), type: "IMAGE", image: null }, ["image"]],
     ["DOWNLOAD tanpa label", { id: id(1), type: "DOWNLOAD", file: null }, ["label"]],
     ["VISION_MISSION tanpa visi", { id: id(1), type: "VISION_MISSION", mission: ["a"] }, ["vision"]],
+    ["PAYMENT_ACCOUNTS tanpa rekening", { id: id(1), type: "PAYMENT_ACCOUNTS", accounts: [] }, ["accounts"]],
+    [
+      "PAYMENT_ACCOUNTS nomor berisi huruf",
+      { id: id(1), type: "PAYMENT_ACCOUNTS", accounts: [{ bank: "B", number: "12ab34", holder: "PT" }] },
+      ["accounts", 0, "number"],
+    ],
+    [
+      "PAYMENT_ACCOUNTS nomor diakhiri strip",
+      { id: id(1), type: "PAYMENT_ACCOUNTS", accounts: [{ bank: "B", number: "1234-", holder: "PT" }] },
+      ["accounts", 0, "number"],
+    ],
+    [
+      "PAYMENT_ACCOUNTS nomor dobel (beda pemisah)",
+      {
+        id: id(1),
+        type: "PAYMENT_ACCOUNTS",
+        accounts: [
+          { bank: "A", number: "123 456", holder: "PT" },
+          { bank: "B", number: "123-456", holder: "PT" },
+        ],
+      },
+      ["accounts"],
+    ],
+    [
+      "PAYMENT_ACCOUNTS tanpa atas nama",
+      { id: id(1), type: "PAYMENT_ACCOUNTS", accounts: [{ bank: "B", number: "123" }] },
+      ["accounts", 0, "holder"],
+    ],
+    [
+      "PAYMENT_ACCOUNTS tombol javascript:",
+      {
+        id: id(1),
+        type: "PAYMENT_ACCOUNTS",
+        accounts: [{ bank: "B", number: "123", holder: "PT" }],
+        confirm: { label: "Konfirmasi", href: "javascript:alert(1)" },
+      },
+      ["confirm", "href"],
+    ],
   ] as const)("menolak %s", (_label, block, path) => {
     const result = pageBlockSchema.safeParse(block);
     expect(result.success).toBe(false);
@@ -148,6 +198,22 @@ describe("pageBlockMediaRefs", () => {
     expect(pageBlockMediaRefs(blocks)).toEqual([
       { path: "0.image", mediaId: MEDIA_IMAGE, kind: "image", requireAlt: true },
       { path: "2.file", mediaId: MEDIA_PDF, kind: "pdf", requireAlt: false },
+    ]);
+  });
+
+  it("PAYMENT_ACCOUNTS: logo bank = gambar dekoratif (alt tidak wajib), rekening tanpa logo dilewati", () => {
+    const blocks = pageBlocksSchema.parse([
+      {
+        id: id(1),
+        type: "PAYMENT_ACCOUNTS",
+        accounts: [
+          { bank: "A", number: "1", holder: "PT" },
+          { bank: "B", number: "2", holder: "PT", logo: { mediaId: MEDIA_IMAGE } },
+        ],
+      },
+    ]);
+    expect(pageBlockMediaRefs(blocks)).toEqual([
+      { path: "0.accounts.1.logo", mediaId: MEDIA_IMAGE, kind: "image", requireAlt: false },
     ]);
   });
 });

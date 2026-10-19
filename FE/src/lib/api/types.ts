@@ -736,9 +736,19 @@ export type PageBlock =
   | ({ id: string; type: "LIST"; style: "bullet" | "chips"; items: string[] } & BlockHeading)
   | ({ id: string; type: "SERVICES"; intro: string; mode: SelectionMode; limit: number; ids: string[] } & BlockHeading)
   | { id: string; type: "IMAGE"; image: MediaRef | null; caption: string }
-  | ({ id: string; type: "DOWNLOAD"; description: string; label: string; file: MediaRef | null } & BlockHeading);
+  | ({ id: string; type: "DOWNLOAD"; description: string; label: string; file: MediaRef | null } & BlockHeading)
+  | ({
+      id: string;
+      type: "PAYMENT_ACCOUNTS";
+      intro: string;
+      accounts: PaymentAccount<MediaRef>[];
+      confirm: { label: string; href: string } | null;
+    } & BlockHeading);
 
 export type PageBlockType = PageBlock["type"];
+
+// Rekening tujuan transfer. Nomor: angka dengan spasi/strip pemisah (divalidasi BE).
+export type PaymentAccount<Logo> = { bank: string; number: string; holder: string; note: string; logo: Logo | null };
 
 export type PageListItem = {
   id: string;
@@ -777,6 +787,13 @@ export type PublicPageBlock =
       description: string;
       label: string;
       file: { url: string; size: number; mime: string };
+    } & BlockHeading)
+  | ({
+      id: string;
+      type: "PAYMENT_ACCOUNTS";
+      intro: string;
+      accounts: PaymentAccount<PublicImage>[];
+      confirm: { label: string; href: string } | null;
     } & BlockHeading);
 
 export type PublicPage = {

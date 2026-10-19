@@ -17,7 +17,7 @@ import { seedCovers } from "./seed-covers";
 import { seedGallery } from "./seed-gallery";
 import { seedHomeImages } from "./seed-home-images";
 import { seedManifestGallery } from "./seed-manifest-gallery";
-import { buildProfileBlocks, buildSettings } from "./seed-data/build";
+import { buildPaymentPage, buildProfileBlocks, buildSettings } from "./seed-data/build";
 import { writeCatalog } from "./seed-data/catalog-writer";
 import { profilePage } from "./seed-data/content";
 import { createSeedNav } from "./seed-data/nav";
@@ -115,6 +115,24 @@ async function seedProfilePage(): Promise<"created" | "exists"> {
   return "created";
 }
 
+// Halaman pembayaran (DRAFT, rekening [ISI]). Hanya kalau slug-nya belum pernah ada (termasuk di Sampah),
+// supaya halaman yang dihapus admin tidak muncul lagi. Menu ditambah admin setelah halaman tayang.
+async function seedPaymentPage(): Promise<"created" | "exists"> {
+  const page = buildPaymentPage();
+  if ((await db.page.count({ where: { slug: page.slug } })) > 0) return "exists";
+  await db.page.create({
+    data: {
+      kind: "STANDARD",
+      slug: page.slug,
+      title: page.title,
+      status: "DRAFT",
+      blocks: page.blocks as Prisma.InputJsonValue,
+      seo: { title: "", description: "", ogImageId: null },
+    },
+  });
+  return "created";
+}
+
 async function main() {
   const adminResult = await seedAdmin();
   for (const setting of settings) {
@@ -139,6 +157,8 @@ async function main() {
     : null;
 
   const profileResult = await seedProfilePage();
+  // Mode minimal (e2e) tanpa halaman pembayaran; spec e2e membuat halamannya sendiri.
+  const paymentResult = MINIMAL ? null : await seedPaymentPage();
   const contentResult = MINIMAL ? null : await seedContent(PUBLISHED_AT);
   // Gambar contoh hanya untuk data contoh yang baru dibuat di run ini (database baru), supaya gambar
   // yang dihapus admin tidak muncul lagi di setiap `docker compose up`: placeholder untuk layanan &
@@ -164,6 +184,7 @@ async function main() {
   console.info(
     `Seed selesai: ${settings.length} key pengaturan dicek (yang ada tidak ditimpa), katalog contoh ${catalogResult}, ` +
       `halaman profil ${profileResult === "created" ? "dibuat" : "sudah ada"}, ` +
+      (paymentResult ? `halaman pembayaran ${paymentResult === "created" ? "dibuat (draft)" : "sudah ada"}, ` : "") +
       `admin ${adminResult === "created" ? "dibuat" : "sudah ada"}.`,
   );
   if (USE_REFERENCE) {

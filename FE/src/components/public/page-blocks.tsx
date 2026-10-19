@@ -2,6 +2,7 @@ import { DownloadIcon } from "lucide-react";
 import { createElement } from "react";
 import { Reveal } from "@/components/motion/reveal";
 import { LineDraw, RevealImage } from "@/components/motion/reveal-parts";
+import { PaymentAccounts } from "@/components/public/payment-accounts";
 import { PublicImage } from "@/components/public/public-image";
 import { PublicSection } from "@/components/public/public-section";
 import { RichTextHtml } from "@/components/public/rich-text-html";
@@ -23,6 +24,7 @@ const FALLBACK_HEADINGS: Record<PublicPageBlock["type"], string> = {
   SERVICES: "Layanan",
   IMAGE: "Gambar",
   DOWNLOAD: "Unduhan",
+  PAYMENT_ACCOUNTS: "Rekening pembayaran",
 };
 
 const BLOCK_IMAGE_SIZES = "(min-width: 1280px) 1232px, calc(100vw - 32px)";
@@ -117,6 +119,12 @@ function Block({ block, anchor }: { block: PublicPageBlock; anchor: string }) {
             <RollText>{block.label}</RollText>
             <span className="font-mono text-label text-on-primary">PDF · {formatBytes(block.file.size)}</span>
           </a>
+        </PublicSection>
+      );
+    case "PAYMENT_ACCOUNTS":
+      return (
+        <PublicSection bare id={anchor} eyebrow={block.eyebrow} heading={block.heading} fallbackHeading={FALLBACK_HEADINGS.PAYMENT_ACCOUNTS} intro={block.intro}>
+          <PaymentAccounts anchor={anchor} accounts={block.accounts} confirm={block.confirm} />
         </PublicSection>
       );
   }

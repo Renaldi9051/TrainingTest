@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { PageBlock, PageBlockType, RichTextDoc } from "@/lib/api/types";
 import { indexesFromFieldKeys, indexesFromFormErrors } from "@/lib/form-errors";
+import { CONTENT_HREF_ERROR, isContentHref } from "@/lib/home-sections";
 
 // Logika state editor blok halaman (tanpa UI), supaya bisa diuji Vitest. Batas & aturan wajib
 // mengikuti BE/src/lib/validators/page-blocks.ts; BE tetap memvalidasi ulang saat simpan.
@@ -11,6 +12,7 @@ export const LIST_ITEMS_MAX = 30;
 export const MISSION_ITEMS_MAX = 10;
 export const SERVICES_LIMIT_MAX = 12;
 export const SERVICES_LIMIT_DEFAULT = 4;
+export const PAYMENT_ACCOUNTS_MAX = 6;
 
 export const PAGE_BLOCK_TYPES = [
   "RICH_TEXT",
@@ -20,6 +22,7 @@ export const PAGE_BLOCK_TYPES = [
   "SERVICES",
   "IMAGE",
   "DOWNLOAD",
+  "PAYMENT_ACCOUNTS",
 ] as const satisfies readonly PageBlockType[];
 
 export const PAGE_BLOCK_LABELS: Record<PageBlockType, string> = {
@@ -30,6 +33,7 @@ export const PAGE_BLOCK_LABELS: Record<PageBlockType, string> = {
   SERVICES: "Layanan",
   IMAGE: "Gambar",
   DOWNLOAD: "Unduhan",
+  PAYMENT_ACCOUNTS: "Rekening pembayaran",
 };
 
 export const PAGE_BLOCK_DESCRIPTIONS: Record<PageBlockType, string> = {
@@ -40,7 +44,10 @@ export const PAGE_BLOCK_DESCRIPTIONS: Record<PageBlockType, string> = {
   SERVICES: "Layanan dari modul Layanan (otomatis atau pilih manual).",
   IMAGE: "Satu gambar dengan keterangan.",
   DOWNLOAD: "Tombol unduh PDF, mis. company profile.",
+  PAYMENT_ACCOUNTS: "Daftar rekening tujuan transfer dengan tombol salin nomor, mis. halaman pembayaran.",
 };
+
+export const emptyPaymentAccount = () => ({ bank: "", number: "", holder: "", note: "", logo: null });
 
 export function createBlock(type: PageBlockType, id: string = crypto.randomUUID()): PageBlock {
   const heading = { eyebrow: "", heading: "" };
@@ -59,6 +66,8 @@ export function createBlock(type: PageBlockType, id: string = crypto.randomUUID(
       return { id, type, image: null, caption: "" };
     case "DOWNLOAD":
       return { id, type, ...heading, description: "", label: "Unduh company profile", file: null };
+    case "PAYMENT_ACCOUNTS":
+      return { id, type, ...heading, intro: "", accounts: [emptyPaymentAccount()], confirm: null };
   }
 }
 
@@ -131,6 +140,8 @@ export function blockSummary(block: PageBlock): string {
       return block.caption || (block.image ? "Gambar dipilih" : "Belum ada gambar");
     case "DOWNLOAD":
       return block.heading || block.label;
+    case "PAYMENT_ACCOUNTS":
+      return block.heading || `${block.accounts.length} rekening`;
   }
 }
 
@@ -224,6 +235,33 @@ export const pageBlockFormSchema = z.discriminatedUnion("type", [
     description: optionalText("Deskripsi", 300),
     label: requiredText("Label tombol", 60),
     file: mediaRef.nullable(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("PAYMENT_ACCOUNTS"),
+    ...headingShape,
+    intro: optionalText("Pengantar", 300),
+    accounts: z
+      .array(
+        z.object({
+          bank: requiredText("Nama bank", 60),
+          number: requiredText("Nomor rekening", 40).regex(/^\d(?:[\d -]*\d)?$/, {
+            error: "Nomor rekening hanya boleh berisi angka, spasi, atau strip.",
+          }),
+          holder: requiredText("Atas nama", 80),
+          note: optionalText("Catatan", 120),
+          logo: mediaRef.nullable(),
+        }),
+      )
+      .min(1, { error: "Isi minimal satu rekening." })
+      .max(PAYMENT_ACCOUNTS_MAX, { error: `Rekening maksimal ${PAYMENT_ACCOUNTS_MAX}.` }),
+    // null = tanpa tombol (kotak centang di editor), sama seperti CTA opsional di beranda.
+    confirm: z
+      .object({
+        label: requiredText("Label tombol", 40),
+        href: requiredText("Tautan", 500).refine(isContentHref, { error: CONTENT_HREF_ERROR }),
+      })
+      .nullable(),
   }),
 ]);
 
