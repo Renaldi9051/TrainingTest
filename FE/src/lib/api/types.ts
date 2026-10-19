@@ -452,6 +452,8 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   investment: PublicInvestment;
   // null = "Jadwal menyesuaikan".
   nextSchedule: Pick<PublicTrainingSchedule, "startDate" | "endDate" | "city" | "method"> | null;
+  // Galeri foto pelatihan; tampil sebagai hero geser di detail.
+  gallery: PublicImage[];
   seo: { title: string; description: string; ogImage: PublicImage | null };
   schedules: PublicTrainingSchedule[];
   related: PublicTrainingCard[];

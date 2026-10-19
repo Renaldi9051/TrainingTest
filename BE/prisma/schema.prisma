@@ -291,6 +291,8 @@ model Training {
   showPrice            Boolean                  @default(false)
   coverId              String?                  @db.Uuid
   cover                Media?                   @relation(fields: [coverId], references: [id], onDelete: SetNull)
+  // Galeri foto pelatihan: array mediaId (string[]). Ditampilkan sebagai galeri geser di detail.
+  gallery              Json                     @default("[]")
   status               ContentStatus            @default(DRAFT)
   publishedAt          DateTime?                @db.Timestamptz(3)
   // Kapan FE terakhir di-revalidate untuk publish ini. Scheduler BE me-revalidate pelatihan yang

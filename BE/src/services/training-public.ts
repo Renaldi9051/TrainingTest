@@ -72,6 +72,8 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   investment: PublicInvestment;
   // Sesi DIBUKA terdekat; null = "Jadwal menyesuaikan".
   nextSchedule: PublicNextSchedule | null;
+  // Galeri foto pelatihan (0..n); tampil sebagai hero geser di detail.
+  gallery: PublicImage[];
   seo: { title: string; description: string; ogImage: PublicImage | null };
   schedules: PublicTrainingSchedule[];
   related: PublicTrainingCard[];
@@ -245,8 +247,11 @@ async function buildDetail(
   now: Date,
 ): Promise<PublicTrainingDetail> {
   const seo = parseSeo(row.seo);
+  const galleryIds = Array.isArray(row.gallery)
+    ? (row.gallery as unknown[]).filter((id): id is string => typeof id === "string")
+    : [];
   const [media, related, defaults] = await Promise.all([
-    getMediaMap([seo.ogImageId]),
+    getMediaMap([seo.ogImageId, ...galleryIds]),
     relatedTrainings(row, now),
     getTrainingDefaults(),
   ]);
@@ -277,6 +282,9 @@ async function buildDetail(
     priceText: row.showPrice ? row.priceText : null,
     investment: computeInvestment(row.showPrice, row.priceText, schedules),
     nextSchedule: nextOpenSchedule(schedules),
+    gallery: galleryIds
+      .map((id) => toPublicImage(media.get(id)))
+      .filter((image): image is PublicImage => image !== null),
     seo: {
       title: seo.title,
       description: seo.description,

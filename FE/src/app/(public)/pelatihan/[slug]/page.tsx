@@ -8,6 +8,7 @@ import { Accordion } from "@/components/public/accordion";
 import { JsonLd } from "@/components/public/json-ld";
 import { PreviewBanner } from "@/components/public/preview-banner";
 import { PublicImage } from "@/components/public/public-image";
+import { TrainingGallery } from "@/components/public/training-gallery";
 import { RichTextHtml } from "@/components/public/rich-text-html";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { TrainingGrid } from "@/components/public/training-card";
@@ -177,13 +178,17 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
       <div className={cn("bg-[#fafafa]", cta && "pb-24 lg:pb-0")}>
         <Container className="grid gap-8 pt-12 lg:grid-cols-[minmax(0,1fr)_320px]">
           <article className="min-w-0 rounded-2xl bg-white p-6 shadow-[0_2px_12px_rgb(0_0_0_/_0.12)] md:p-8">
-            <div className="relative mb-6 flex aspect-video items-center justify-center overflow-hidden bg-[#0b417f] text-center text-white">
-              {training.cover ? (
-                <PublicImage image={training.cover} sizes="(min-width: 1024px) 800px, 100vw" grayscale={false} priority />
-              ) : (
-                <span className="max-w-[24ch] px-8 text-[24px] font-bold uppercase md:text-[36px]">{training.title}</span>
-              )}
-            </div>
+            {training.gallery.length > 0 ? (
+              <TrainingGallery images={training.gallery} title={training.title} />
+            ) : (
+              <div className="relative mb-6 flex aspect-video items-center justify-center overflow-hidden rounded-2xl bg-[#0b417f] text-center text-white">
+                {training.cover ? (
+                  <PublicImage image={training.cover} sizes="(min-width: 1024px) 800px, 100vw" grayscale={false} priority />
+                ) : (
+                  <span className="max-w-[24ch] px-8 text-[24px] font-bold uppercase md:text-[36px]">{training.title}</span>
+                )}
+              </div>
+            )}
             <h1 data-page-enter="" className="text-[25px] leading-[1.2] font-bold text-[#111] uppercase md:text-[30px]">{training.title}</h1>
             {training.categories.length > 0 ? (
               <p className="mt-3 flex flex-wrap gap-2 text-[13px] text-[#0b417f]">
