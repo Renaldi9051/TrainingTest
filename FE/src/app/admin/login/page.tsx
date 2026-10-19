@@ -16,7 +16,7 @@ export default function LoginPage({ searchParams }: PageProps<"/admin/login">) {
         <h1 className="mt-3 text-[28px] leading-[1.1] font-semibold tracking-[-0.03em] text-fg-strong">
           Masuk
         </h1>
-        <p className="mt-2 text-small text-fg-muted">Gunakan email dan kata sandi akun admin.</p>
+        <p className="mt-2 text-small text-fg-muted">Masukkan kata sandi admin.</p>
         <div className="mt-8">
           <Suspense fallback={<LoginFormSkeleton />}>
             <LoginGate searchParams={searchParams} />
@@ -39,7 +39,6 @@ async function LoginGate({ searchParams }: Pick<PageProps<"/admin/login">, "sear
 function LoginFormSkeleton() {
   return (
     <div className="space-y-5" aria-hidden>
-      <Skeleton className="h-14 w-full" />
       <Skeleton className="h-14 w-full" />
       <Skeleton className="h-10 w-full" />
     </div>

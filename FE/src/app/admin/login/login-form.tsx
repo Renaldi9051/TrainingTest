@@ -13,11 +13,6 @@ import { ApiError, apiFetch } from "@/lib/api/client";
 import type { AuthUserResponse } from "@/lib/api/types";
 
 const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, { error: "Email wajib diisi." })
-    .pipe(z.email({ error: "Format email tidak valid." })),
   password: z.string().min(1, { error: "Kata sandi wajib diisi." }),
 });
 
@@ -33,7 +28,7 @@ export function LoginForm({ next }: { next: string }) {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { password: "" },
   });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -48,7 +43,7 @@ export function LoginForm({ next }: { next: string }) {
     } catch (error) {
       if (error instanceof ApiError && error.fields) {
         for (const [field, messages] of Object.entries(error.fields)) {
-          if (field === "email" || field === "password") {
+          if (field === "password") {
             setError(field, { message: messages[0] });
           }
         }
@@ -63,11 +58,8 @@ export function LoginForm({ next }: { next: string }) {
 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-5">
-      <FormField id={sid("email")} label="Email" error={errors.email?.message}>
-        <Input type="email" autoComplete="username" autoFocus {...register("email")} />
-      </FormField>
       <FormField id={sid("password")} label="Kata sandi" error={errors.password?.message}>
-        <Input type="password" autoComplete="current-password" {...register("password")} />
+        <Input type="password" autoComplete="current-password" autoFocus {...register("password")} />
       </FormField>
 
       {errors.root?.message ? (
