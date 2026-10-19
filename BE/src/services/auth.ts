@@ -7,23 +7,20 @@ import type { LoginInput } from "@/lib/validators/auth";
 import { AuditAction, writeAudit } from "@/services/audit";
 import { createSession, revokeSession, type SessionUser } from "@/services/session";
 
-// Pesan sama untuk email tidak terdaftar, password salah, dan akun nonaktif.
-export const INVALID_CREDENTIALS_MESSAGE = "Email atau kata sandi salah.";
+// Pesan sama untuk password salah, admin belum dibuat, dan akun nonaktif.
+export const INVALID_CREDENTIALS_MESSAGE = "Kata sandi salah.";
 
 type RequestMeta = { ip: string; userAgent: string | null; unknownIpMode?: UnknownIpMode };
-
-export function loginRateLimitKey(ip: string, email: string): string {
-  return `${ip}|${email.toLowerCase()}`;
-}
 
 export async function login(
   input: LoginInput,
   meta: RequestMeta,
   limiter: RateLimiter = getLoginRateLimiter(),
 ): Promise<{ user: SessionUser; token: string; expiresAt: Date }> {
-  // Key = IP + email. IP tak terbaca selalu jadi "unknown" (juga di mode "skip"): limit login tidak
-  // pernah dilewati, paling tidak berlaku per email, supaya tetap terlindung dari tebak kata sandi.
-  const key = loginRateLimitKey(ipRateLimitKey(meta.ip, meta.unknownIpMode ?? "shared") ?? UNKNOWN_IP, input.email);
+  // Key = IP. IP tak terbaca selalu jadi "unknown" (juga di mode "skip"): limit login tidak pernah
+  // dilewati, paling tidak semua IP tak terbaca berbagi satu bucket, supaya tetap terlindung dari
+  // tebak kata sandi.
+  const key = ipRateLimitKey(meta.ip, meta.unknownIpMode ?? "shared") ?? UNKNOWN_IP;
   const limit = limiter.status(key);
   if (limit.blocked) {
     const minutes = Math.max(1, Math.ceil(limit.retryAfterMs / 60_000));
@@ -35,9 +32,10 @@ export async function login(
   }
 
   const db = getDb();
-  const user = await db.user.findUnique({
-    where: { email: input.email },
-    select: { id: true, name: true, email: true, active: true, passwordHash: true },
+  // Satu admin: akun yang paling awal dibuat (admin dari seed).
+  const user = await db.user.findFirst({
+    orderBy: { createdAt: "asc" },
+    select: { id: true, name: true, active: true, passwordHash: true },
   });
 
   let valid = false;
@@ -61,7 +59,7 @@ export async function login(
   });
 
   return {
-    user: { id: user.id, name: user.name, email: user.email, lastLoginAt },
+    user: { id: user.id, name: user.name, lastLoginAt },
     ...session,
   };
 }

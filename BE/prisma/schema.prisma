@@ -107,7 +107,6 @@ enum RedirectCode {
 model User {
   id           String    @id @default(uuid(7)) @db.Uuid
   name         String
-  email        String    @unique
   passwordHash String
   active       Boolean   @default(true)
   lastLoginAt  DateTime? @db.Timestamptz(3)

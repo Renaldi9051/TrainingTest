@@ -29,7 +29,6 @@ export type PaginationMeta = {
 export type AuthUser = {
   id: string;
   name: string;
-  email: string;
   lastLoginAt: string | null;
 };
 

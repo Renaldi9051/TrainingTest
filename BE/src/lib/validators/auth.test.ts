@@ -2,17 +2,14 @@ import { describe, expect, it } from "vitest";
 import { loginSchema } from "@/lib/validators/auth";
 
 describe("loginSchema", () => {
-  it("menormalkan email (trim + huruf kecil)", () => {
-    expect(loginSchema.parse({ email: "  Admin@Example.COM ", password: "x" }).email).toBe(
-      "admin@example.com",
-    );
+  it("hanya menerima kata sandi; field lain (mis. email lama) diabaikan", () => {
+    expect(loginSchema.parse({ email: "admin@example.com", password: "x" })).toEqual({ password: "x" });
   });
 
-  it("menolak email tidak valid dan password kosong dengan pesan Bahasa Indonesia", () => {
-    const result = loginSchema.safeParse({ email: "bukan", password: "" });
-    expect(result.success).toBe(false);
-    const messages = result.error?.issues.map((issue) => issue.message);
-    expect(messages).toContain("Format email tidak valid.");
-    expect(messages).toContain("Kata sandi wajib diisi.");
+  it("menolak password kosong dan terlalu panjang dengan pesan Bahasa Indonesia", () => {
+    const messages = (input: unknown) => loginSchema.safeParse(input).error?.issues.map((issue) => issue.message);
+    expect(messages({ password: "" })).toContain("Kata sandi wajib diisi.");
+    expect(messages({})).toContain("Kata sandi wajib diisi.");
+    expect(messages({ password: "x".repeat(257) })).toContain("Kata sandi terlalu panjang.");
   });
 });

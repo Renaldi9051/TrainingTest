@@ -17,7 +17,6 @@ const DAY = 24 * 60 * 60 * 1000;
 const activeUser = {
   id: "u1",
   name: "Admin",
-  email: "admin@example.com",
   active: true,
   lastLoginAt: null,
 };

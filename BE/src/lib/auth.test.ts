@@ -16,7 +16,7 @@ import { revalidateEntity } from "@/lib/revalidate-map";
 import { SESSION_COOKIE } from "@/lib/session-cookie";
 
 const DAY = 24 * 60 * 60 * 1000;
-const user = { id: "u1", name: "Admin", email: "admin@example.com", active: true, lastLoginAt: null };
+const user = { id: "u1", name: "Admin", active: true, lastLoginAt: null };
 
 let mock: MockDb;
 
@@ -62,7 +62,6 @@ describe("requireAdmin", () => {
     expect(admin.user).toEqual({
       id: "u1",
       name: "Admin",
-      email: "admin@example.com",
       lastLoginAt: null,
     });
   });

@@ -26,7 +26,6 @@ beforeEach(() => {
 const activeUser = () => ({
   id: "u1",
   name: "Admin",
-  email: "admin@example.com",
   active: true,
   passwordHash,
 });
@@ -35,13 +34,14 @@ const freshLimiter = () => new MemoryRateLimiter(5, 15 * 60_000);
 
 describe("login", () => {
   it("sukses: update lastLoginAt, buat sesi, tulis audit LOGIN", async () => {
-    mock.user.findUnique.mockResolvedValue(activeUser());
+    mock.user.findFirst.mockResolvedValue(activeUser());
     const result = await login(
-      { email: "admin@example.com", password: CORRECT },
+      { password: CORRECT },
       meta,
       freshLimiter(),
     );
-    expect(result.user).toMatchObject({ id: "u1", email: "admin@example.com" });
+    expect(result.user).toEqual({ id: "u1", name: "Admin", lastLoginAt: expect.any(Date) });
+    expect(mock.user.findFirst.mock.calls[0][0]).toMatchObject({ orderBy: { createdAt: "asc" } });
     expect(result.user).not.toHaveProperty("passwordHash");
     expect(mock.user.update).toHaveBeenCalledWith({
       where: { id: "u1" },
@@ -58,44 +58,44 @@ describe("login", () => {
 
   it.each([
     ["password salah", () => activeUser(), "password-salah-123"],
-    ["email tidak terdaftar", () => null, CORRECT],
+    ["admin belum dibuat", () => null, CORRECT],
     ["akun nonaktif", () => ({ ...activeUser(), active: false }), CORRECT],
   ])("%s: 401 dengan pesan yang sama", async (_label, found, password) => {
-    mock.user.findUnique.mockResolvedValue(found());
+    mock.user.findFirst.mockResolvedValue(found());
     await expect(
-      login({ email: "admin@example.com", password }, meta, freshLimiter()),
+      login({ password }, meta, freshLimiter()),
     ).rejects.toMatchObject({ status: 401, message: INVALID_CREDENTIALS_MESSAGE });
     expect(mock.session.create).not.toHaveBeenCalled();
   });
 
-  it("429 setelah 5 kali gagal untuk IP+email yang sama, walau password benar", async () => {
+  it("429 setelah 5 kali gagal dari IP yang sama, walau password benar", async () => {
     const limiter = freshLimiter();
-    mock.user.findUnique.mockResolvedValue(activeUser());
+    mock.user.findFirst.mockResolvedValue(activeUser());
     for (let i = 0; i < 5; i++) {
       await expect(
-        login({ email: "admin@example.com", password: "salah-salah-123" }, meta, limiter),
+        login({ password: "salah-salah-123" }, meta, limiter),
       ).rejects.toMatchObject({ status: 401 });
     }
     await expect(
-      login({ email: "admin@example.com", password: CORRECT }, meta, limiter),
+      login({ password: CORRECT }, meta, limiter),
     ).rejects.toMatchObject({ status: 429, code: "TOO_MANY_ATTEMPTS" });
 
-    // IP lain dengan email yang sama tidak ikut terblokir.
+    // IP lain tidak ikut terblokir.
     await expect(
-      login({ email: "admin@example.com", password: CORRECT }, { ...meta, ip: "10.0.0.2" }, limiter),
+      login({ password: CORRECT }, { ...meta, ip: "10.0.0.2" }, limiter),
     ).resolves.toMatchObject({ user: { id: "u1" } });
   });
 });
 
 describe("logout", () => {
-  it("IP tak terbaca, mode skip: login tetap dibatasi per email (tidak pernah dilewati)", async () => {
+  it("IP tak terbaca, mode skip: login tetap dibatasi lewat bucket bersama (tidak pernah dilewati)", async () => {
     const limiter = freshLimiter();
-    mock.user.findUnique.mockResolvedValue(activeUser());
+    mock.user.findFirst.mockResolvedValue(activeUser());
     const anon = { ip: "unknown", userAgent: "vitest", unknownIpMode: "skip" } as const;
     for (let i = 0; i < 5; i++) {
-      await expect(login({ email: "admin@example.com", password: "salah-salah-123" }, anon, limiter)).rejects.toMatchObject({ status: 401 });
+      await expect(login({ password: "salah-salah-123" }, anon, limiter)).rejects.toMatchObject({ status: 401 });
     }
-    await expect(login({ email: "admin@example.com", password: CORRECT }, anon, limiter)).rejects.toMatchObject({ status: 429 });
+    await expect(login({ password: CORRECT }, anon, limiter)).rejects.toMatchObject({ status: 429 });
   });
 
   it("menghapus sesi dan menulis audit LOGOUT", async () => {

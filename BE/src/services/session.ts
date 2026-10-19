@@ -9,7 +9,6 @@ export const SESSION_REFRESH_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 export type SessionUser = {
   id: string;
   name: string;
-  email: string;
   lastLoginAt: Date | null;
 };
 
@@ -60,7 +59,7 @@ export async function validateSession(
     select: {
       id: true,
       expiresAt: true,
-      user: { select: { id: true, name: true, email: true, active: true, lastLoginAt: true } },
+      user: { select: { id: true, name: true, active: true, lastLoginAt: true } },
     },
   });
   if (!session) return null;
