@@ -1,6 +1,5 @@
 import { outlineLabel } from "@/lib/outline-label";
 import { SearchIcon } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { DotPattern } from "@/components/decor/dot-pattern";
 import { GrainOverlay } from "@/components/decor/grain-overlay";
@@ -14,6 +13,7 @@ import { HeroWords } from "@/components/motion/hero-words";
 import { CountUp } from "@/components/motion/reveal-parts";
 import { VelocityMarquee } from "@/components/motion/velocity-marquee";
 import { ChipLink } from "@/components/public/chip-link";
+import { CtaLink } from "@/components/public/cta-link";
 import { ClientLogos } from "@/components/public/client-logos";
 import { PublicSection } from "@/components/public/public-section";
 import { ScheduleTable } from "@/components/public/schedule-table";
@@ -21,7 +21,7 @@ import { ServiceRows } from "@/components/public/service-rows";
 import { TestimonialsScroller } from "@/components/public/testimonials-scroller";
 import { TrainingGrid } from "@/components/public/training-card";
 import { VisionMission } from "@/components/public/vision-mission";
-import { ButtonContent, buttonVariants, MAGNETIC } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import type { Cta, PreviewHomeSection, PublicHomeSection } from "@/lib/api/types";
@@ -42,27 +42,6 @@ const FALLBACK_HEADINGS: Record<PublicHomeSection["type"], string> = {
   CTA: "Hubungi kami",
   MARQUEE: "Bidang layanan",
 };
-
-function CtaLink({ cta, variant, arrow }: { cta: Cta; variant: "primary" | "secondary" | "inverse" | "inverseOutline"; arrow?: boolean }) {
-  const external = /^https:\/\//i.test(cta.href);
-  const className = buttonVariants({ variant, size: "lg" });
-  const content = (
-    <ButtonContent arrow={arrow} roll>
-      {cta.label}
-    </ButtonContent>
-  );
-  return external ? (
-    <a href={cta.href} target="_blank" rel="noopener noreferrer" className={className} {...MAGNETIC}>
-      {content}
-      <span className="sr-only"> (tab baru)</span>
-    </a>
-  ) : (
-    <Link href={cta.href} className={className} {...MAGNETIC}>
-      {content}
-    </Link>
-  );
-}
-
 
 // Tanda + di keempat sudut sebuah blok (DESIGN.md 6.1). Induk relative.
 function CornerMarkers({ decor, inset = "-top-1.5" }: { decor: boolean; inset?: string }) {
