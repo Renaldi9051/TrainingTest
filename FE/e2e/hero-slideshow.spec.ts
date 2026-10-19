@@ -152,6 +152,23 @@ test.describe("hero slideshow", () => {
     await expect(page.locator(".floating-contact")).toBeHidden();
   });
 
+  // cacheComponents menyimpan beranda di <Activity mode="hidden"> setelah pindah halaman: penanda hero
+  // masih di DOM, tapi header & floating contact di halaman tujuan harus kembali normal.
+  test("pindah menu lewat navigasi klien: header putih sticky di halaman lain, transparan lagi saat kembali", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    const header = page.locator("header.site-header");
+    await expect(header).toHaveCSS("position", "absolute");
+    await page.getByRole("navigation", { name: "Menu utama", exact: true }).locator('a[href^="/"]:not([href="/"])').first().click();
+    await expect(page).not.toHaveURL(/\/$/);
+    await expect(hero(page)).toBeHidden();
+    await expect(header).toHaveCSS("position", "sticky");
+    await expect(page.locator(".floating-contact")).toBeVisible();
+    await page.goBack();
+    await expect(hero(page)).toBeVisible();
+    await expect(header).toHaveCSS("position", "absolute");
+  });
+
   test("pause menghentikan slide dan kata berganti; play melanjutkan", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 1400 });
     await page.goto("/");

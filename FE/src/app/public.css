@@ -15,8 +15,9 @@
 /* Di atas foto hero beranda (elemen [data-header-over], lib/hero-marker.ts; DESIGN.md 8.1): header
    transparan berteks terang dan ikut tergulir bersama hero (bukan sticky), seperti mockup. Murni CSS,
    jadi benar sejak render pertama dan tetap terbaca tanpa JS. Tidak berlaku saat banner pratinjau admin
-   tampil di atas hero ([data-preview-banner]): header tetap putih dan tidak menutupi banner. */
-:root:has([data-header-over]):not(:has([data-preview-banner])) .site-header {
+   tampil di atas hero ([data-preview-banner]): header tetap putih dan tidak menutupi banner. Juga tidak
+   berlaku di html[data-hero-hidden]: hero beranda masih di DOM tapi tersembunyi setelah pindah halaman. */
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header {
   position: absolute;
   inset-inline: 0;
   top: 0;
@@ -26,18 +27,18 @@
   --header-line: color-mix(in srgb, var(--inverse-fg) 40%, transparent);
   --header-hover: color-mix(in srgb, var(--inverse-fg) 12%, transparent);
 }
-:root:has([data-header-over]):not(:has([data-preview-banner])) .site-header .site-brand-light {
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header .site-brand-light {
   display: none;
 }
-:root:has([data-header-over]):not(:has([data-preview-banner])) .site-header .site-brand-dark {
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header .site-brand-dark {
   display: flex;
 }
 /* Di atas foto hero: CTA --accent dengan teks gelap (palet C; fallback netral = terang/teks gelap). */
-:root:has([data-header-over]):not(:has([data-preview-banner])) .site-header .site-header-cta {
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header .site-header-cta {
   background: var(--cta, var(--inverse-fg));
   color: var(--on-cta, var(--fg-strong));
 }
-:root:has([data-header-over]):not(:has([data-preview-banner])) .site-header .site-header-cta:hover {
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header .site-header-cta:hover {
   background: var(--cta-hover, var(--bg-muted));
 }
 
@@ -50,7 +51,7 @@
     scale 300ms var(--ease-standard),
     visibility 300ms allow-discrete;
 }
-:root:has([data-header-over]):not(:has([data-preview-banner])):not([data-past-hero]) .floating-contact {
+:root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])):not([data-past-hero]) .floating-contact {
   opacity: 0;
   translate: 0 16px;
   scale: 0.9;

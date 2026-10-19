@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode } from "react";
 import { GrainOverlay } from "@/components/decor/grain-overlay";
 import { HudLabel } from "@/components/decor/hud-label";
 import { RotatingBadge } from "@/components/decor/rotating-badge";
@@ -9,7 +9,7 @@ import { Viewfinder } from "@/components/decor/viewfinder";
 import { PublicImage } from "@/components/public/public-image";
 import { segmentKeyTarget } from "@/components/ui/segmented-plan";
 import type { HeroLayout, HeroPhotoStyle, PublicHeroSlide } from "@/lib/api/types";
-import { HEADER_OVER_ATTR, PAST_HERO_ATTR } from "@/lib/hero-marker";
+import { HEADER_OVER_ATTR, HERO_HIDDEN_ATTR, PAST_HERO_ATTR } from "@/lib/hero-marker";
 import { cn } from "@/lib/utils";
 import { HeroPauseButton } from "./hero-pause-button";
 import { useHeroPaused } from "./hero-playback";
@@ -64,6 +64,16 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
   const allBlockers: SlideBlockers = { ...blockers, userPaused };
   const playing = autoplayAllowed(count, allBlockers);
   const block = (change: Partial<typeof blockers>) => setBlockers((current) => ({ ...current, ...change }));
+
+  // Pindah halaman lewat navigasi klien menyembunyikan beranda di <Activity> tanpa melepasnya dari DOM;
+  // cleanup effect tetap jalan, jadi tandai html supaya header & floating contact kembali normal
+  // (public.css). Layout effect: berganti di commit yang sama, sebelum paint.
+  useLayoutEffect(() => {
+    if (!full) return;
+    const root = document.documentElement;
+    root.removeAttribute(HERO_HIDDEN_ATTR);
+    return () => root.setAttribute(HERO_HIDDEN_ATTR, "");
+  }, [full]);
 
   // Kondisi awal di browser: reduced motion, tab, slide lain setelah halaman selesai dimuat.
   useEffect(() => {
