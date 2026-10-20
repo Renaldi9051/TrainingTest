@@ -5,8 +5,10 @@ import { getEnv } from "@/lib/env";
 
 // Dipanggil BE setelah mutasi konten (BE/src/lib/revalidate.ts). Route ini menang atas rewrite
 // /api/* ke BE karena route filesystem dicek lebih dulu.
+// Panjang tag mengikuti batas Next.js (256). Tag terpanjang dari BE: "training:" + slug (maks 120),
+// batas lama 100 menolak seluruh batch kalau ada satu slug panjang.
 const bodySchema = z.object({
-  tags: z.array(z.string().trim().min(1).max(100)).min(1).max(50),
+  tags: z.array(z.string().trim().min(1).max(256)).min(1).max(50),
 });
 
 function secretMatches(received: string | null): boolean {
