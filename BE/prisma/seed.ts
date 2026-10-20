@@ -17,6 +17,7 @@ import { seedCovers } from "./seed-covers";
 import { seedGallery } from "./seed-gallery";
 import { seedHomeImages } from "./seed-home-images";
 import { seedManifestGallery } from "./seed-manifest-gallery";
+import { seedThemeGallery } from "./seed-theme-gallery";
 import { seedPaymentPage } from "./seed-payment-page";
 import { buildProfileBlocks, buildSettings } from "./seed-data/build";
 import { writeCatalog } from "./seed-data/catalog-writer";
@@ -156,6 +157,9 @@ async function main() {
   // Galeri foto administrative: 4 foto per pelatihan dari pool kategori ke TrainingImage, foto pertama
   // jadi cover kalau cover masih kosong.
   const galleryResult = MINIMAL ? null : await seedGallery();
+  // Foto tema (orang Indonesia) untuk semua kategori lain dan pelatihan yang sampul/galerinya kosong.
+  // Sebelum seedHomeImages, jadi kategori sudah berfoto dan ilustrasi lama tidak dipasang lagi.
+  const themeResult = MINIMAL ? null : await seedThemeGallery();
   // Slide hero & gambar kategori yang masih kosong (database tanpa gambar, mis. VPS).
   const homeImageResult = MINIMAL ? null : await seedHomeImages();
   // Seed bulk mencetak ringkasannya sendiri.
@@ -205,6 +209,11 @@ async function main() {
   if (galleryResult !== null) {
     console.info(
       `Galeri foto: ${galleryResult === "dilewati" ? "dilewati" : `${galleryResult} pelatihan`} (administrative, hanya yang galerinya kosong).`,
+    );
+  }
+  if (themeResult !== null) {
+    console.info(
+      `Foto tema: ${themeResult === "dilewati" ? "dilewati (sudah terpasang)" : `${themeResult.categories} kategori, ${themeResult.trainings} pelatihan`}.`,
     );
   }
   if (homeImageResult !== null) {

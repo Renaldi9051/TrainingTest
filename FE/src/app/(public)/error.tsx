@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 
-export default function PublicError({ reset }: { error: Error; reset: () => void }) {
+// `retry` mengambil ulang data dari server (refresh + reset). `reset` saja hanya menggambar ulang di
+// browser, jadi error dari Server Component tetap muncul walau BE sudah pulih.
+export default function PublicError({ retry }: { error: Error; retry: () => void }) {
   return (
     <Container className="py-24 md:py-32">
       <Eyebrow>Terjadi kesalahan</Eyebrow>
@@ -15,7 +17,7 @@ export default function PublicError({ reset }: { error: Error; reset: () => void
         Server sedang sibuk atau tidak dapat dihubungi. Coba lagi beberapa saat lagi.
       </p>
       <div className="mt-10">
-        <Button size="lg" onClick={reset}>
+        <Button size="lg" onClick={retry}>
           Coba lagi
         </Button>
       </div>

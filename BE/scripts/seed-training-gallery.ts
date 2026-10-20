@@ -26,9 +26,9 @@ async function main() {
   }
   for (const step of steps.trainings) {
     const parts = [
-      step.cover ? (step.previousCoverId ? "sampul (ganti foto pool lama)" : "sampul") : "dilewati: sampul sudah ada",
+      step.cover ? (step.previousCoverId ? "sampul (ganti foto lama)" : "sampul") : "dilewati: sampul sudah ada",
       step.gallery
-        ? `galeri ${step.gallery.length} foto${step.previousImageIds.length > 0 ? " (ganti foto pool lama)" : ""}`
+        ? `galeri ${step.gallery.length} foto${step.previousImageIds.length > 0 ? " (ganti foto lama)" : ""}`
         : `dilewati: galeri sudah berisi ${step.previousImageIds.length} foto`,
       ...(step.categoryIds.length > 0 ? [`tautkan ke ${step.categoryIds.length} kategori manifest`] : []),
     ];

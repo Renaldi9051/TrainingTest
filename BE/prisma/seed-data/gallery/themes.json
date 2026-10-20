@@ -1,0 +1,746 @@
+{
+  "default": "kantor",
+  "themes": [
+    {
+      "key": "energi",
+      "label": "Energi, migas & pertambangan",
+      "match": "migas|oil|(^|-)gas($|-)|mining|tambang|batu-?bara|mineral|geolog|energy|energi|pembangkit|nuklir|^gold$|electric-vehicle",
+      "photos": [
+        {
+          "file": "themes/energi-01.jpg",
+          "alt": "Petugas memeriksa fasilitas pengolahan gas",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/37589838/"
+          }
+        },
+        {
+          "file": "themes/energi-02.jpg",
+          "alt": "Petugas berjalan di antara tangki penyimpanan minyak",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/36778676/"
+          }
+        },
+        {
+          "file": "themes/energi-03.jpg",
+          "alt": "Petugas meninjau area tambang dengan latar pegunungan",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/4735530/"
+          }
+        },
+        {
+          "file": "themes/energi-04.jpg",
+          "alt": "Pekerja berhijab dan berhelm di area tambang dengan truk dan ekskavator",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/36384760/"
+          }
+        },
+        {
+          "file": "themes/energi-05.jpg",
+          "alt": "Kompleks pembangkit dan tangki penyimpanan dilihat dari udara",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/6754760/"
+          }
+        },
+        {
+          "file": "themes/energi-06.jpg",
+          "alt": "Kilang minyak dengan tangki dan jaringan pipa dilihat dari udara",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/6767962/"
+          }
+        }
+      ]
+    },
+    {
+      "key": "agro",
+      "label": "Pertanian, perikanan & lingkungan",
+      "match": "agro|akuakultur|perikanan|pakan|hutan|lingkungan|environment|limbah|carbon|esg|natural|pertanian",
+      "photos": [
+        {
+          "file": "themes/agro-01.jpg",
+          "alt": "Dua petani tersenyum bekerja di ladang",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/15830193/"
+          }
+        },
+        {
+          "file": "themes/agro-02.jpg",
+          "alt": "Petani memanen kubis di kebun",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/16560054/"
+          }
+        },
+        {
+          "file": "themes/agro-03.jpg",
+          "alt": "Petani memetik cabai di kebun",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/12470180/"
+          }
+        },
+        {
+          "file": "themes/agro-04.jpg",
+          "alt": "Petani mengemas sayuran di ladang",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/26690966/"
+          }
+        },
+        {
+          "file": "themes/agro-05.jpg",
+          "alt": "Dua petani membajak sawah dengan traktor tangan",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/9686993/"
+          }
+        },
+        {
+          "file": "themes/agro-06.jpg",
+          "alt": "Petani menanam padi di sawah",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/35544010/"
+          }
+        },
+        {
+          "file": "themes/agro-07.jpg",
+          "alt": "Petani perempuan bercaping di sawah menguning",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/20347119/"
+          }
+        }
+      ]
+    },
+    {
+      "key": "logistik",
+      "label": "Logistik, pengadaan & maritim",
+      "match": "warehouse|gudang|logistic|supply|spply|procurement|pengadaan|purchasing|vendor|inventory|cargo|shipping|kapal|pelayaran|pelabuhan|marine|maritime|container|export|import|kepabeanan|clearance|distribusi|transportasi|vehicle|driving|defensive|riding|dangerous|berbahaya|handling|spare-part|pengelolaan-barang|tata-letak",
+      "photos": [
+        {
+          "file": "themes/logistik-01.jpg",
+          "alt": "Dua awak kapal bekerja di dek kapal kargo",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/37171400/"
+          }
+        },
+        {
+          "file": "themes/logistik-02.jpg",
+          "alt": "Pekerja memuat kayu ke kapal di pelabuhan",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/36663382/"
+          }
+        },
+        {
+          "file": "themes/logistik-03.jpg",
+          "alt": "Pekerja beristirahat di dekat truk dan peti kemas di pelabuhan",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/40360226/"
+          }
+        },
+        {
+          "file": "themes/logistik-04.jpg",
+          "alt": "Petugas pelabuhan berseragam mengoperasikan peralatan bongkar muat",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/37510661/"
+          }
+        },
+        {
+          "file": "themes/logistik-05.jpg",
+          "alt": "Petugas membersihkan rampa kapal feri di pelabuhan",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/39675721/"
+          }
+        },
+        {
+          "file": "themes/logistik-06.jpg",
+          "alt": "Pekerja memikul karung untuk dimuat ke kapal",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/11017229/"
+          }
+        },
+        {
+          "file": "themes/logistik-07.jpg",
+          "alt": "Gudang berisi tumpukan kardus dan palet",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1672552226380-486fe900b322"
+          }
+        }
+      ]
+    },
+    {
+      "key": "konstruksi",
+      "label": "Konstruksi, teknik sipil & properti",
+      "match": "sipil|kontruksi|konstruksi|bangunan|building|gedung|infrastruktur|arsitektur|survey|mapping|pemetaan|lereng|pertanahan|estate|propert|proyek|project|drafting|^cad$|quantity|estimation|tender|plumbing|piping|tkdn",
+      "photos": [
+        {
+          "file": "themes/konstruksi-01.jpg",
+          "alt": "Juru ukur memakai alat survei di lapangan",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/39235160/"
+          }
+        },
+        {
+          "file": "themes/konstruksi-02.jpg",
+          "alt": "Pekerja berhelm memperbaiki jalan",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/sFb6log0N70"
+          }
+        },
+        {
+          "file": "themes/konstruksi-03.jpg",
+          "alt": "Pekerja konstruksi berhelm di lokasi proyek gedung",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/BZ5CKvk1hwE"
+          }
+        },
+        {
+          "file": "themes/konstruksi-04.jpg",
+          "alt": "Pekerja merakit besi tulangan di lokasi proyek",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/10938935/"
+          }
+        },
+        {
+          "file": "themes/konstruksi-05.jpg",
+          "alt": "Pekerja berhelm dan rompi keselamatan di jalan kota",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/3979016/"
+          }
+        },
+        {
+          "file": "themes/konstruksi-06.jpg",
+          "alt": "Pekerja berhelm mengoperasikan mesin di lokasi proyek",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/15390174/"
+          }
+        },
+        {
+          "file": "themes/konstruksi-07.jpg",
+          "alt": "Pekerja memanggul besi di antara perancah",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/ji0wcfoW7Zc"
+          }
+        }
+      ]
+    },
+    {
+      "key": "teknologi",
+      "label": "Teknologi informasi & digital",
+      "match": "information|informasi|programming|software|^data|database|cyber|digital|^web$|excel(?!lence)|microsoft|system|aplikasi|technology|^smart$|e-commerce|forensic|modeling|^logic$|^drone$",
+      "photos": [
+        {
+          "file": "themes/teknologi-01.jpg",
+          "alt": "Dua programmer berdiskusi di depan layar kode",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/two-men-working-on-computers-in-an-office-RIk-i9rXPao"
+          }
+        },
+        {
+          "file": "themes/teknologi-02.jpg",
+          "alt": "Peserta bekerja dengan laptop sambil minum",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/a-man-sitting-at-a-table-with-a-laptop-and-a-drink-xYmKPLKCr_0"
+          }
+        },
+        {
+          "file": "themes/teknologi-03.jpg",
+          "alt": "Peserta mengetik di laptop",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/a-man-sitting-at-a-table-using-a-laptop-computer-JCJzXJuT1z8"
+          }
+        },
+        {
+          "file": "themes/teknologi-04.jpg",
+          "alt": "Programmer menulis kode di depan monitor",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/man-in-black-shirt-using-laptop-computer-and-flat-screen-monitor--S2-AKdWQoQ"
+          }
+        },
+        {
+          "file": "themes/teknologi-05.jpg",
+          "alt": "Programmer menulis kode di ruang kerja bersama",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/person-coding-in-modern-workspace-G1N9kDHqBrQ"
+          }
+        },
+        {
+          "file": "themes/teknologi-06.jpg",
+          "alt": "Programmer berheadphone bekerja di depan komputer",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/man-wearing-headphones-while-using-computer-o4UhdLv5jbQ"
+          }
+        }
+      ]
+    },
+    {
+      "key": "industri",
+      "label": "Industri, teknik & K3",
+      "match": "industri|manufactur|produksi|production|maintenance|perawatan|pemeliharaan|repair|mechanical|mekanikal|mekatronika|electric|elektr|kelistrikan|electroni[ck]|instrument|kalibrasi|alat-ukur|metering|machine|pompa|valve|baja|coating|corrosion|korosi|rotating|reliability|predictive|preventive|troubleshooting|quality|^iso$|^k3$|hse|healthy|safety|keselamatan|^fire$|kimia|chemist|laboratorium|technical|teknik|enginering|switchgear|grounding|lightning|^panel$|thermography|infrared|refrigerator|^ac$|battery|generatior|equipment|water-jet|asme|alignment|process|^operasi|operation|foundation|instalation|food-production|^tools?$",
+      "photos": [
+        {
+          "file": "themes/industri-01.jpg",
+          "alt": "Dua teknisi mengoperasikan mesin CNC di bengkel",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/4281613/"
+          }
+        },
+        {
+          "file": "themes/industri-02.jpg",
+          "alt": "Dua pekerja berhelm dan berseragam oranye memeriksa catatan kerja",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/10871712/"
+          }
+        },
+        {
+          "file": "themes/industri-03.jpg",
+          "alt": "Pekerja berhelm kuning berbicara lewat radio di ruang kendali",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/14147712/"
+          }
+        },
+        {
+          "file": "themes/industri-04.jpg",
+          "alt": "Teknisi berhelm berdiri di tangga fasilitas industri",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/13634590/"
+          }
+        },
+        {
+          "file": "themes/industri-05.jpg",
+          "alt": "Pekerja bengkel bekerja dengan peralatan",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/10938936/"
+          }
+        },
+        {
+          "file": "themes/industri-06.jpg",
+          "alt": "Pekerja berhelm putih dan rompi keselamatan",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/lWmyvGCodTE"
+          }
+        },
+        {
+          "file": "themes/industri-07.jpg",
+          "alt": "Pekerja berhelm kuning dan rompi keselamatan saat apel kerja",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/EiVEsCCLHFE"
+          }
+        }
+      ]
+    },
+    {
+      "key": "keuangan",
+      "label": "Keuangan, akuntansi & perbankan",
+      "match": "account|finance|keuangan|^tax$|pajak|bank|credit|treasury|investasi|invest|capital|modal|ipo|audit|assurance|fraud|insurance|budget|biaya|cost|cash|petty|pembayaran|transaksi|syariah|koperasi|economy|pencucian|appraisal|penilaian|harga|pensiun|konsolidasi|laporan|statement|^report$|feasibility|kelayakan|collection|collector|scoring|balanced|scorecard|kpi|kinerja",
+      "photos": [
+        {
+          "file": "themes/keuangan-01.jpg",
+          "alt": "Tangan menyerahkan uang kertas rupiah",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/38429810/"
+          }
+        },
+        {
+          "file": "themes/keuangan-02.jpg",
+          "alt": "Dompet berisi uang rupiah di tangan",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/8719575/"
+          }
+        },
+        {
+          "file": "themes/keuangan-03.jpg",
+          "alt": "Beragam pecahan uang kertas rupiah",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/6927358/"
+          }
+        },
+        {
+          "file": "themes/keuangan-04.jpg",
+          "alt": "Pedagang berhijab menghitung penjualan dengan kalkulator",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/37682130/"
+          }
+        },
+        {
+          "file": "themes/keuangan-05.jpg",
+          "alt": "Tangan memegang lembaran uang rupiah",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/31679217/"
+          }
+        },
+        {
+          "file": "themes/keuangan-06.jpg",
+          "alt": "Tangan menulis perhitungan di atas kertas",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1658534984640-c9885a17fc9b"
+          }
+        },
+        {
+          "file": "themes/keuangan-07.jpg",
+          "alt": "Tangan menandatangani dokumen di atas meja",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1666018215872-b98ffea7e6ab"
+          }
+        }
+      ]
+    },
+    {
+      "key": "layanan",
+      "label": "Layanan, pemasaran & kesehatan",
+      "match": "customer|service|pelayanan|excellence|complaint|hospitality|perhotelan|housekeeping|kebersihan|^food|retail|merchandising|sales|selling|marketing|pemasaran|market|konsumen|public-relation|humas|event|protocol|medis|rumah-sakit|kesehatan|content|media|photography|relationship|opinion",
+      "photos": [
+        {
+          "file": "themes/layanan-01.jpg",
+          "alt": "Pramusaji hotel mengantar kopi ke kamar tamu",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/3770107/"
+          }
+        },
+        {
+          "file": "themes/layanan-02.jpg",
+          "alt": "Staf hotel membawa linen bersih di lorong",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/3772615/"
+          }
+        },
+        {
+          "file": "themes/layanan-03.jpg",
+          "alt": "Kasir berhijab melayani di toko swalayan",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/18703556/"
+          }
+        },
+        {
+          "file": "themes/layanan-04.jpg",
+          "alt": "Barista berhijab menyiapkan pesanan",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/35647484/"
+          }
+        },
+        {
+          "file": "themes/layanan-05.jpg",
+          "alt": "Barista tersenyum memegang cangkir kopi",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/8627340/"
+          }
+        },
+        {
+          "file": "themes/layanan-06.jpg",
+          "alt": "Dokter berjas putih di ruang praktik",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/8376281/"
+          }
+        },
+        {
+          "file": "themes/layanan-07.jpg",
+          "alt": "Pemeriksaan mata pasien anak di klinik",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/36292510/"
+          }
+        }
+      ]
+    },
+    {
+      "key": "kelas",
+      "label": "Pengembangan diri & kepemimpinan",
+      "match": "training|pelatihan|education|pendidikan|leadership|kepemimpinan|coaching|counseling|motivat|personal|pengembangan-diri|softskill|^skill$|public-speaking|communication|komunikasi|emotional|assertive|anger|behavioral|psikologi|team-work|conflict|konflik|negosiasi|problem-solving|decision|career|competency|writing|^basic$|^advanced$|^study$|^program$|professional|ethic|etika|intelligence|^circle$|community|social|development|inovasi|improvement|perpustakaan|interview|persiapan",
+      "photos": [
+        {
+          "file": "themes/kelas-01.jpg",
+          "alt": "Peserta seminar mengangkat tangan untuk bertanya",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/33524620/"
+          }
+        },
+        {
+          "file": "themes/kelas-02.jpg",
+          "alt": "Pemateri menyampaikan materi dengan mikrofon di panggung",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/7591091/"
+          }
+        },
+        {
+          "file": "themes/kelas-03.jpg",
+          "alt": "Peserta mengikuti kelas pelatihan di ruang komputer",
+          "source": {
+            "provider": "unsplash",
+            "creator": "FLASHCOM INDONESIA",
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1558301285-c3d15a72670b"
+          }
+        },
+        {
+          "file": "themes/kelas-04.jpg",
+          "alt": "Peserta pelatihan berkumpul untuk kegiatan di luar ruangan",
+          "source": {
+            "provider": "unsplash",
+            "creator": "Akeyodia - Business Coaching Firm",
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1715310503085-06d8c2adf0fa"
+          }
+        },
+        {
+          "file": "themes/kelas-05.jpg",
+          "alt": "Peserta pelatihan bersorak bersama dalam kegiatan tim",
+          "source": {
+            "provider": "unsplash",
+            "creator": "Akeyodia - Business Coaching Firm",
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1715310686551-31545eaa71d8"
+          }
+        },
+        {
+          "file": "themes/kelas-06.jpg",
+          "alt": "Peserta berhijab membaca materi pelatihan",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/NAsmdV6dbao"
+          }
+        },
+        {
+          "file": "themes/kelas-07.jpg",
+          "alt": "Peserta berhijab mencatat materi di ruang kelas",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1660795307989-62de1019a9e4"
+          }
+        }
+      ]
+    },
+    {
+      "key": "kantor",
+      "label": "Perkantoran, manajemen & SDM (bawaan)",
+      "match": null,
+      "photos": [
+        {
+          "file": "themes/kantor-01.jpg",
+          "alt": "Dua pegawai berdiskusi sambil melihat ponsel di ruang rapat",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1577415124269-fc1140a69e91"
+          }
+        },
+        {
+          "file": "themes/kantor-02.jpg",
+          "alt": "Pegawai tersenyum di meja kerja kantor dengan dokumen",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/5415444/"
+          }
+        },
+        {
+          "file": "themes/kantor-03.jpg",
+          "alt": "Pegawai berhijab bekerja di meja kantor",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/7498921/"
+          }
+        },
+        {
+          "file": "themes/kantor-04.jpg",
+          "alt": "Tim kantor berbincang santai di ruang kerja",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/I5GYe9ApsOA"
+          }
+        },
+        {
+          "file": "themes/kantor-05.jpg",
+          "alt": "Pegawai berjas duduk di meja kerja",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/Tn1ZmtCAyAY"
+          }
+        },
+        {
+          "file": "themes/kantor-06.jpg",
+          "alt": "Pegawai bekerja dengan laptop di meja kantor",
+          "source": {
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1623658877772-69ae99a89304"
+          }
+        }
+      ]
+    }
+  ],
+  "retired": []
+}

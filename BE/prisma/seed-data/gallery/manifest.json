@@ -1,13 +1,13 @@
 {
   "categories": {
     "accounting": {
-      "file": "categories/accounting.jpg",
-      "alt": "Tangan mencatat di buku dan menghitung dengan kalkulator di meja kerja akuntansi",
+      "file": "categories/accounting-v2.jpg",
+      "alt": "Tangan mencatat dan menghitung dengan kalkulator di meja kerja akuntansi",
       "source": {
-        "provider": "stocksnap",
-        "creator": "Tevarak",
-        "license": "CC0 1.0",
-        "url": "https://stocksnap.io/photo/calculator-calendar-RFVHCUGML3"
+        "provider": "pexels",
+        "creator": null,
+        "license": "Pexels License",
+        "url": "https://www.pexels.com/photo/8297150/"
       }
     }
   },
@@ -25,13 +25,13 @@
       },
       "gallery": [
         {
-          "file": "training-accounting-and-tax-for-oil-and-gas-industry-di-yogyakarta/01.jpg",
-          "alt": "Peserta mengikuti kuliah di aula besar dengan dua layar presentasi",
+          "file": "training-accounting-and-tax-for-oil-and-gas-industry-di-yogyakarta/01-v2.jpg",
+          "alt": "Peserta pelatihan menyimak materi di ruang seminar yang penuh",
           "source": {
-            "provider": "rawpixel",
+            "provider": "pexels",
             "creator": null,
-            "license": "CC0 1.0",
-            "url": "https://www.rawpixel.com/image/5959368/free-public-domain-cc0-photo"
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/7831174/"
           }
         },
         {
@@ -45,13 +45,13 @@
           }
         },
         {
-          "file": "training-accounting-and-tax-for-oil-and-gas-industry-di-yogyakarta/03.jpg",
-          "alt": "Peserta perempuan berhijab menyimak materi di ruang kelas",
+          "file": "training-accounting-and-tax-for-oil-and-gas-industry-di-yogyakarta/03-v2.jpg",
+          "alt": "Peserta berhijab mengerjakan latihan di komputer pada kelas pelatihan",
           "source": {
-            "provider": "rawpixel",
-            "creator": "The African Union Mission in Somalia",
-            "license": "CC0 1.0",
-            "url": "https://www.rawpixel.com/image/3373106/free-photo-image-africa-burka-burqa"
+            "provider": "unsplash",
+            "creator": "FLASHCOM INDONESIA",
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/wr6eqJyxWy8"
           }
         },
         {
@@ -89,13 +89,13 @@
       },
       "gallery": [
         {
-          "file": "training-business-plan-and-budgeting/01.jpg",
-          "alt": "Fasilitator menjelaskan rencana di papan berisi catatan tempel kepada peserta",
+          "file": "training-business-plan-and-budgeting/01-v2.jpg",
+          "alt": "Fasilitator memandu diskusi peserta di depan lembar flipchart",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Direct Media",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/business-presenting-XDAR6MIG75"
+            "provider": "unsplash",
+            "creator": "Akeyodia - Business Coaching Firm",
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/zNlmOdJqPWU"
           }
         },
         {
@@ -109,13 +109,13 @@
           }
         },
         {
-          "file": "training-business-plan-and-budgeting/03.jpg",
-          "alt": "Tim berdiskusi mengelilingi meja dengan laptop, tampak dari atas",
+          "file": "training-business-plan-and-budgeting/03-v2.jpg",
+          "alt": "Tim berdiskusi mengelilingi meja rapat dengan laptop",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Direct Media",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/business-people-FRU4Y0OBEY"
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/15030654/"
           }
         },
         {
@@ -142,13 +142,13 @@
     },
     "training-cost-estimation-project-di-sidoarjo": {
       "cover": {
-        "file": "training-cost-estimation-project-di-sidoarjo/cover.jpg",
-        "alt": "Dua pekerja berompi keselamatan menunjuk gambar kerja proyek",
+        "file": "training-cost-estimation-project-di-sidoarjo/cover-v2.jpg",
+        "alt": "Pekerja proyek berhelm kuning dan rompi keselamatan berkumpul di lokasi proyek",
         "source": {
-          "provider": "rawpixel",
+          "provider": "unsplash",
           "creator": null,
-          "license": "CC0 1.0",
-          "url": "https://www.rawpixel.com/image/5928027/photo-image-public-domain-logo-hands"
+          "license": "Unsplash License",
+          "url": "https://unsplash.com/photos/7TR0TGS7zqg"
         }
       },
       "gallery": [
@@ -173,23 +173,23 @@
           }
         },
         {
-          "file": "training-cost-estimation-project-di-sidoarjo/03.jpg",
-          "alt": "Pemateri menjelaskan presentasi proyek kepada peserta",
+          "file": "training-cost-estimation-project-di-sidoarjo/03-v2.jpg",
+          "alt": "Peserta berkemeja putih mengikuti sesi diskusi di ruang pelatihan",
           "source": {
-            "provider": "rawpixel",
+            "provider": "pexels",
             "creator": null,
-            "license": "CC0 1.0",
-            "url": "https://www.rawpixel.com/image/9676430/image-face-person-woman"
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/40230522/"
           }
         },
         {
-          "file": "training-cost-estimation-project-di-sidoarjo/04.jpg",
-          "alt": "Pekerja membawa gulungan gambar kerja di lokasi proyek",
+          "file": "training-cost-estimation-project-di-sidoarjo/04-v2.jpg",
+          "alt": "Pekerja berhelm putih dan rompi keselamatan di lokasi proyek",
           "source": {
-            "provider": "rawpixel",
+            "provider": "pexels",
             "creator": null,
-            "license": "CC0 1.0",
-            "url": "https://www.rawpixel.com/image/5928302/photo-image-public-domain-person-construction"
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/8173678/"
           }
         },
         {
@@ -217,13 +217,13 @@
       },
       "gallery": [
         {
-          "file": "training-effective-internal-control-di-bandung/01.jpg",
-          "alt": "Pemateri menjelaskan bagan alur di papan kepada peserta",
+          "file": "training-effective-internal-control-di-bandung/01-v2.jpg",
+          "alt": "Pemateri berbatik menyampaikan materi dengan mikrofon di depan peserta",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Direct Media",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/woman-business-CGARXEBMID"
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/38081093/"
           }
         },
         {
@@ -237,13 +237,13 @@
           }
         },
         {
-          "file": "training-effective-internal-control-di-bandung/03.jpg",
-          "alt": "Peserta menulis poin diskusi di papan tulis",
+          "file": "training-effective-internal-control-di-bandung/03-v2.jpg",
+          "alt": "Peserta mencatat poin diskusi di lembar kerja",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Startup Stock Photos",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/whiteboard-planning-THWKGLDS2M"
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/9VG-HVNGu7s"
           }
         },
         {
@@ -257,47 +257,47 @@
           }
         },
         {
-          "file": "training-effective-internal-control-di-bandung/05.jpg",
-          "alt": "Dua peserta meninjau data bersama di laptop",
+          "file": "training-effective-internal-control-di-bandung/05-v2.jpg",
+          "alt": "Dua peserta berdiskusi sambil meninjau data di laptop",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Kristin Hardwick",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/working-together-DKO3B7QNG7"
+            "provider": "unsplash",
+            "creator": "Edi Kurniawan",
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/uPnvAYdLhNw"
           }
         }
       ]
     },
     "training-finance-for-non-finance-di-yogyakarta": {
       "cover": {
-        "file": "training-finance-for-non-finance-di-yogyakarta/cover.jpg",
-        "alt": "Menghitung dengan kalkulator di depan laptop berisi lembar kerja keuangan",
+        "file": "training-finance-for-non-finance-di-yogyakarta/cover-v2.jpg",
+        "alt": "Menghitung dengan kalkulator di atas kertas berisi coretan perhitungan",
         "source": {
-          "provider": "stocksnap",
-          "creator": "Wilfred Iven",
-          "license": "CC0 1.0",
-          "url": "https://stocksnap.io/photo/accounting-finance-JONMP7TPGK"
+          "provider": "pexels",
+          "creator": null,
+          "license": "Pexels License",
+          "url": "https://www.pexels.com/photo/9052479/"
         }
       },
       "gallery": [
         {
-          "file": "training-finance-for-non-finance-di-yogyakarta/01.jpg",
-          "alt": "Peserta memenuhi ruang kuliah berundak",
+          "file": "training-finance-for-non-finance-di-yogyakarta/01-v2.jpg",
+          "alt": "Peserta menyimak pemateri di aula seminar",
           "source": {
-            "provider": "rawpixel",
-            "creator": "usembassynewzealand",
-            "license": "CC0 1.0",
-            "url": "https://www.rawpixel.com/image/8734108/photo-image-public-domain-person-room"
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/9275222/"
           }
         },
         {
-          "file": "training-finance-for-non-finance-di-yogyakarta/02.jpg",
-          "alt": "Tiga peserta berdiskusi sambil bekerja di laptop",
+          "file": "training-finance-for-non-finance-di-yogyakarta/02-v2.jpg",
+          "alt": "Pemateri mendampingi peserta yang bekerja di laptop",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Burst",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/colleagues-meeting-KPVOIKEPSG"
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/xPbN9bOPO8g"
           }
         },
         {
@@ -311,23 +311,23 @@
           }
         },
         {
-          "file": "training-finance-for-non-finance-di-yogyakarta/04.jpg",
-          "alt": "Peserta menyimak materi di ruang seminar dengan layar proyektor",
+          "file": "training-finance-for-non-finance-di-yogyakarta/04-v2.jpg",
+          "alt": "Peserta menyimak materi sambil mencatat di meja pelatihan",
           "source": {
-            "provider": "rawpixel",
-            "creator": null,
-            "license": "CC0 1.0",
-            "url": "https://www.rawpixel.com/image/5960638/free-public-domain-cc0-photo"
+            "provider": "unsplash",
+            "creator": "Akeyodia - Business Coaching Firm",
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/wK7ODR2MjEY"
           }
         },
         {
-          "file": "training-finance-for-non-finance-di-yogyakarta/05.jpg",
-          "alt": "Dua perempuan berdiskusi di meja dekat jendela kantor",
+          "file": "training-finance-for-non-finance-di-yogyakarta/05-v2.jpg",
+          "alt": "Peserta berdiskusi di meja rapat kantor",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Christina Morillo",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/business-meeting-SKBXLJOILI"
+            "provider": "unsplash",
+            "creator": "Edi Kurniawan",
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/Mq4wJuX1-OQ"
           }
         }
       ]
@@ -345,13 +345,13 @@
       },
       "gallery": [
         {
-          "file": "training-finance-treasury-management/01.jpg",
-          "alt": "Peserta memadati ruang konferensi besar",
+          "file": "training-finance-treasury-management/01-v2.jpg",
+          "alt": "Peserta duduk lesehan mengikuti sesi pelatihan di ruang serbaguna",
           "source": {
-            "provider": "rawpixel",
-            "creator": null,
-            "license": "CC0 1.0",
-            "url": "https://www.rawpixel.com/image/5959407/free-public-domain-cc0-photo"
+            "provider": "unsplash",
+            "creator": "Akeyodia - Business Coaching Firm",
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/sPo5tHN64Q4"
           }
         },
         {
@@ -375,23 +375,23 @@
           }
         },
         {
-          "file": "training-finance-treasury-management/04.jpg",
-          "alt": "Peserta bekerja dengan laptop di meja pelatihan",
+          "file": "training-finance-treasury-management/04-v2.jpg",
+          "alt": "Peserta berhijab bekerja dengan komputer di meja kantor",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Startup Stock Photos",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/business-team-Q1OSKR7D42"
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/33550146/"
           }
         },
         {
-          "file": "training-finance-treasury-management/05.jpg",
-          "alt": "Peserta mencatat sambil membandingkan data di laptop",
+          "file": "training-finance-treasury-management/05-v2.jpg",
+          "alt": "Tangan menulis catatan materi di buku tulis",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Direct Media",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/business-working-RRJH1KMRMW"
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1728484704423-f06b3cab1cb8"
           }
         }
       ]
@@ -409,53 +409,53 @@
       },
       "gallery": [
         {
-          "file": "training-know-your-customer/01.jpg",
-          "alt": "Dua orang berjabat tangan di atas meja",
+          "file": "training-know-your-customer/01-v2.jpg",
+          "alt": "Dua orang berjabat tangan di depan dinding berornamen",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Kristin Hardwick",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/work-business-J5LXKNDREC"
-          }
-        },
-        {
-          "file": "training-know-your-customer/02.jpg",
-          "alt": "Tangan menyerahkan kartu pembayaran",
-          "source": {
-            "provider": "stocksnap",
-            "creator": "Michal Jarmoluk",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/creditcard-money-71MH9ATF4S"
-          }
-        },
-        {
-          "file": "training-know-your-customer/03.jpg",
-          "alt": "Peserta berdiskusi di ruang rapat dengan laptop",
-          "source": {
-            "provider": "stocksnap",
-            "creator": "Christina Morillo",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/conferenceroom-meeting-GVUWVKUHZE"
-          }
-        },
-        {
-          "file": "training-know-your-customer/04.jpg",
-          "alt": "Memeriksa ponsel di samping laptop",
-          "source": {
-            "provider": "stocksnap",
-            "creator": "Wilfred Iven",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/apple-iphone-O00MGHPXG6"
-          }
-        },
-        {
-          "file": "training-know-your-customer/05.jpg",
-          "alt": "Peserta seminar mengangkat tangan untuk bertanya",
-          "source": {
-            "provider": "rawpixel",
+            "provider": "unsplash",
             "creator": null,
-            "license": "CC0 1.0",
-            "url": "https://www.rawpixel.com/image/6111752/photo-image-public-domain-person-free"
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1652751207424-6df95a30556f"
+          }
+        },
+        {
+          "file": "training-know-your-customer/02-v2.jpg",
+          "alt": "Petugas melayani tamu yang berkonsultasi di meja layanan kantor",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/5415447/"
+          }
+        },
+        {
+          "file": "training-know-your-customer/03-v2.jpg",
+          "alt": "Pegawai berhijab memeriksa dokumen bersama di meja kantor",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/5415442/"
+          }
+        },
+        {
+          "file": "training-know-your-customer/04-v2.jpg",
+          "alt": "Peserta berkacamata fokus bekerja di depan laptop",
+          "source": {
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/6145908/"
+          }
+        },
+        {
+          "file": "training-know-your-customer/05-v2.jpg",
+          "alt": "Peserta lokakarya mencatat sambil menyimak di meja diskusi",
+          "source": {
+            "provider": "unsplash",
+            "creator": "Akeyodia - Business Coaching Firm",
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/OikpO7Nq4AE"
           }
         }
       ]
@@ -483,23 +483,23 @@
           }
         },
         {
-          "file": "training-manajemen-inventaris-aset-perusahaan-terbaru/02.jpg",
-          "alt": "Petugas mencatat di papan klip saat pemeriksaan",
+          "file": "training-manajemen-inventaris-aset-perusahaan-terbaru/02-v2.jpg",
+          "alt": "Peserta mencatat materi di meja pelatihan",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Burst",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/construction-plans-69YZFGFBSY"
+            "provider": "unsplash",
+            "creator": "Akeyodia - Business Coaching Firm",
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1694081844125-5ba0b32d5861"
           }
         },
         {
-          "file": "training-manajemen-inventaris-aset-perusahaan-terbaru/03.jpg",
-          "alt": "Peserta mengerjakan tugas kelompok di meja kerja",
+          "file": "training-manajemen-inventaris-aset-perusahaan-terbaru/03-v2.jpg",
+          "alt": "Peserta berdiskusi bersama di depan laptop",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Brodie Vissers",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/people-girls-Y2AHVPYB51"
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://unsplash.com/photos/hv2DRoXTKxI"
           }
         },
         {
@@ -513,13 +513,13 @@
           }
         },
         {
-          "file": "training-manajemen-inventaris-aset-perusahaan-terbaru/05.jpg",
-          "alt": "Peserta menyusun catatan tempel saat diskusi kelompok",
+          "file": "training-manajemen-inventaris-aset-perusahaan-terbaru/05-v2.jpg",
+          "alt": "Peserta berdiskusi mengerjakan tugas kelompok di ruang kelas",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Startup Stock Photos",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/team-meeting-84GOP2OAKR"
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/35362880/"
           }
         }
       ]
@@ -537,23 +537,23 @@
       },
       "gallery": [
         {
-          "file": "training-revenue-assurance-practitioner/01.jpg",
-          "alt": "Menganalisis grafik pendapatan di laptop",
+          "file": "training-revenue-assurance-practitioner/01-v2.jpg",
+          "alt": "Pegawai tersenyum sambil bekerja dengan laptop di meja kantor",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Negative Space",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/analytics-charts-RCFX768X06"
+            "provider": "unsplash",
+            "creator": "FLASHCOM INDONESIA",
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1558301255-0b606d97a303"
           }
         },
         {
-          "file": "training-revenue-assurance-practitioner/02.jpg",
-          "alt": "Peserta menyimak seminar di auditorium, tampak dari atas",
+          "file": "training-revenue-assurance-practitioner/02-v2.jpg",
+          "alt": "Peserta mengikuti kelas pelatihan di ruang komputer",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Mikael Kristenson",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/people-crowd-JPBNOBX921"
+            "provider": "unsplash",
+            "creator": "FLASHCOM INDONESIA",
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1558301862-1281ab412ed3"
           }
         },
         {
@@ -567,23 +567,23 @@
           }
         },
         {
-          "file": "training-revenue-assurance-practitioner/04.jpg",
-          "alt": "Kamera merekam pembicara di depan peserta seminar",
+          "file": "training-revenue-assurance-practitioner/04-v2.jpg",
+          "alt": "Pegawai duduk di meja kerja dengan laptop dan dokumen",
           "source": {
-            "provider": "rawpixel",
-            "creator": "usbotschaftberlin",
-            "license": "CC0 1.0",
-            "url": "https://www.rawpixel.com/image/8734377/camera-recording-conference"
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/5415446/"
           }
         },
         {
-          "file": "training-revenue-assurance-practitioner/05.jpg",
-          "alt": "Peserta menandai kertas kerja bersama di meja",
+          "file": "training-revenue-assurance-practitioner/05-v2.jpg",
+          "alt": "Peserta berdiskusi membahas lembar kerja saat jeda sesi",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Brodie Vissers",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/people-girls-N444PJYUP9"
+            "provider": "unsplash",
+            "creator": "Akeyodia - Business Coaching Firm",
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1715310310729-9c8531b08e70"
           }
         }
       ]
@@ -601,13 +601,13 @@
       },
       "gallery": [
         {
-          "file": "training-tax-for-non-finance-and-accounting/01.jpg",
-          "alt": "Peserta berhijab bertanya melalui mikrofon di forum diskusi",
+          "file": "training-tax-for-non-finance-and-accounting/01-v2.jpg",
+          "alt": "Pemateri berhijab berbicara dengan mikrofon",
           "source": {
-            "provider": "rawpixel",
-            "creator": "The African Union Mission in Somalia",
-            "license": "CC0 1.0",
-            "url": "https://www.rawpixel.com/image/3373088/free-photo-image-africa-cc0-conference"
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1627541718143-1adc1b582e62"
           }
         },
         {
@@ -631,26 +631,62 @@
           }
         },
         {
-          "file": "training-tax-for-non-finance-and-accounting/04.jpg",
-          "alt": "Peserta mencatat materi di meja diskusi",
+          "file": "training-tax-for-non-finance-and-accounting/04-v2.jpg",
+          "alt": "Tangan menulis catatan di buku saat sesi materi",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Startup Stock Photos",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/team-meeting-69TMH4ITIE"
+            "provider": "unsplash",
+            "creator": null,
+            "license": "Unsplash License",
+            "url": "https://images.unsplash.com/photo-1728484700786-728331faee54"
           }
         },
         {
-          "file": "training-tax-for-non-finance-and-accounting/05.jpg",
-          "alt": "Dua peserta mencatat dan membandingkan data di laptop",
+          "file": "training-tax-for-non-finance-and-accounting/05-v2.jpg",
+          "alt": "Pegawai mengerjakan laporan di laptop sambil membuka buku",
           "source": {
-            "provider": "stocksnap",
-            "creator": "Helloquence",
-            "license": "CC0 1.0",
-            "url": "https://stocksnap.io/photo/writing-papers-Y01VDYAX63"
+            "provider": "pexels",
+            "creator": null,
+            "license": "Pexels License",
+            "url": "https://www.pexels.com/photo/5415443/"
           }
         }
       ]
     }
-  }
+  },
+  "retired": [
+    "categories/accounting.jpg",
+    "training-accounting-and-tax-for-oil-and-gas-industry-di-yogyakarta/01.jpg",
+    "training-accounting-and-tax-for-oil-and-gas-industry-di-yogyakarta/03.jpg",
+    "training-business-plan-and-budgeting/01.jpg",
+    "training-business-plan-and-budgeting/03.jpg",
+    "training-cost-estimation-project-di-sidoarjo/03.jpg",
+    "training-cost-estimation-project-di-sidoarjo/04.jpg",
+    "training-cost-estimation-project-di-sidoarjo/cover.jpg",
+    "training-effective-internal-control-di-bandung/01.jpg",
+    "training-effective-internal-control-di-bandung/03.jpg",
+    "training-effective-internal-control-di-bandung/05.jpg",
+    "training-finance-for-non-finance-di-yogyakarta/01.jpg",
+    "training-finance-for-non-finance-di-yogyakarta/02.jpg",
+    "training-finance-for-non-finance-di-yogyakarta/04.jpg",
+    "training-finance-for-non-finance-di-yogyakarta/05.jpg",
+    "training-finance-for-non-finance-di-yogyakarta/cover.jpg",
+    "training-finance-treasury-management/01.jpg",
+    "training-finance-treasury-management/04.jpg",
+    "training-finance-treasury-management/05.jpg",
+    "training-know-your-customer/01.jpg",
+    "training-know-your-customer/02.jpg",
+    "training-know-your-customer/03.jpg",
+    "training-know-your-customer/04.jpg",
+    "training-know-your-customer/05.jpg",
+    "training-manajemen-inventaris-aset-perusahaan-terbaru/02.jpg",
+    "training-manajemen-inventaris-aset-perusahaan-terbaru/03.jpg",
+    "training-manajemen-inventaris-aset-perusahaan-terbaru/05.jpg",
+    "training-revenue-assurance-practitioner/01.jpg",
+    "training-revenue-assurance-practitioner/02.jpg",
+    "training-revenue-assurance-practitioner/04.jpg",
+    "training-revenue-assurance-practitioner/05.jpg",
+    "training-tax-for-non-finance-and-accounting/01.jpg",
+    "training-tax-for-non-finance-and-accounting/04.jpg",
+    "training-tax-for-non-finance-and-accounting/05.jpg"
+  ]
 }
