@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/admin/ui/button";
 
-export default function AdminError({ reset }: { error: Error; reset: () => void }) {
+// `retry` mengambil ulang data dari server; `reset` saja tidak (lihat app/(public)/error.tsx).
+export default function AdminError({ retry }: { error: Error; retry: () => void }) {
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center gap-4 px-6">
       <p className="font-mono text-label font-medium uppercase text-fg-muted">Terjadi kesalahan</p>
@@ -13,7 +14,7 @@ export default function AdminError({ reset }: { error: Error; reset: () => void 
         Server sedang tidak dapat dihubungi atau terjadi kesalahan. Coba muat ulang beberapa saat lagi.
       </p>
       <div>
-        <Button onClick={reset}>Coba lagi</Button>
+        <Button onClick={retry}>Coba lagi</Button>
       </div>
     </main>
   );
