@@ -29,6 +29,7 @@
     "e2e:cleanup": "tsx scripts/e2e-uploads-cleanup.ts",
     "db:sync-content": "dotenv -e ../.env -- tsx scripts/sync-content-dev.ts",
     "db:seed:gallery": "dotenv -e ../.env -- tsx scripts/seed-training-gallery.ts",
+    "db:seed:themes": "dotenv -e ../.env -- tsx scripts/seed-theme-gallery.ts",
     "db:seed:bulk": "dotenv -e ../.env -- prisma db seed -- --bulk",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
