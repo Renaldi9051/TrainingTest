@@ -2,15 +2,18 @@
 // seed.ts (juga saat deploy) dan skrip `npm run db:seed:gallery` (dry run di dev).
 // - Gambar kategori diganti dengan foto di manifest (permintaan pemilik, 19 Okt 2026). Media lama tidak
 //   dihapus, tetap di media library.
-// - Sampul dan galeri pelatihan hanya diisi kalau masih kosong atau masih berisi foto pool accounting
-//   versi awal (seed-gallery.ts sebelum 19 Okt 2026; pemilik minta accounting memakai foto manifest).
-//   Pilihan admin lainnya tidak tertimpa.
+// - Sampul dan galeri pelatihan hanya diisi kalau masih kosong atau masih berisi foto yang sudah
+//   dipensiunkan: foto pool accounting versi awal (seed-gallery.ts sebelum 19 Okt 2026) dan foto
+//   manifest di daftar `retired` (foto berisi orang diganti foto orang Indonesia, permintaan pemilik
+//   20 Okt 2026). Galeri hanya diganti kalau seluruh isinya foto seed; pilihan admin tidak tertimpa.
 // - Pelatihan di manifest ditautkan ke kategori manifest (accounting) kalau tautannya belum ada. Seed
 //   katalog referensi tidak lagi menautkannya karena langkah foto di atas mengisi updatedById, dan batas
 //   accounting 6 versi awal sempat melepas tautan 4 pelatihan (pemilik minta kembali 10).
 // - Foto yang sudah pernah diunggah (nama file asli sama, belum di Sampah) dipakai ulang, jadi aman
 //   dijalankan ulang.
-// Semua foto berlisensi CC0 (sumber per foto dicatat di manifest).
+// Foto berlisensi CC0, Unsplash License, atau Pexels License (sumber per foto dicatat di manifest).
+// Mengganti foto: simpan dengan nama file baru dan pindahkan nama lama ke `retired`, karena nama file
+// yang sama dianggap sudah diunggah.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
@@ -29,13 +32,16 @@ const photoSchema = z.object({
 const manifestSchema = z.object({
   categories: z.record(z.string(), photoSchema),
   trainings: z.record(z.string(), z.object({ cover: photoSchema, gallery: z.array(photoSchema).min(1).max(6) })),
+  // File foto manifest versi sebelumnya yang sudah diganti (filenya sudah dihapus dari repo).
+  retired: z.array(z.string().min(1)).default([]),
 });
 type Photo = z.infer<typeof photoSchema>;
 
 const db = getDb();
 
 // Nama file asli di media library: unik per foto, dipakai untuk mendeteksi unggahan sebelumnya.
-const uploadName = (photo: Photo) => photo.file.replaceAll("/", "--");
+const fileUploadName = (file: string) => file.replaceAll("/", "--");
+const uploadName = (photo: Photo) => fileUploadName(photo.file);
 
 // Foto pool accounting versi awal (seed-data/gallery/accounting-NN.jpg, sudah dihapus dari repo).
 export const isLegacyPoolPhoto = (originalName: string | null | undefined) =>
@@ -78,6 +84,14 @@ export async function planManifestGallery(): Promise<ManifestPlan> {
     categories.push({ id: row.id, slug, name: row.name, photo, currentName: row.image?.originalName ?? null });
   }
 
+  // Foto yang boleh diganti, dan semua foto milik seed (termasuk foto manifest yang masih dipakai).
+  const retired = new Set(manifest.retired.map(fileUploadName));
+  const isReplaceable = (name: string | null | undefined) => isLegacyPoolPhoto(name) || (!!name && retired.has(name));
+  const seedNames = new Set(
+    Object.values(manifest.trainings).flatMap((entry) => [entry.cover, ...entry.gallery].map(uploadName)),
+  );
+  const isSeedPhoto = (name: string | null | undefined) => isReplaceable(name) || (!!name && seedNames.has(name));
+
   const trainings: TrainingStep[] = [];
   const unchanged: ManifestPlan["unchanged"] = [];
   for (const [slug, entry] of Object.entries(manifest.trainings)) {
@@ -96,8 +110,9 @@ export async function planManifestGallery(): Promise<ManifestPlan> {
       missing.push(`pelatihan ${slug}`);
       continue;
     }
-    const coverFree = !row.coverId || isLegacyPoolPhoto(row.cover?.originalName);
-    const galleryFree = row.images.every((image) => isLegacyPoolPhoto(image.media.originalName));
+    const coverFree = !row.coverId || isReplaceable(row.cover?.originalName);
+    const names = row.images.map((image) => image.media.originalName);
+    const galleryFree = names.length === 0 || (names.every(isSeedPhoto) && names.some(isReplaceable));
     const step = {
       id: row.id,
       slug,
@@ -188,7 +203,7 @@ export async function applyManifestGallery(steps: ManifestPlan): Promise<{ uploa
       }
       if (step.gallery) {
         const imageIds = step.gallery.map(mediaId);
-        // Hanya tautan ke foto pool lama yang dilepas (lihat planManifestGallery); medianya tetap ada.
+        // Hanya galeri yang seluruhnya foto seed yang dilepas (lihat planManifestGallery); medianya tetap ada.
         await tx.trainingImage.deleteMany({ where: { trainingId: step.id } });
         await tx.trainingImage.createMany({
           data: imageIds.map((id, order) => ({ trainingId: step.id, mediaId: id, order })),
