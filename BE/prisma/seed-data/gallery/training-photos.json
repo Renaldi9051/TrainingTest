@@ -2812,6 +2812,126 @@
           "alt": "Pria menulis di buku catatan"
         }
       ]
+    },
+    "powerful-database-analysis-and-dashboard-reporting-with-ms-excel": {
+      "cover": {
+        "pexelsId": 6476561,
+        "alt": "Pria bekerja di depan komputer berisi grafik data"
+      },
+      "gallery": [
+        {
+          "pexelsId": 13451105,
+          "alt": "Pria bekerja di depan komputer di kantor"
+        },
+        {
+          "pexelsId": 3183145,
+          "alt": "Tangan bekerja di laptop dengan laporan data"
+        },
+        {
+          "pexelsId": 9783346,
+          "alt": "Pria menghadap layar besar berisi deretan angka"
+        },
+        {
+          "pexelsId": 7681286,
+          "alt": "Pria bekerja dengan laptop di meja kantor"
+        }
+      ]
+    },
+    "training-analisa-kebijakan-kesehatan": {
+      "cover": {
+        "pexelsId": 6129657,
+        "alt": "Tenaga kesehatan berdiskusi di rumah sakit"
+      },
+      "gallery": [
+        {
+          "pexelsId": 6129649,
+          "alt": "Dokter dan perawat berdiskusi di ruang kerja rumah sakit"
+        },
+        {
+          "pexelsId": 7108401,
+          "alt": "Rapat tenaga kesehatan di meja"
+        },
+        {
+          "pexelsId": 5452190,
+          "alt": "Para dokter berdiskusi di ruang pertemuan"
+        },
+        {
+          "pexelsId": 6129159,
+          "alt": "Dokter dan perawat bercakap di meja perawat"
+        }
+      ]
+    },
+    "training-evaluasi-etika-dan-kepatuhan": {
+      "cover": {
+        "pexelsId": 10041247,
+        "alt": "Dua profesional membahas dokumen di meja rapat"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7433853,
+          "alt": "Rapat pembahasan dokumen di ruang konferensi"
+        },
+        {
+          "pexelsId": 6949865,
+          "alt": "Rapat di ruang konferensi dengan meja panjang"
+        },
+        {
+          "pexelsId": 39204841,
+          "alt": "Presentasi dalam rapat kantor modern"
+        },
+        {
+          "pexelsId": 7648258,
+          "alt": "Peserta rapat bermasker di ruang pertemuan"
+        }
+      ]
+    },
+    "training-filling-systems": {
+      "cover": {
+        "pexelsId": 8872714,
+        "alt": "Petugas arsip menata berkas di rak penyimpanan"
+      },
+      "gallery": [
+        {
+          "pexelsId": 357514,
+          "alt": "Tumpukan map berkas dokumen"
+        },
+        {
+          "pexelsId": 265024,
+          "alt": "Dua ordner merah di lantai"
+        },
+        {
+          "pexelsId": 6538576,
+          "alt": "Tangan menyusun map di rak"
+        },
+        {
+          "pexelsId": 4502977,
+          "alt": "Deretan ordner di dalam kotak"
+        }
+      ]
+    },
+    "training-visual-merchandising": {
+      "cover": {
+        "pexelsId": 12770245,
+        "alt": "Etalase toko pakaian dengan manekin dan tanda diskon"
+      },
+      "gallery": [
+        {
+          "pexelsId": 13532891,
+          "alt": "Pakaian tergantung di balik kaca toko"
+        },
+        {
+          "pexelsId": 5531549,
+          "alt": "Pintu masuk butik dengan etalase pakaian"
+        },
+        {
+          "pexelsId": 33276443,
+          "alt": "Tampilan toko pakaian dengan tanda diskon"
+        },
+        {
+          "pexelsId": 2983364,
+          "alt": "Manekin di etalase toko"
+        }
+      ]
     }
   }
 }

@@ -59,6 +59,8 @@ export async function planTrainingPhotos(photos?: TrainingPhotos): Promise<Train
     ...themes.themes.flatMap((theme) => theme.photos.map((photo) => themeUploadName(photo.file))),
     ...themes.retired.map(themeUploadName),
     ...(await readdir(COVERS_DIR).catch(() => [] as string[])).filter((name) => name.endsWith(".jpg")),
+    // Pool galeri administrative (seed-gallery.ts): dipakai bergiliran, jadi berulang antarpelatihan.
+    ...(await readdir(GALLERY_DIR).catch(() => [] as string[])).filter((name) => /^administrative-\d+\.jpg$/.test(name)),
   ]);
   const isSeedImage = (name: string | null | undefined) =>
     !!name && (seedNames.has(name) || isPexelsSeedPhoto(name) || isLegacyPoolPhoto(name));
