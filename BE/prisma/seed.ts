@@ -147,7 +147,7 @@ async function main() {
   const cleanup = USE_REFERENCE ? await seedCategoryCleanup() : null;
   // Satu pelatihan satu kategori (sekali per versi), setelah perapian supaya kata kunci ikut menentukan.
   const single = USE_REFERENCE ? await seedSingleCategory() : null;
-  // Isi kategori sampai 10 dari judul referensi di Sampah (sekali per versi).
+  // Isi kategori sampai 10 dari judul referensi: dipulihkan dari Sampah atau dibuat baru (sekali per versi).
   const fill = USE_REFERENCE ? await seedCategoryFill() : null;
 
   const profileResult = await seedProfilePage();
@@ -207,7 +207,7 @@ async function main() {
           (single.skipped.length > 0 ? `; dilewati: ${single.skipped.join("; ")}.` : "."));
     console.info(fill === "dilewati" || fill === null
       ? "Isi kategori: dilewati (versi ini sudah dijalankan)."
-      : `Isi kategori: ${fill.restored} pelatihan dipulihkan dari Sampah (` +
+      : `Isi kategori: ${fill.restored} pelatihan dipulihkan dari Sampah, ${fill.created} dibuat dari judul referensi (` +
           fill.summary.map((item) => `${item.slug} ${item.before}->${item.after}`).join(", ") + ")" +
           (fill.failed.length > 0 ? `; gagal: ${fill.failed.join("; ")}.` : "."));
   }
