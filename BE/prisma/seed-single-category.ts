@@ -44,19 +44,15 @@ export async function loadCategoryCandidates(): Promise<CategoryCandidate[]> {
   return categories.map((category) => ({ ...category, inMenu: menu.has(category.slug) }));
 }
 
-export async function seedSingleCategory(): Promise<SingleCategoryResult | "dilewati"> {
-  const done = await db.siteSetting.findUnique({ where: { key: SINGLE_CATEGORY_KEY }, select: { value: true } });
-  if (done?.value === SINGLE_CATEGORY_VERSION) return "dilewati";
-  const owner = await db.user.findFirstOrThrow({ orderBy: { createdAt: "asc" }, select: { id: true } });
-  const result: SingleCategoryResult = {
-    trainingsChanged: 0,
-    linksRemoved: 0,
-    linksAdded: 0,
-    stillGeneric: [],
-    deletedCategories: [],
-    skipped: [],
-  };
+export type SingleCategoryChange = { trainingId: string; title: string; keep: string; remove: string[]; add: boolean };
 
+// Rencana tanpa menulis apa pun (dipakai seed dan pratinjau): pelatihan yang kategorinya berubah,
+// plus pelatihan yang tetap di kategori generik karena judulnya tidak menunjuk kategori bertopik.
+export async function planSingleCategory(): Promise<{
+  candidates: CategoryCandidate[];
+  changes: SingleCategoryChange[];
+  stillGeneric: string[];
+}> {
   const candidates = await loadCategoryCandidates();
   const byId = new Map(candidates.map((category) => [category.id, category]));
   const trainings = await db.training.findMany({
@@ -64,9 +60,8 @@ export async function seedSingleCategory(): Promise<SingleCategoryResult | "dile
     select: { id: true, title: true, categories: { select: { categoryId: true } } },
     orderBy: { slug: "asc" },
   });
-
-  type Change = { trainingId: string; keep: string; remove: string[]; add: boolean };
-  const changes: Change[] = [];
+  const changes: SingleCategoryChange[] = [];
+  const stillGeneric: string[] = [];
   for (const training of trainings) {
     const linkedIds = training.categories.map((link) => link.categoryId);
     const current = linkedIds.flatMap((id) => byId.get(id) ?? []);
@@ -74,12 +69,28 @@ export async function seedSingleCategory(): Promise<SingleCategoryResult | "dile
     if (current.length <= 1 && !onlyGeneric && linkedIds.length === current.length) continue;
     const chosen = pickPrimaryCategory(training.title, current, candidates);
     if (!chosen) continue;
-    if (GENERIC_CATEGORY_SLUGS.has(chosen.slug)) result.stillGeneric.push(`${training.title} (${chosen.name})`);
+    if (GENERIC_CATEGORY_SLUGS.has(chosen.slug)) stillGeneric.push(`${training.title} (${chosen.name})`);
     const remove = linkedIds.filter((id) => id !== chosen.id);
     const add = !linkedIds.includes(chosen.id);
     if (remove.length === 0 && !add) continue;
-    changes.push({ trainingId: training.id, keep: chosen.id, remove, add });
+    changes.push({ trainingId: training.id, title: training.title, keep: chosen.id, remove, add });
   }
+  return { candidates, changes, stillGeneric };
+}
+
+export async function seedSingleCategory(): Promise<SingleCategoryResult | "dilewati"> {
+  const done = await db.siteSetting.findUnique({ where: { key: SINGLE_CATEGORY_KEY }, select: { value: true } });
+  if (done?.value === SINGLE_CATEGORY_VERSION) return "dilewati";
+  const owner = await db.user.findFirstOrThrow({ orderBy: { createdAt: "asc" }, select: { id: true } });
+  const { changes, stillGeneric } = await planSingleCategory();
+  const result: SingleCategoryResult = {
+    trainingsChanged: 0,
+    linksRemoved: 0,
+    linksAdded: 0,
+    stillGeneric,
+    deletedCategories: [],
+    skipped: [],
+  };
 
   for (let index = 0; index < changes.length; index += BATCH) {
     const batch = changes.slice(index, index + BATCH);
