@@ -5,6 +5,7 @@ import { revalidateEntity } from "@/lib/revalidate-map";
 import type { ReorderInput } from "@/lib/validators/common";
 import type { NavCreateInput, NavUpdateInput } from "@/lib/validators/nav";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
+import { nonEmptyPublicCategoryWhere } from "@/services/category";
 
 // Menu header & footer, nested 1 level: item induk (parentId null) boleh punya anak,
 // anak tidak boleh punya anak lagi. Batas kedalaman dicek di sini, bukan di DB.
@@ -249,8 +250,25 @@ function toPublic(items: NavItemDto[]): PublicNavItem[] {
   return items.map((item) => ({ label: item.label, href: item.href, children: toPublic(item.children) }));
 }
 
-export async function getPublicNav(): Promise<{ header: PublicNavItem[]; footer: PublicNavItem[] }> {
-  const items = await getDb().navItem.findMany({ where: { deletedAt: null } });
+// Slug kategori dari href menu: landing kategori atau katalog terfilter satu kategori.
+export function navCategorySlug(href: string): string | null {
+  const match = /^\/pelatihan\/kategori\/([^/?#]+)$|^\/pelatihan\?kategori=([^&#,]+)$/.exec(href);
+  return match ? (match[1] ?? match[2] ?? null) : null;
+}
+
+// Menu ke kategori yang tidak tampil di publik (kosong atau dihapus) disembunyikan, supaya tidak ada
+// tautan ke halaman 404. FE men-cache menu dengan tag `nav` + `categories`.
+export async function getPublicNav(now = new Date()): Promise<{ header: PublicNavItem[]; footer: PublicNavItem[] }> {
+  const db = getDb();
+  const [all, visible] = await Promise.all([
+    db.navItem.findMany({ where: { deletedAt: null } }),
+    db.category.findMany({ where: nonEmptyPublicCategoryWhere(now), select: { slug: true } }),
+  ]);
+  const slugs = new Set(visible.map((category) => category.slug));
+  const items = all.filter((item) => {
+    const slug = navCategorySlug(item.href);
+    return slug === null || slugs.has(slug);
+  });
   return {
     header: toPublic(buildTree(items.filter((item) => item.location === "HEADER"))),
     footer: toPublic(buildTree(items.filter((item) => item.location === "FOOTER"))),

@@ -414,9 +414,15 @@ export function toPublicCategory(category: CategoryWithCount): PublicCategory {
   };
 }
 
+// Kategori tanpa pelatihan tayang tidak tampil di publik (daftar, filter, landing, menu); datanya
+// tetap ada di admin. Dengan satu pelatihan satu kategori, banyak kategori referensi kosong.
+export function nonEmptyPublicCategoryWhere(now: Date) {
+  return { deletedAt: null, trainings: { some: { training: publicTrainingWhere(now) } } } satisfies Prisma.CategoryWhereInput;
+}
+
 export async function listPublicCategories(now = new Date()): Promise<PublicCategory[]> {
   const rows = await getDb().category.findMany({
-    where: { deletedAt: null },
+    where: nonEmptyPublicCategoryWhere(now),
     include: publicCountInclude(now),
     orderBy: [{ order: "asc" }, { name: "asc" }],
   });
@@ -425,7 +431,7 @@ export async function listPublicCategories(now = new Date()): Promise<PublicCate
 
 export async function getPublicCategory(slug: string, now = new Date()): Promise<PublicCategory | null> {
   const category = await getDb().category.findFirst({
-    where: { slug, deletedAt: null },
+    where: { slug, ...nonEmptyPublicCategoryWhere(now) },
     include: publicCountInclude(now),
   });
   return category ? toPublicCategory(category) : null;

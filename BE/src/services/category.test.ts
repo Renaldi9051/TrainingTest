@@ -403,5 +403,10 @@ describe("listPublicCategories", () => {
       status: "PUBLISHED",
       publishedAt: { lte: now },
     });
+    // Kategori tanpa pelatihan tayang tidak ikut (filter di query).
+    expect(mock.category.findMany.mock.calls[0][0].where).toEqual({
+      deletedAt: null,
+      trainings: { some: { training: { deletedAt: null, status: "PUBLISHED", publishedAt: { lte: now } } } },
+    });
   });
 });

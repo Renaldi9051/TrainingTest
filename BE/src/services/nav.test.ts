@@ -124,7 +124,29 @@ describe("reorderNav", () => {
 });
 
 describe("getPublicNav", () => {
+  it("menu ke kategori yang tidak tampil di publik (kosong/dihapus) disembunyikan", async () => {
+    mock.navItem.findMany.mockResolvedValue([
+      item(1, { href: "/pelatihan/kategori/drone", order: 0 }),
+      item(2, { href: "/pelatihan/kategori/kosong", order: 1 }),
+      item(3, { href: "/pelatihan?kategori=kosong", order: 2 }),
+      item(4, { href: "/pelatihan?kategori=drone", order: 3 }),
+      item(5, { href: "/pelatihan", order: 4 }),
+    ]);
+    mock.category.findMany.mockResolvedValue([{ slug: "drone" }]);
+    const nav = await getPublicNav();
+    expect(nav.header.map((entry) => entry.href)).toEqual([
+      "/pelatihan/kategori/drone",
+      "/pelatihan?kategori=drone",
+      "/pelatihan",
+    ]);
+    expect(mock.category.findMany.mock.calls[0][0].where).toMatchObject({
+      deletedAt: null,
+      trainings: { some: { training: expect.any(Object) } },
+    });
+  });
+
   it("membentuk pohon header/footer terurut", async () => {
+    mock.category.findMany.mockResolvedValue([]);
     mock.navItem.findMany.mockResolvedValue([
       item(2, { order: 1 }),
       item(1, { order: 0 }),
