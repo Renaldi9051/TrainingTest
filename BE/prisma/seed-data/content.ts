@@ -436,17 +436,24 @@ export const profilePage = {
 // ===== Section beranda =====
 // Urutan mengikuti beranda situs referensi, lalu section tambahan PRD 5.3. Semua visible.
 
+// Teks hero sesuai katalog pelatihan korporat (21 Okt 2026). Database lama diperbarui oleh seed-home-copy.ts.
+export const heroCopy = {
+  rotatingWords: ["memimpin", "mengelola", "bersaing"],
+  subheadline:
+    "Pelatihan publik dan in-house untuk perusahaan dan instansi, dari keuangan, SDM, dan manajemen sampai K3, pertambangan, dan migas, dipandu praktisi berpengalaman.",
+  searchPlaceholder: "Cari pelatihan, mis. manajemen risiko",
+};
+
 export const homeSections = [
   {
     type: "HERO",
     content: {
       eyebrow: "Training provider",
       headline: "Tambah pengetahuan, tingkatkan kemampuan",
-      rotatingWords: ["terbang", "berkarya", "berbisnis"],
-      subheadline:
-        "Pelatihan drone dan industri kreatif, dari pilot drone dan pemetaan udara sampai fotografi, videografi, dan desain, dipandu praktisi aktif.",
+      rotatingWords: heroCopy.rotatingWords,
+      subheadline: heroCopy.subheadline,
       showSearch: true,
-      searchPlaceholder: "Cari pelatihan, mis. pemetaan drone",
+      searchPlaceholder: heroCopy.searchPlaceholder,
       primaryCta: { label: "Dapatkan harga spesial", href: "/pelatihan" },
       secondaryCta: null,
       // Tanpa slide: hero teks. Slide (gambar dokumentasi asli) diisi admin lewat editor slide.
