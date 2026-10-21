@@ -12,6 +12,7 @@ import { hashPassword } from "../src/lib/password";
 import { RevalidateTag, revalidateTags } from "../src/lib/revalidate";
 import { REFERENCE_SEED_KEY, REFERENCE_SEED_VERSION, seedReferenceCatalog } from "./seed-reference";
 import { seedBulk } from "./seed-bulk";
+import { seedCategoryCleanup } from "./seed-category-cleanup";
 import { type ContentSeedResult, seedContent } from "./seed-content";
 import { seedCovers } from "./seed-covers";
 import { seedGallery } from "./seed-gallery";
@@ -139,6 +140,8 @@ async function main() {
   const reference = USE_REFERENCE && referenceSeeded?.value !== REFERENCE_SEED_VERSION
     ? await seedReferenceCatalog({ hideDemo: true })
     : null;
+  // Perapian kategori referensi (kata kunci, gabung kembar, hapus generik), sekali per versi.
+  const cleanup = USE_REFERENCE ? await seedCategoryCleanup() : null;
 
   const profileResult = await seedProfilePage();
   // Mode minimal (e2e) tanpa halaman pembayaran; spec e2e membuat halamannya sendiri.
@@ -181,6 +184,12 @@ async function main() {
     console.info(reference
       ? `Katalog referensi: ${reference.categoriesCreated} kategori, ${reference.trainingsCreated} pelatihan, ${reference.linksCreated} tautan, ${reference.menuCreated} submenu baru; dirapikan ${reference.trainingsHidden} pelatihan ke Sampah dan ${reference.linksRemoved} tautan kategori dilepas.`
       : "Katalog referensi sudah terpasang; perubahan admin dipertahankan.");
+    console.info(cleanup === "dilewati" || cleanup === null
+      ? "Perapian kategori: dilewati (versi ini sudah dijalankan)."
+      : `Perapian kategori: kata kunci ${cleanup.keywordCategories} kategori (+${cleanup.linksAdded} tautan), ` +
+          `${cleanup.merged} kategori digabung (${cleanup.movedTrainings} tautan pindah), ` +
+          `${cleanup.deleted} kategori generik dihapus (${cleanup.detachedLinks} tautan dilepas)` +
+          (cleanup.skipped.length > 0 ? `; dilewati: ${cleanup.skipped.join("; ")}.` : "."));
   }
   console.info(
     contentResult
@@ -222,7 +231,7 @@ async function main() {
     );
   }
   // Bila FE sudah berjalan saat seed manual, tampilkan dropdown baru tanpa perlu restart.
-  if (reference && process.env.FE_REVALIDATE_URL && process.env.REVALIDATE_SECRET) {
+  if ((reference || (cleanup && cleanup !== "dilewati")) && process.env.FE_REVALIDATE_URL && process.env.REVALIDATE_SECRET) {
     await revalidateTags([RevalidateTag.NAV, RevalidateTag.CATEGORIES, RevalidateTag.TRAININGS, RevalidateTag.HOME]);
   }
 }
