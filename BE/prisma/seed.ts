@@ -13,6 +13,7 @@ import { RevalidateTag, revalidateTags } from "../src/lib/revalidate";
 import { REFERENCE_SEED_KEY, REFERENCE_SEED_VERSION, seedReferenceCatalog } from "./seed-reference";
 import { seedBulk } from "./seed-bulk";
 import { seedCategoryCleanup } from "./seed-category-cleanup";
+import { seedSingleCategory } from "./seed-single-category";
 import { type ContentSeedResult, seedContent } from "./seed-content";
 import { seedCovers } from "./seed-covers";
 import { seedGallery } from "./seed-gallery";
@@ -142,6 +143,8 @@ async function main() {
     : null;
   // Perapian kategori referensi (kata kunci, gabung kembar, hapus generik), sekali per versi.
   const cleanup = USE_REFERENCE ? await seedCategoryCleanup() : null;
+  // Satu pelatihan satu kategori (sekali per versi), setelah perapian supaya kata kunci ikut menentukan.
+  const single = USE_REFERENCE ? await seedSingleCategory() : null;
 
   const profileResult = await seedProfilePage();
   // Mode minimal (e2e) tanpa halaman pembayaran; spec e2e membuat halamannya sendiri.
@@ -190,6 +193,12 @@ async function main() {
           `${cleanup.merged} kategori digabung (${cleanup.movedTrainings} tautan pindah), ` +
           `${cleanup.deleted} kategori generik dihapus (${cleanup.detachedLinks} tautan dilepas)` +
           (cleanup.skipped.length > 0 ? `; dilewati: ${cleanup.skipped.join("; ")}.` : "."));
+    console.info(single === "dilewati" || single === null
+      ? "Satu kategori per pelatihan: dilewati (versi ini sudah dijalankan)."
+      : `Satu kategori per pelatihan: ${single.trainingsChanged} pelatihan dirapikan (${single.linksRemoved} tautan dilepas, ` +
+          `${single.linksAdded} kategori baru dari judul); kategori dihapus: ${single.deletedCategories.join(", ") || "-"}` +
+          (single.stillGeneric.length > 0 ? `; masih di kategori generik: ${single.stillGeneric.join(" | ")}` : "") +
+          (single.skipped.length > 0 ? `; dilewati: ${single.skipped.join("; ")}.` : "."));
   }
   console.info(
     contentResult
@@ -231,7 +240,7 @@ async function main() {
     );
   }
   // Bila FE sudah berjalan saat seed manual, tampilkan dropdown baru tanpa perlu restart.
-  if ((reference || (cleanup && cleanup !== "dilewati")) && process.env.FE_REVALIDATE_URL && process.env.REVALIDATE_SECRET) {
+  if ((reference || (cleanup && cleanup !== "dilewati") || (single && single !== "dilewati")) && process.env.FE_REVALIDATE_URL && process.env.REVALIDATE_SECRET) {
     await revalidateTags([RevalidateTag.NAV, RevalidateTag.CATEGORIES, RevalidateTag.TRAININGS, RevalidateTag.HOME]);
   }
 }

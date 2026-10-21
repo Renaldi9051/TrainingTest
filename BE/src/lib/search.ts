@@ -54,6 +54,12 @@ export function wholeWordRegex(keyword: string): string {
   return `(^|[^[:alnum:]])${escaped}($|[^[:alnum:]])`;
 }
 
+// Padanan wholeWordRegex di JS: teks memuat frasa sebagai kata/frasa utuh (setelah di-fold).
+export function containsWholeWord(text: string, phrase: string): boolean {
+  const pattern = wholeWordRegex(phrase).replaceAll("[:alnum:]", String.raw`\p{L}\p{N}`);
+  return new RegExp(pattern, "u").test(foldText(text));
+}
+
 // Pola LIKE "mengandung" dengan wildcard pengguna (% _ \) di-escape; dipakai dengan ESCAPE '\'.
 export function likeContainsPattern(query: string): string {
   return `%${foldText(query).replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
