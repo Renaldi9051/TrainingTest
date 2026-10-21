@@ -337,9 +337,6 @@ export type CategoryOption = { id: string; slug: string; name: string };
 // details pada error CATEGORY_IN_USE (409).
 export type CategoryInUseDetails = { trainingCount: number };
 
-// details pada error CATEGORY_ONLY_CATEGORY (409, hapus dengan ?detach=true).
-export type CategoryOnlyCategoryDetails = { trainings: { id: string; title: string }[]; total: number };
-
 // GET /admin/categories/:id/keyword-matches
 export type KeywordMatch = {
   id: string;

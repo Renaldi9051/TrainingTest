@@ -142,7 +142,11 @@ const schema = z
     showPrice: z.boolean(),
     coverId: z.string().nullable(),
     imageIds: z.array(z.string()).max(IMAGES_MAX, { error: `Galeri maksimal ${IMAGES_MAX} gambar.` }),
-    categoryIds: z.array(z.string()).min(1, { error: "Pilih minimal satu kategori." }),
+    // Satu pelatihan satu kategori (sama dengan validator BE).
+    categoryIds: z
+      .array(z.string())
+      .min(1, { error: "Pilih kategori." })
+      .max(1, { error: "Pelatihan hanya boleh punya satu kategori." }),
     status: z.enum(["DRAFT", "PUBLISHED"]),
     publishedAt: z.string(),
     seo: z.object({
@@ -660,7 +664,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
             control={form.control}
             name="categoryIds"
             render={({ field }) => (
-              <CategoryChecklist value={field.value} onChange={field.onChange} error={errors.categoryIds?.message} />
+              <CategoryRadioList value={field.value} onChange={field.onChange} error={errors.categoryIds?.message} />
             )}
           />
 
@@ -893,7 +897,9 @@ function PublishPanel({
   );
 }
 
-function CategoryChecklist({
+// Pilihan satu kategori. Nilai tetap array (bentuk API); data lama dengan beberapa kategori diganti
+// satu pilihan saat admin memilih.
+function CategoryRadioList({
   value,
   onChange,
   error,
@@ -913,13 +919,16 @@ function CategoryChecklist({
     const items = query.data ?? [];
     return term ? items.filter((item) => item.name.toLowerCase().includes(term)) : items;
   }, [filter, query.data]);
-  const selected = new Set(value);
+  const selectedName = query.data?.find((item) => item.id === value[0])?.name;
 
   return (
     <fieldset className="space-y-3 border-t border-border pt-6" aria-describedby={error ? `${filterId}-error` : undefined}>
       <legend className="font-mono text-label uppercase text-fg-muted">
-        Kategori <span className="normal-case">({value.length} dipilih)</span>
+        Kategori <span className="normal-case">({selectedName ?? "belum dipilih"})</span>
       </legend>
+      {value.length > 1 ? (
+        <p className="text-small text-fg-muted">Pelatihan ini masih punya {value.length} kategori. Pilih satu.</p>
+      ) : null}
       <div className="relative">
         <label htmlFor={filterId} className="sr-only">
           Cari kategori
@@ -960,12 +969,14 @@ function CategoryChecklist({
         <ul className="max-h-64 space-y-1 overflow-y-auto pr-1">
           {visible.map((category) => (
             <li key={category.id}>
-              <label className="flex items-center gap-2 rounded-sm px-1 py-1 text-sm hover:bg-bg-subtle">
-                <Checkbox
-                  checked={selected.has(category.id)}
-                  onCheckedChange={(checked) =>
-                    onChange(checked ? [...value, category.id] : value.filter((id) => id !== category.id))
-                  }
+              <label className="flex cursor-pointer items-center gap-2 rounded-sm px-1 py-1 text-sm hover:bg-bg-subtle">
+                <input
+                  type="radio"
+                  name={`${filterId}-category`}
+                  value={category.id}
+                  checked={value.length === 1 && value[0] === category.id}
+                  onChange={() => onChange([category.id])}
+                  className="accent-[var(--fg-strong)]"
                 />
                 {category.name}
               </label>

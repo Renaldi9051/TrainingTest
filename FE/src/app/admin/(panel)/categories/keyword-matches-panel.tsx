@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LinkIcon } from "lucide-react";
+import { FolderInputIcon } from "lucide-react";
 import Link from "next/link";
 import { useId, useState } from "react";
 import { toast } from "sonner";
@@ -15,8 +15,8 @@ import { formatNumber } from "@/lib/format";
 import { trainingKeys } from "../trainings/training-keys";
 import { categoryKeys } from "./category-form";
 
-// Pelatihan yang judulnya memuat kata kunci kategori tapi belum tertaut. Admin mencentang lalu
-// menautkan; tautan hanya ditambah, kategori lama pelatihan tetap.
+// Pelatihan yang judulnya memuat kata kunci kategori tapi ada di kategori lain. Admin mencentang lalu
+// memindahkannya ke kategori ini (satu pelatihan satu kategori, kategori lamanya dilepas).
 export function KeywordMatchesPanel({ category }: { category: Category }) {
   const headingId = useId();
   const queryClient = useQueryClient();
@@ -43,7 +43,7 @@ export function KeywordMatchesPanel({ category }: { category: Category }) {
         queryClient.invalidateQueries({ queryKey: categoryKeys.all }),
         queryClient.invalidateQueries({ queryKey: trainingKeys.all }),
       ]);
-      toast.success(`${formatNumber(linked)} pelatihan ditautkan ke ${category.name}.`);
+      toast.success(`${formatNumber(linked)} pelatihan dipindah ke ${category.name}.`);
     },
     onError: (error) => toast.error(errorMessage(error)),
   });
@@ -64,7 +64,7 @@ export function KeywordMatchesPanel({ category }: { category: Category }) {
         </h2>
         <p className="max-w-[65ch] text-small text-fg-muted">
           {hasKeywords
-            ? `Judulnya memuat ${category.keywords.map((keyword) => `"${keyword}"`).join(", ")} tapi belum ada di kategori ini. Centang lalu tautkan; kategori lain pelatihan tetap.`
+            ? `Judulnya memuat ${category.keywords.map((keyword) => `"${keyword}"`).join(", ")} tapi masih di kategori lain. Centang lalu pindahkan ke kategori ini; kategori lamanya dilepas karena setiap pelatihan hanya punya satu kategori.`
             : "Tambahkan kata kunci di atas lalu simpan untuk melihat pelatihan yang judulnya cocok."}
         </p>
       </div>
@@ -101,7 +101,7 @@ export function KeywordMatchesPanel({ category }: { category: Category }) {
             </label>
             <div className="flex items-center gap-3">
               <p className="text-small text-fg-muted" aria-live="polite">
-                {formatNumber(query.data.total)} belum tertaut · {formatNumber(query.data.linkedCount)} sudah tertaut
+                {formatNumber(query.data.total)} di kategori lain · {formatNumber(query.data.linkedCount)} sudah di kategori ini
               </p>
               <Button
                 type="button"
@@ -110,8 +110,8 @@ export function KeywordMatchesPanel({ category }: { category: Category }) {
                 aria-busy={link.isPending}
                 onClick={() => link.mutate(chosen)}
               >
-                <LinkIcon aria-hidden />
-                {chosen.length > 0 ? `Tautkan ${formatNumber(chosen.length)} pelatihan` : "Tautkan"}
+                <FolderInputIcon aria-hidden />
+                {chosen.length > 0 ? `Pindahkan ${formatNumber(chosen.length)} pelatihan` : "Pindahkan"}
               </Button>
             </div>
           </div>
@@ -149,7 +149,7 @@ export function KeywordMatchesPanel({ category }: { category: Category }) {
           </ul>
           {query.data.total > items.length ? (
             <p className="text-small text-fg-muted">
-              Menampilkan {formatNumber(items.length)} dari {formatNumber(query.data.total)}. Tautkan sebagian dulu atau perjelas kata kunci.
+              Menampilkan {formatNumber(items.length)} dari {formatNumber(query.data.total)}. Pindahkan sebagian dulu atau perjelas kata kunci.
             </p>
           ) : null}
         </div>
