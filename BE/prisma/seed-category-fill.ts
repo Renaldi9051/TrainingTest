@@ -5,6 +5,8 @@
 // - Kandidat: artikel snapshot yang ditandai kategori itu, judul belum dipakai pelatihan aktif, belum
 //   pernah diubah admin; urut terbaru. Kategori dengan kandidat paling sedikit diisi lebih dulu.
 // - Kategori yang kandidatnya kurang tetap di bawah 10 (pemilik: tidak mengarang judul).
+// - Versi 2: kategori yang judul bertandanya habis diisi dari judul referensi lain yang topiknya sama
+//   (CATEGORY_FILL_TOPIC_PICKS, dipilih manual dari judul di Sampah; tanpa judul kembar).
 // Versi pertama: kategori berawalan A dan B yang tampil di publik.
 import { getDb } from "../src/lib/db";
 import { withRevalidateBatch } from "../src/lib/revalidate-map";
@@ -14,21 +16,76 @@ import snapshot from "./seed-data/reference-catalog.json";
 import { hasReferenceTitle, plainTitle, referenceSnapshotSlugs } from "./seed-data/reference-training";
 
 export const CATEGORY_FILL_KEY = "seed.categoryFill.version";
-export const CATEGORY_FILL_VERSION = "2026-10-21-ab";
+export const CATEGORY_FILL_VERSION = "2026-10-21-ab-topik";
 export const CATEGORY_FILL_TARGET = 10;
 export const CATEGORY_FILL_SLUGS = [
   "administrative",
   "akuakultur",
+  "alignment",
   "analysis",
+  "anger",
   "arsitektur",
   "assurance",
   "audit",
+  "balanced-scorecard",
   "banking",
   "batu-bara",
+  "behavioral",
   "budgeting",
   "building",
   "business",
 ];
+// Slug pelatihan referensi (di Sampah) per kategori, urut prioritas; dipakai setelah judul bertanda habis.
+export const CATEGORY_FILL_TOPIC_PICKS: Record<string, string[]> = {
+  alignment: [
+    "training-terminasi-tegangan-menengah-dan-jointing-di-jakarta-terbaru",
+    "training-machinery-vibration-analysis-terbaru",
+    "training-vibration-and-alignment",
+    "training-balancing-and-total-alignment",
+    "training-praktik-analisis-vibrasi-terupdate",
+    "training-rotating-machine-maintenance",
+    "training-rotating-equipment-operation-maintenance-and-troubleshooting",
+    "pelatihan-bearing-selection-and-maintenance",
+    "pelatihan-machinery-diagnostic-vibration-information-fundamentals-of-rotating-machinery-diagnostics",
+  ],
+  anger: [
+    "training-emotional-control",
+    "pelatihan-conflict-management-training",
+    "training-managing-conflict-and-handling-difficult-people",
+    "pelatihan-stress-time-management",
+    "training-emotional-management-for-improvement-productivity",
+    "pelatihan-kepemimpinan-berdasarkan-kecerdasan-emosi",
+    "pelatihan-handling-conflict-at-work-place",
+    "training-technique-of-emotional-freedom-technique",
+    "pelatihan-conflict-collaboration",
+  ],
+  assurance: ["pelatihan-quality-assurance-for-internal-audit-department", "training-project-quality-management"],
+  "balanced-scorecard": [
+    "training-pengukuran-kinerja-perusahaan-berbasis-balanced-scorecard-di-jakarta",
+    "training-performance-management",
+    "teknik-penyusunan-casecading-kpi",
+    "training-strategic-balanced-scorecard-penyusunan-kpi-bpr",
+  ],
+  behavioral: [
+    "training-office-communication-and-behavior-ethic",
+    "training-behavior-based-safety-bbs",
+    "training-effective-skill-for-organization-behavior",
+    "training-effective-solutions-for-unacceptable-employee-behavior",
+    "training-conflict-management-human-behaviour-in-organization",
+    "training-technique-interview-for-recruitment-bei-interview",
+    "training-wawancara-kerja-efektif-untuk-rekrutmen-staf-atau-jalur-karir",
+    "pelatihan-understanding-customer-behaviour",
+    "training-analisa-pendeteksian-fraud-dengan-human-behavior-dan-nlp-terbaru",
+  ],
+  budgeting: [
+    "training-strategic-planning-management-control-and-effective-budgeting",
+    "training-rencana-anggaran-biaya-konstruksi",
+    "training-penyusunan-anggaran-perawatan-bangunan-gedung-dan-fasilitas",
+    "training-corporate-budgeting-training-concepts-applications",
+    "training-budgeting-cost-control-for-coal-mining-industry",
+    "training-strategic-plan-and-budgeting-perencanaan-strategi-dan-anggaran-rumah-sakit-tahun-2024-2025",
+  ],
+};
 
 const db = getDb();
 // Judul kembar = sama setelah awalan "Training/Pelatihan" dan tanda baca diabaikan
@@ -69,7 +126,10 @@ export async function planCategoryFill(): Promise<CategoryFillPlan> {
       .filter(({ row }) => row && !activeSlugs.has(row.slug))
       .sort((a, b) => b.post.date.localeCompare(a.post.date) || (a.row?.slug ?? "").localeCompare(b.row?.slug ?? ""))
       .map(({ row }) => row as NonNullable<typeof row>);
-    return { category, rows };
+    const topicRows = (CATEGORY_FILL_TOPIC_PICKS[category.slug] ?? [])
+      .map((slug) => trashedBySlug.get(slug))
+      .filter((row): row is NonNullable<typeof row> => !!row && !activeSlugs.has(row.slug));
+    return { category, rows: [...rows, ...topicRows] };
   });
 
   const picks: CategoryFillPick[] = [];
