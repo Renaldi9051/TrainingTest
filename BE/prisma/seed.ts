@@ -20,6 +20,7 @@ import { seedGallery } from "./seed-gallery";
 import { seedHomeImages } from "./seed-home-images";
 import { seedManifestGallery } from "./seed-manifest-gallery";
 import { seedThemeGallery } from "./seed-theme-gallery";
+import { seedTrainingPhotos } from "./seed-training-photos";
 import { seedPaymentPage } from "./seed-payment-page";
 import { buildProfileBlocks, buildSettings } from "./seed-data/build";
 import { writeCatalog } from "./seed-data/catalog-writer";
@@ -166,6 +167,8 @@ async function main() {
   // Foto tema (orang Indonesia) untuk semua kategori lain dan pelatihan yang sampul/galerinya kosong.
   // Sebelum seedHomeImages, jadi kategori sudah berfoto dan ilustrasi lama tidak dipasang lagi.
   const themeResult = MINIMAL ? null : await seedThemeGallery();
+  // Foto unik per pelatihan sesuai topik (training-photos.json), menggantikan foto tema yang berulang.
+  const photoResult = MINIMAL ? null : await seedTrainingPhotos();
   // Slide hero & gambar kategori yang masih kosong (database tanpa gambar, mis. VPS).
   const homeImageResult = MINIMAL ? null : await seedHomeImages();
   // Seed bulk mencetak ringkasannya sendiri.
@@ -232,6 +235,17 @@ async function main() {
   if (themeResult !== null) {
     console.info(
       `Foto tema: ${themeResult === "dilewati" ? "dilewati (sudah terpasang)" : `${themeResult.categories} kategori, ${themeResult.trainings} pelatihan`}.`,
+    );
+  }
+  if (photoResult !== null) {
+    console.info(
+      photoResult === "dilewati"
+        ? "Foto per pelatihan: dilewati (sudah terpasang)."
+        : `Foto per pelatihan: ${photoResult.trainings} pelatihan (${photoResult.uploaded} foto diunduh)` +
+            (photoResult.kept > 0 ? `, ${photoResult.kept} dilewati karena foto pilihan admin` : "") +
+            (photoResult.missing.length > 0 ? `, tidak ditemukan: ${photoResult.missing.join(", ")}` : "") +
+            (photoResult.failed.length > 0 ? `; gagal: ${photoResult.failed.join("; ")}` : "") +
+            ".",
     );
   }
   if (homeImageResult !== null) {

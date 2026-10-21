@@ -1,0 +1,1305 @@
+{
+  "source": {
+    "provider": "pexels",
+    "license": "Pexels License",
+    "url": "https://www.pexels.com/photo/{pexelsId}/"
+  },
+  "trainings": {
+    "training-financial-accounting-analysis-and-reporting-online": {
+      "cover": {
+        "pexelsId": 33175673,
+        "alt": "Kalkulator, kacamata, dan pena di atas laporan keuangan bergrafik"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7947755,
+          "alt": "Kalkulator dan kaca pembesar di atas kertas grafik batang dan diagram"
+        },
+        {
+          "pexelsId": 7948030,
+          "alt": "Lembar laporan pendapatan dan riset pasar dengan grafik batang merah muda"
+        },
+        {
+          "pexelsId": 209224,
+          "alt": "Kalkulator dan pena di atas kertas grafik keuangan"
+        },
+        {
+          "pexelsId": 6801681,
+          "alt": "Tangan di samping kaca pembesar, kalkulator, dan uang di atas dokumen pasar saham"
+        }
+      ]
+    },
+    "pelatihan-marine-clearance-officer": {
+      "cover": {
+        "pexelsId": 12530458,
+        "alt": "Kapal kargo bermuatan peti kemas dilihat dari udara di laut biru"
+      },
+      "gallery": [
+        {
+          "pexelsId": 12530455,
+          "alt": "Kapal kontainer berlayar di laut lepas dilihat dari udara"
+        },
+        {
+          "pexelsId": 221322,
+          "alt": "Pemandangan dek kapal kargo menghadap laut dari anjungan"
+        },
+        {
+          "pexelsId": 38726115,
+          "alt": "Derek pelabuhan di atas tumpukan peti kemas"
+        },
+        {
+          "pexelsId": 29359072,
+          "alt": "Kapal tunda tua bersandar di pelabuhan saat senja"
+        }
+      ]
+    },
+    "training-bisnis-pelayaran-di-jakarta": {
+      "cover": {
+        "pexelsId": 3840441,
+        "alt": "Kapal kontainer dibantu kapal tunda memasuki terminal pelabuhan"
+      },
+      "gallery": [
+        {
+          "pexelsId": 36062754,
+          "alt": "Kapal kontainer bersandar di dermaga dengan derek pelabuhan"
+        },
+        {
+          "pexelsId": 19549941,
+          "alt": "Kapal kontainer bermuatan penuh berlayar di perairan tenang"
+        },
+        {
+          "pexelsId": 14392678,
+          "alt": "Kapal kargo berlayar di laut saat matahari terbenam"
+        },
+        {
+          "pexelsId": 40027582,
+          "alt": "Peti kemas merah dan kuning di dek kapal dilihat dari atas"
+        }
+      ]
+    },
+    "training-internal-auditor-ism-code-di-jakarta": {
+      "cover": {
+        "pexelsId": 133627,
+        "alt": "Pelampung keselamatan oranye terpasang di pagar kapal"
+      },
+      "gallery": [
+        {
+          "pexelsId": 2076824,
+          "alt": "Awak kapal berkumpul di dek kapal"
+        },
+        {
+          "pexelsId": 241025,
+          "alt": "Kotak selang pemadam kebakaran merah di dinding kapal"
+        },
+        {
+          "pexelsId": 11371257,
+          "alt": "Dek haluan kapal di tengah laut dilihat dari udara"
+        },
+        {
+          "pexelsId": 1654497,
+          "alt": "Pelaut berseragam berjalan di dek kapal berwarna biru"
+        }
+      ]
+    },
+    "training-marine-clearance-officer": {
+      "cover": {
+        "pexelsId": 2680058,
+        "alt": "Kapal kargo dibantu kapal tunda di pelabuhan"
+      },
+      "gallery": [
+        {
+          "pexelsId": 24869107,
+          "alt": "Kapal tunda merah melintas di perairan pelabuhan"
+        },
+        {
+          "pexelsId": 10231086,
+          "alt": "Deretan kapal tunda bersandar di dekat kapal pesiar"
+        },
+        {
+          "pexelsId": 3309498,
+          "alt": "Kapal besar dikawal dua kapal tunda di laut dilihat dari udara"
+        },
+        {
+          "pexelsId": 17344214,
+          "alt": "Kapal kargo berlayar di laut lepas"
+        }
+      ]
+    },
+    "training-pembuatan-pakan-ternak-seimbang-dari-bahan-lokal-terbaik": {
+      "cover": {
+        "pexelsId": 18474449,
+        "alt": "Sapi makan jerami di kandang"
+      },
+      "gallery": [
+        {
+          "pexelsId": 35270798,
+          "alt": "Peternak memberi minum dan pakan sapi di padang rumput"
+        },
+        {
+          "pexelsId": 19958300,
+          "alt": "Sapi jersey bertanda telinga di kandang"
+        },
+        {
+          "pexelsId": 20634965,
+          "alt": "Dua anak sapi di atas jerami"
+        },
+        {
+          "pexelsId": 12210607,
+          "alt": "Sapi merumput di padang hijau"
+        }
+      ]
+    },
+    "training-peternak-ayam-potong": {
+      "cover": {
+        "pexelsId": 26625882,
+        "alt": "Ayam broiler di kandang peternakan lengkap dengan tempat pakan"
+      },
+      "gallery": [
+        {
+          "pexelsId": 27083552,
+          "alt": "Kawanan ayam broiler di kandang tertutup modern"
+        },
+        {
+          "pexelsId": 4530413,
+          "alt": "Anak ayam di kandang pembesaran dengan lampu penghangat"
+        },
+        {
+          "pexelsId": 2253583,
+          "alt": "Ayam putih memenuhi kandang peternakan"
+        },
+        {
+          "pexelsId": 35877058,
+          "alt": "Ayam putih di dalam kandang besar berpenerangan"
+        }
+      ]
+    },
+    "training-shipping-agency-online": {
+      "cover": {
+        "pexelsId": 36652842,
+        "alt": "Terminal peti kemas dengan derek dan truk pelabuhan"
+      },
+      "gallery": [
+        {
+          "pexelsId": 906494,
+          "alt": "Tumpukan peti kemas di lapangan penumpukan pelabuhan"
+        },
+        {
+          "pexelsId": 33692749,
+          "alt": "Peti kemas warna-warni bertumpuk di pelabuhan"
+        },
+        {
+          "pexelsId": 3245117,
+          "alt": "Lapangan penumpukan peti kemas yang luas"
+        },
+        {
+          "pexelsId": 6572428,
+          "alt": "Kapal kontainer di dermaga dengan deretan derek bongkar muat"
+        }
+      ]
+    },
+    "training-ternak-kambing-dan-domba": {
+      "cover": {
+        "pexelsId": 16145176,
+        "alt": "Peternak menggiring kawanan kambing di jalan desa"
+      },
+      "gallery": [
+        {
+          "pexelsId": 6131668,
+          "alt": "Penggembala menggiring kambing di jalan berdebu saat senja"
+        },
+        {
+          "pexelsId": 21620413,
+          "alt": "Domba di kandang ternak"
+        },
+        {
+          "pexelsId": 8807304,
+          "alt": "Kambing dan domba di kandang beratap seng"
+        },
+        {
+          "pexelsId": 390025,
+          "alt": "Kawanan kambing putih berdiri berdekatan"
+        }
+      ]
+    },
+    "training-waste-management-pengelolaan-sampah-secara-efektif-dan-berkelanjutan": {
+      "cover": {
+        "pexelsId": 5145705,
+        "alt": "Dua perempuan memilah sampah botol plastik di tempat daur ulang"
+      },
+      "gallery": [
+        {
+          "pexelsId": 6995365,
+          "alt": "Perempuan memilah sampah ke kantong terpisah"
+        },
+        {
+          "pexelsId": 7656748,
+          "alt": "Relawan memungut sampah plastik ke kantong"
+        },
+        {
+          "pexelsId": 11115604,
+          "alt": "Truk sampah mengangkat tempat sampah"
+        },
+        {
+          "pexelsId": 7512761,
+          "alt": "Tangan memasukkan kaleng ke tempat sampah berlabel logam"
+        }
+      ]
+    },
+    "training-water-management-lahan-gambut": {
+      "cover": {
+        "pexelsId": 927745,
+        "alt": "Hutan rawa tergenang air dilihat dari udara"
+      },
+      "gallery": [
+        {
+          "pexelsId": 4320463,
+          "alt": "Pohon tanpa daun tumbuh di lahan basah berair hijau"
+        },
+        {
+          "pexelsId": 3300836,
+          "alt": "Lahan basah dengan aliran air dan rumput rawa"
+        },
+        {
+          "pexelsId": 1375630,
+          "alt": "Perairan di antara perbukitan berhutan dilihat dari udara"
+        },
+        {
+          "pexelsId": 16037676,
+          "alt": "Danau di tengah hutan hujan tropis"
+        }
+      ]
+    },
+    "cara-memilih-mesin-pembuat-pakan-ikan-terbaik-versi-ahli-teknologi-pangan": {
+      "cover": {
+        "pexelsId": 2889347,
+        "alt": "Ruang pengolahan pangan dengan mesin dan tangki baja"
+      },
+      "gallery": [
+        {
+          "pexelsId": 11765539,
+          "alt": "Pekerja mengoperasikan mesin di lantai pabrik"
+        },
+        {
+          "pexelsId": 29224559,
+          "alt": "Pekerja pabrik mengoperasikan mesin industri"
+        },
+        {
+          "pexelsId": 2965707,
+          "alt": "Truk menuang biji-bijian ke fasilitas penyimpanan"
+        },
+        {
+          "pexelsId": 1296262,
+          "alt": "Biji-bijian kering sebagai bahan pakan"
+        }
+      ]
+    },
+    "formulasi-pakan-ikan-lele-nila-dan-gurami-yang-efektif": {
+      "cover": {
+        "pexelsId": 8352786,
+        "alt": "Ikan nila segar berjajar di atas es"
+      },
+      "gallery": [
+        {
+          "pexelsId": 166633,
+          "alt": "Ikan lele di dalam air"
+        },
+        {
+          "pexelsId": 3947869,
+          "alt": "Petani tersenyum memegang dua ikan nila hasil panen"
+        },
+        {
+          "pexelsId": 19311538,
+          "alt": "Tumpukan ikan mas segar"
+        },
+        {
+          "pexelsId": 3098642,
+          "alt": "Tangan memegang ikan hasil budidaya"
+        }
+      ]
+    },
+    "langkah-mudah-memulai-usaha-pakan-ikan-dari-nol-hingga-sukses": {
+      "cover": {
+        "pexelsId": 7509420,
+        "alt": "Pembudidaya memberi pakan ikan di kolam"
+      },
+      "gallery": [
+        {
+          "pexelsId": 28738439,
+          "alt": "Keramba jaring apung di tepi danau"
+        },
+        {
+          "pexelsId": 6546300,
+          "alt": "Jaring ikan dan pelampung di tepi kolam"
+        },
+        {
+          "pexelsId": 19222506,
+          "alt": "Keranjang berisi ikan segar hasil panen"
+        },
+        {
+          "pexelsId": 15212632,
+          "alt": "Pria memegang ikan hasil tangkapan"
+        }
+      ]
+    },
+    "pelatihan-pakan-ikan-bermutu-peluang-usaha-yang-sedang-naik-daun": {
+      "cover": {
+        "pexelsId": 28738440,
+        "alt": "Keramba ikan terapung di perairan hijau dilihat dari udara"
+      },
+      "gallery": [
+        {
+          "pexelsId": 16296413,
+          "alt": "Pembudidaya bekerja di keramba ikan di laut dilihat dari atas"
+        },
+        {
+          "pexelsId": 6872322,
+          "alt": "Kolam-kolam budidaya ikan di pesisir dilihat dari udara"
+        },
+        {
+          "pexelsId": 5795822,
+          "alt": "Kolam budidaya ikan berderet dilihat dari atas"
+        },
+        {
+          "pexelsId": 691162,
+          "alt": "Butiran pakan tumpah dari toples kaca"
+        }
+      ]
+    },
+    "perbandingan-pakan-ikan-komersial-vs-buatan-sendiri": {
+      "cover": {
+        "pexelsId": 213399,
+        "alt": "Ikan koi berkumpul di permukaan kolam"
+      },
+      "gallery": [
+        {
+          "pexelsId": 27089710,
+          "alt": "Ikan lele dan ikan koi di kolam"
+        },
+        {
+          "pexelsId": 13093376,
+          "alt": "Ikan koi berenang di air biru"
+        },
+        {
+          "pexelsId": 29479389,
+          "alt": "Ikan koi berenang di kolam yang tenang"
+        },
+        {
+          "pexelsId": 16962629,
+          "alt": "Ikan grass carp berenang dekat permukaan kolam"
+        }
+      ]
+    },
+    "teknik-fermentasi-untuk-meningkatkan-mutu-pakan-ikan": {
+      "cover": {
+        "pexelsId": 4397282,
+        "alt": "Toples kaca berisi butiran bahan pakan"
+      },
+      "gallery": [
+        {
+          "pexelsId": 6605199,
+          "alt": "Toples kaca berisi minuman hasil fermentasi"
+        },
+        {
+          "pexelsId": 5472000,
+          "alt": "Karung berisi biji-bijian"
+        },
+        {
+          "pexelsId": 11560594,
+          "alt": "Nelayan menebar jala dari rakit bambu"
+        },
+        {
+          "pexelsId": 13802019,
+          "alt": "Dua orang menarik jaring ikan di perairan dangkal"
+        }
+      ]
+    },
+    "tips-meningkatkan-kandungan-protein-pakan-ikan-menurut-peneliti-gizi-akuakultur": {
+      "cover": {
+        "pexelsId": 8442281,
+        "alt": "Dua peneliti berjas lab menganalisis sampel di laboratorium"
+      },
+      "gallery": [
+        {
+          "pexelsId": 3304176,
+          "alt": "Tangan memegang ikan segar"
+        },
+        {
+          "pexelsId": 6711109,
+          "alt": "Nelayan dengan jaring di perahu saat matahari terbit"
+        },
+        {
+          "pexelsId": 16578772,
+          "alt": "Nelayan menebar jaring kupu-kupu di danau"
+        },
+        {
+          "pexelsId": 9120018,
+          "alt": "Nelayan menebar jala dari perahu"
+        }
+      ]
+    },
+    "training-terminasi-kabel-mv-medium-voltage": {
+      "cover": {
+        "pexelsId": 17842832,
+        "alt": "Teknisi listrik berhelm memeriksa kabel di panel listrik"
+      },
+      "gallery": [
+        {
+          "pexelsId": 18468536,
+          "alt": "Gardu induk listrik dengan jaringan kabel tegangan tinggi"
+        },
+        {
+          "pexelsId": 27928760,
+          "alt": "Teknisi mengerjakan rangkaian di panel listrik"
+        },
+        {
+          "pexelsId": 17843269,
+          "alt": "Teknisi perempuan menguji peralatan di ruang panel listrik"
+        },
+        {
+          "pexelsId": 10871929,
+          "alt": "Teknisi berhelm memeriksa tegangan di panel listrik"
+        }
+      ]
+    },
+    "training-systems-analysis-and-design": {
+      "cover": {
+        "pexelsId": 7988742,
+        "alt": "Dua pengembang berdiskusi di depan layar berisi kode"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7988759,
+          "alt": "Pengembang menunjuk kode di monitor sambil berdiskusi"
+        },
+        {
+          "pexelsId": 12899156,
+          "alt": "Pemrogram mengetik kode di laptop"
+        },
+        {
+          "pexelsId": 7988116,
+          "alt": "Tim pengembang bekerja di depan komputer di kantor"
+        },
+        {
+          "pexelsId": 7147490,
+          "alt": "Tangan perancang membuat sketsa di atas kertas"
+        }
+      ]
+    },
+    "training-weibull-analysis": {
+      "cover": {
+        "pexelsId": 32845694,
+        "alt": "Insinyur berhelm memegang tablet di pabrik"
+      },
+      "gallery": [
+        {
+          "pexelsId": 32845692,
+          "alt": "Pekerja industri memeriksa data di tablet di area pabrik"
+        },
+        {
+          "pexelsId": 37688150,
+          "alt": "Teknisi memeriksa mesin di bengkel"
+        },
+        {
+          "pexelsId": 38190066,
+          "alt": "Teknisi memperbaiki perangkat elektronik di meja kerja"
+        },
+        {
+          "pexelsId": 32497161,
+          "alt": "Teknisi memeriksa unit pendingin di luar ruangan"
+        }
+      ]
+    },
+    "training-anger-management": {
+      "cover": {
+        "pexelsId": 8560221,
+        "alt": "Konselor mencatat sesi bersama klien yang berbaring di sofa"
+      },
+      "gallery": [
+        {
+          "pexelsId": 4101198,
+          "alt": "Pria berbicara dengan emosi sambil mengangkat tangan"
+        },
+        {
+          "pexelsId": 7579182,
+          "alt": "Pasangan tampak tertekan saat sesi konseling"
+        },
+        {
+          "pexelsId": 5336965,
+          "alt": "Pria mendengarkan psikolog dalam sesi konseling"
+        },
+        {
+          "pexelsId": 8560035,
+          "alt": "Pria tertunduk memegang kepala saat sesi bersama terapis"
+        }
+      ]
+    },
+    "training-sketchup": {
+      "cover": {
+        "pexelsId": 15764116,
+        "alt": "Arsitek merancang gambar rumah di komputer"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7504746,
+          "alt": "Perancang membuat model 3D di komputer"
+        },
+        {
+          "pexelsId": 29148783,
+          "alt": "Tangan memegang maket rumah cetak 3D"
+        },
+        {
+          "pexelsId": 9618453,
+          "alt": "Arsitek menyusun maket kawasan"
+        },
+        {
+          "pexelsId": 9618450,
+          "alt": "Arsitek mengukur rencana tapak dengan penggaris"
+        }
+      ]
+    },
+    "training-quality-control-and-quality-assurance": {
+      "cover": {
+        "pexelsId": 19895915,
+        "alt": "Petugas berhelm dan rompi keselamatan memeriksa area pabrik"
+      },
+      "gallery": [
+        {
+          "pexelsId": 32845682,
+          "alt": "Dua pekerja berhelm memeriksa gulungan baja di pabrik"
+        },
+        {
+          "pexelsId": 31091544,
+          "alt": "Petugas kendali mutu memeriksa produk tekstil di pabrik"
+        },
+        {
+          "pexelsId": 30824281,
+          "alt": "Pekerja memeriksa barang di stasiun pengemasan gudang"
+        },
+        {
+          "pexelsId": 3861949,
+          "alt": "Insinyur menguji purwarupa perangkat elektronik"
+        }
+      ]
+    },
+    "training-internal-control-and-financial-management": {
+      "cover": {
+        "pexelsId": 8463694,
+        "alt": "Tangan memegang uang kertas rupiah"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7680736,
+          "alt": "Perempuan memeriksa kuitansi dengan kalkulator di meja"
+        },
+        {
+          "pexelsId": 7681191,
+          "alt": "Perempuan menyerahkan dokumen di meja kerja"
+        },
+        {
+          "pexelsId": 8111819,
+          "alt": "Perempuan membaca dokumen pada papan klip di kantor"
+        },
+        {
+          "pexelsId": 7580926,
+          "alt": "Pria berjas memeriksa map dokumen di meja kerja"
+        }
+      ]
+    },
+    "training-it-asset-management-di-yogyakarta": {
+      "cover": {
+        "pexelsId": 37605911,
+        "alt": "Teknisi TI bekerja di ruang server"
+      },
+      "gallery": [
+        {
+          "pexelsId": 4508751,
+          "alt": "Lorong ruang server dengan deretan rak"
+        },
+        {
+          "pexelsId": 1181354,
+          "alt": "Teknisi perempuan memantau server dengan laptop"
+        },
+        {
+          "pexelsId": 442150,
+          "alt": "Teknisi merapikan kabel jaringan di rak server"
+        },
+        {
+          "pexelsId": 6466141,
+          "alt": "Perangkat server tersusun di dalam rak"
+        }
+      ]
+    },
+    "training-laporan-strategi-anti-fraud-mengembangkan-pola-strategi-dan-tindak-lanjut-terstruktur": {
+      "cover": {
+        "pexelsId": 10341357,
+        "alt": "Kaca pembesar di atas dokumen polis dan uang kertas"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7821674,
+          "alt": "Tangan memeriksa laporan dengan kaca pembesar"
+        },
+        {
+          "pexelsId": 5370914,
+          "alt": "Kaca pembesar di atas dokumen catatan tulisan tangan"
+        },
+        {
+          "pexelsId": 7319148,
+          "alt": "Penyelidik memeriksa dokumen dengan kaca pembesar"
+        },
+        {
+          "pexelsId": 7319068,
+          "alt": "Kaca pembesar di atas tumpukan dokumen berkode"
+        }
+      ]
+    },
+    "training-pricing-dan-step-by-step-tata-cara-dokumentasi-transfer-pricing-berdasarkan-pmk-213pmk-032016": {
+      "cover": {
+        "pexelsId": 6863183,
+        "alt": "Dokumen pajak, kuitansi, dan koin di atas meja"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7821685,
+          "alt": "Kalkulator, kaca pembesar, dan formulir pajak di meja kayu"
+        },
+        {
+          "pexelsId": 6863259,
+          "alt": "Formulir pajak dengan catatan pengingat dan jam"
+        },
+        {
+          "pexelsId": 6863330,
+          "alt": "Tangan mengisi dokumen pajak di samping kalkulator"
+        },
+        {
+          "pexelsId": 6863174,
+          "alt": "Kaca pembesar di atas dokumen pajak"
+        }
+      ]
+    },
+    "training-risk-management-maturity-level": {
+      "cover": {
+        "pexelsId": 277124,
+        "alt": "Tangan menggerakkan bidak catur di papan"
+      },
+      "gallery": [
+        {
+          "pexelsId": 5477776,
+          "alt": "Bidak catur hitam berserakan di latar oranye"
+        },
+        {
+          "pexelsId": 6114956,
+          "alt": "Bidak catur di atas papan"
+        },
+        {
+          "pexelsId": 8427404,
+          "alt": "Tangan memindahkan bidak di samping jam catur"
+        },
+        {
+          "pexelsId": 6592681,
+          "alt": "Tangan menunjuk grafik kinerja pada papan klip"
+        }
+      ]
+    },
+    "training-balance-scorecard-untuk-pengukuran-kinerja-sdm": {
+      "cover": {
+        "pexelsId": 7652178,
+        "alt": "Tim kantor berdiskusi di sekitar laptop"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7643749,
+          "alt": "Dua karyawan perempuan berdiskusi di meja kerja"
+        },
+        {
+          "pexelsId": 8101753,
+          "alt": "Karyawan memaparkan pendapat dalam rapat"
+        },
+        {
+          "pexelsId": 38460673,
+          "alt": "Tim membahas dokumen bersama di meja kantor"
+        },
+        {
+          "pexelsId": 7688101,
+          "alt": "Karyawan berbicara dalam diskusi di kantor"
+        }
+      ]
+    },
+    "training-balanced-scorecard-bsc": {
+      "cover": {
+        "pexelsId": 7869111,
+        "alt": "Rapat tim dengan grafik di papan tulis"
+      },
+      "gallery": [
+        {
+          "pexelsId": 5439484,
+          "alt": "Perempuan menulis rencana di papan tulis di depan rekan kerja"
+        },
+        {
+          "pexelsId": 7693107,
+          "alt": "Tim berdiskusi di depan papan tulis"
+        },
+        {
+          "pexelsId": 36733318,
+          "alt": "Presentasi grafik dalam rapat tim"
+        },
+        {
+          "pexelsId": 7710077,
+          "alt": "Dua rekan kerja menyusun ide dengan catatan tempel di papan"
+        }
+      ]
+    },
+    "training-human-resource-scorecard-untuk-mengukur-kinerja": {
+      "cover": {
+        "pexelsId": 4344114,
+        "alt": "Rapat tim di meja kantor dengan laptop"
+      },
+      "gallery": [
+        {
+          "pexelsId": 36733329,
+          "alt": "Rekan kerja meninjau dokumen dalam rapat"
+        },
+        {
+          "pexelsId": 36765718,
+          "alt": "Karyawan berdiskusi di ruang santai kantor"
+        },
+        {
+          "pexelsId": 36765722,
+          "alt": "Tim berdiskusi di sofa kantor"
+        },
+        {
+          "pexelsId": 36765715,
+          "alt": "Rapat santai tim di ruang kantor modern"
+        }
+      ]
+    },
+    "training-key-performance-indicator-online": {
+      "cover": {
+        "pexelsId": 3912976,
+        "alt": "Grafik data di layar laptop"
+      },
+      "gallery": [
+        {
+          "pexelsId": 39204838,
+          "alt": "Presentasi grafik di layar dalam rapat kantor"
+        },
+        {
+          "pexelsId": 9034736,
+          "alt": "Perempuan memaparkan grafik di papan flipchart"
+        },
+        {
+          "pexelsId": 6340621,
+          "alt": "Tim rapat di ruang presentasi"
+        },
+        {
+          "pexelsId": 36733413,
+          "alt": "Diskusi tim dilihat dari atas"
+        }
+      ]
+    },
+    "training-perencanaan-strategis-dan-balanced-scorecard": {
+      "cover": {
+        "pexelsId": 8424567,
+        "alt": "Dua perempuan menyusun strategi bisnis di papan tulis"
+      },
+      "gallery": [
+        {
+          "pexelsId": 17724738,
+          "alt": "Dua orang menyusun rencana di papan tulis berisi catatan tempel"
+        },
+        {
+          "pexelsId": 15543114,
+          "alt": "Catatan tempel warna-warni berisi ide di papan"
+        },
+        {
+          "pexelsId": 29521529,
+          "alt": "Catatan tempel untuk curah gagasan di papan"
+        },
+        {
+          "pexelsId": 7181178,
+          "alt": "Tangan menandai dokumen berisi grafik dan diagram"
+        }
+      ]
+    },
+    "training-strategic-human-resource-management": {
+      "cover": {
+        "pexelsId": 18848927,
+        "alt": "Kandidat berjabat tangan dengan perekrut setelah wawancara"
+      },
+      "gallery": [
+        {
+          "pexelsId": 5668863,
+          "alt": "Pewawancara berbicara dengan pelamar di meja kantor"
+        },
+        {
+          "pexelsId": 5439436,
+          "alt": "Pewawancara membaca resume di depan kandidat"
+        },
+        {
+          "pexelsId": 5439137,
+          "alt": "Wawancara kerja di kantor bernuansa terang"
+        },
+        {
+          "pexelsId": 7648029,
+          "alt": "Dua rekan kerja membaca brosur di meja"
+        }
+      ]
+    },
+    "training-analisis-kredit-korporasi-di-bali": {
+      "cover": {
+        "pexelsId": 8439750,
+        "alt": "Tim meninjau dokumen keuangan dan grafik di meja"
+      },
+      "gallery": [
+        {
+          "pexelsId": 6325919,
+          "alt": "Pria memeriksa dokumen dengan serius"
+        },
+        {
+          "pexelsId": 8847133,
+          "alt": "Dua profesional meninjau dokumen di ruang kerja"
+        },
+        {
+          "pexelsId": 7821676,
+          "alt": "Penyerahan dokumen di meja dengan kalkulator"
+        },
+        {
+          "pexelsId": 8278876,
+          "alt": "Karyawan memeriksa lembaran dokumen di kantor"
+        }
+      ]
+    },
+    "training-aspek-legal-dan-akad-bank-syariah-untuk-notaris": {
+      "cover": {
+        "pexelsId": 8112180,
+        "alt": "Jabat tangan di atas meja berisi dokumen kontrak dan berkas hukum"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7841499,
+          "alt": "Tangan menandatangani kontrak dengan pena"
+        },
+        {
+          "pexelsId": 8152751,
+          "alt": "Pengacara berjabat tangan dengan klien di kantor"
+        },
+        {
+          "pexelsId": 7841502,
+          "alt": "Tangan menyerahkan pena untuk menandatangani dokumen"
+        },
+        {
+          "pexelsId": 8730987,
+          "alt": "Tangan menandatangani dokumen dari dekat"
+        }
+      ]
+    },
+    "training-bank-garansi-surenty-bond-dan-sblc": {
+      "cover": {
+        "pexelsId": 8428059,
+        "alt": "Dua pengusaha berjabat tangan di meja kantor"
+      },
+      "gallery": [
+        {
+          "pexelsId": 17682883,
+          "alt": "Jabat tangan di atas meja berisi dokumen"
+        },
+        {
+          "pexelsId": 7979604,
+          "alt": "Jabat tangan kesepakatan di meja kerja"
+        },
+        {
+          "pexelsId": 7691709,
+          "alt": "Jabat tangan setelah pertemuan bisnis"
+        },
+        {
+          "pexelsId": 8441784,
+          "alt": "Pria berjas menandatangani dokumen"
+        }
+      ]
+    },
+    "training-credit-scoring": {
+      "cover": {
+        "pexelsId": 5831260,
+        "alt": "Analis memeriksa grafik di beberapa monitor sambil memegang tablet"
+      },
+      "gallery": [
+        {
+          "pexelsId": 5833758,
+          "alt": "Analis bekerja dengan tiga monitor berisi grafik"
+        },
+        {
+          "pexelsId": 5831259,
+          "alt": "Analis mengamati grafik di beberapa layar"
+        },
+        {
+          "pexelsId": 5831256,
+          "alt": "Analis tampak tertekan memantau grafik di layar"
+        },
+        {
+          "pexelsId": 7109243,
+          "alt": "Pria berjas meninjau dasbor data di laptop"
+        }
+      ]
+    },
+    "training-financial-statement-analysis-di-jakarta": {
+      "cover": {
+        "pexelsId": 8353793,
+        "alt": "Pria memantau data pasar di layar besar"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7109291,
+          "alt": "Grafik keuangan di layar laptop"
+        },
+        {
+          "pexelsId": 7947996,
+          "alt": "Pria meninjau grafik batang di laptop"
+        },
+        {
+          "pexelsId": 265087,
+          "alt": "Laptop dan tablet menampilkan grafik dan diagram lingkaran"
+        },
+        {
+          "pexelsId": 6801647,
+          "alt": "Grafik pasar di laptop dan ponsel di meja kerja"
+        }
+      ]
+    },
+    "training-icaap-internal-capital-adequacy-assessment-process": {
+      "cover": {
+        "pexelsId": 5909800,
+        "alt": "Mesin penghitung uang berisi lembaran uang kertas"
+      },
+      "gallery": [
+        {
+          "pexelsId": 6266774,
+          "alt": "Mesin penghitung uang di antara tumpukan uang kertas"
+        },
+        {
+          "pexelsId": 6266280,
+          "alt": "Tangan menghitung uang kertas"
+        },
+        {
+          "pexelsId": 7447655,
+          "alt": "Fasad gedung bank lama bertiang klasik"
+        },
+        {
+          "pexelsId": 10958528,
+          "alt": "Gedung perkantoran berkaca di pusat kota"
+        }
+      ]
+    },
+    "training-income-smoothing-bagi-hasil-dpk-syariah": {
+      "cover": {
+        "pexelsId": 10347160,
+        "alt": "Karyawan berhijab berdiskusi sambil meninjau dokumen"
+      },
+      "gallery": [
+        {
+          "pexelsId": 10347166,
+          "alt": "Perempuan berhijab membaca dokumen di kantor"
+        },
+        {
+          "pexelsId": 8154928,
+          "alt": "Perempuan berhijab di ruang kantor bersama rekan kerja"
+        },
+        {
+          "pexelsId": 10347517,
+          "alt": "Perempuan berhijab memegang map di kantor"
+        },
+        {
+          "pexelsId": 8938288,
+          "alt": "Perempuan berhijab mencatat di buku dalam rapat"
+        }
+      ]
+    },
+    "training-manajemen-risiko-bank-syariah-dalam-praktik-perbankan": {
+      "cover": {
+        "pexelsId": 10347512,
+        "alt": "Perempuan berhijab memeriksa ponsel di kantor"
+      },
+      "gallery": [
+        {
+          "pexelsId": 8154764,
+          "alt": "Perempuan berhijab bekerja di meja kantor"
+        },
+        {
+          "pexelsId": 10347514,
+          "alt": "Perempuan berhijab berdiri di ruang kantor"
+        },
+        {
+          "pexelsId": 8154931,
+          "alt": "Perempuan berhijab berblazer hijau di kantor"
+        },
+        {
+          "pexelsId": 13427955,
+          "alt": "Bidak catur hitam di atas papan kayu"
+        }
+      ]
+    },
+    "training-manajemen-risiko-operasional-bank": {
+      "cover": {
+        "pexelsId": 5699341,
+        "alt": "Nasabah menggunakan mesin ATM"
+      },
+      "gallery": [
+        {
+          "pexelsId": 8475161,
+          "alt": "Pembayaran dengan kartu bank di meja kasir"
+        },
+        {
+          "pexelsId": 4921262,
+          "alt": "Penyerahan uang tunai di loket"
+        },
+        {
+          "pexelsId": 4475524,
+          "alt": "Tangan menghitung uang tunai di atas buku catatan"
+        },
+        {
+          "pexelsId": 6114991,
+          "alt": "Bidak catur hitam dan putih di papan"
+        }
+      ]
+    },
+    "training-metallurgy-for-non-metallurgist-di-jogja": {
+      "cover": {
+        "pexelsId": 6804260,
+        "alt": "Logam cair dituang dari wadah di pabrik pengecoran"
+      },
+      "gallery": [
+        {
+          "pexelsId": 3730670,
+          "alt": "Pekerja pengecoran logam di dekat percikan api"
+        },
+        {
+          "pexelsId": 3861438,
+          "alt": "Insinyur memeriksa sampel logam di laboratorium"
+        },
+        {
+          "pexelsId": 4033019,
+          "alt": "Peneliti menggunakan mikroskop di laboratorium"
+        },
+        {
+          "pexelsId": 5726835,
+          "alt": "Peneliti mengamati sampel melalui mikroskop"
+        }
+      ]
+    },
+    "training-behavioral-event-interview": {
+      "cover": {
+        "pexelsId": 5439138,
+        "alt": "Wawancara kerja antara pewawancara dan kandidat di kantor"
+      },
+      "gallery": [
+        {
+          "pexelsId": 5439152,
+          "alt": "Kandidat duduk di depan laptop saat wawancara"
+        },
+        {
+          "pexelsId": 5439433,
+          "alt": "Perekrut meninjau dokumen kandidat"
+        },
+        {
+          "pexelsId": 5989931,
+          "alt": "Perempuan mengikuti wawancara kerja"
+        },
+        {
+          "pexelsId": 5439379,
+          "alt": "Kandidat menunggu di meja wawancara"
+        }
+      ]
+    },
+    "training-budgeting-and-cost-control-di-jakarta": {
+      "cover": {
+        "pexelsId": 4386373,
+        "alt": "Kalkulator dan buku catatan di atas uang kertas"
+      },
+      "gallery": [
+        {
+          "pexelsId": 5942707,
+          "alt": "Uang, kopi, kalkulator, dan laptop di meja kerja"
+        },
+        {
+          "pexelsId": 7361183,
+          "alt": "Kalkulator putih di meja kerja"
+        },
+        {
+          "pexelsId": 5466812,
+          "alt": "Tangan menulis anggaran di buku sambil menggunakan kalkulator"
+        },
+        {
+          "pexelsId": 6774947,
+          "alt": "Tanaman tumbuh dari toples berisi koin"
+        }
+      ]
+    },
+    "training-financial-budgeting": {
+      "cover": {
+        "pexelsId": 6963030,
+        "alt": "Menghitung anggaran dengan kalkulator di meja"
+      },
+      "gallery": [
+        {
+          "pexelsId": 20376766,
+          "alt": "Tumpukan koin di depan miniatur rumah"
+        },
+        {
+          "pexelsId": 9755383,
+          "alt": "Tangan memegang toples tabungan berisi koin"
+        },
+        {
+          "pexelsId": 6863252,
+          "alt": "Koin di dalam toples"
+        },
+        {
+          "pexelsId": 6927371,
+          "alt": "Uang kertas rupiah di atas meja kayu"
+        }
+      ]
+    },
+    "pelatihan-tekla-struktures": {
+      "cover": {
+        "pexelsId": 14213937,
+        "alt": "Rangka baja bangunan dilihat dari bawah"
+      },
+      "gallery": [
+        {
+          "pexelsId": 2314022,
+          "alt": "Konstruksi rangka logam dengan alat berat dilihat dari atas"
+        },
+        {
+          "pexelsId": 6592192,
+          "alt": "Rangka baja struktur bangunan"
+        },
+        {
+          "pexelsId": 17046790,
+          "alt": "Tangan menggambar rancangan bangunan dengan penggaris"
+        },
+        {
+          "pexelsId": 9618456,
+          "alt": "Perancang mengerjakan gambar rencana di meja"
+        }
+      ]
+    },
+    "training-manajemen-konstruksi-di-bali": {
+      "cover": {
+        "pexelsId": 13832413,
+        "alt": "Crane di lokasi proyek konstruksi"
+      },
+      "gallery": [
+        {
+          "pexelsId": 27907084,
+          "alt": "Proyek bangunan dengan perancah"
+        },
+        {
+          "pexelsId": 19857796,
+          "alt": "Pekerja di atas gelagar jembatan yang sedang dibangun"
+        },
+        {
+          "pexelsId": 1117452,
+          "alt": "Pekerja di atas perancah bangunan"
+        },
+        {
+          "pexelsId": 36601725,
+          "alt": "Pekerja konstruksi berhelm di lokasi proyek"
+        }
+      ]
+    },
+    "training-complaint-handling-management-di-jakarta": {
+      "cover": {
+        "pexelsId": 8422707,
+        "alt": "Penjaga toko melayani pelanggan lanjut usia"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7709145,
+          "alt": "Petugas layanan pelanggan menerima panggilan di meja kerja"
+        },
+        {
+          "pexelsId": 7640473,
+          "alt": "Pria marah berbicara kepada rekan kerja"
+        },
+        {
+          "pexelsId": 7640784,
+          "alt": "Pria tampak frustrasi di meja kerja"
+        },
+        {
+          "pexelsId": 8422717,
+          "alt": "Penjaga toko membantu pelanggan memilih barang"
+        }
+      ]
+    },
+    "training-customer-service-daring": {
+      "cover": {
+        "pexelsId": 7709088,
+        "alt": "Dua agen layanan pelanggan bekerja dengan headset"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7682352,
+          "alt": "Tim layanan pelanggan bekerja di kantor"
+        },
+        {
+          "pexelsId": 5453835,
+          "alt": "Agen layanan pelanggan berbicara melalui headset"
+        },
+        {
+          "pexelsId": 7709268,
+          "alt": "Agen call center berbicara melalui headset"
+        },
+        {
+          "pexelsId": 8867176,
+          "alt": "Agen call center memegang papan klip sambil tersenyum"
+        }
+      ]
+    },
+    "training-new-product-development-terbaik": {
+      "cover": {
+        "pexelsId": 18428283,
+        "alt": "Printer 3D mencetak purwarupa"
+      },
+      "gallery": [
+        {
+          "pexelsId": 4485456,
+          "alt": "Printer 3D bekerja di bengkel"
+        },
+        {
+          "pexelsId": 19835322,
+          "alt": "Printer 3D mencetak benda logam"
+        },
+        {
+          "pexelsId": 30620861,
+          "alt": "Printer 3D mencetak desain heksagonal"
+        },
+        {
+          "pexelsId": 5973966,
+          "alt": "Perajin membuat sketsa rancangan di meja kerja"
+        }
+      ]
+    },
+    "training-project-management-daring": {
+      "cover": {
+        "pexelsId": 4623462,
+        "alt": "Pria menunjuk catatan tempel di papan proyek"
+      },
+      "gallery": [
+        {
+          "pexelsId": 7490886,
+          "alt": "Tim membahas rancangan di meja"
+        },
+        {
+          "pexelsId": 7550439,
+          "alt": "Tim menyatukan tangan sebagai tanda kerja sama"
+        },
+        {
+          "pexelsId": 29267512,
+          "alt": "Tim bekerja bersama di ruang kerja"
+        },
+        {
+          "pexelsId": 15543126,
+          "alt": "Catatan tempel warna-warni di papan perencanaan"
+        }
+      ]
+    }
+  }
+}
