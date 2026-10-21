@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/admin/ui/skeleton";
 import { ApiError, apiFetch } from "@/lib/api/client";
 import type { Category } from "@/lib/api/types";
 import { CategoryForm, categoryKeys } from "../category-form";
+import { KeywordMatchesPanel } from "../keyword-matches-panel";
 
 export function EditCategory({ id }: { id: string }) {
   const query = useQuery({
@@ -52,6 +53,7 @@ export function EditCategory({ id }: { id: string }) {
     <>
       <PageHeader title={query.data.name} description={`/pelatihan/kategori/${query.data.slug}`} />
       <CategoryForm category={query.data} />
+      <KeywordMatchesPanel category={query.data} />
     </>
   );
 }

@@ -324,6 +324,8 @@ export type Category = {
   featured: boolean;
   imageId: string | null;
   image: Media | null;
+  // Kata kunci judul untuk panel "Pelatihan yang cocok" (tidak menautkan otomatis).
+  keywords: string[];
   // Admin: pelatihan aktif = belum dihapus (draft + published).
   trainingCount: number;
   createdAt: string;
@@ -334,6 +336,26 @@ export type CategoryOption = { id: string; slug: string; name: string };
 
 // details pada error CATEGORY_IN_USE (409).
 export type CategoryInUseDetails = { trainingCount: number };
+
+// GET /admin/categories/:id/keyword-matches
+export type KeywordMatch = {
+  id: string;
+  slug: string;
+  title: string;
+  publicState: TrainingPublicState;
+  categories: { id: string; name: string }[];
+};
+
+export type KeywordMatches = {
+  keywords: string[];
+  // Belum tertaut, paling banyak 200; total = semua yang belum tertaut.
+  items: KeywordMatch[];
+  total: number;
+  linkedCount: number;
+};
+
+// POST /admin/categories/:id/merge
+export type CategoryMergeResult = { target: Category; movedTrainings: number };
 
 export type PublicCategory = {
   slug: string;

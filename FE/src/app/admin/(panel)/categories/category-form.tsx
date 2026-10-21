@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2Icon } from "lucide-react";
+import { MergeIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,6 +15,7 @@ import { IconPicker } from "@/components/admin/icon-picker";
 import { MediaPicker } from "@/components/admin/media/media-picker";
 import { SlugField } from "@/components/admin/slug-field";
 import { StickySaveBar } from "@/components/admin/sticky-save-bar";
+import { TagInput } from "@/components/admin/tag-input";
 import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
@@ -25,13 +26,20 @@ import { useScopedId } from "@/hooks/use-scoped-id";
 import { ApiError, apiSend, errorMessage } from "@/lib/api/client";
 import type { Category, CategoryInUseDetails } from "@/lib/api/types";
 import { applyFieldErrors } from "@/lib/form-errors";
+import { formatNumber } from "@/lib/format";
+import { CategoryMergeDialog } from "./category-merge-dialog";
 
 export const categoryKeys = {
   all: ["admin", "categories"] as const,
   list: (params: object) => ["admin", "categories", "list", params] as const,
   detail: (id: string) => ["admin", "categories", "detail", id] as const,
   options: ["admin", "categories", "options"] as const,
+  keywordMatches: (id: string) => ["admin", "categories", "keyword-matches", id] as const,
 };
+
+// Sama dengan batas BE (validators/category.ts).
+export const KEYWORDS_MAX = 20;
+const KEYWORD_MAX_LENGTH = 60;
 
 const schema = z.object({
   name: z.string().trim().min(1, { error: "Nama wajib diisi." }).max(100, { error: "Nama maksimal 100 karakter." }),
@@ -40,6 +48,14 @@ const schema = z.object({
   icon: z.string().nullable(),
   featured: z.boolean(),
   imageId: z.string().nullable(),
+  keywords: z
+    .array(
+      z
+        .string()
+        .min(2, { error: "Kata kunci minimal 2 karakter." })
+        .max(KEYWORD_MAX_LENGTH, { error: `Kata kunci maksimal ${KEYWORD_MAX_LENGTH} karakter.` }),
+    )
+    .max(KEYWORDS_MAX, { error: `Maksimal ${KEYWORDS_MAX} kata kunci.` }),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -50,6 +66,8 @@ export function CategoryForm({ category }: { category: Category | null }) {
   const queryClient = useQueryClient();
   const [autoSlug, setAutoSlug] = useState(category === null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const inUse = (category?.trainingCount ?? 0) > 0;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -60,6 +78,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
       icon: category?.icon ?? null,
       featured: category?.featured ?? false,
       imageId: category?.imageId ?? null,
+      keywords: category?.keywords ?? [],
     },
     mode: "onBlur",
   });
@@ -85,18 +104,21 @@ export function CategoryForm({ category }: { category: Category | null }) {
         icon: saved.icon,
         featured: saved.featured,
         imageId: saved.imageId,
+        keywords: saved.keywords,
       });
       setAutoSlug(false);
       toast.success(category ? "Kategori disimpan." : "Kategori ditambahkan.");
       if (!category) router.push(`/admin/categories/${saved.id}`);
     },
     onError: (error) => {
-      if (!applyFieldErrors(error, form.setError, ["name", "slug", "description", "icon", "featured", "imageId"])) {
+      if (!applyFieldErrors(error, form.setError, ["name", "slug", "description", "icon", "featured", "imageId", "keywords"])) {
         toast.error(errorMessage(error));
       }
     },
   });
 
+  // Kategori yang masih dipakai tidak bisa dihapus (satu pelatihan satu kategori): dialog hapus
+  // mengarahkan ke Gabungkan atau aksi massal pindah kategori.
   const remove = useMutation({
     mutationFn: async () => apiSend(`/admin/categories/${category?.id}`, "DELETE"),
     onSuccess: async () => {
@@ -120,6 +142,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
 
   const errors = form.formState.errors;
   const name = useWatch({ control: form.control, name: "name" });
+  const keywordError = errors.keywords?.message ?? errors.keywords?.find?.((item) => item?.message)?.message;
 
   return (
     <>
@@ -160,6 +183,27 @@ export function CategoryForm({ category }: { category: Category | null }) {
           >
             <Textarea rows={5} {...form.register("description")} />
           </FormField>
+          <Controller
+            control={form.control}
+            name="keywords"
+            render={({ field }) => (
+              <FormField
+                id={sid("keywords")}
+                label="Kata kunci"
+                description="Pelatihan yang judulnya memuat salah satu kata ini muncul di daftar Pelatihan yang cocok. Tidak ada yang dipindah otomatis. Tekan Enter atau koma untuk menambah."
+                error={keywordError}
+              >
+                <TagInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  max={KEYWORDS_MAX}
+                  removeLabel={(tag) => `Hapus kata kunci ${tag}`}
+                  placeholder={field.value.length >= KEYWORDS_MAX ? `Maksimal ${KEYWORDS_MAX} kata kunci` : "Contoh: drone"}
+                />
+              </FormField>
+            )}
+          />
         </div>
 
         <aside className="space-y-8 lg:border-l lg:border-border lg:pl-8">
@@ -208,22 +252,26 @@ export function CategoryForm({ category }: { category: Category | null }) {
             )}
           />
           {category ? (
-            <div className="border-t border-border pt-6">
+            <div className="space-y-3 border-t border-border pt-6">
               <p className="text-small text-fg-muted">
-                {category.trainingCount > 0
-                  ? `Dipakai ${category.trainingCount} pelatihan. Pindahkan pelatihan tersebut sebelum menghapus.`
-                  : "Belum dipakai pelatihan mana pun."}
+                {inUse ? `Dipakai ${formatNumber(category.trainingCount)} pelatihan.` : "Belum dipakai pelatihan mana pun."}
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-3 text-status-error"
-                onClick={() => setConfirmDelete(true)}
-              >
-                <Trash2Icon aria-hidden />
-                Hapus kategori
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setMergeOpen(true)}>
+                  <MergeIcon aria-hidden />
+                  Gabungkan ke kategori lain
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-status-error"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2Icon aria-hidden />
+                  Hapus kategori
+                </Button>
+              </div>
             </div>
           ) : null}
         </aside>
@@ -234,13 +282,34 @@ export function CategoryForm({ category }: { category: Category | null }) {
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title={`Hapus kategori "${category?.name ?? ""}"?`}
-        description="Kategori dipindahkan ke Sampah dan hilang dari situs. Bisa dipulihkan dalam 30 hari."
-        confirmLabel="Hapus"
-        destructive
+        title={inUse ? `Kategori "${category?.name ?? ""}" masih dipakai` : `Hapus kategori "${category?.name ?? ""}"?`}
+        description={
+          inUse
+            ? `Kategori ini berisi ${formatNumber(category?.trainingCount ?? 0)} pelatihan, dan setiap pelatihan hanya punya satu kategori. Gabungkan ke kategori lain (pelatihannya ikut pindah), atau pindahkan pelatihannya lewat aksi massal "Pindah kategori" di daftar pelatihan.`
+            : "Kategori dipindahkan ke Sampah dan hilang dari situs. Item menu ke kategori ini ikut dihapus. Bisa dipulihkan dalam 30 hari."
+        }
+        confirmLabel={inUse ? "Gabungkan ke kategori lain" : "Hapus"}
+        destructive={!inUse}
         pending={remove.isPending}
-        onConfirm={() => remove.mutate()}
-      />
+        onConfirm={() => {
+          if (!inUse) {
+            remove.mutate();
+            return;
+          }
+          setConfirmDelete(false);
+          setMergeOpen(true);
+        }}
+      >
+        {inUse && category ? (
+          <Link href={`/admin/trainings?categoryId=${category.id}`} className="text-small underline underline-offset-4">
+            Lihat {formatNumber(category.trainingCount)} pelatihan di kategori ini
+          </Link>
+        ) : null}
+      </ConfirmDialog>
+
+      {category ? (
+        <CategoryMergeDialog category={category} open={mergeOpen} onOpenChange={setMergeOpen} onMerged={() => form.reset()} />
+      ) : null}
     </>
   );
 }

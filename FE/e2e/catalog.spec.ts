@@ -28,7 +28,7 @@ test.describe("katalog & detail pelatihan", () => {
     await page.getByRole("textbox", { name: "Judul", exact: true }).fill(title);
     await page.getByRole("textbox", { name: "Ringkasan", exact: true }).fill(`Ringkasan pelatihan uji ${id}.`);
     await page.getByPlaceholder("Cari kategori").fill(category.name);
-    await page.getByRole("checkbox", { name: category.name, exact: true }).click();
+    await page.getByRole("radio", { name: category.name, exact: true }).click();
     // Status Tayang wajib 4 hasil belajar.
     for (let index = 1; index <= 4; index += 1) {
       await page.getByRole("button", { name: "Tambah hasil belajar" }).click();

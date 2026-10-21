@@ -276,6 +276,9 @@ model Category {
   // Gambar kategori: fallback sampul pelatihan tanpa cover dan foto di landing kategori.
   imageId     String?   @db.Uuid
   image       Media?    @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  // Kata kunci judul pelatihan: admin melihat pelatihan yang judulnya cocok tapi belum tertaut,
+  // lalu menautkannya sendiri (tidak ada penautan otomatis). Kosong = fitur tidak dipakai.
+  keywords    String[]  @default([])
   createdAt   DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
   deletedAt   DateTime? @db.Timestamptz(3)

@@ -12,6 +12,7 @@ import {
 } from "@/lib/slug";
 import type {
   CategoryCreateInput,
+  CategoryDeleteQuery,
   CategoryListQuery,
   CategoryUpdateInput,
 } from "@/lib/validators/category";
@@ -29,7 +30,7 @@ import { reorderResource } from "@/services/reorder";
 import { publicTrainingWhere } from "@/services/training-visibility";
 
 const ENTITY = "Category";
-const FIELDS = ["slug", "name", "description", "icon", "featured", "order", "imageId"] as const;
+const FIELDS = ["slug", "name", "description", "icon", "featured", "order", "imageId", "keywords"] as const;
 
 export type CategoryDto = {
   id: string;
@@ -41,6 +42,7 @@ export type CategoryDto = {
   featured: boolean;
   imageId: string | null;
   image: MediaDto | null;
+  keywords: string[];
   trainingCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -68,6 +70,7 @@ function toDto(category: CategoryWithCount): CategoryDto {
     featured: category.featured,
     imageId: category.imageId,
     image: activeMediaDto(category.image),
+    keywords: category.keywords,
     trainingCount: category._count.trainings,
     createdAt: category.createdAt,
     updatedAt: category.updatedAt,
@@ -139,7 +142,7 @@ export async function listCategoryOptions(): Promise<CategoryOption[]> {
   });
 }
 
-async function findActive(id: string): Promise<CategoryWithCount> {
+export async function findActiveCategory(id: string): Promise<CategoryWithCount> {
   const category = await getDb().category.findFirst({
     where: { id, deletedAt: null },
     include: adminInclude,
@@ -149,7 +152,7 @@ async function findActive(id: string): Promise<CategoryWithCount> {
 }
 
 export async function getCategory(id: string): Promise<CategoryDto> {
-  return toDto(await findActive(id));
+  return toDto(await findActiveCategory(id));
 }
 
 export async function createCategory(input: CategoryCreateInput, userId: string): Promise<CategoryDto> {
@@ -171,6 +174,7 @@ export async function createCategory(input: CategoryCreateInput, userId: string)
           icon: input.icon,
           featured: input.featured,
           imageId: input.imageId,
+          keywords: input.keywords,
           order,
           updatedById: userId,
         },
@@ -200,7 +204,7 @@ export async function updateCategory(
   input: CategoryUpdateInput,
   userId: string,
 ): Promise<CategoryDto> {
-  const before = await findActive(id);
+  const before = await findActiveCategory(id);
   const slugChanged = input.slug !== undefined && input.slug !== before.slug;
   if (slugChanged && input.slug) await assertSlugAvailable(slugLookup, input.slug, id);
   await assertMediaRefs([{ field: "imageId", mediaId: input.imageId, kind: "image", requireAlt: true }]);
@@ -212,6 +216,7 @@ export async function updateCategory(
   if (input.icon !== undefined) data.icon = input.icon;
   if (input.featured !== undefined) data.featured = input.featured;
   if (input.imageId !== undefined) data.imageId = input.imageId;
+  if (input.keywords !== undefined) data.keywords = input.keywords;
 
   const updated = await withSlugConflict(() =>
     getDb().$transaction(async (tx) => {
@@ -242,26 +247,100 @@ export async function updateCategory(
 }
 
 // Kategori yang masih dipakai pelatihan aktif tidak boleh dihapus, supaya tidak ada pelatihan
-// yang kehilangan kategori di halaman publik. Pindahkan dulu lewat bulk action pelatihan.
-export async function deleteCategory(id: string, userId: string): Promise<void> {
-  const category = await findActive(id);
-  if (category._count.trainings > 0) {
+// yang kehilangan kategori di halaman publik. Pindahkan dulu lewat bulk action pelatihan, atau
+// pakai detach: tautan dilepas lalu kategori dihapus, asalkan setiap pelatihan masih punya kategori
+// aktif lain. Item menu yang menuju halaman kategori ikut dipindah ke Sampah.
+export async function deleteCategory(id: string, userId: string, { detach = false }: CategoryDeleteQuery = { detach: false }): Promise<void> {
+  const category = await findActiveCategory(id);
+  const trainingCount = category._count.trainings;
+  if (trainingCount > 0 && !detach) {
     throw new HttpError(
       409,
       "CATEGORY_IN_USE",
-      `Kategori masih dipakai ${category._count.trainings} pelatihan. Pindahkan pelatihan tersebut ke kategori lain dulu.`,
+      `Kategori masih dipakai ${trainingCount} pelatihan. Pindahkan pelatihan tersebut ke kategori lain dulu.`,
       undefined,
-      { trainingCount: category._count.trainings },
+      { trainingCount },
     );
   }
-  await getDb().$transaction(async (tx) => {
-    await tx.category.update({ where: { id }, data: { deletedAt: new Date(), updatedById: userId } });
+  const linked = trainingCount > 0 ? await linkedTrainings(id) : [];
+  if (detach) {
+    const orphans = linked.filter((training) => training.otherCategories === 0);
+    if (orphans.length > 0) {
+      throw new HttpError(
+        409,
+        "CATEGORY_ONLY_CATEGORY",
+        `${orphans.length} pelatihan hanya punya kategori ini. Tambahkan kategori lain ke pelatihan tersebut dulu.`,
+        undefined,
+        { trainings: orphans.slice(0, ORPHAN_PREVIEW_LIMIT).map(({ id: trainingId, title }) => ({ id: trainingId, title })), total: orphans.length },
+      );
+    }
+  }
+  const now = new Date();
+  const navChanged = await getDb().$transaction(async (tx) => {
+    if (linked.length > 0) await tx.trainingCategory.deleteMany({ where: { categoryId: id } });
+    await tx.category.update({ where: { id }, data: { deletedAt: now, updatedById: userId } });
+    const navItems = await removeCategoryNavItems(tx, category.slug, userId, now);
     await writeAudit(
-      { userId, action: AuditAction.DELETE, entity: ENTITY, entityId: id, diff: { slug: category.slug } },
+      {
+        userId,
+        action: AuditAction.DELETE,
+        entity: ENTITY,
+        entityId: id,
+        diff: {
+          slug: category.slug,
+          ...(linked.length > 0 ? { detachedTrainings: linked.map((training) => training.id) } : {}),
+          ...(navItems.length > 0 ? { removedNavItems: navItems } : {}),
+        },
+      },
       tx,
     );
+    return navItems.length > 0;
   });
-  await revalidateEntity({ entity: "Category", slugs: [category.slug] });
+  await revalidateEntity([
+    { entity: "Category", slugs: [category.slug] },
+    ...(linked.length > 0 ? [{ entity: "Training" as const, slugs: linked.map((training) => training.slug) }] : []),
+    ...(navChanged ? [{ entity: "Nav" as const }] : []),
+  ]);
+}
+
+const ORPHAN_PREVIEW_LIMIT = 20;
+
+// Pelatihan (belum dihapus) yang tertaut ke kategori ini + jumlah kategori aktif lainnya.
+async function linkedTrainings(categoryId: string) {
+  const rows = await getDb().training.findMany({
+    where: { deletedAt: null, categories: { some: { categoryId } } },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      categories: { where: { categoryId: { not: categoryId }, category: { deletedAt: null } }, select: { categoryId: true } },
+    },
+    orderBy: { title: "asc" },
+  });
+  return rows.map(({ categories, ...training }) => ({ ...training, otherCategories: categories.length }));
+}
+
+type NavTx = Pick<Prisma.TransactionClient, "navItem">;
+
+// href menu yang menuju halaman kategori ini (path landing atau katalog terfilter ?kategori=slug).
+export function categoryNavHrefs(slug: string): string[] {
+  return [publicPath.category(slug), `/pelatihan?kategori=${slug}`];
+}
+
+// Kategori dihapus: item menu (dan submenunya) yang menuju halamannya dipindah ke Sampah.
+// Mengembalikan id item yang dipindah.
+async function removeCategoryNavItems(tx: NavTx, slug: string, userId: string, now: Date): Promise<string[]> {
+  const items = await tx.navItem.findMany({
+    where: { href: { in: categoryNavHrefs(slug) }, deletedAt: null },
+    select: { id: true },
+  });
+  if (items.length === 0) return [];
+  const ids = items.map((item) => item.id);
+  await tx.navItem.updateMany({
+    where: { OR: [{ id: { in: ids } }, { parentId: { in: ids } }], deletedAt: null },
+    data: { deletedAt: now, updatedById: userId },
+  });
+  return ids;
 }
 
 // Pulihkan dari Sampah. Kalau slug lama sudah dipakai kategori lain: 409 dan admin diminta
@@ -335,9 +414,15 @@ export function toPublicCategory(category: CategoryWithCount): PublicCategory {
   };
 }
 
+// Kategori tanpa pelatihan tayang tidak tampil di publik (daftar, filter, landing, menu); datanya
+// tetap ada di admin. Dengan satu pelatihan satu kategori, banyak kategori referensi kosong.
+export function nonEmptyPublicCategoryWhere(now: Date) {
+  return { deletedAt: null, trainings: { some: { training: publicTrainingWhere(now) } } } satisfies Prisma.CategoryWhereInput;
+}
+
 export async function listPublicCategories(now = new Date()): Promise<PublicCategory[]> {
   const rows = await getDb().category.findMany({
-    where: { deletedAt: null },
+    where: nonEmptyPublicCategoryWhere(now),
     include: publicCountInclude(now),
     orderBy: [{ order: "asc" }, { name: "asc" }],
   });
@@ -346,7 +431,7 @@ export async function listPublicCategories(now = new Date()): Promise<PublicCate
 
 export async function getPublicCategory(slug: string, now = new Date()): Promise<PublicCategory | null> {
   const category = await getDb().category.findFirst({
-    where: { slug, deletedAt: null },
+    where: { slug, ...nonEmptyPublicCategoryWhere(now) },
     include: publicCountInclude(now),
   });
   return category ? toPublicCategory(category) : null;

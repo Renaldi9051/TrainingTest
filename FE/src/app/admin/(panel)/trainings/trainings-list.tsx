@@ -293,7 +293,7 @@ export function TrainingsList() {
               Jadikan draf
             </Button>
             <Button size="sm" variant="outline" onClick={() => setBulkDialog("set-category")}>
-              Ganti semua kategori dengan...
+              Pindah kategori...
             </Button>
             <Button size="sm" variant="outline" className="text-status-error" onClick={() => setBulkDialog("delete")}>
               Hapus
@@ -426,17 +426,17 @@ export function TrainingsList() {
             setTargetCategory("");
           }
         }}
-        title={`Ganti semua kategori ${count} pelatihan?`}
+        title={`Pindah kategori ${count} pelatihan?`}
         description={
           targetName
-            ? `Semua kategori lama pada ${count} pelatihan terpilih dihapus dan diganti dengan "${targetName}".`
-            : `Pilih kategori pengganti. Semua kategori lama pada ${count} pelatihan terpilih akan dihapus.`
+            ? `${count} pelatihan terpilih dipindah ke "${targetName}" (kategori lamanya dilepas).`
+            : `Pilih kategori tujuan untuk ${count} pelatihan terpilih.`
         }
-        confirmLabel="Ganti kategori"
+        confirmLabel="Pindahkan"
         pending={bulk.isPending}
         onConfirm={() => {
           if (!targetCategory) {
-            toast.error("Pilih kategori pengganti dulu.");
+            toast.error("Pilih kategori tujuan dulu.");
             return;
           }
           bulk.mutate({ action: "set-category", ids: selectedIds, categoryId: targetCategory });

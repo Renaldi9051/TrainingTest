@@ -14,14 +14,16 @@ import { TrainingGrid } from "@/components/public/training-card";
 import { ButtonArrow, buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { getCatalog, getCategories, getCategory, getSchedules } from "@/lib/api/public";
+import { getCatalog, getCategories, getCategory, getRedirect, getSchedules, Tag } from "@/lib/api/public";
 import type { PublicCategory } from "@/lib/api/types";
 import { METHOD_PARAMS } from "@/lib/catalog-url";
 import { formatNumber, monthParam } from "@/lib/format";
+import { followRedirect } from "@/lib/public-redirect";
 import { cn } from "@/lib/utils";
 
 // Paginasi (?hal) dan filter metode (?metode) dibaca dari query string, sehingga rute dirender
-// sesuai permintaan. Slug yang tidak ada = notFound() (HTTP 404).
+// sesuai permintaan. Slug yang tidak ada = redirect dari tabel Redirect (slug diganti atau kategori
+// digabung admin), selain itu notFound() (HTTP 404).
 export const instant = false;
 // 12 per halaman: pas untuk grid 3 kolom (sebelumnya 10, menyisakan satu kartu di baris terakhir).
 const LANDING_SIZE = 12;
@@ -66,7 +68,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps<"
   const page = parsePage(query.hal);
   const metode = parseMethod(query.metode);
   const category = await getCategory(slug);
-  if (!category) notFound();
+  if (!category) {
+    const target = await getRedirect(`/pelatihan/kategori/${slug}`, Tag.category(slug));
+    if (target) followRedirect(target);
+    notFound();
+  }
   // "Jadwal bulan ini" bergantung pada tanggal hari ini: dihitung per request.
   await connection();
   const [catalog, categories, upcoming, thisMonth] = await Promise.all([

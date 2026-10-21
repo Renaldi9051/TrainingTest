@@ -2,6 +2,8 @@
 // Semua pencocokan mencakup baris di Sampah agar penghapusan oleh admin tidak dibatalkan.
 import type { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
+import { pickPrimaryCategory } from "./seed-data/primary-category";
+import { loadCategoryCandidates } from "./seed-single-category";
 import { categories as demoCategories, trainings as demoTrainings } from "./seed-data/catalog";
 import {
   referenceCategories,
@@ -87,13 +89,19 @@ export async function seedReferenceCatalog({ hideDemo = false }: { hideDemo?: bo
       select: { id: true, slug: true },
     })).map((item) => [item.slug, item.id]),
   );
+  // Satu pelatihan satu kategori: dari kategori sumber dipilih satu (seed-data/primary-category.ts).
+  const candidates = await loadCategoryCandidates();
+  const candidateById = new Map(candidates.map((category) => [category.id, category]));
   const links = referencePosts.flatMap((post) => {
     const trainingId = trainingIds.get(post.slug);
     if (!trainingId) return [];
-    return referenceTraining(post).categorySlugs.flatMap((slug) => {
-      const categoryId = categoryIds.get(slug);
-      return categoryId ? [{ trainingId, categoryId }] : [];
+    const training = referenceTraining(post);
+    const current = training.categorySlugs.flatMap((slug) => {
+      const category = candidateById.get(categoryIds.get(slug) ?? "");
+      return category ? [category] : [];
     });
+    const chosen = pickPrimaryCategory(training.title, current, candidates);
+    return chosen ? [{ trainingId, categoryId: chosen.id }] : [];
   });
   let linksCreated = 0;
   for (const batch of batches(links, 500)) {

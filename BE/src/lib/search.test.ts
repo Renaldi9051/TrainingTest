@@ -7,6 +7,7 @@ import {
   normalizeSearchText,
   searchTokens,
   toPrefixTsQuery,
+  wholeWordRegex,
 } from "@/lib/search";
 
 describe("normalizeSearchText", () => {
@@ -43,6 +44,24 @@ describe("foldText & likeContainsPattern", () => {
     expect(likeContainsPattern("Diskon 50%")).toBe(String.raw`%diskon 50\%%`);
     expect(likeContainsPattern("file_name")).toBe(String.raw`%file\_name%`);
     expect(likeContainsPattern(String.raw`a\b`)).toBe(String.raw`%a\\b%`);
+  });
+});
+
+describe("wholeWordRegex", () => {
+  it("kata kunci di-fold dan karakter regex di-escape; batas kata = bukan huruf/angka", () => {
+    expect(wholeWordRegex(" Pemetaan  Udara ")).toBe("(^|[^[:alnum:]])pemetaan udara($|[^[:alnum:]])");
+    expect(wholeWordRegex("Café")).toBe("(^|[^[:alnum:]])cafe($|[^[:alnum:]])");
+    expect(wholeWordRegex("C++ (dasar)")).toBe(String.raw`(^|[^[:alnum:]])c\+\+ \(dasar\)($|[^[:alnum:]])`);
+  });
+
+  it("pola setara regex JS: cocok kata utuh saja", () => {
+    const js = (keyword: string) =>
+      new RegExp(wholeWordRegex(keyword).replaceAll("[:alnum:]", String.raw`\p{L}\p{N}`), "u");
+    expect(js("drone").test("training pemetaan udara menggunakan drone multirotor")).toBe(true);
+    expect(js("drone").test("drone & survey")).toBe(true);
+    expect(js("drone").test("dronestore")).toBe(false);
+    expect(js("survey").test("surveyor tambang")).toBe(false);
+    expect(js("c++").test("pemrograman c++ dasar")).toBe(true);
   });
 });
 

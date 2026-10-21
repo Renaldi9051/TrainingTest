@@ -6,9 +6,9 @@
 //   dipensiunkan: foto pool accounting versi awal (seed-gallery.ts sebelum 19 Okt 2026) dan foto
 //   manifest di daftar `retired` (foto berisi orang diganti foto orang Indonesia, permintaan pemilik
 //   20 Okt 2026). Galeri hanya diganti kalau seluruh isinya foto seed; pilihan admin tidak tertimpa.
-// - Pelatihan di manifest ditautkan ke kategori manifest (accounting) kalau tautannya belum ada. Seed
-//   katalog referensi tidak lagi menautkannya karena langkah foto di atas mengisi updatedById, dan batas
-//   accounting 6 versi awal sempat melepas tautan 4 pelatihan (pemilik minta kembali 10).
+// - Pelatihan di manifest ditautkan ke kategori manifest (accounting) hanya kalau belum punya kategori
+//   aktif sama sekali (satu pelatihan satu kategori, 21 Okt 2026). Penempatan ke accounting diatur seed
+//   satu kategori (seed-single-category.ts, loadManifestPins), jadi pilihan admin tidak tertimpa.
 // - Foto yang sudah pernah diunggah (nama file asli sama, belum di Sampah) dipakai ulang, jadi aman
 //   dijalankan ulang.
 // Foto berlisensi CC0, Unsplash License, atau Pexels License (sumber per foto dicatat di manifest).
@@ -68,8 +68,19 @@ export type ManifestPlan = {
   missing: string[];
 };
 
+async function readManifest() {
+  return manifestSchema.parse(JSON.parse(await readFile(path.join(GALLERY_DIR, "manifest.json"), "utf8")));
+}
+
+// Slug pelatihan manifest -> slug kategori manifest pertama (accounting); dipakai seed satu kategori.
+export async function loadManifestPins(): Promise<Map<string, string>> {
+  const manifest = await readManifest();
+  const category = Object.keys(manifest.categories)[0];
+  return new Map(category ? Object.keys(manifest.trainings).map((slug) => [slug, category]) : []);
+}
+
 export async function planManifestGallery(): Promise<ManifestPlan> {
-  const manifest = manifestSchema.parse(JSON.parse(await readFile(path.join(GALLERY_DIR, "manifest.json"), "utf8")));
+  const manifest = await readManifest();
   const missing: string[] = [];
   const manifestCategories: ManifestPlan["manifestCategories"] = [];
   const categories: CategoryStep[] = [];
@@ -103,7 +114,7 @@ export async function planManifestGallery(): Promise<ManifestPlan> {
         coverId: true,
         cover: { select: { originalName: true } },
         images: { select: { mediaId: true, media: { select: { originalName: true } } } },
-        categories: { select: { categoryId: true } },
+        categories: { where: { category: { deletedAt: null } }, select: { categoryId: true } },
       },
     });
     if (!row) {
@@ -121,9 +132,7 @@ export async function planManifestGallery(): Promise<ManifestPlan> {
       gallery: galleryFree ? entry.gallery : null,
       previousCoverId: row.coverId,
       previousImageIds: row.images.map((image) => image.mediaId),
-      categoryIds: manifestCategories
-        .map((category) => category.id)
-        .filter((id) => !row.categories.some((link) => link.categoryId === id)),
+      categoryIds: row.categories.length === 0 ? manifestCategories.slice(0, 1).map((category) => category.id) : [],
     };
     if (step.cover || step.gallery || step.categoryIds.length > 0) trainings.push(step);
     else {

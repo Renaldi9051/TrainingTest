@@ -12,12 +12,16 @@ import { hashPassword } from "../src/lib/password";
 import { RevalidateTag, revalidateTags } from "../src/lib/revalidate";
 import { REFERENCE_SEED_KEY, REFERENCE_SEED_VERSION, seedReferenceCatalog } from "./seed-reference";
 import { seedBulk } from "./seed-bulk";
+import { seedCategoryCleanup } from "./seed-category-cleanup";
+import { seedCategoryFill } from "./seed-category-fill";
+import { seedSingleCategory } from "./seed-single-category";
 import { type ContentSeedResult, seedContent } from "./seed-content";
 import { seedCovers } from "./seed-covers";
 import { seedGallery } from "./seed-gallery";
 import { seedHomeImages } from "./seed-home-images";
 import { seedManifestGallery } from "./seed-manifest-gallery";
 import { seedThemeGallery } from "./seed-theme-gallery";
+import { seedTrainingPhotos } from "./seed-training-photos";
 import { seedPaymentPage } from "./seed-payment-page";
 import { buildProfileBlocks, buildSettings } from "./seed-data/build";
 import { writeCatalog } from "./seed-data/catalog-writer";
@@ -139,6 +143,12 @@ async function main() {
   const reference = USE_REFERENCE && referenceSeeded?.value !== REFERENCE_SEED_VERSION
     ? await seedReferenceCatalog({ hideDemo: true })
     : null;
+  // Perapian kategori referensi (kata kunci, gabung kembar, hapus generik), sekali per versi.
+  const cleanup = USE_REFERENCE ? await seedCategoryCleanup() : null;
+  // Satu pelatihan satu kategori (sekali per versi), setelah perapian supaya kata kunci ikut menentukan.
+  const single = USE_REFERENCE ? await seedSingleCategory() : null;
+  // Isi kategori sampai 10 dari judul referensi di Sampah (sekali per versi).
+  const fill = USE_REFERENCE ? await seedCategoryFill() : null;
 
   const profileResult = await seedProfilePage();
   // Mode minimal (e2e) tanpa halaman pembayaran; spec e2e membuat halamannya sendiri.
@@ -160,6 +170,8 @@ async function main() {
   // Foto tema (orang Indonesia) untuk semua kategori lain dan pelatihan yang sampul/galerinya kosong.
   // Sebelum seedHomeImages, jadi kategori sudah berfoto dan ilustrasi lama tidak dipasang lagi.
   const themeResult = MINIMAL ? null : await seedThemeGallery();
+  // Foto unik per pelatihan sesuai topik (training-photos.json), menggantikan foto tema yang berulang.
+  const photoResult = MINIMAL ? null : await seedTrainingPhotos();
   // Slide hero & gambar kategori yang masih kosong (database tanpa gambar, mis. VPS).
   const homeImageResult = MINIMAL ? null : await seedHomeImages();
   // Seed bulk mencetak ringkasannya sendiri.
@@ -181,6 +193,23 @@ async function main() {
     console.info(reference
       ? `Katalog referensi: ${reference.categoriesCreated} kategori, ${reference.trainingsCreated} pelatihan, ${reference.linksCreated} tautan, ${reference.menuCreated} submenu baru; dirapikan ${reference.trainingsHidden} pelatihan ke Sampah dan ${reference.linksRemoved} tautan kategori dilepas.`
       : "Katalog referensi sudah terpasang; perubahan admin dipertahankan.");
+    console.info(cleanup === "dilewati" || cleanup === null
+      ? "Perapian kategori: dilewati (versi ini sudah dijalankan)."
+      : `Perapian kategori: kata kunci ${cleanup.keywordCategories} kategori (+${cleanup.linksAdded} tautan), ` +
+          `${cleanup.merged} kategori digabung (${cleanup.movedTrainings} tautan pindah), ` +
+          `${cleanup.deleted} kategori generik dihapus (${cleanup.detachedLinks} tautan dilepas)` +
+          (cleanup.skipped.length > 0 ? `; dilewati: ${cleanup.skipped.join("; ")}.` : "."));
+    console.info(single === "dilewati" || single === null
+      ? "Satu kategori per pelatihan: dilewati (versi ini sudah dijalankan)."
+      : `Satu kategori per pelatihan: ${single.trainingsChanged} pelatihan dirapikan (${single.linksRemoved} tautan dilepas, ` +
+          `${single.linksAdded} kategori baru dari judul); kategori dihapus: ${single.deletedCategories.join(", ") || "-"}` +
+          (single.stillGeneric.length > 0 ? `; masih di kategori generik: ${single.stillGeneric.join(" | ")}` : "") +
+          (single.skipped.length > 0 ? `; dilewati: ${single.skipped.join("; ")}.` : "."));
+    console.info(fill === "dilewati" || fill === null
+      ? "Isi kategori: dilewati (versi ini sudah dijalankan)."
+      : `Isi kategori: ${fill.restored} pelatihan dipulihkan dari Sampah (` +
+          fill.summary.map((item) => `${item.slug} ${item.before}->${item.after}`).join(", ") + ")" +
+          (fill.failed.length > 0 ? `; gagal: ${fill.failed.join("; ")}.` : "."));
   }
   console.info(
     contentResult
@@ -216,13 +245,24 @@ async function main() {
       `Foto tema: ${themeResult === "dilewati" ? "dilewati (sudah terpasang)" : `${themeResult.categories} kategori, ${themeResult.trainings} pelatihan`}.`,
     );
   }
+  if (photoResult !== null) {
+    console.info(
+      photoResult === "dilewati"
+        ? "Foto per pelatihan: dilewati (sudah terpasang)."
+        : `Foto per pelatihan: ${photoResult.trainings} pelatihan (${photoResult.uploaded} foto diunduh)` +
+            (photoResult.kept > 0 ? `, ${photoResult.kept} dilewati karena foto pilihan admin` : "") +
+            (photoResult.missing.length > 0 ? `, tidak ditemukan: ${photoResult.missing.join(", ")}` : "") +
+            (photoResult.failed.length > 0 ? `; gagal: ${photoResult.failed.join("; ")}` : "") +
+            ".",
+    );
+  }
   if (homeImageResult !== null) {
     console.info(
       `Gambar beranda: ${homeImageResult === "dilewati" ? "dilewati (sudah berisi)" : `${homeImageResult.heroSlides} slide hero, ${homeImageResult.categories} gambar kategori`}.`,
     );
   }
   // Bila FE sudah berjalan saat seed manual, tampilkan dropdown baru tanpa perlu restart.
-  if (reference && process.env.FE_REVALIDATE_URL && process.env.REVALIDATE_SECRET) {
+  if ((reference || (cleanup && cleanup !== "dilewati") || (single && single !== "dilewati") || (fill && fill !== "dilewati")) && process.env.FE_REVALIDATE_URL && process.env.REVALIDATE_SECRET) {
     await revalidateTags([RevalidateTag.NAV, RevalidateTag.CATEGORIES, RevalidateTag.TRAININGS, RevalidateTag.HOME]);
   }
 }

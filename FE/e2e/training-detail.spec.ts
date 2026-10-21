@@ -218,7 +218,7 @@ test.describe("detail pelatihan terstruktur", () => {
     const confirm = page.getByRole("alertdialog");
     const actions = [
       { button: "Jadikan draf", heading: "Jadikan 4 pelatihan sebagai draf?" },
-      { button: "Ganti semua kategori dengan...", heading: "Ganti semua kategori 4 pelatihan?" },
+      { button: "Pindah kategori...", heading: "Pindah kategori 4 pelatihan?" },
       { button: "Hapus", heading: "Hapus 4 pelatihan?" },
       { button: "Tayangkan", heading: "Tayangkan 4 pelatihan?" },
     ];

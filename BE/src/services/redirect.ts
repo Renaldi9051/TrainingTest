@@ -38,7 +38,7 @@ export async function releaseRedirectPath(tx: Tx, path: string, userId: string):
 // Eksekusi redirect di FE/proxy menyusul di Fase 5 (lihat BACKLOG); datanya dicatat dari sekarang.
 export async function recordSlugRedirect(
   tx: Tx,
-  { from, to, userId }: { from: string; to: string; userId: string },
+  { from, to, userId, reason = "slug berubah" }: { from: string; to: string; userId: string; reason?: string },
 ): Promise<void> {
   if (from === to) return;
 
@@ -65,7 +65,7 @@ export async function recordSlugRedirect(
       action: existing ? AuditAction.UPDATE : AuditAction.CREATE,
       entity: "Redirect",
       entityId: redirect.id,
-      diff: { from, to, code: "PERMANENT", reason: "slug berubah" },
+      diff: { from, to, code: "PERMANENT", reason },
     },
     tx,
   );

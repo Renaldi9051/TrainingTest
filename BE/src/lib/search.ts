@@ -47,6 +47,19 @@ export function foldText(input: string): string {
     .trim();
 }
 
+// Regex POSIX Postgres "kata/frasa utuh" untuk kolom yang sudah di-fold (mis. Training.searchTitle):
+// tidak diapit huruf/angka lain, jadi "drone" tidak cocok dengan "drones" dan "C++" tetap bisa dipakai.
+export function wholeWordRegex(keyword: string): string {
+  const escaped = foldText(keyword).replace(/[\\^$.|?*+()[\]{}]/g, (char) => `\\${char}`);
+  return `(^|[^[:alnum:]])${escaped}($|[^[:alnum:]])`;
+}
+
+// Padanan wholeWordRegex di JS: teks memuat frasa sebagai kata/frasa utuh (setelah di-fold).
+export function containsWholeWord(text: string, phrase: string): boolean {
+  const pattern = wholeWordRegex(phrase).replaceAll("[:alnum:]", String.raw`\p{L}\p{N}`);
+  return new RegExp(pattern, "u").test(foldText(text));
+}
+
 // Pola LIKE "mengandung" dengan wildcard pengguna (% _ \) di-escape; dipakai dengan ESCAPE '\'.
 export function likeContainsPattern(query: string): string {
   return `%${foldText(query).replace(/[\\%_]/g, (char) => `\\${char}`)}%`;

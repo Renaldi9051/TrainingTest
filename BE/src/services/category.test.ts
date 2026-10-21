@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { categoryCreateSchema, categoryListQuerySchema, categoryUpdateSchema } from "@/lib/validators/category";
+import {
+  categoryCreateSchema,
+  categoryDeleteQuerySchema,
+  categoryListQuerySchema,
+  categoryUpdateSchema,
+} from "@/lib/validators/category";
 import { createMockDb, passThroughTransactions, type MockDb } from "@/test/mock-db";
 
 const db = vi.hoisted(() => ({ current: undefined as unknown }));
@@ -35,6 +40,7 @@ const category = (extra: Record<string, unknown> = {}) => ({
   updatedById: null,
   imageId: null,
   image: null,
+  keywords: [],
   _count: { trainings: 0 },
   ...extra,
 });
@@ -67,9 +73,29 @@ beforeEach(() => {
   mock.category.aggregate.mockResolvedValue({ _max: { order: 4 } });
   mock.redirect.findFirst.mockResolvedValue(null);
   mock.redirect.create.mockResolvedValue({ id: "r1" });
+  mock.navItem.findMany.mockResolvedValue([]);
 });
 
 describe("validator kategori", () => {
+  it("kata kunci: spasi dirapikan, duplikat beda huruf dibuang, batas jumlah & panjang", () => {
+    expect(categoryCreateSchema.parse({ name: "Drone", keywords: ["  drone ", "Drone", "foto   udara"] }).keywords).toEqual([
+      "drone",
+      "foto udara",
+    ]);
+    expect(categoryCreateSchema.parse({ name: "Drone" }).keywords).toEqual([]);
+    expect(categoryUpdateSchema.safeParse({ keywords: ["a"] }).success).toBe(false);
+    expect(categoryUpdateSchema.safeParse({ keywords: ["--"] }).success).toBe(false);
+    expect(categoryUpdateSchema.safeParse({ keywords: ["x".repeat(61)] }).success).toBe(false);
+    expect(categoryUpdateSchema.safeParse({ keywords: Array.from({ length: 21 }, (_, i) => `kata ${i}`) }).success).toBe(false);
+    expect(categoryUpdateSchema.parse({ keywords: [] })).toEqual({ keywords: [] });
+  });
+
+  it("hapus: detach hanya dari ?detach=true", () => {
+    expect(categoryDeleteQuerySchema.parse({})).toEqual({ detach: false });
+    expect(categoryDeleteQuerySchema.parse({ detach: "true" })).toEqual({ detach: true });
+    expect(categoryDeleteQuerySchema.safeParse({ detach: "ya" }).success).toBe(false);
+  });
+
   it("ikon hanya dari allowlist; slug kosong = otomatis", () => {
     expect(categoryCreateSchema.parse({ name: "Keuangan", slug: "", icon: "calculator" })).toMatchObject({
       slug: undefined,
@@ -114,7 +140,7 @@ describe("createCategory", () => {
     );
 
     const created = await createCategory(
-      { name: "Keuangan & Akuntansi", description: null, icon: null, featured: false, imageId: null },
+      { name: "Keuangan & Akuntansi", description: null, icon: null, featured: false, imageId: null, keywords: [] },
       "u1",
     );
     expect(created.slug).toBe("keuangan-dan-akuntansi-2");
@@ -128,7 +154,7 @@ describe("createCategory", () => {
     mock.category.findFirst.mockResolvedValue({ id: "lain" });
     await expect(
       createCategory(
-        { name: "Keuangan", slug: "keuangan", description: null, icon: null, featured: false, imageId: null },
+        { name: "Keuangan", slug: "keuangan", description: null, icon: null, featured: false, imageId: null, keywords: [] },
         "u1",
       ),
     ).rejects.toMatchObject({ status: 409, fields: { slug: [expect.any(String)] } });
@@ -183,6 +209,55 @@ describe("deleteCategory", () => {
     expect(mock.category.update.mock.calls[0][0].data.deletedAt).toBeInstanceOf(Date);
     expect(mock.auditLog.create.mock.calls[0][0].data).toMatchObject({ action: "DELETE" });
     expect(revalidate).toHaveBeenCalled();
+    expect(mock.trainingCategory.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("item menu ke halaman kategori (dan submenunya) ikut ke Sampah, nav di-revalidate", async () => {
+    mock.category.findFirst.mockResolvedValue(category());
+    mock.navItem.findMany.mockResolvedValue([{ id: "nav-1" }]);
+    await deleteCategory(ID, "u1");
+    expect(mock.navItem.findMany.mock.calls[0][0].where.href.in).toEqual([
+      "/pelatihan/kategori/keuangan",
+      "/pelatihan?kategori=keuangan",
+    ]);
+    expect(mock.navItem.updateMany.mock.calls[0][0]).toMatchObject({
+      where: { OR: [{ id: { in: ["nav-1"] } }, { parentId: { in: ["nav-1"] } }] },
+      data: { updatedById: "u1" },
+    });
+    expect(mock.auditLog.create.mock.calls[0][0].data.diff).toMatchObject({ removedNavItems: ["nav-1"] });
+    expect(revalidate).toHaveBeenCalledWith(expect.arrayContaining(["nav", "category:keuangan"]));
+  });
+
+  it("detach: tautan dilepas lalu dihapus kalau semua pelatihan masih punya kategori lain", async () => {
+    mock.category.findFirst.mockResolvedValue(category({ _count: { trainings: 2 } }));
+    mock.training.findMany.mockResolvedValue([
+      { id: "t1", slug: "a", title: "A", categories: [{ categoryId: "lain" }] },
+      { id: "t2", slug: "b", title: "B", categories: [{ categoryId: "lain" }, { categoryId: "lain-2" }] },
+    ]);
+    await deleteCategory(ID, "u1", { detach: true });
+    expect(mock.training.findMany.mock.calls[0][0].select.categories.where).toMatchObject({
+      categoryId: { not: ID },
+      category: { deletedAt: null },
+    });
+    expect(mock.trainingCategory.deleteMany).toHaveBeenCalledWith({ where: { categoryId: ID } });
+    expect(mock.category.update.mock.calls[0][0].data.deletedAt).toBeInstanceOf(Date);
+    expect(mock.auditLog.create.mock.calls[0][0].data.diff).toMatchObject({ detachedTrainings: ["t1", "t2"] });
+    expect(revalidate).toHaveBeenCalledWith(expect.arrayContaining(["training:a", "training:b", "category:keuangan"]));
+  });
+
+  it("detach: 409 CATEGORY_ONLY_CATEGORY kalau ada pelatihan yang jadi tanpa kategori", async () => {
+    mock.category.findFirst.mockResolvedValue(category({ _count: { trainings: 2 } }));
+    mock.training.findMany.mockResolvedValue([
+      { id: "t1", slug: "a", title: "A", categories: [] },
+      { id: "t2", slug: "b", title: "B", categories: [{ categoryId: "lain" }] },
+    ]);
+    await expect(deleteCategory(ID, "u1", { detach: true })).rejects.toMatchObject({
+      status: 409,
+      code: "CATEGORY_ONLY_CATEGORY",
+      details: { trainings: [{ id: "t1", title: "A" }], total: 1 },
+    });
+    expect(mock.trainingCategory.deleteMany).not.toHaveBeenCalled();
+    expect(mock.category.update).not.toHaveBeenCalled();
   });
 });
 
@@ -225,7 +300,7 @@ describe("gambar kategori (admin)", () => {
     mock.category.findFirst.mockResolvedValue(null);
     mock.media.findMany.mockResolvedValue([{ id: IMAGE_ID, mime: "image/webp", alt: null }]);
     await expect(
-      createCategory({ name: "Keuangan", description: null, icon: null, featured: false, imageId: IMAGE_ID }, "u1"),
+      createCategory({ name: "Keuangan", description: null, icon: null, featured: false, imageId: IMAGE_ID, keywords: [] }, "u1"),
     ).rejects.toMatchObject({ status: 422, fields: { imageId: [expect.stringContaining("alt")] } });
     expect(mock.category.create).not.toHaveBeenCalled();
   });
@@ -327,6 +402,11 @@ describe("listPublicCategories", () => {
       deletedAt: null,
       status: "PUBLISHED",
       publishedAt: { lte: now },
+    });
+    // Kategori tanpa pelatihan tayang tidak ikut (filter di query).
+    expect(mock.category.findMany.mock.calls[0][0].where).toEqual({
+      deletedAt: null,
+      trainings: { some: { training: { deletedAt: null, status: "PUBLISHED", publishedAt: { lte: now } } } },
     });
   });
 });

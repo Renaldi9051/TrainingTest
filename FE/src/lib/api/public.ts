@@ -79,7 +79,8 @@ export async function getSettings(): Promise<PublicSettings> {
 export async function getNav(): Promise<PublicNav> {
   "use cache";
   cacheLife("content");
-  cacheTag(Tag.NAV);
+  // `categories`: menu ke kategori yang kosong disembunyikan BE, jadi ikut berubah saat isi kategori berubah.
+  cacheTag(Tag.NAV, Tag.CATEGORIES);
   return getRequired<PublicNav>("/nav");
 }
 

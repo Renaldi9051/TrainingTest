@@ -1,6 +1,7 @@
 import { adminRoute } from "@/lib/auth";
 import { ok, readJson } from "@/lib/http";
-import { categoryUpdateSchema } from "@/lib/validators/category";
+import { parseSearchParams } from "@/lib/list-query";
+import { categoryDeleteQuerySchema, categoryUpdateSchema } from "@/lib/validators/category";
 import { idSchema } from "@/lib/validators/common";
 import { deleteCategory, getCategory, updateCategory } from "@/services/category";
 
@@ -19,8 +20,10 @@ export const PATCH = adminRoute<Context>(async (request, context, admin) => {
   return ok(await updateCategory(id, input, admin.user.id));
 });
 
-export const DELETE = adminRoute<Context>(async (_request, context, admin) => {
+// ?detach=true: lepas dari semua pelatihan lalu hapus (ditolak kalau ada pelatihan yang jadi tanpa kategori).
+export const DELETE = adminRoute<Context>(async (request, context, admin) => {
   const id = idSchema.parse((await context.params).id);
-  await deleteCategory(id, admin.user.id);
+  const query = parseSearchParams(categoryDeleteQuerySchema, request.nextUrl.searchParams);
+  await deleteCategory(id, admin.user.id, query);
   return ok({ deleted: true });
 });

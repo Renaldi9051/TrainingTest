@@ -16,7 +16,7 @@ import {
   type HomeSectionUpdateInput,
 } from "@/lib/validators/home-section";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
-import { publicCountInclude, toPublicCategory, type PublicCategory } from "@/services/category";
+import { nonEmptyPublicCategoryWhere, publicCountInclude, toPublicCategory, type PublicCategory } from "@/services/category";
 import { toPublicClient, type PublicClient } from "@/services/client";
 import { assertMediaRefs, getMediaMap, toPublicImage, type MediaDto, type PublicImage } from "@/services/media";
 import { nextOrder } from "@/services/reorder";
@@ -325,7 +325,7 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
         categories.map((item) => item.content),
         {
           byIds: (ids) =>
-            db.category.findMany({ where: { id: { in: ids }, deletedAt: null }, include: publicCountInclude(now) }),
+            db.category.findMany({ where: { id: { in: ids }, ...nonEmptyPublicCategoryWhere(now) }, include: publicCountInclude(now) }),
           // Auto: kategori unggulan yang punya >= 1 pelatihan publik, dihitung di query (bukan loop).
           top: (limit) =>
             db.category.findMany({
