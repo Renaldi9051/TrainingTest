@@ -13,6 +13,7 @@ import { RevalidateTag, revalidateTags } from "../src/lib/revalidate";
 import { REFERENCE_SEED_KEY, REFERENCE_SEED_VERSION, seedReferenceCatalog } from "./seed-reference";
 import { seedBulk } from "./seed-bulk";
 import { seedCategoryCleanup } from "./seed-category-cleanup";
+import { seedCategoryFill } from "./seed-category-fill";
 import { seedSingleCategory } from "./seed-single-category";
 import { type ContentSeedResult, seedContent } from "./seed-content";
 import { seedCovers } from "./seed-covers";
@@ -146,6 +147,8 @@ async function main() {
   const cleanup = USE_REFERENCE ? await seedCategoryCleanup() : null;
   // Satu pelatihan satu kategori (sekali per versi), setelah perapian supaya kata kunci ikut menentukan.
   const single = USE_REFERENCE ? await seedSingleCategory() : null;
+  // Isi kategori sampai 10 dari judul referensi di Sampah (sekali per versi).
+  const fill = USE_REFERENCE ? await seedCategoryFill() : null;
 
   const profileResult = await seedProfilePage();
   // Mode minimal (e2e) tanpa halaman pembayaran; spec e2e membuat halamannya sendiri.
@@ -202,6 +205,11 @@ async function main() {
           `${single.linksAdded} kategori baru dari judul); kategori dihapus: ${single.deletedCategories.join(", ") || "-"}` +
           (single.stillGeneric.length > 0 ? `; masih di kategori generik: ${single.stillGeneric.join(" | ")}` : "") +
           (single.skipped.length > 0 ? `; dilewati: ${single.skipped.join("; ")}.` : "."));
+    console.info(fill === "dilewati" || fill === null
+      ? "Isi kategori: dilewati (versi ini sudah dijalankan)."
+      : `Isi kategori: ${fill.restored} pelatihan dipulihkan dari Sampah (` +
+          fill.summary.map((item) => `${item.slug} ${item.before}->${item.after}`).join(", ") + ")" +
+          (fill.failed.length > 0 ? `; gagal: ${fill.failed.join("; ")}.` : "."));
   }
   console.info(
     contentResult
@@ -254,7 +262,7 @@ async function main() {
     );
   }
   // Bila FE sudah berjalan saat seed manual, tampilkan dropdown baru tanpa perlu restart.
-  if ((reference || (cleanup && cleanup !== "dilewati") || (single && single !== "dilewati")) && process.env.FE_REVALIDATE_URL && process.env.REVALIDATE_SECRET) {
+  if ((reference || (cleanup && cleanup !== "dilewati") || (single && single !== "dilewati") || (fill && fill !== "dilewati")) && process.env.FE_REVALIDATE_URL && process.env.REVALIDATE_SECRET) {
     await revalidateTags([RevalidateTag.NAV, RevalidateTag.CATEGORIES, RevalidateTag.TRAININGS, RevalidateTag.HOME]);
   }
 }
