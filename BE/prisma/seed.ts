@@ -14,6 +14,7 @@ import { REFERENCE_SEED_KEY, REFERENCE_SEED_VERSION, seedReferenceCatalog } from
 import { seedBulk } from "./seed-bulk";
 import { seedCategoryCleanup } from "./seed-category-cleanup";
 import { seedCategoryFill } from "./seed-category-fill";
+import { seedHomeCopy } from "./seed-home-copy";
 import { seedSingleCategory } from "./seed-single-category";
 import { type ContentSeedResult, seedContent } from "./seed-content";
 import { seedCovers } from "./seed-covers";
@@ -174,6 +175,8 @@ async function main() {
   const photoResult = MINIMAL ? null : await seedTrainingPhotos();
   // Slide hero & gambar kategori yang masih kosong (database tanpa gambar, mis. VPS).
   const homeImageResult = MINIMAL ? null : await seedHomeImages();
+  // Teks hero beranda sesuai katalog korporat (sekali per versi; teks yang diubah admin tetap).
+  const homeCopyResult = MINIMAL ? null : await seedHomeCopy();
   // Seed bulk mencetak ringkasannya sendiri.
   if (BULK) await seedBulk();
 
@@ -259,6 +262,13 @@ async function main() {
   if (homeImageResult !== null) {
     console.info(
       `Gambar beranda: ${homeImageResult === "dilewati" ? "dilewati (sudah berisi)" : `${homeImageResult.heroSlides} slide hero, ${homeImageResult.categories} gambar kategori`}.`,
+    );
+  }
+  if (homeCopyResult !== null) {
+    console.info(
+      homeCopyResult === "dilewati"
+        ? "Teks hero: dilewati (versi ini sudah dijalankan)."
+        : `Teks hero: ${homeCopyResult.changed.length > 0 ? `diperbarui (${homeCopyResult.changed.join(", ")})` : "tidak diubah (sudah disunting admin)"}.`,
     );
   }
   // Bila FE sudah berjalan saat seed manual, tampilkan dropdown baru tanpa perlu restart.
