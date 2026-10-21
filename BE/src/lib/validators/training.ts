@@ -23,11 +23,12 @@ const methodSchema = z.enum(TRAINING_METHODS, { error: "Metode tidak dikenal." }
 const typeSchema = z.enum(TRAINING_TYPES, { error: "Tipe tidak dikenal." });
 const levelSchema = z.enum(TRAINING_LEVELS, { error: "Tingkat tidak dikenal." });
 
+// Satu pelatihan satu kategori (keputusan pemilik, 21 Okt 2026). Bentuk array dipertahankan supaya
+// API dan relasi TrainingCategory tidak berubah.
 const categoryIdsSchema = z
   .array(idSchema)
-  .min(1, { error: "Pilih minimal satu kategori." })
-  .max(20, { error: "Maksimal 20 kategori." })
-  .transform((ids) => [...new Set(ids)]);
+  .min(1, { error: "Pilih kategori." })
+  .max(1, { error: "Pelatihan hanya boleh punya satu kategori." });
 
 // publishedAt: ISO datetime dari form (datetime-local dikonversi FE ke ISO dengan zona WIB).
 const publishedAtSchema = z.iso

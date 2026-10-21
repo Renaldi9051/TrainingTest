@@ -108,15 +108,17 @@ describe("linkKeywordMatches", () => {
     expect(keywordLinkSchema.parse({ trainingIds: [T1] })).toEqual({ trainingIds: [T1] });
   });
 
-  it("menambah tautan tanpa duplikat, menandai pelatihan diubah admin, audit + revalidate", async () => {
+  it("memindah pelatihan ke kategori ini (kategori lama dilepas), menandai diubah admin, audit + revalidate", async () => {
     mock.category.findFirst.mockResolvedValue(category());
     mock.training.findMany.mockResolvedValue([
-      { id: T1, slug: "a" },
-      { id: T2, slug: "b" },
+      { id: T1, slug: "a", categories: [{ category: { id: "c-geo", slug: "geology" } }] },
+      { id: T2, slug: "b", categories: [] },
     ]);
-    mock.trainingCategory.createMany.mockResolvedValue({ count: 2 });
     await expect(linkKeywordMatches(ID, { trainingIds: [T1, T2] }, "u1")).resolves.toEqual({ linked: 2 });
     expect(mock.training.findMany.mock.calls[0][0].where).toEqual({ id: { in: [T1, T2] }, deletedAt: null });
+    expect(mock.trainingCategory.deleteMany).toHaveBeenCalledWith({
+      where: { trainingId: { in: [T1, T2] }, categoryId: { not: ID } },
+    });
     expect(mock.trainingCategory.createMany).toHaveBeenCalledWith({
       data: [
         { trainingId: T1, categoryId: ID },
@@ -124,22 +126,21 @@ describe("linkKeywordMatches", () => {
       ],
       skipDuplicates: true,
     });
-    expect(mock.trainingCategory.deleteMany).not.toHaveBeenCalled();
     expect(mock.training.updateMany).toHaveBeenCalledWith({ where: { id: { in: [T1, T2] } }, data: { updatedById: "u1" } });
     expect(mock.auditLog.create.mock.calls[0][0].data).toMatchObject({
       action: "UPDATE",
       entity: "Category",
       entityId: ID,
-      diff: { linkedTrainings: [T1, T2], source: "keywords" },
+      diff: { movedTrainings: [T1, T2], fromCategories: ["c-geo"], source: "keywords" },
     });
     expect(revalidate).toHaveBeenCalledWith(
-      expect.arrayContaining(["categories", "trainings", "category:drone", "training:a", "training:b"]),
+      expect.arrayContaining(["categories", "trainings", "category:drone", "category:geology", "training:a", "training:b"]),
     );
   });
 
   it("422 kalau sebagian pelatihan sudah dihapus", async () => {
     mock.category.findFirst.mockResolvedValue(category());
-    mock.training.findMany.mockResolvedValue([{ id: T1, slug: "a" }]);
+    mock.training.findMany.mockResolvedValue([{ id: T1, slug: "a", categories: [] }]);
     await expect(linkKeywordMatches(ID, { trainingIds: [T1, T2] }, "u1")).rejects.toMatchObject({
       status: 422,
       fields: { trainingIds: [expect.any(String)] },

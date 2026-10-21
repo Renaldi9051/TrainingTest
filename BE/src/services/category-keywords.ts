@@ -9,8 +9,8 @@ import { findActiveCategory } from "@/services/category";
 import { publicState, type TrainingPublicState } from "@/services/training";
 
 // "Pelatihan yang cocok": pelatihan (belum dihapus, draft maupun tayang) yang judulnya memuat salah
-// satu kata kunci kategori sebagai kata/frasa utuh tapi belum tertaut ke kategori itu. Admin memilih
-// sendiri mana yang ditautkan; tidak ada penautan otomatis saat pelatihan disimpan.
+// satu kata kunci kategori sebagai kata/frasa utuh tapi belum ada di kategori itu. Admin memilih
+// sendiri mana yang dipindah; tidak ada pemindahan otomatis saat pelatihan disimpan.
 
 export const KEYWORD_MATCH_LIMIT = 200;
 
@@ -92,9 +92,9 @@ export async function listKeywordMatches(categoryId: string, now = new Date()): 
   return { keywords: category.keywords, items, total: unlinked.length, linkedCount: rows.length - unlinked.length };
 }
 
-// Tautkan pelatihan terpilih ke kategori (hanya menambah). Pelatihan ditandai diubah admin
-// (updatedById), sama seperti aksi massal pelatihan, supaya seed katalog referensi berikutnya tidak
-// mengembalikan tautannya ke data sumber.
+// Pindahkan pelatihan terpilih ke kategori ini. Satu pelatihan satu kategori, jadi kategori lamanya
+// dilepas. Pelatihan ditandai diubah admin (updatedById), sama seperti aksi massal pelatihan, supaya
+// seed katalog referensi berikutnya tidak mengembalikan kategorinya ke data sumber.
 export async function linkKeywordMatches(
   categoryId: string,
   input: KeywordLinkInput,
@@ -104,7 +104,7 @@ export async function linkKeywordMatches(
   const db = getDb();
   const trainings = await db.training.findMany({
     where: { id: { in: input.trainingIds }, deletedAt: null },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, categories: { select: { category: { select: { id: true, slug: true } } } } },
   });
   if (trainings.length !== input.trainingIds.length) {
     throw new HttpError(422, "VALIDATION_ERROR", "Sebagian pelatihan tidak ditemukan atau sudah dihapus.", {
@@ -112,8 +112,12 @@ export async function linkKeywordMatches(
     });
   }
   const ids = trainings.map((training) => training.id);
-  const linked = await db.$transaction(async (tx) => {
-    const created = await tx.trainingCategory.createMany({
+  const previous = trainings.flatMap((training) =>
+    training.categories.map((link) => link.category).filter((item) => item.id !== categoryId),
+  );
+  await db.$transaction(async (tx) => {
+    await tx.trainingCategory.deleteMany({ where: { trainingId: { in: ids }, categoryId: { not: categoryId } } });
+    await tx.trainingCategory.createMany({
       data: ids.map((trainingId) => ({ trainingId, categoryId })),
       skipDuplicates: true,
     });
@@ -124,15 +128,18 @@ export async function linkKeywordMatches(
         action: AuditAction.UPDATE,
         entity: "Category",
         entityId: categoryId,
-        diff: { linkedTrainings: ids, source: "keywords" },
+        diff: {
+          movedTrainings: ids,
+          fromCategories: [...new Set(previous.map((item) => item.id))],
+          source: "keywords",
+        },
       },
       tx,
     );
-    return created.count;
   });
   await revalidateEntity([
-    { entity: "Category", slugs: [category.slug] },
+    { entity: "Category", slugs: [category.slug, ...new Set(previous.map((item) => item.slug))] },
     { entity: "Training", slugs: trainings.map((training) => training.slug) },
   ]);
-  return { linked };
+  return { linked: ids.length };
 }

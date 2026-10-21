@@ -68,7 +68,8 @@ describe("data contoh", () => {
       expect(training.audience.length).toBeGreaterThanOrEqual(2);
       expect(training.priceText).toMatch(/^Rp[\d.]+ per peserta$/);
     }
-    expect(trainings.some((training) => training.categorySlugs.length === 2)).toBe(true);
+    // Satu pelatihan satu kategori.
+    expect(trainings.every((training) => training.categorySlugs.length === 1)).toBe(true);
     expect(new Set(trainings.map((training) => training.level))).toEqual(new Set(["dasar", "menengah", "lanjut"]));
     expect(new Set(trainings.map((training) => training.method))).toEqual(new Set(["ONLINE", "OFFLINE", "HYBRID"]));
     expect(new Set(trainings.map((training) => training.types.join("+")))).toEqual(new Set(["PUBLIC+IN_HOUSE", "PUBLIC"]));
