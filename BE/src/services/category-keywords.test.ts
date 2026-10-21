@@ -61,12 +61,13 @@ describe("listKeywordMatches", () => {
       { id: T1, linked: false },
     ]);
     mock.training.findMany.mockResolvedValue([
-      { id: T1, slug: "a", title: "A drone", status: "DRAFT", categories: [] },
+      { id: T1, slug: "a", title: "A drone", status: "DRAFT", publishedAt: null, categories: [] },
       {
         id: T2,
         slug: "b",
         title: "B drone",
         status: "PUBLISHED",
+        publishedAt: new Date("2099-01-01T00:00:00Z"),
         categories: [{ category: { id: "c2", name: "Photography" } }, { category: { id: "c1", name: "Media" } }],
       },
     ]);
@@ -78,6 +79,7 @@ describe("listKeywordMatches", () => {
     expect(result.total).toBe(2);
     expect(result.linkedCount).toBe(1);
     expect(result.items.map((item) => item.id)).toEqual([T2, T1]);
+    expect(result.items.map((item) => item.publicState)).toEqual(["SCHEDULED", "DRAFT"]);
     expect(result.items[0].categories.map((item) => item.name)).toEqual(["Media", "Photography"]);
     expect(mock.training.findMany.mock.calls[0][0].select.categories.where).toEqual({ category: { deletedAt: null } });
   });

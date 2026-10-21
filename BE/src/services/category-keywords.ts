@@ -6,6 +6,7 @@ import { wholeWordRegex } from "@/lib/search";
 import type { KeywordLinkInput } from "@/lib/validators/category";
 import { AuditAction, writeAudit } from "@/services/audit";
 import { findActiveCategory } from "@/services/category";
+import { publicState, type TrainingPublicState } from "@/services/training";
 
 // "Pelatihan yang cocok": pelatihan (belum dihapus, draft maupun tayang) yang judulnya memuat salah
 // satu kata kunci kategori sebagai kata/frasa utuh tapi belum tertaut ke kategori itu. Admin memilih
@@ -17,7 +18,7 @@ export type KeywordMatch = {
   id: string;
   slug: string;
   title: string;
-  status: "DRAFT" | "PUBLISHED";
+  publicState: TrainingPublicState;
   categories: { id: string; name: string }[];
 };
 
@@ -50,7 +51,7 @@ export async function findKeywordMatchIds(categoryId: string, keywords: readonly
   `);
 }
 
-export async function listKeywordMatches(categoryId: string): Promise<KeywordMatches> {
+export async function listKeywordMatches(categoryId: string, now = new Date()): Promise<KeywordMatches> {
   const category = await findActiveCategory(categoryId);
   const rows = await findKeywordMatchIds(categoryId, category.keywords);
   const unlinked = rows.filter((row) => !row.linked).map((row) => row.id);
@@ -65,6 +66,7 @@ export async function listKeywordMatches(categoryId: string): Promise<KeywordMat
             slug: true,
             title: true,
             status: true,
+            publishedAt: true,
             categories: {
               where: { category: { deletedAt: null } },
               select: { category: { select: { id: true, name: true } } },
@@ -80,7 +82,7 @@ export async function listKeywordMatches(categoryId: string): Promise<KeywordMat
         id: training.id,
         slug: training.slug,
         title: training.title,
-        status: training.status,
+        publicState: publicState(training, now),
         categories: training.categories
           .map((link) => link.category)
           .sort((a, b) => a.name.localeCompare(b.name, "id")),
