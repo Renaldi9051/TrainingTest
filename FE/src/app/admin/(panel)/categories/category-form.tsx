@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2Icon } from "lucide-react";
+import { MergeIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,6 +15,7 @@ import { IconPicker } from "@/components/admin/icon-picker";
 import { MediaPicker } from "@/components/admin/media/media-picker";
 import { SlugField } from "@/components/admin/slug-field";
 import { StickySaveBar } from "@/components/admin/sticky-save-bar";
+import { TagInput } from "@/components/admin/tag-input";
 import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
@@ -23,15 +24,23 @@ import { Textarea } from "@/components/admin/ui/textarea";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { useScopedId } from "@/hooks/use-scoped-id";
 import { ApiError, apiSend, errorMessage } from "@/lib/api/client";
-import type { Category, CategoryInUseDetails } from "@/lib/api/types";
+import type { Category, CategoryInUseDetails, CategoryOnlyCategoryDetails } from "@/lib/api/types";
 import { applyFieldErrors } from "@/lib/form-errors";
+import { formatNumber } from "@/lib/format";
+import { trainingKeys } from "../trainings/training-keys";
+import { CategoryMergeDialog } from "./category-merge-dialog";
 
 export const categoryKeys = {
   all: ["admin", "categories"] as const,
   list: (params: object) => ["admin", "categories", "list", params] as const,
   detail: (id: string) => ["admin", "categories", "detail", id] as const,
   options: ["admin", "categories", "options"] as const,
+  keywordMatches: (id: string) => ["admin", "categories", "keyword-matches", id] as const,
 };
+
+// Sama dengan batas BE (validators/category.ts).
+export const KEYWORDS_MAX = 20;
+const KEYWORD_MAX_LENGTH = 60;
 
 const schema = z.object({
   name: z.string().trim().min(1, { error: "Nama wajib diisi." }).max(100, { error: "Nama maksimal 100 karakter." }),
@@ -40,6 +49,14 @@ const schema = z.object({
   icon: z.string().nullable(),
   featured: z.boolean(),
   imageId: z.string().nullable(),
+  keywords: z
+    .array(
+      z
+        .string()
+        .min(2, { error: "Kata kunci minimal 2 karakter." })
+        .max(KEYWORD_MAX_LENGTH, { error: `Kata kunci maksimal ${KEYWORD_MAX_LENGTH} karakter.` }),
+    )
+    .max(KEYWORDS_MAX, { error: `Maksimal ${KEYWORDS_MAX} kata kunci.` }),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -50,6 +67,10 @@ export function CategoryForm({ category }: { category: Category | null }) {
   const queryClient = useQueryClient();
   const [autoSlug, setAutoSlug] = useState(category === null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  // Pelatihan yang hanya punya kategori ini (hapus dengan lepas tautan ditolak BE).
+  const [orphans, setOrphans] = useState<CategoryOnlyCategoryDetails | null>(null);
+  const inUse = (category?.trainingCount ?? 0) > 0;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -60,6 +81,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
       icon: category?.icon ?? null,
       featured: category?.featured ?? false,
       imageId: category?.imageId ?? null,
+      keywords: category?.keywords ?? [],
     },
     mode: "onBlur",
   });
@@ -85,29 +107,37 @@ export function CategoryForm({ category }: { category: Category | null }) {
         icon: saved.icon,
         featured: saved.featured,
         imageId: saved.imageId,
+        keywords: saved.keywords,
       });
       setAutoSlug(false);
       toast.success(category ? "Kategori disimpan." : "Kategori ditambahkan.");
       if (!category) router.push(`/admin/categories/${saved.id}`);
     },
     onError: (error) => {
-      if (!applyFieldErrors(error, form.setError, ["name", "slug", "description", "icon", "featured", "imageId"])) {
+      if (!applyFieldErrors(error, form.setError, ["name", "slug", "description", "icon", "featured", "imageId", "keywords"])) {
         toast.error(errorMessage(error));
       }
     },
   });
 
+  // Kategori yang dipakai pelatihan dihapus dengan ?detach=true: tautan dilepas dulu oleh BE.
   const remove = useMutation({
-    mutationFn: async () => apiSend(`/admin/categories/${category?.id}`, "DELETE"),
+    mutationFn: async () => apiSend(`/admin/categories/${category?.id}${inUse ? "?detach=true" : ""}`, "DELETE"),
     onSuccess: async () => {
       // Detail item yang dihapus dibuang dulu supaya tidak di-refetch (404).
       if (category) queryClient.removeQueries({ queryKey: categoryKeys.detail(category.id) });
       await queryClient.invalidateQueries({ queryKey: categoryKeys.all });
+      if (inUse) await queryClient.invalidateQueries({ queryKey: trainingKeys.all });
       form.reset();
       toast.success("Kategori dipindahkan ke Sampah.");
       router.push("/admin/categories");
     },
     onError: (error) => {
+      if (error instanceof ApiError && error.code === "CATEGORY_ONLY_CATEGORY") {
+        // Dialog tetap terbuka dan menampilkan pelatihan yang perlu kategori lain.
+        setOrphans((error.details as CategoryOnlyCategoryDetails | undefined) ?? { trainings: [], total: 0 });
+        return;
+      }
       if (error instanceof ApiError && error.code === "CATEGORY_IN_USE") {
         const count = (error.details as CategoryInUseDetails | undefined)?.trainingCount ?? 0;
         toast.error(`Kategori masih dipakai ${count} pelatihan. Pindahkan dulu lewat aksi massal di daftar pelatihan.`);
@@ -120,6 +150,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
 
   const errors = form.formState.errors;
   const name = useWatch({ control: form.control, name: "name" });
+  const keywordError = errors.keywords?.message ?? errors.keywords?.find?.((item) => item?.message)?.message;
 
   return (
     <>
@@ -160,6 +191,27 @@ export function CategoryForm({ category }: { category: Category | null }) {
           >
             <Textarea rows={5} {...form.register("description")} />
           </FormField>
+          <Controller
+            control={form.control}
+            name="keywords"
+            render={({ field }) => (
+              <FormField
+                id={sid("keywords")}
+                label="Kata kunci"
+                description="Pelatihan yang judulnya memuat salah satu kata ini muncul di daftar Pelatihan yang cocok. Tidak ada yang ditautkan otomatis. Tekan Enter atau koma untuk menambah."
+                error={keywordError}
+              >
+                <TagInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  max={KEYWORDS_MAX}
+                  removeLabel={(tag) => `Hapus kata kunci ${tag}`}
+                  placeholder={field.value.length >= KEYWORDS_MAX ? `Maksimal ${KEYWORDS_MAX} kata kunci` : "Contoh: drone"}
+                />
+              </FormField>
+            )}
+          />
         </div>
 
         <aside className="space-y-8 lg:border-l lg:border-border lg:pl-8">
@@ -208,22 +260,29 @@ export function CategoryForm({ category }: { category: Category | null }) {
             )}
           />
           {category ? (
-            <div className="border-t border-border pt-6">
+            <div className="space-y-3 border-t border-border pt-6">
               <p className="text-small text-fg-muted">
-                {category.trainingCount > 0
-                  ? `Dipakai ${category.trainingCount} pelatihan. Pindahkan pelatihan tersebut sebelum menghapus.`
-                  : "Belum dipakai pelatihan mana pun."}
+                {inUse ? `Dipakai ${formatNumber(category.trainingCount)} pelatihan.` : "Belum dipakai pelatihan mana pun."}
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-3 text-status-error"
-                onClick={() => setConfirmDelete(true)}
-              >
-                <Trash2Icon aria-hidden />
-                Hapus kategori
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setMergeOpen(true)}>
+                  <MergeIcon aria-hidden />
+                  Gabungkan ke kategori lain
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-status-error"
+                  onClick={() => {
+                    setOrphans(null);
+                    setConfirmDelete(true);
+                  }}
+                >
+                  <Trash2Icon aria-hidden />
+                  Hapus kategori
+                </Button>
+              </div>
             </div>
           ) : null}
         </aside>
@@ -235,12 +294,40 @@ export function CategoryForm({ category }: { category: Category | null }) {
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
         title={`Hapus kategori "${category?.name ?? ""}"?`}
-        description="Kategori dipindahkan ke Sampah dan hilang dari situs. Bisa dipulihkan dalam 30 hari."
-        confirmLabel="Hapus"
+        description={
+          inUse
+            ? `Kategori dilepas dari ${formatNumber(category?.trainingCount ?? 0)} pelatihan lalu dipindahkan ke Sampah. Pelatihan tetap tampil di kategori lainnya. Item menu ke kategori ini ikut dihapus. Kalau kategori dipulihkan, tautan pelatihannya tidak ikut kembali.`
+            : "Kategori dipindahkan ke Sampah dan hilang dari situs. Item menu ke kategori ini ikut dihapus. Bisa dipulihkan dalam 30 hari."
+        }
+        confirmLabel={inUse ? "Lepas dan hapus" : "Hapus"}
         destructive
         pending={remove.isPending}
         onConfirm={() => remove.mutate()}
-      />
+      >
+        {orphans ? (
+          <div role="alert" className="space-y-2 rounded-md border border-border p-3 text-small">
+            <p className="text-status-error">
+              {formatNumber(orphans.total)} pelatihan hanya punya kategori ini. Tambahkan kategori lain ke pelatihan berikut dulu, lalu hapus lagi.
+            </p>
+            <ul className="max-h-48 space-y-1 overflow-y-auto">
+              {orphans.trainings.map((training) => (
+                <li key={training.id}>
+                  <Link href={`/admin/trainings/${training.id}`} className="underline-offset-4 hover:underline">
+                    {training.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {orphans.total > orphans.trainings.length ? (
+              <p className="text-fg-muted">dan {formatNumber(orphans.total - orphans.trainings.length)} pelatihan lainnya.</p>
+            ) : null}
+          </div>
+        ) : null}
+      </ConfirmDialog>
+
+      {category ? (
+        <CategoryMergeDialog category={category} open={mergeOpen} onOpenChange={setMergeOpen} onMerged={() => form.reset()} />
+      ) : null}
     </>
   );
 }
