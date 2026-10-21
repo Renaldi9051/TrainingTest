@@ -6,16 +6,20 @@
 // (validator admin juga hanya menerima satu kategori). Pelatihan yang berubah ditandai diubah admin
 // supaya seed katalog referensi berikutnya tidak menambah kategorinya lagi. Kategori yang kosong
 // disembunyikan dari publik oleh BE, datanya tetap ada di admin.
+// Pelatihan di manifest foto (seed-data/gallery/manifest.json, pilihan pemilik 19 Okt 2026) tetap di
+// kategori manifest (accounting), sesuai fotonya.
+// v2: seed foto manifest sempat menautkan ulang 3 pelatihan manifest ke accounting setelah v1.
 import { getDb } from "../src/lib/db";
 import { HttpError } from "../src/lib/http";
 import { withRevalidateBatch } from "../src/lib/revalidate-map";
 import { AuditAction, writeAudit } from "../src/services/audit";
 import { deleteCategory } from "../src/services/category";
 import { navCategorySlug } from "../src/services/nav";
+import { loadManifestPins } from "./seed-manifest-gallery";
 import { type CategoryCandidate, GENERIC_CATEGORY_SLUGS, pickPrimaryCategory } from "./seed-data/primary-category";
 
 export const SINGLE_CATEGORY_KEY = "seed.singleCategory.version";
-export const SINGLE_CATEGORY_VERSION = "2026-10-21-one-category";
+export const SINGLE_CATEGORY_VERSION = "2026-10-21-one-category-v2";
 
 // Kategori generik yang dihapus kalau sudah kosong (yang lain sudah dihapus seed perapian kategori).
 export const EMPTY_GENERIC_TO_DELETE = ["slider", "uncategorized"];
@@ -53,11 +57,12 @@ export async function planSingleCategory(): Promise<{
   changes: SingleCategoryChange[];
   stillGeneric: string[];
 }> {
-  const candidates = await loadCategoryCandidates();
+  const [candidates, pins] = await Promise.all([loadCategoryCandidates(), loadManifestPins()]);
   const byId = new Map(candidates.map((category) => [category.id, category]));
+  const bySlug = new Map(candidates.map((category) => [category.slug, category]));
   const trainings = await db.training.findMany({
     where: { deletedAt: null },
-    select: { id: true, title: true, categories: { select: { categoryId: true } } },
+    select: { id: true, slug: true, title: true, categories: { select: { categoryId: true } } },
     orderBy: { slug: "asc" },
   });
   const changes: SingleCategoryChange[] = [];
@@ -66,8 +71,10 @@ export async function planSingleCategory(): Promise<{
     const linkedIds = training.categories.map((link) => link.categoryId);
     const current = linkedIds.flatMap((id) => byId.get(id) ?? []);
     const onlyGeneric = current.length > 0 && current.every((category) => GENERIC_CATEGORY_SLUGS.has(category.slug));
-    if (current.length <= 1 && !onlyGeneric && linkedIds.length === current.length) continue;
-    const chosen = pickPrimaryCategory(training.title, current, candidates);
+    const pinned = bySlug.get(pins.get(training.slug) ?? "");
+    const settled = current.length <= 1 && !onlyGeneric && linkedIds.length === current.length;
+    if (settled && (!pinned || current[0]?.id === pinned.id)) continue;
+    const chosen = pinned ?? pickPrimaryCategory(training.title, current, candidates);
     if (!chosen) continue;
     if (GENERIC_CATEGORY_SLUGS.has(chosen.slug)) stillGeneric.push(`${training.title} (${chosen.name})`);
     const remove = linkedIds.filter((id) => id !== chosen.id);
