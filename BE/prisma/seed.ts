@@ -14,6 +14,7 @@ import { REFERENCE_SEED_KEY, REFERENCE_SEED_VERSION, seedReferenceCatalog } from
 import { seedBulk } from "./seed-bulk";
 import { seedCategoryCleanup } from "./seed-category-cleanup";
 import { seedCategoryFill } from "./seed-category-fill";
+import { seedCategorySchedules } from "./seed-category-schedules";
 import { seedHomeCopy } from "./seed-home-copy";
 import { seedSingleCategory } from "./seed-single-category";
 import { type ContentSeedResult, seedContent } from "./seed-content";
@@ -150,6 +151,8 @@ async function main() {
   const single = USE_REFERENCE ? await seedSingleCategory() : null;
   // Isi kategori sampai 10 dari judul referensi: dipulihkan dari Sampah atau dibuat baru (sekali per versi).
   const fill = USE_REFERENCE ? await seedCategoryFill() : null;
+  // 5 jadwal per kategori A-B untuk pelatihan berbeda (sekali per versi), setelah kategori terisi.
+  const schedules = USE_REFERENCE && !MINIMAL ? await seedCategorySchedules() : null;
 
   const profileResult = await seedProfilePage();
   // Mode minimal (e2e) tanpa halaman pembayaran; spec e2e membuat halamannya sendiri.
@@ -213,6 +216,13 @@ async function main() {
       : `Isi kategori: ${fill.restored} pelatihan dipulihkan dari Sampah, ${fill.created} dibuat dari judul referensi (` +
           fill.summary.map((item) => `${item.slug} ${item.before}->${item.after}`).join(", ") + ")" +
           (fill.failed.length > 0 ? `; gagal: ${fill.failed.join("; ")}.` : "."));
+    if (schedules !== null) {
+      console.info(schedules === "dilewati"
+        ? "Jadwal kategori A-B: dilewati (versi ini sudah dijalankan)."
+        : `Jadwal kategori A-B: ${schedules.created} dibuat (` +
+            schedules.summary.map((item) => `${item.slug} ${item.before}->${item.after}`).join(", ") + ")" +
+            (schedules.failed.length > 0 ? `; gagal: ${schedules.failed.join("; ")}.` : "."));
+    }
   }
   console.info(
     contentResult
