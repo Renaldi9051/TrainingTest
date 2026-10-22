@@ -14,7 +14,7 @@ describe("jadwal kategori A-B", () => {
     const slugs = new Set(referenceCategories.map((category) => category.slug));
     expect(CATEGORY_SCHEDULE_SLUGS.filter((slug) => !slugs.has(slug))).toEqual([]);
     expect(CATEGORY_SCHEDULE_SLUGS.every((slug) => /^[ab]/.test(slug))).toBe(true);
-    expect(CATEGORY_FILL_SLUGS.filter((slug) => !CATEGORY_SCHEDULE_SLUGS.includes(slug))).toEqual([]);
+    expect(CATEGORY_FILL_SLUGS.filter((slug) => /^[ab]/.test(slug) && !CATEGORY_SCHEDULE_SLUGS.includes(slug))).toEqual([]);
   });
 
   it("lolos validator admin, 2 hari, mulai Senin-Rabu, 2-17 minggu ke depan", () => {

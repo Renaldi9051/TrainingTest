@@ -11,18 +11,22 @@
 //   di Sampah. Judul snapshot yang belum pernah ada di database dibuat baru (naskah seed sama seperti
 //   seed referensi); yang di Sampah tapi pernah diubah admin tetap tidak disentuh. Judul yang sudah
 //   punya foto di training-photos.json didahulukan supaya hasilnya sama dengan dev.
+// - Versi 4 (22 Okt 2026): semua kategori berawalan C dan D, termasuk yang belum punya pelatihan. Judul
+//   bertanda di referensi banyak yang tidak sesuai topik, jadi kategori ini memakai daftar judul pilihan
+//   manual (seed-data/category-fill-picks.json) lebih dulu; judul bertanda hanya cadangan.
 // Versi pertama: kategori berawalan A dan B yang tampil di publik.
 import type { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
 import { revalidateEntity, withRevalidateBatch } from "../src/lib/revalidate-map";
 import { AuditAction, writeAudit } from "../src/services/audit";
 import { restoreTraining } from "../src/services/training";
+import fillPicks from "./seed-data/category-fill-picks.json";
 import snapshot from "./seed-data/reference-catalog.json";
 import { hasReferenceTitle, plainTitle, referenceSnapshotSlugs, referenceTraining } from "./seed-data/reference-training";
 import { loadTrainingPhotos } from "./seed-training-photos";
 
 export const CATEGORY_FILL_KEY = "seed.categoryFill.version";
-export const CATEGORY_FILL_VERSION = "2026-10-21-ab-buat";
+export const CATEGORY_FILL_VERSION = "2026-10-22-cd";
 export const CATEGORY_FILL_TARGET = 10;
 export const CATEGORY_FILL_SLUGS = [
   "administrative",
@@ -40,7 +44,59 @@ export const CATEGORY_FILL_SLUGS = [
   "budgeting",
   "building",
   "business",
+  "cad",
+  "capital",
+  "carbon-trading",
+  "career",
+  "cargo",
+  "cash-management",
+  "center",
+  "chemist",
+  "circle",
+  "clearance",
+  "coaching",
+  "coating",
+  "collection",
+  "collector",
+  "communication",
+  "community",
+  "company",
+  "compensation",
+  "competency",
+  "complaint",
+  "compliance",
+  "conflict",
+  "container",
+  "content-creation",
+  "contract",
+  "control",
+  "corporate",
+  "correspondence",
+  "corrosion",
+  "cost",
+  "counseling",
+  "credit",
+  "csr",
+  "customer",
+  "customer-services",
+  "cyber-security",
+  "dangerous-goods",
+  "data",
+  "database",
+  "decision-making",
+  "defensive",
+  "design",
+  "development",
+  "digital",
+  "digital-forensic",
+  "digital-marketing",
+  "distribusi",
+  "drafting",
+  "driving",
+  "drone",
 ];
+// Slug pelatihan referensi pilihan manual per kategori, urut prioritas; dipakai sebelum judul bertanda.
+export const CATEGORY_FILL_PICKS: Record<string, string[]> = fillPicks;
 // Slug pelatihan referensi (di Sampah) per kategori, urut prioritas; dipakai setelah judul bertanda habis.
 export const CATEGORY_FILL_TOPIC_PICKS: Record<string, string[]> = {
   alignment: [
@@ -189,11 +245,14 @@ export async function planCategoryFill(): Promise<CategoryFillPlan> {
           referenceSnapshotSlugs[a.index].localeCompare(referenceSnapshotSlugs[b.index]),
       )
       .map(({ index }) => candidate(index));
-    const topic = (CATEGORY_FILL_TOPIC_PICKS[category.slug] ?? []).map((slug) => {
-      const index = indexBySlug.get(slug);
-      return index === undefined ? null : candidate(index);
-    });
-    const rows = [...tagged, ...topic].filter((row): row is Candidate => row !== null);
+    const bySlugs = (slugs: string[] | undefined) =>
+      (slugs ?? []).map((slug) => {
+        const index = indexBySlug.get(slug);
+        return index === undefined ? null : candidate(index);
+      });
+    const picked = bySlugs(CATEGORY_FILL_PICKS[category.slug]);
+    const topic = bySlugs(CATEGORY_FILL_TOPIC_PICKS[category.slug]);
+    const rows = [...picked, ...tagged, ...topic].filter((row): row is Candidate => row !== null);
     // Urutan asal tetap, yang sudah punya foto unik didahulukan.
     return { category, rows: [...rows.filter((row) => row.hasPhotos), ...rows.filter((row) => !row.hasPhotos)] };
   });
