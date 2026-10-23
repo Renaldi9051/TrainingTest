@@ -1,7 +1,8 @@
 // Foto unik per pelatihan sesuai topik judulnya (permintaan pemilik, 21 Okt 2026: foto tidak boleh
 // berulang dan harus nyambung dengan topik). Daftar foto ada di seed-data/gallery/training-photos.json:
 // foto Pexels (Pexels License) yang dipilih manual, 1 sampul + 4 galeri per pelatihan, alt bahasa
-// Indonesia. Uji coba pertama: kategori berawalan A dan B.
+// Indonesia. Kategori berawalan A-B, lalu C-D (22 Okt 2026). Untuk C-D, foto yang menampilkan orang
+// diutamakan orang Indonesia/Asia (pemilik); foto benda/lokasi melengkapi galeri.
 // - File foto tidak disimpan di repo; seed mengunduhnya dari CDN Pexels lalu mengunggahnya ke media
 //   library (nama file `pexels-<id>.jpg`; yang sudah ada dipakai ulang). Unduhan gagal = pelatihan itu
 //   dilewati dan dicatat, seed tetap jalan.
