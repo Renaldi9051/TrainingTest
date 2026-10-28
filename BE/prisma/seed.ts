@@ -154,7 +154,7 @@ async function main() {
   const fill = USE_REFERENCE ? await seedCategoryFill() : null;
   // 5 jadwal per kategori A-B untuk pelatihan berbeda (sekali per versi), setelah kategori terisi.
   const schedules = USE_REFERENCE && !MINIMAL ? await seedCategorySchedules() : null;
-  // Lokasi jadwal buatan seed dipindah ke area Jogja (sekali per versi), setelah jadwal kategori dibuat.
+  // Lokasi jadwal offline/hybrid dipindah ke area Jogja (sekali per versi), setelah jadwal kategori dibuat.
   const locations = MINIMAL ? null : await seedScheduleLocations();
 
   const profileResult = await seedProfilePage();
@@ -232,7 +232,6 @@ async function main() {
       ? "Lokasi jadwal Jogja: dilewati (versi ini sudah dijalankan)."
       : `Lokasi jadwal Jogja: ${locations.moved} jadwal dipindah (` +
           Object.entries(locations.byCity).map(([city, count]) => `${city} ${count}`).join(", ") + ")" +
-          `, ${locations.kept} jadwal buatan admin di luar Jogja dibiarkan` +
           (locations.failed.length > 0 ? `; gagal: ${locations.failed.join("; ")}.` : "."));
   }
   console.info(
