@@ -29,7 +29,7 @@ const METHOD_TEXT: Record<(typeof METHOD_PARAMS)[number], string> = {
   hybrid: "Hybrid",
 };
 const TYPE_TEXT: Record<(typeof TYPE_PARAMS)[number], string> = { public: "Public", "in-house": "In-house" };
-// Kategori di sidebar (10 teratas, keputusan pemilik 15 Okt); sisanya lewat "Tampilkan semua" yang
+// Kategori di sidebar (10 pertama urut abjad, keputusan pemilik 15 Okt); sisanya lewat "Tampilkan semua" yang
 // membuka overlay indeks A-Z (PRD 5.2).
 const VISIBLE_CATEGORIES = 10;
 // 15 per halaman (keputusan sebelumnya, pas untuk 3 kolom).
@@ -181,11 +181,11 @@ function CategoryFilter({ state, categories }: { state: CatalogState; categories
   const available = categories.filter(
     (category) => category.trainingCount > 0 || state.kategori.includes(category.slug),
   );
-  // Terpilih & unggulan dulu, lalu yang paling banyak pelatihannya.
-  const selected = available.filter((category) => state.kategori.includes(category.slug));
-  const rest = available
-    .filter((category) => !state.kategori.includes(category.slug))
-    .sort((a, b) => Number(b.featured) - Number(a.featured) || b.trainingCount - a.trainingCount);
+  // Terpilih dulu (supaya tetap terlihat), lalu sisanya urut abjad A-Z.
+  const byName = (a: PublicCategory, b: PublicCategory) =>
+    a.name.localeCompare(b.name, "id", { sensitivity: "base" });
+  const selected = available.filter((category) => state.kategori.includes(category.slug)).sort(byName);
+  const rest = available.filter((category) => !state.kategori.includes(category.slug)).sort(byName);
   const shown = [...selected, ...rest].slice(0, Math.max(VISIBLE_CATEGORIES, selected.length));
 
   return (
