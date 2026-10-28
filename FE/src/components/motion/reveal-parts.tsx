@@ -51,24 +51,6 @@ export function LineDraw({ className }: { className?: string }) {
   return <span aria-hidden data-reveal="line" className={cn("block h-px origin-left bg-border", className)} />;
 }
 
-// Angka statistik yang berjalan 0 -> nilai saat grupnya diputar (counter 900 ms). Rata kiri: posisi
-// awal teks tidak berubah saat jumlah digit bertambah (tanpa layout shift). Lebar dikunci oleh
-// salinan nilai final yang tak terlihat (tanpa geser layout); angka yang berjalan aria-hidden dan
-// pembaca layar langsung mendapat nilai final. Tanpa root reveal / layar pertama: angka final diam.
-export function CountUp({ value, display }: { value: number; display: string }) {
-  return (
-    <span className="inline-grid tabular-nums">
-      <span aria-hidden className="invisible col-start-1 row-start-1">
-        {display}
-      </span>
-      <span aria-hidden data-reveal-count={value} className="col-start-1 row-start-1">
-        {display}
-      </span>
-      <span className="sr-only">{display}</span>
-    </span>
-  );
-}
-
 // Bingkai gambar: wipe dari bawah + zoom 1,15 -> 1 pada <img> di dalamnya. Parent menentukan rasio.
 export function RevealImage({ className, children }: { className?: string; children: ReactNode }) {
   return (

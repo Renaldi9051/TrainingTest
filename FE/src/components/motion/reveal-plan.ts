@@ -47,7 +47,7 @@ export function revealDelay(kind: RevealKind, index: number, column = 0): number
 
 export type PlannedElement = { element: HTMLElement; from: RevealFrom; delay: number };
 
-export type RevealPlan = { elements: PlannedElement[]; scramble: HTMLElement[]; counters: HTMLElement[] };
+export type RevealPlan = { elements: PlannedElement[]; scramble: HTMLElement[] };
 
 // Kolom kartu dihitung dari posisi relatif terhadap daftarnya (0 = paling kiri).
 function columnOf(element: HTMLElement): number {
@@ -100,6 +100,5 @@ export function planReveal(root: HTMLElement): RevealPlan {
   }
 
   const scramble = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal-scramble]")).filter(owned);
-  const countUps = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal-count]")).filter(owned);
-  return { elements, scramble, counters: countUps };
+  return { elements, scramble };
 }

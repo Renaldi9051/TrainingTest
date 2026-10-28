@@ -47,9 +47,6 @@ export const IMAGE_ZOOM_FROM = 1.15;
 // Eyebrow scramble. Blueprint 450 ms; DESIGN.md 300 ms.
 export const SCRAMBLE_MS = 300;
 
-// Counter statistik (ease-out cubic, seperti blueprint).
-export const COUNTER_MS = 900;
-
 // Kata berganti di hero: tiap 2 s, terus berulang (berhenti hanya saat tab lain/di luar layar).
 // Pergantian sendiri 300 ms.
 export const ROTATE_INTERVAL_MS = 2000;
