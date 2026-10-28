@@ -7,7 +7,7 @@
 import type { TrainingMethod, TrainingType } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
 import { slugify } from "../src/lib/slug";
-import { JOGJA_CITIES } from "./seed-data/jogja-locations";
+import { JOGJA_LOCATIONS } from "./seed-data/jogja-locations";
 
 const TRAINING_COUNT = 1200;
 const BATCH = 200;
@@ -144,7 +144,6 @@ const MODULE_PREFIXES = ["Dasar-dasar", "Praktik", "Studi kasus", "Evaluasi dan 
 const DURATIONS = ["1 hari", "2 hari", "3 hari", "5 hari", "16 jam pelajaran"];
 const METHODS: TrainingMethod[] = ["ONLINE", "OFFLINE", "HYBRID"];
 const TYPE_SETS: TrainingType[][] = [["PUBLIC"], ["IN_HOUSE"], ["PUBLIC", "IN_HOUSE"]];
-const CITIES = JOGJA_CITIES;
 
 export async function seedBulk() {
   assertDevDatabase();
@@ -277,12 +276,13 @@ export async function seedBulk() {
         startDate.setUTCHours(0, 0, 0, 0);
         const endDate = new Date(startDate.getTime() + random.int(0, 2) * 24 * 60 * 60 * 1000);
         const method = random.pick(METHODS);
+        const [city, venue] = random.pick(JOGJA_LOCATIONS);
         return {
           trainingId: row.id,
           startDate,
           endDate,
-          city: method === "ONLINE" ? null : random.pick(CITIES),
-          venue: method === "ONLINE" ? "Zoom" : "Ruang pelatihan",
+          city: method === "ONLINE" ? null : city,
+          venue: method === "ONLINE" ? "Zoom" : venue,
           method,
           price: random.int(25, 120) * 100_000,
           status: random.next() < 0.15 ? ("FULL" as const) : ("OPEN" as const),

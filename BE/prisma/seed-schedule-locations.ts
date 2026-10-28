@@ -1,15 +1,16 @@
-// Pindahkan lokasi jadwal ke area Jogja (pemilik, 28 Okt 2026), sekali per versi: semua jadwal offline/hybrid
-// yang kotanya di luar JOGJA_LOCATIONS (semua jadwal yang ada dibuat seed, kata pemilik). Jadwal online (tanpa
-// kota) dan jadwal yang sudah di area Jogja tidak disentuh. Kota & tempat Jogja diberikan bergiliran (urut
-// tanggal mulai), lewat service admin (audit + revalidate) atas nama admin pertama.
+// Pindahkan lokasi jadwal ke hotel/gedung nyata di area Jogja (pemilik, 28 Okt 2026), sekali per versi: semua
+// jadwal offline/hybrid yang kotanya di luar Jogja (semua jadwal yang ada dibuat seed, kata pemilik) atau yang
+// masih memakai tempat generik seed sebelumnya (GENERIC_VENUES). Jadwal online (tanpa kota) dan jadwal Jogja
+// dengan tempat lain tidak disentuh. Lokasi diberikan bergiliran (urut tanggal mulai), lewat service admin
+// (audit + revalidate) atas nama admin pertama.
 import { getDb } from "../src/lib/db";
 import { withRevalidateBatch } from "../src/lib/revalidate-map";
 import { scheduleUpdateSchema } from "../src/lib/validators/schedule";
 import { updateSchedule } from "../src/services/schedule";
-import { JOGJA_CITIES, JOGJA_LOCATIONS } from "./seed-data/jogja-locations";
+import { GENERIC_VENUES, JOGJA_CITIES, JOGJA_LOCATIONS } from "./seed-data/jogja-locations";
 
 export const SCHEDULE_LOCATIONS_KEY = "seed.scheduleLocations.version";
-export const SCHEDULE_LOCATIONS_VERSION = "2026-10-28-jogja";
+export const SCHEDULE_LOCATIONS_VERSION = "2026-10-28-jogja-venues";
 
 // Lokasi Jogja untuk jadwal ke-`index` yang dipindah. Murni supaya bisa diuji.
 export function jogjaLocationFor(index: number): { city: string; venue: string } {
@@ -26,7 +27,11 @@ export async function seedScheduleLocations(): Promise<ScheduleLocationsResult |
   const owner = await db.user.findFirstOrThrow({ orderBy: { createdAt: "asc" }, select: { id: true } });
 
   const rows = await db.schedule.findMany({
-    where: { deletedAt: null, city: { not: null, notIn: [...JOGJA_CITIES] } },
+    where: {
+      deletedAt: null,
+      city: { not: null },
+      OR: [{ city: { notIn: [...JOGJA_CITIES] } }, { venue: { in: [...GENERIC_VENUES] } }],
+    },
     orderBy: [{ startDate: "asc" }, { id: "asc" }],
     select: { id: true },
   });
