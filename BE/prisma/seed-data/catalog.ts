@@ -5,6 +5,7 @@
 import { slugify } from "../../src/lib/slug";
 import type { RichTextDoc } from "../../src/lib/rich-text";
 import type { CategoryIcon } from "../../src/lib/validators/category";
+import { JOGJA_LOCATIONS } from "./jogja-locations";
 import { paragraphs } from "./rich-text";
 
 type Level = "dasar" | "menengah" | "lanjut";
@@ -1030,18 +1031,7 @@ function priceOf(training: SeedTraining): number {
 
 // ===== Jadwal: 2-3 sesi per pelatihan dalam 6 bulan sejak `today` (YYYY-MM-DD, WIB) =====
 
-const CITIES: [string, string][] = [
-  ["Jakarta", "Ruang pelatihan, Jakarta Selatan"],
-  ["Bandung", "Hotel mitra, Bandung"],
-  ["Surabaya", "Ruang pelatihan, Surabaya"],
-  ["Yogyakarta", "Hotel mitra, Yogyakarta"],
-  ["Semarang", "Ruang pelatihan, Semarang"],
-  ["Medan", "Hotel mitra, Medan"],
-  ["Makassar", "Ruang pelatihan, Makassar"],
-  ["Denpasar", "Hotel mitra, Denpasar"],
-  ["Balikpapan", "Ruang pelatihan, Balikpapan"],
-  ["Palembang", "Hotel mitra, Palembang"],
-];
+const CITIES = JOGJA_LOCATIONS;
 const ONLINE_VENUES = ["Zoom", "Google Meet"];
 
 function addDays(date: string, days: number): string {

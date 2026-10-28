@@ -10,6 +10,7 @@ import { appDateString, appToday } from "../src/lib/time";
 import { scheduleCreateSchema, type ScheduleCreateInput } from "../src/lib/validators/schedule";
 import { createSchedule } from "../src/services/schedule";
 import { publicTrainingWhere } from "../src/services/training-visibility";
+import { JOGJA_LOCATIONS } from "./seed-data/jogja-locations";
 
 export const CATEGORY_SCHEDULES_KEY = "seed.categorySchedules.version";
 export const CATEGORY_SCHEDULES_VERSION = "2026-10-22-ab-5";
@@ -35,14 +36,7 @@ export const CATEGORY_SCHEDULE_SLUGS = [
 ];
 
 const METHODS = ["OFFLINE", "ONLINE", "OFFLINE", "HYBRID", "ONLINE"] as const;
-const CITIES: [string, string][] = [
-  ["Jakarta", "Ruang pelatihan, Jakarta Selatan"],
-  ["Bandung", "Hotel mitra, Bandung"],
-  ["Yogyakarta", "Hotel mitra, Yogyakarta"],
-  ["Surabaya", "Ruang pelatihan, Surabaya"],
-  ["Denpasar", "Hotel mitra, Denpasar"],
-  ["Batam", "Hotel mitra, Batam"],
-];
+const CITIES = JOGJA_LOCATIONS;
 const ONLINE_VENUE = "Zoom";
 const PRICES = [5_500_000, 6_000_000, 6_500_000, 7_000_000, 7_500_000];
 const ONLINE_DISCOUNT = 1_500_000;

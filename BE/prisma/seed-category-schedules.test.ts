@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { scheduleCreateSchema } from "../src/lib/validators/schedule";
 import { CATEGORY_FILL_SLUGS } from "./seed-category-fill";
 import { buildCategorySchedule, CATEGORY_SCHEDULE_SLUGS, SCHEDULES_PER_CATEGORY } from "./seed-category-schedules";
+import { JOGJA_CITIES } from "./seed-data/jogja-locations";
 import { referenceCategories } from "./seed-data/reference-training";
 
 const TODAY = "2026-10-22";
@@ -28,12 +29,12 @@ describe("jadwal kategori A-B", () => {
     }
   });
 
-  it("online tanpa kota dan lebih murah; offline dan hybrid punya kota", () => {
+  it("online tanpa kota; offline dan hybrid di area Jogja", () => {
     for (const schedule of all) {
       expect(schedule.method === "ONLINE" ? schedule.city === null : schedule.city !== null).toBe(true);
     }
     expect(new Set(all.map((schedule) => schedule.method))).toEqual(new Set(["OFFLINE", "ONLINE", "HYBRID"]));
-    expect(new Set(all.map((schedule) => schedule.city)).size).toBeGreaterThan(5);
+    expect(new Set(all.flatMap((schedule) => schedule.city ?? []))).toEqual(new Set(JOGJA_CITIES));
   });
 
   it("jadwal satu kategori tersebar di tanggal berbeda", () => {

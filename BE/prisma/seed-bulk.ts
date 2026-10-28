@@ -7,6 +7,7 @@
 import type { TrainingMethod, TrainingType } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
 import { slugify } from "../src/lib/slug";
+import { JOGJA_CITIES } from "./seed-data/jogja-locations";
 
 const TRAINING_COUNT = 1200;
 const BATCH = 200;
@@ -143,7 +144,7 @@ const MODULE_PREFIXES = ["Dasar-dasar", "Praktik", "Studi kasus", "Evaluasi dan 
 const DURATIONS = ["1 hari", "2 hari", "3 hari", "5 hari", "16 jam pelajaran"];
 const METHODS: TrainingMethod[] = ["ONLINE", "OFFLINE", "HYBRID"];
 const TYPE_SETS: TrainingType[][] = [["PUBLIC"], ["IN_HOUSE"], ["PUBLIC", "IN_HOUSE"]];
-const CITIES = ["Jakarta", "Bandung", "Surabaya", "Yogyakarta", "Bali", "Medan", "Makassar", "Batam"];
+const CITIES = JOGJA_CITIES;
 
 export async function seedBulk() {
   assertDevDatabase();

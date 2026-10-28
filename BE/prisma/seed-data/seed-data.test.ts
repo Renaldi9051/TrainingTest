@@ -3,6 +3,7 @@ import { slugSchema } from "../../src/lib/slug";
 import { buildAll } from "./build";
 import { buildSchedules, categories, publishOrder, trainings } from "./catalog";
 import * as content from "./content";
+import { JOGJA_CITIES } from "./jogja-locations";
 
 // Data contoh dipakai seed & skrip sinkronisasi training_dev: harus lolos validator API dan
 // tidak memuat data kontak sungguhan.
@@ -91,7 +92,7 @@ describe("data contoh", () => {
       expect(schedule.method === "ONLINE" ? schedule.city === null : schedule.city !== null).toBe(true);
     }
     expect(new Set(schedules.map((schedule) => schedule.status))).toEqual(new Set(["OPEN", "FULL"]));
-    expect(new Set(schedules.map((schedule) => schedule.city)).size).toBeGreaterThan(5);
+    expect(new Set(schedules.flatMap((schedule) => schedule.city ?? []))).toEqual(new Set(JOGJA_CITIES));
   });
 
   it("menu sesuai struktur yang disepakati", () => {
