@@ -15,6 +15,7 @@ import { seedBulk } from "./seed-bulk";
 import { seedCategoryCleanup } from "./seed-category-cleanup";
 import { seedCategoryFill } from "./seed-category-fill";
 import { seedCategorySchedules } from "./seed-category-schedules";
+import { seedScheduleLocations } from "./seed-schedule-locations";
 import { seedHomeCopy } from "./seed-home-copy";
 import { seedSingleCategory } from "./seed-single-category";
 import { type ContentSeedResult, seedContent } from "./seed-content";
@@ -153,6 +154,8 @@ async function main() {
   const fill = USE_REFERENCE ? await seedCategoryFill() : null;
   // 5 jadwal per kategori A-B untuk pelatihan berbeda (sekali per versi), setelah kategori terisi.
   const schedules = USE_REFERENCE && !MINIMAL ? await seedCategorySchedules() : null;
+  // Lokasi jadwal buatan seed dipindah ke area Jogja (sekali per versi), setelah jadwal kategori dibuat.
+  const locations = MINIMAL ? null : await seedScheduleLocations();
 
   const profileResult = await seedProfilePage();
   // Mode minimal (e2e) tanpa halaman pembayaran; spec e2e membuat halamannya sendiri.
@@ -223,6 +226,14 @@ async function main() {
             schedules.summary.map((item) => `${item.slug} ${item.before}->${item.after}`).join(", ") + ")" +
             (schedules.failed.length > 0 ? `; gagal: ${schedules.failed.join("; ")}.` : "."));
     }
+  }
+  if (locations !== null) {
+    console.info(locations === "dilewati"
+      ? "Lokasi jadwal Jogja: dilewati (versi ini sudah dijalankan)."
+      : `Lokasi jadwal Jogja: ${locations.moved} jadwal dipindah (` +
+          Object.entries(locations.byCity).map(([city, count]) => `${city} ${count}`).join(", ") + ")" +
+          `, ${locations.kept} jadwal buatan admin di luar Jogja dibiarkan` +
+          (locations.failed.length > 0 ? `; gagal: ${locations.failed.join("; ")}.` : "."));
   }
   console.info(
     contentResult
