@@ -7,8 +7,8 @@ type PublicImageProps = {
   image: PublicImageData;
   sizes: string;
   className?: string;
-  // Palet C (DESIGN 2, v0.3): foto tampil berwarna. Grayscale hanya untuk logo klien dan opsi
-  // photoStyle "grayscale" di hero.
+  // Palet C (DESIGN 2, v0.3): foto tampil berwarna. Grayscale hanya untuk logo klien, opsi
+  // photoStyle "grayscale" di hero, dan sampul kartu pelatihan (berwarna saat hover/fokus).
   grayscale?: boolean;
   // Gambar utama di layar pertama (LCP): dimuat langsung dengan prioritas tinggi.
   priority?: boolean;

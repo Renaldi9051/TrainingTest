@@ -10,8 +10,9 @@ import { PublicImage } from "./public-image";
 
 export const CARD_IMAGE_SIZES = "(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw";
 
-// Kartu pelatihan DESIGN 8.4 (palet C v0.3): kotak radius 12 px ber-border, gambar 4:3 berwarna ->
-// label mono --accent-ink -> judul h3 -> meta, teks berjarak 18 px dari tepi.
+// Kartu pelatihan DESIGN 8.4 (palet C v0.3): kotak radius 12 px ber-border, gambar 4:3 -> label mono
+// --accent-ink -> judul h3 -> meta, teks berjarak 18 px dari tepi. Gambar hitam putih dan kembali
+// berwarna saat hover/fokus (pemilik, 28 Okt 2026, menggantikan foto kartu berwarna di DESIGN 2 v0.3).
 // Hover: border --primary + kartu naik 3 px, gambar zoom 1.03, sudut Viewfinder 12 px masuk, judul bergaris bawah,
 // label "Lihat →" mengikuti kursor (PointerEffects, hanya desktop). Di grid: gambar wipe dari bawah
 // + zoom 1,15 -> 1 bersama kartunya.
@@ -55,7 +56,8 @@ export function TrainingCard({
             <PublicImage
               image={training.cover}
               sizes={CARD_IMAGE_SIZES}
-              className="transition-transform duration-300 ease-standard group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              grayscale
+              className="transition-[transform,filter] duration-300 ease-standard group-hover:scale-[1.03] group-hover:grayscale-0 group-focus-within:grayscale-0 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             />
             <Viewfinder size="sm" tone="plain" hover />
           </>
