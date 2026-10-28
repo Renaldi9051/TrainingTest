@@ -43,3 +43,6 @@ docs/blueprint.html
 *.pem
 npm-debug.log*
 .vercel
+
+# foto sumber lokal (bahan gambar pelatihan), tidak pernah di-commit
+/Foto/
