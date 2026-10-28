@@ -397,7 +397,7 @@ function ScheduleDialog({
               <Input type="date" {...form.register("endDate")} />
             </FormField>
             <FormField id={sid("city")} label="Kota" error={errors.city?.message}>
-              <Input {...form.register("city")} placeholder="Jakarta" />
+              <Input {...form.register("city")} placeholder="Sleman" />
             </FormField>
             <FormField id={sid("venue")} label="Tempat" error={errors.venue?.message}>
               <Input {...form.register("venue")} placeholder="Nama hotel / Zoom" />
