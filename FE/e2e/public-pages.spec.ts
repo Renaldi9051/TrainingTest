@@ -169,22 +169,11 @@ test.describe("halaman publik", () => {
       secondaryCta: { label: "Lihat jadwal", href: "/jadwal" },
       slides: [{ mediaId: heroImage }],
     });
-    await section("STATS", {
-      eyebrow: "01 / Angka",
-      heading: "Dipercaya banyak organisasi",
-      items: [
-        { value: 100, prefix: "", suffix: "+", label: "Trainer" },
-        { value: 1000, prefix: "", suffix: "+", label: "Judul pelatihan" },
-        { value: 4, prefix: "", suffix: "", label: "Negara" },
-      ],
-    });
-    await section("SERVICES", { eyebrow: "02 / Layanan", heading: "Layanan kami", mode: "auto", limit: 4, cta: { label: "Semua layanan", href: "/layanan" } });
-    await section("CATEGORIES", { eyebrow: "03 / Kategori", heading: "Kategori populer", mode: "auto", limit: 12 });
-    await section("LATEST_TRAININGS", { eyebrow: "04 / Terbaru", heading: "Pelatihan terbaru", mode: "auto", limit: 3 });
-    await section("UPCOMING_SCHEDULES", { eyebrow: "05 / Jadwal", heading: "Jadwal terdekat", limit: 5 });
-    await section("CLIENTS", { eyebrow: "06 / Klien", heading: "Klien kami", mode: "auto", limit: 24 });
-    await section("VISION_MISSION", { eyebrow: "07 / Visi & misi", vision: "Menjadi mitra belajar yang dipercaya.", mission: ["Program relevan.", "Trainer praktisi."] });
-    await section("TESTIMONIALS", { eyebrow: "08 / Testimoni", heading: "Kata peserta", mode: "auto", limit: 6 });
+    await section("LATEST_TRAININGS", { eyebrow: "01 / Terbaru", heading: "Pelatihan terbaru", mode: "auto", limit: 3 });
+    await section("UPCOMING_SCHEDULES", { eyebrow: "02 / Jadwal", heading: "Jadwal terdekat", limit: 5 });
+    await section("CLIENTS", { eyebrow: "03 / Klien", heading: "Klien kami", mode: "auto", limit: 24 });
+    await section("VISION_MISSION", { eyebrow: "04 / Visi & misi", vision: "Menjadi mitra belajar yang dipercaya.", mission: ["Program relevan.", "Trainer praktisi."] });
+    await section("TESTIMONIALS", { eyebrow: "05 / Testimoni", heading: "Kata peserta", mode: "auto", limit: 6 });
     await section("CTA", {
       eyebrow: "Konsultasi",
       heading: "Butuh pelatihan khusus untuk tim Anda?",
@@ -197,7 +186,7 @@ test.describe("halaman publik", () => {
     await expect.poll(async () => (await page.request.get("/")).status()).toBe(200);
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1, name: /\[UJI\] Tim belajar lebih terarah/ })).toBeVisible();
-    for (const heading of ["Dipercaya banyak organisasi", "Layanan kami", "Pelatihan terbaru", "Jadwal terdekat", "Klien kami", "Kata peserta"]) {
+    for (const heading of ["Pelatihan terbaru", "Jadwal terdekat", "Klien kami", "Kata peserta"]) {
       await expect(page.getByRole("heading", { level: 2, name: heading })).toBeVisible();
     }
     expect(await headingIssues(page)).toEqual([]);
@@ -322,18 +311,18 @@ test.describe("halaman publik", () => {
     await expect(page.getByRole("heading", { level: 1, name: new RegExp(`Halaman draf ${id}`) })).toBeVisible();
 
     const sections = ((await (await page.request.get("/api/admin/home-sections")).json()) as { data: { id: string; type: string }[] }).data;
-    const stats = sections.find((section) => section.type === "STATS");
-    await patch(page.request, `/admin/home-sections/${stats?.id}`, { visible: false });
+    const clients = sections.find((section) => section.type === "CLIENTS");
+    await patch(page.request, `/admin/home-sections/${clients?.id}`, { visible: false });
     await page.goto("/admin/preview?type=home");
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByText("Tersembunyi · tidak tampil di publik")).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2, name: "Dipercaya banyak organisasi" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Klien kami" })).toBeVisible();
 
     // Keluar dari pratinjau: section tersembunyi tidak tampil.
     await page.getByRole("button", { name: "Keluar dari pratinjau" }).click();
     await expect(page.getByText(/Mode pratinjau/)).toHaveCount(0);
-    await expect(page.getByRole("heading", { level: 2, name: "Dipercaya banyak organisasi" })).toHaveCount(0);
-    await patch(page.request, `/admin/home-sections/${stats?.id}`, { visible: true });
+    await expect(page.getByRole("heading", { level: 2, name: "Klien kami" })).toHaveCount(0);
+    await patch(page.request, `/admin/home-sections/${clients?.id}`, { visible: true });
   });
 
   test("screenshot 360/768/1280 px @screens", async ({ page }) => {

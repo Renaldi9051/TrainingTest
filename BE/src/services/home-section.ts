@@ -8,6 +8,8 @@ import {
   HOME_SECTION_CONTENT_SCHEMAS,
   HOME_SECTION_LABELS,
   homeSectionMediaRefs,
+  isRetiredHomeSectionType,
+  type RetiredHomeSectionType,
   safeParseHomeSectionContent,
   SINGLE_INSTANCE_TYPES,
   type HomeSectionContent,
@@ -16,13 +18,11 @@ import {
   type HomeSectionUpdateInput,
 } from "@/lib/validators/home-section";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
-import { nonEmptyPublicCategoryWhere, publicCountInclude, toPublicCategory, type PublicCategory } from "@/services/category";
 import { toPublicClient, type PublicClient } from "@/services/client";
 import { assertMediaRefs, getMediaMap, toPublicImage, type MediaDto, type PublicImage } from "@/services/media";
 import { nextOrder } from "@/services/reorder";
 import { publicScheduleInclude, toPublicSchedule, type PublicSchedule } from "@/services/schedule";
 import { resolveSelections, type Selection } from "@/services/selection";
-import { publicServiceWhere, resolveServiceSelections, type PublicServiceCard } from "@/services/service";
 import { toPublicTestimonial, type PublicTestimonial } from "@/services/testimonial";
 import { cardInclude, toCard, type PublicTrainingCard } from "@/services/training-public";
 import { publicTrainingWhere } from "@/services/training-visibility";
@@ -260,16 +260,12 @@ export type PublicHeroSlide = {
 
 export type PublicHomeSection =
   | (Base<"HERO"> & Omit<C<"HERO">, "slides"> & { slides: PublicHeroSlide[] })
-  | (Base<"STATS"> & C<"STATS">)
-  | (Base<"SERVICES"> & Omit<C<"SERVICES">, SelectionKeys> & { items: PublicServiceCard[] })
-  | (Base<"CATEGORIES"> & Omit<C<"CATEGORIES">, SelectionKeys> & { items: PublicCategory[] })
   | (Base<"LATEST_TRAININGS"> & Omit<C<"LATEST_TRAININGS">, SelectionKeys> & { items: PublicTrainingCard[] })
   | (Base<"UPCOMING_SCHEDULES"> & Omit<C<"UPCOMING_SCHEDULES">, "limit"> & { items: PublicSchedule[] })
   | (Base<"CLIENTS"> & Omit<C<"CLIENTS">, SelectionKeys> & { items: PublicClient[] })
   | (Base<"VISION_MISSION"> & C<"VISION_MISSION">)
   | (Base<"TESTIMONIALS"> & Omit<C<"TESTIMONIALS">, SelectionKeys> & { items: PublicTestimonial[] })
-  | (Base<"CTA"> & C<"CTA">)
-  | (Base<"MARQUEE"> & { heading: string; items: string[] });
+  | (Base<"CTA"> & C<"CTA">);
 
 // Pratinjau admin: semua section (termasuk yang disembunyikan) + penanda tampil & kosong.
 export type PreviewHomeSection = PublicHomeSection & {
@@ -287,9 +283,14 @@ function omitKeys<T extends object, K extends keyof T>(value: T, keys: readonly 
 // Konfigurasi pilihan (mode, limit, ids) tidak ikut ke respons publik.
 const omitSelection = <T extends Selection>(content: T) => omitKeys(content, ["mode", "limit", "ids"] as const);
 
-type Parsed = { row: HomeSection; section: HomeSectionContent };
+// Section yang dirender di beranda (tanpa type yang sudah dipensiunkan).
+type ActiveHomeSectionContent = Exclude<HomeSectionContent, { type: RetiredHomeSectionType }>;
+type Parsed = { row: HomeSection; section: ActiveHomeSectionContent };
 
-function selectionsOf<K extends HomeSectionType>(parsed: Parsed[], type: K): { id: string; content: C<K> }[] {
+const isActiveSection = (section: HomeSectionContent): section is ActiveHomeSectionContent =>
+  !isRetiredHomeSectionType(section.type);
+
+function selectionsOf<K extends ActiveHomeSectionContent["type"]>(parsed: Parsed[], type: K): { id: string; content: C<K> }[] {
   return parsed.flatMap(({ row, section }) =>
     section.type === type ? [{ id: row.id, content: section.content as C<K> }] : [],
   );
@@ -297,46 +298,24 @@ function selectionsOf<K extends HomeSectionType>(parsed: Parsed[], type: K): { i
 
 // Data semua section di-resolve sekaligus dengan jumlah query tetap: per entitas maksimal satu
 // query untuk semua id manual + satu query mode auto (lihat resolveSelections), satu query jadwal,
-// satu query media. Tidak bergantung jumlah section.
+// satu query media. Tidak bergantung jumlah section. Type yang dipensiunkan dilewati.
 export async function resolveHomeSections(rows: HomeSection[], now = new Date()): Promise<PreviewHomeSection[]> {
   const parsed: Parsed[] = rows.flatMap((row) => {
     const section = parsedContent(row);
-    return section ? [{ row, section }] : [];
+    return section && isActiveSection(section) ? [{ row, section }] : [];
   });
   const db = getDb();
   const today = appToday(now);
   const trainingWhere = publicTrainingWhere(now);
 
-  const services = selectionsOf(parsed, "SERVICES");
-  const categories = selectionsOf(parsed, "CATEGORIES");
   const trainings = selectionsOf(parsed, "LATEST_TRAININGS");
   const schedules = selectionsOf(parsed, "UPCOMING_SCHEDULES");
   const clients = selectionsOf(parsed, "CLIENTS");
   const testimonials = selectionsOf(parsed, "TESTIMONIALS");
   const scheduleLimit = Math.max(0, ...schedules.map((item) => item.content.limit));
-  const marquees = selectionsOf(parsed, "MARQUEE");
-  // Teks berjalan dari judul layanan: satu query untuk semua section (jumlah terbesar).
-  const marqueeServiceLimit = Math.max(0, ...marquees.filter((item) => item.content.source === "services").map((item) => item.content.limit));
 
-  const [serviceItems, categoryItems, trainingItems, scheduleRows, clientItems, testimonialItems, media, serviceTitles] =
+  const [trainingItems, scheduleRows, clientItems, testimonialItems, media] =
     await Promise.all([
-      resolveServiceSelections(services.map((item) => item.content)),
-      resolveSelections(
-        categories.map((item) => item.content),
-        {
-          byIds: (ids) =>
-            db.category.findMany({ where: { id: { in: ids }, ...nonEmptyPublicCategoryWhere(now) }, include: publicCountInclude(now) }),
-          // Auto: kategori unggulan yang punya >= 1 pelatihan publik, dihitung di query (bukan loop).
-          top: (limit) =>
-            db.category.findMany({
-              where: { deletedAt: null, featured: true, trainings: { some: { training: trainingWhere } } },
-              include: publicCountInclude(now),
-              orderBy: [{ order: "asc" }, { name: "asc" }],
-              take: limit,
-            }),
-          toItem: toPublicCategory,
-        },
-      ),
       resolveSelections(
         trainings.map((item) => item.content),
         {
@@ -396,20 +375,10 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
         },
       ),
       getMediaMap(parsed.flatMap(({ section }) => homeSectionMediaRefs(section).map((ref) => ref.mediaId))),
-      marqueeServiceLimit
-        ? db.service.findMany({
-            where: publicServiceWhere,
-            select: { title: true },
-            orderBy: [{ order: "asc" }, { title: "asc" }],
-            take: marqueeServiceLimit,
-          })
-        : Promise.resolve([]),
     ]);
 
   const itemsFor = <T,>(list: { id: string }[], resolved: T[][]) =>
     new Map(list.map((item, index) => [item.id, resolved[index] ?? []]));
-  const serviceMap = itemsFor(services, serviceItems);
-  const categoryMap = itemsFor(categories, categoryItems);
   const trainingMap = itemsFor(trainings, trainingItems);
   const clientMap = itemsFor(clients, clientItems);
   const testimonialMap = itemsFor(testimonials, testimonialItems);
@@ -438,25 +407,10 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
         });
         return { ...base, type: "HERO", ...rest, slides: resolved, empty: false };
       }
-      case "STATS":
-        return { ...base, type: "STATS", ...section.content, empty: false };
       case "VISION_MISSION":
         return { ...base, type: "VISION_MISSION", ...section.content, empty: false };
       case "CTA":
         return { ...base, type: "CTA", ...section.content, empty: false };
-      case "MARQUEE": {
-        const { heading, source, items: custom, limit } = section.content;
-        const items = source === "services" ? serviceTitles.slice(0, limit).map((row) => row.title) : custom;
-        return { ...base, type: "MARQUEE", heading, items, empty: items.length === 0 };
-      }
-      case "SERVICES": {
-        const items = serviceMap.get(row.id) ?? [];
-        return { ...base, type: "SERVICES", ...omitSelection(section.content), items, empty: items.length === 0 };
-      }
-      case "CATEGORIES": {
-        const items = categoryMap.get(row.id) ?? [];
-        return { ...base, type: "CATEGORIES", ...omitSelection(section.content), items, empty: items.length === 0 };
-      }
       case "LATEST_TRAININGS": {
         const items = trainingMap.get(row.id) ?? [];
         return { ...base, type: "LATEST_TRAININGS", ...omitSelection(section.content), items, empty: items.length === 0 };

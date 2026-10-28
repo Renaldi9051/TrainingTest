@@ -468,66 +468,28 @@ export const homeSections = [
       decor: true,
     },
   },
-  {
-    type: "SERVICES",
-    content: {
-      eyebrow: "01 / Layanan",
-      heading: "Program dan layanan training kami",
-      intro: "Pilih program drone dan kreatif yang paling sesuai dengan kebutuhan Anda dan tim.",
-      mode: "auto",
-      limit: 4,
-      cta: { label: "Semua layanan", href: "/layanan" },
-    },
-  },
-  { type: "VISION_MISSION", content: { eyebrow: "02 / Visi & misi", ...visionMission } },
-  { type: "CLIENTS", content: { eyebrow: "03 / Klien", heading: "Klien kami", mode: "auto", limit: 24 } },
+  { type: "VISION_MISSION", content: { eyebrow: "01 / Visi & misi", ...visionMission } },
+  { type: "CLIENTS", content: { eyebrow: "02 / Klien", heading: "Klien kami", mode: "auto", limit: 24 } },
   {
     type: "LATEST_TRAININGS",
     content: {
-      eyebrow: "04 / Terbaru",
+      eyebrow: "03 / Terbaru",
       heading: "Training terupdate",
       mode: "auto",
-      limit: 12,
+      limit: 6,
       cta: { label: "Lihat selengkapnya", href: "/pelatihan" },
-    },
-  },
-  {
-    type: "STATS",
-    content: {
-      eyebrow: "05 / Angka",
-      heading: "Dipercaya banyak organisasi",
-      items: [
-        { value: 50, prefix: "", suffix: "+", label: "Instruktur dan pilot praktisi" },
-        { value: 330, prefix: "", suffix: "+", label: "Judul pelatihan" },
-        { value: 15, prefix: "", suffix: "", label: "Bidang drone dan kreatif" },
-        { value: 2000, prefix: "", suffix: "+", label: "Jam terbang latihan" },
-      ],
-    },
-  },  {
-    // Teks besar berjalan mengikuti scroll (seperti blueprint, setelah statistik).
-    type: "MARQUEE",
-    content: { heading: "Bidang layanan", source: "services", items: [], limit: 6 },
-  },
-  {
-    type: "CATEGORIES",
-    content: {
-      eyebrow: "06 / Kategori",
-      heading: "Kategori populer",
-      mode: "auto",
-      limit: 12,
-      cta: { label: "Semua pelatihan", href: "/pelatihan" },
     },
   },
   {
     type: "UPCOMING_SCHEDULES",
     content: {
-      eyebrow: "07 / Jadwal",
+      eyebrow: "04 / Jadwal",
       heading: "Jadwal terdekat",
       limit: 5,
       cta: { label: "Semua jadwal", href: "/jadwal" },
     },
   },
-  { type: "TESTIMONIALS", content: { eyebrow: "08 / Testimoni", heading: "Kata peserta", mode: "auto", limit: 6 } },
+  { type: "TESTIMONIALS", content: { eyebrow: "05 / Testimoni", heading: "Kata peserta", mode: "auto", limit: 6 } },
   {
     type: "CTA",
     content: {

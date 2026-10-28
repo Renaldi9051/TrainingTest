@@ -929,16 +929,12 @@ type PublicBase<K extends HomeSectionType> = { id: string; type: K };
 
 export type PublicHomeSection =
   | (PublicBase<"HERO"> & Omit<HomeSectionContentMap["HERO"], "slides"> & { slides: PublicHeroSlide[] })
-  | (PublicBase<"STATS"> & HomeSectionContentMap["STATS"])
-  | (PublicBase<"SERVICES"> & Omit3<HomeSectionContentMap["SERVICES"]> & { items: PublicServiceCard[] })
-  | (PublicBase<"CATEGORIES"> & Omit3<HomeSectionContentMap["CATEGORIES"]> & { items: PublicCategory[] })
   | (PublicBase<"LATEST_TRAININGS"> & Omit3<HomeSectionContentMap["LATEST_TRAININGS"]> & { items: PublicTrainingCard[] })
   | (PublicBase<"UPCOMING_SCHEDULES"> & Omit<HomeSectionContentMap["UPCOMING_SCHEDULES"], "limit"> & { items: PublicSchedule[] })
   | (PublicBase<"CLIENTS"> & Omit3<HomeSectionContentMap["CLIENTS"]> & { items: PublicClient[] })
   | (PublicBase<"VISION_MISSION"> & HomeSectionContentMap["VISION_MISSION"])
   | (PublicBase<"TESTIMONIALS"> & Omit3<HomeSectionContentMap["TESTIMONIALS"]> & { items: PublicTestimonial[] })
-  | (PublicBase<"CTA"> & HomeSectionContentMap["CTA"])
-  | (PublicBase<"MARQUEE"> & Decor & { heading: string; items: string[] });
+  | (PublicBase<"CTA"> & HomeSectionContentMap["CTA"]);
 
 export type PublicHome = { sections: PublicHomeSection[] };
 

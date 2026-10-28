@@ -18,13 +18,9 @@ describe("data contoh", () => {
     expect(built.mediaPartners).toHaveLength(3);
     expect(built.homeSections.map((section) => section.type)).toEqual([
       "HERO",
-      "SERVICES",
       "VISION_MISSION",
       "CLIENTS",
       "LATEST_TRAININGS",
-      "STATS",
-      "MARQUEE",
-      "CATEGORIES",
       "UPCOMING_SCHEDULES",
       "TESTIMONIALS",
       "CTA",

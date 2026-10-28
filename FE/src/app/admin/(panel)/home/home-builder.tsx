@@ -24,9 +24,10 @@ import { useDeleteWithUndo } from "@/hooks/use-delete-with-undo";
 import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
 import type { HomeSection } from "@/lib/api/types";
 import {
+  ADDABLE_HOME_SECTION_TYPES,
   HOME_SECTION_DESCRIPTIONS,
   HOME_SECTION_LABELS,
-  HOME_SECTION_TYPES,
+  isRetiredHomeSectionType,
   sectionSummary,
   unavailableTypes,
 } from "@/lib/home-sections";
@@ -95,7 +96,7 @@ export function HomeBuilder() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
-        {HOME_SECTION_TYPES.map((type) => {
+        {ADDABLE_HOME_SECTION_TYPES.map((type) => {
           const reason = unavailable[type];
           const item = (
             <DropdownMenuItem
@@ -173,17 +174,19 @@ export function HomeBuilder() {
             renderItem={(section, handle) => {
               const index = sections.indexOf(section);
               const label = `${HOME_SECTION_LABELS[section.type]}${section.title ? ` (${section.title})` : ""}`;
+              // Type yang dipensiunkan tidak dirender di beranda: toggle tampil tidak berarti, tinggal ubah/hapus.
+              const retired = isRetiredHomeSectionType(section.type);
               return (
-                <div className={cn("flex items-center gap-3 py-2", !section.visible && "opacity-60")}>
+                <div className={cn("flex items-center gap-3 py-2", (retired || !section.visible) && "opacity-60")}>
                   {handle}
                   <span className="font-mono text-xs text-fg-muted">{String(index + 1).padStart(2, "0")}</span>
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 text-sm font-medium text-fg-strong">
                       {label}
-                      {!section.visible ? (
+                      {retired || !section.visible ? (
                         <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase text-fg-muted">
                           <EyeOffIcon className="size-3" strokeWidth={1.5} aria-hidden />
-                          Tersembunyi
+                          {retired ? "Tidak tampil di beranda" : "Tersembunyi"}
                         </span>
                       ) : null}
                     </p>
@@ -191,11 +194,13 @@ export function HomeBuilder() {
                       {sectionSummary(section)}
                     </p>
                   </div>
-                  <Switch
-                    checked={section.visible}
-                    onCheckedChange={(visible) => toggle.mutate({ id: section.id, visible })}
-                    aria-label={`Tampilkan ${label} di beranda`}
-                  />
+                  {retired ? null : (
+                    <Switch
+                      checked={section.visible}
+                      onCheckedChange={(visible) => toggle.mutate({ id: section.id, visible })}
+                      aria-label={`Tampilkan ${label} di beranda`}
+                    />
+                  )}
                   <Button variant="ghost" size="icon-sm" asChild>
                     <Link href={`/admin/home/${section.id}`} aria-label={`Ubah ${label}`}>
                       <PencilIcon strokeWidth={1.5} aria-hidden />

@@ -7,8 +7,10 @@ import {
   homeSectionCreateSchema,
   homeSectionMediaRefs,
   homeSectionUpdateSchema,
+  LATEST_TRAININGS_MAX,
   legacyHeroToSlides,
   parseHomeSectionContent,
+  RETIRED_HOME_SECTION_TYPES,
   safeParseHomeSectionContent,
   SINGLE_INSTANCE_TYPES,
 } from "@/lib/validators/home-section";
@@ -184,8 +186,8 @@ describe("validasi isi", () => {
 
 describe("create & update", () => {
   it("create: default label null dan visible true", () => {
-    expect(homeSectionCreateSchema.parse({ type: "CATEGORIES", content: {} })).toMatchObject({
-      type: "CATEGORIES",
+    expect(homeSectionCreateSchema.parse({ type: "CLIENTS", content: {} })).toMatchObject({
+      type: "CLIENTS",
       title: null,
       visible: true,
     });
@@ -193,6 +195,14 @@ describe("create & update", () => {
 
   it("create: isi divalidasi sesuai type", () => {
     expect(homeSectionCreateSchema.safeParse({ type: "CTA", content: {} }).success).toBe(false);
+  });
+
+  it("create: type yang dipensiunkan ditolak, type lain tidak", () => {
+    for (const type of HOME_SECTION_TYPES) {
+      const result = homeSectionCreateSchema.safeParse({ type, content: FULL[type] });
+      expect(result.success, type).toBe(!(RETIRED_HOME_SECTION_TYPES as readonly string[]).includes(type));
+    }
+    expect([...RETIRED_HOME_SECTION_TYPES]).toEqual(["STATS", "SERVICES", "CATEGORIES", "MARQUEE"]);
   });
 
   it("update: type tidak bisa diubah", () => {
@@ -215,6 +225,20 @@ describe("safeParseHomeSectionContent", () => {
   it("isi tersimpan yang rusak menghasilkan null, bukan error", () => {
     expect(safeParseHomeSectionContent("CTA", { heading: 1 })).toBeNull();
     expect(safeParseHomeSectionContent("CLIENTS", {})).toMatchObject({ mode: "auto" });
+  });
+
+  it("pelatihan terbaru: limit & id lama (sampai 12) dipotong ke 6 saat dibaca", () => {
+    const ids = Array.from({ length: 8 }, (_, i) => `0199b4d0-0000-7000-8000-${String(i + 1).padStart(12, "0")}`);
+    expect(safeParseHomeSectionContent("LATEST_TRAININGS", { mode: "manual", limit: 12, ids })).toMatchObject({
+      limit: 6,
+      ids: ids.slice(0, 6),
+    });
+  });
+
+  it("pelatihan terbaru: saat simpan, limit > 6 tetap ditolak", () => {
+    expect(HOME_SECTION_CONTENT_SCHEMAS.LATEST_TRAININGS.safeParse({ limit: 7 }).error?.issues[0]?.message).toBe(
+      `Jumlah maksimal ${LATEST_TRAININGS_MAX}.`,
+    );
   });
 });
 

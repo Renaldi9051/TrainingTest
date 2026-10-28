@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { indexesFromFieldKeys } from "@/lib/form-errors";
 import {
+  ADDABLE_HOME_SECTION_TYPES,
   defaultContent,
   focalFromPoint,
   HERO_INTERVAL_DEFAULT_MS,
@@ -11,6 +12,7 @@ import {
   HERO_SLIDES_MAX,
   HOME_SECTION_TYPES,
   isContentHref,
+  RETIRED_HOME_SECTION_TYPES,
   ROTATING_WORDS_MAX,
   SELECTION_LIMITS,
   sectionFormSchema,
@@ -29,9 +31,20 @@ describe("sinkron dengan BE", () => {
     expect(be).toContain(`export const HERO_INTERVAL_MIN_MS = ${HERO_INTERVAL_MIN_MS};`);
     expect(be).toContain(`export const HERO_INTERVAL_MAX_MS = ${HERO_INTERVAL_MAX_MS};`);
     expect(be).toContain(`export const HERO_INTERVAL_DEFAULT_MS = ${HERO_INTERVAL_DEFAULT_MS};`);
+    // Batas pelatihan terbaru di BE ditulis sebagai konstanta (juga dipakai untuk memotong data lama).
+    const latestMax = SELECTION_LIMITS.LATEST_TRAININGS.maxLimit;
+    expect(be).toContain(`export const LATEST_TRAININGS_MAX = ${latestMax};`);
+    const limits = be.replace("maxLimit: LATEST_TRAININGS_MAX", `maxLimit: ${latestMax}`);
     for (const { defaultLimit, maxLimit } of Object.values(SELECTION_LIMITS)) {
-      expect(be).toContain(`selectionFields({ defaultLimit: ${defaultLimit}, maxLimit: ${maxLimit} })`);
+      expect(limits).toContain(`selectionFields({ defaultLimit: ${defaultLimit}, maxLimit: ${maxLimit} })`);
     }
+  });
+
+  it("type yang dipensiunkan sama dengan BE dan tidak ada di menu tambah", () => {
+    expect(be).toContain(
+      `export const RETIRED_HOME_SECTION_TYPES = [${RETIRED_HOME_SECTION_TYPES.map((type) => `"${type}"`).join(", ")}]`,
+    );
+    expect(ADDABLE_HOME_SECTION_TYPES).toEqual(["HERO", "LATEST_TRAININGS", "UPCOMING_SCHEDULES", "CLIENTS", "VISION_MISSION", "TESTIMONIALS", "CTA"]);
   });
 });
 

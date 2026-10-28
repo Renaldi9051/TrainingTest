@@ -20,6 +20,17 @@ export const HOME_SECTION_TYPES = [
 
 export const SINGLE_INSTANCE_TYPES = ["HERO", "CTA"] as const satisfies readonly HomeSectionType[];
 
+// Type yang tidak lagi tampil di beranda (beranda dipendekkan, 28 Okt 2026). Baris lama masih bisa
+// diubah & dihapus, tapi tidak bisa ditambah lagi; BE menolak pembuatannya.
+export const RETIRED_HOME_SECTION_TYPES = ["STATS", "SERVICES", "CATEGORIES", "MARQUEE"] as const satisfies readonly HomeSectionType[];
+
+export function isRetiredHomeSectionType(type: HomeSectionType): boolean {
+  return (RETIRED_HOME_SECTION_TYPES as readonly HomeSectionType[]).includes(type);
+}
+
+// Pilihan di menu "Tambah section".
+export const ADDABLE_HOME_SECTION_TYPES = HOME_SECTION_TYPES.filter((type) => !isRetiredHomeSectionType(type));
+
 export const HOME_SECTION_LABELS: Record<HomeSectionType, string> = {
   HERO: "Hero",
   STATS: "Statistik",
@@ -62,7 +73,7 @@ export const MARQUEE_ITEMS_MAX = 12;
 export const SELECTION_LIMITS = {
   SERVICES: { defaultLimit: 4, maxLimit: 8 },
   CATEGORIES: { defaultLimit: 12, maxLimit: 24 },
-  LATEST_TRAININGS: { defaultLimit: 6, maxLimit: 12 },
+  LATEST_TRAININGS: { defaultLimit: 6, maxLimit: 6 },
   CLIENTS: { defaultLimit: 24, maxLimit: 48 },
   TESTIMONIALS: { defaultLimit: 6, maxLimit: 12 },
 } as const;

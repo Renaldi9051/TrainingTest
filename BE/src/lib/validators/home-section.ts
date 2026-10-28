@@ -34,6 +34,16 @@ export const HOME_SECTION_TYPES = [
 // maksimal 2 per halaman: CTA penutup + footer.
 export const SINGLE_INSTANCE_TYPES = ["HERO", "CTA"] as const satisfies readonly HomeSectionType[];
 
+// Type yang tidak lagi tampil di beranda (pemilik, 28 Okt 2026: beranda dipendekkan). Baris lama
+// tetap bisa dibuka & dihapus di admin, tapi tidak bisa dibuat baru dan tidak ikut beranda maupun
+// pratinjau. Enum DB tidak diubah.
+export const RETIRED_HOME_SECTION_TYPES = ["STATS", "SERVICES", "CATEGORIES", "MARQUEE"] as const satisfies readonly HomeSectionType[];
+export type RetiredHomeSectionType = (typeof RETIRED_HOME_SECTION_TYPES)[number];
+
+export function isRetiredHomeSectionType(type: HomeSectionType): type is RetiredHomeSectionType {
+  return (RETIRED_HOME_SECTION_TYPES as readonly HomeSectionType[]).includes(type);
+}
+
 export const HOME_SECTION_LABELS: Record<HomeSectionType, string> = {
   HERO: "Hero",
   STATS: "Statistik",
@@ -55,6 +65,8 @@ export const MARQUEE_ITEMS_MAX = 12;
 export const MARQUEE_ITEM_MAX = 40;
 export const MARQUEE_HEADING_MAX = 60;
 export const STATS_MAX = 6;
+// Beranda menampilkan paling banyak 6 pelatihan terbaru (pemilik, 28 Okt 2026; dulu 12).
+export const LATEST_TRAININGS_MAX = 6;
 export const HERO_SLIDES_MAX = 6;
 export const HERO_INTERVAL_MIN_MS = 4000;
 export const HERO_INTERVAL_MAX_MS = 10000;
@@ -184,8 +196,20 @@ const categoriesContent = z
 
 // auto = pelatihan publik dengan publishedAt terbaru.
 const latestTrainingsContent = z
-  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 6, maxLimit: 12 }), cta: optionalCta, decor })
+  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 6, maxLimit: LATEST_TRAININGS_MAX }), cta: optionalCta, decor })
   .superRefine(requireManualIds);
+
+// Isi tersimpan sebelum batas 6 (limit/ids sampai 12) dipotong saat dibaca, supaya section tidak
+// dianggap rusak dan hilang dari beranda. Data di DB tidak ditulis ulang sampai admin menyimpan.
+function clampStoredLatestTrainings(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const { limit, ids, ...rest } = value as Record<string, unknown>;
+  return {
+    ...rest,
+    ...(limit === undefined ? {} : { limit: typeof limit === "number" ? Math.min(limit, LATEST_TRAININGS_MAX) : limit }),
+    ...(ids === undefined ? {} : { ids: Array.isArray(ids) ? ids.slice(0, LATEST_TRAININGS_MAX) : ids }),
+  };
+}
 
 // Selalu otomatis: sesi DIBUKA terdekat mulai hari ini (WIB) dari pelatihan publik.
 const upcomingSchedulesContent = z.object({
@@ -288,9 +312,13 @@ const sectionMeta = {
   visible: z.boolean(),
 };
 
-export const homeSectionCreateSchema = homeSectionContentSchema.and(
-  z.object({ title: sectionMeta.title.default(null), visible: sectionMeta.visible.default(true) }),
-);
+export const homeSectionCreateSchema = homeSectionContentSchema
+  .and(z.object({ title: sectionMeta.title.default(null), visible: sectionMeta.visible.default(true) }))
+  .superRefine((value, ctx) => {
+    if (isRetiredHomeSectionType(value.type)) {
+      ctx.addIssue({ code: "custom", path: ["type"], message: "Section ini tidak lagi ditampilkan di beranda." });
+    }
+  });
 export type HomeSectionCreateInput = z.infer<typeof homeSectionCreateSchema>;
 
 // Type tidak bisa diubah setelah dibuat; content divalidasi terhadap type yang tersimpan
@@ -324,7 +352,8 @@ export function safeParseHomeSectionContent<T extends HomeSectionType>(
   type: T,
   content: unknown,
 ): HomeSectionContentMap[T] | null {
-  const parsed = contentSchemaFor(type).safeParse(content);
+  const stored = type === "LATEST_TRAININGS" ? clampStoredLatestTrainings(content) : content;
+  const parsed = contentSchemaFor(type).safeParse(stored);
   return parsed.success ? parsed.data : null;
 }
 

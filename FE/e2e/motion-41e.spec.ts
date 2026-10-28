@@ -1,7 +1,7 @@
 import { devices, expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { createTraining, deleteTraining, firstCategory, loginViaApi, ORIGIN, runId, type CreatedTraining } from "./helpers";
 
-// Fase 4.1e: kata hero berganti, counter statistik, marquee logo klien mengikuti scroll, progres
+// Fase 4.1e: kata hero berganti, marquee logo klien mengikuti scroll, progres
 // baca, dan scroll-spy daftar isi. Konten uji dibuat lewat API di database e2e, berawalan [UJI].
 
 const HEADERS = { Origin: ORIGIN };
@@ -78,15 +78,6 @@ test.describe("animasi 4.1e", () => {
       image: null,
     });
     await section("LATEST_TRAININGS", { eyebrow: "Terbaru", heading: `[UJI] Terbaru ${id}`, mode: "auto", limit: 6 });
-    await section("STATS", {
-      eyebrow: "Angka",
-      heading: `[UJI] Angka ${id}`,
-      items: [
-        { value: 1200, prefix: "", suffix: "+", label: "Alumni" },
-        { value: 48, prefix: "", suffix: "", label: "Kota" },
-      ],
-    });
-    await section("MARQUEE", { heading: `[UJI] Bidang ${id}`, source: "custom", items: ["BNSP", "In House", "Public Training"] });
     await section("CLIENTS", { eyebrow: "Klien", heading: `[UJI] Klien ${id}`, mode: "auto", limit: 12 });
     await section("UPCOMING_SCHEDULES", { eyebrow: "Jadwal", heading: `[UJI] Jadwal ${id}`, limit: 5 });
 
@@ -142,26 +133,6 @@ test.describe("animasi 4.1e", () => {
     await expect.poll(() => visibleWord(page), { timeout: 5_000 }).not.toBe(paused);
   });
 
-  test("counter berjalan di bawah layar awal, berakhir di angka final, tanpa layout shift", async ({ page }) => {
-    await watchCls(page);
-    await page.goto("/");
-    const counter = page.locator("[data-reveal-count='1200']");
-    // Di bawah layar awal: ditahan di 0 sebelum terlihat (item masih tersembunyi).
-    expect(await counter.evaluate((element) => element.getBoundingClientRect().top)).toBeGreaterThan(800);
-    const samples: string[] = [];
-    await counter.scrollIntoViewIfNeeded();
-    for (let i = 0; i < 12; i++) {
-      samples.push((await counter.textContent()) ?? "");
-      await page.waitForTimeout(60);
-    }
-    await expect(counter).toHaveText("1.200");
-    expect(samples.some((text) => text !== "1.200")).toBe(true);
-    // Pembaca layar: nilai final satu kali (angka berjalan aria-hidden).
-    await expect(page.getByRole("definition").filter({ hasText: "1.200" }).first()).toBeAttached();
-    await page.waitForTimeout(500);
-    expect(await cls(page)).toBe(0);
-  });
-
   test("marquee logo: berjalan sendiri tanpa scroll, berhenti saat kursor di atasnya; fokus logo menghentikan dan menampilkannya", async ({ page }) => {
     await page.goto("/");
     const marquee = logoMarquee(page);
@@ -195,15 +166,12 @@ test.describe("animasi 4.1e", () => {
     expect(Math.abs((boxAfter?.x ?? 0) - (box?.x ?? 0))).toBeLessThan(1);
   });
 
-  test("reduced motion: kata hero, counter, dan marquee diam", async ({ browser }) => {
+  test("reduced motion: kata hero dan marquee diam", async ({ browser }) => {
     const context = await browser.newContext({ ...devices["Desktop Chrome"], baseURL: ORIGIN, locale: "id-ID", reducedMotion: "reduce", viewport: { width: 1280, height: 800 } });
     const page = await context.newPage();
     await page.goto("/");
     await page.waitForTimeout(2_600);
     expect(await visibleWord(page)).toBe(0);
-    const counter = page.locator("[data-reveal-count='1200']");
-    await counter.scrollIntoViewIfNeeded();
-    await expect(counter).toHaveText("1.200");
     // Marquee: dibungkus ke beberapa baris lewat CSS, salinan kedua tersembunyi, tanpa gerak.
     for (const marquee of await page.locator("[data-marquee]").all()) {
       await expect(marquee.locator("[data-marquee-copy]")).toBeHidden();
@@ -216,24 +184,6 @@ test.describe("animasi 4.1e", () => {
     await page.waitForTimeout(300);
     expect(await logoMarquee(page).locator("> div").evaluate((element) => (element as HTMLElement).style.transform)).toBe("");
     await context.close();
-  });
-
-  test("teks berjalan: teks sekali untuk pembaca layar, pola salinan kedua dibalik, diam tanpa scroll, bergerak ikut scroll", async ({ page }) => {
-    await page.goto("/");
-    const section = page.getByRole("region", { name: `[UJI] Bidang ${id}` });
-    await expect(section.getByRole("listitem")).toHaveText(["BNSP·", "In House·", "Public Training·"]);
-    const styles = (selector: string) => section.locator(selector).evaluateAll((items) => items.map((item) => item.getAttribute("data-marquee-style")));
-    expect(await styles("[data-marquee] > div > div:first-child li")).toEqual(["solid", "outline", "solid"]);
-    expect(await styles("[data-marquee-copy] li")).toEqual(["outline", "solid", "outline"]);
-    const track = section.locator("[data-marquee] > div");
-    await section.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(2_000);
-    const before = await track.evaluate((element) => (element as HTMLElement).style.transform);
-    // Berbeda dengan logo klien: section teks besar tidak berjalan sendiri.
-    await page.waitForTimeout(800);
-    expect(await track.evaluate((element) => (element as HTMLElement).style.transform)).toBe(before);
-    await wheel(page, 500);
-    await expect.poll(() => track.evaluate((element) => (element as HTMLElement).style.transform)).not.toBe(before);
   });
 
   test("marquee di layar pertama tetap bergerak ikut scroll dan CLS tetap 0", async ({ page }) => {
@@ -250,25 +200,6 @@ test.describe("animasi 4.1e", () => {
     await expect.poll(() => trackTransform(page)).not.toBe(resting);
     await page.waitForTimeout(800);
     expect(await cls(page)).toBe(0);
-  });
-
-  test("builder beranda: section Teks berjalan dari teks sendiri, minimal 2 teks", async ({ page }) => {
-    await loginViaApi(page.request);
-    await page.goto("/admin/home");
-    await page.getByRole("button", { name: "Tambah section" }).first().click();
-    await page.getByRole("menuitem", { name: /^Teks berjalan/ }).click();
-    await page.waitForURL(/\/admin\/home\/new\?type=MARQUEE$/);
-    await page.getByRole("radio", { name: /Teks sendiri/ }).check();
-    await page.getByRole("button", { name: "Tambah teks" }).click();
-    await page.getByRole("textbox", { name: "Teks 1", exact: true }).fill("Sertifikasi BNSP");
-    await page.getByRole("button", { name: "Simpan", exact: true }).click();
-    await expect(page.getByText("Isi minimal 2 teks.")).toBeVisible();
-    await page.getByRole("button", { name: "Tambah teks" }).click();
-    await page.getByRole("textbox", { name: "Teks 2", exact: true }).fill("In House");
-    await page.getByRole("textbox", { name: "Label internal", exact: true }).fill(`[UJI] Marquee builder ${id}`);
-    await page.getByRole("button", { name: "Simpan", exact: true }).click();
-    await page.waitForURL(/\/admin\/home\/[0-9a-f-]{36}$/);
-    sectionIds.push(page.url().split("/").at(-1) ?? "");
   });
 
   test("progres baca 0 -> 1 dan daftar isi menandai bagian yang dibaca", async ({ page }) => {

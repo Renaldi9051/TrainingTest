@@ -9,6 +9,7 @@ import { loginViaApi, ORIGIN, runId } from "./helpers";
 // Data uji berawalan [UJI].
 
 const HEADERS = { Origin: ORIGIN };
+const VISION_TEXT = "[UJI] Visi dari builder";
 
 type Section = { id: string; type: string; title: string | null; visible: boolean; content: Record<string, unknown> | null };
 
@@ -114,38 +115,41 @@ test.describe("builder beranda", () => {
     await heroItem.hover({ force: true });
     await expect(page.getByRole("tooltip")).toContainText("Hero sudah ada");
 
-    // STATS: error validasi baris ke-2 diarahkan ke baris yang tepat.
-    await page.getByRole("menuitem", { name: /^Statistik/ }).click();
-    await page.waitForURL(/type=STATS$/);
-    await page.getByRole("spinbutton", { name: "Angka 1", exact: true }).fill("100");
-    await page.getByRole("textbox", { name: "Akhiran" }).first().fill("+");
-    await page.getByRole("textbox", { name: "Label 1", exact: true }).fill("Trainer");
-    await page.getByRole("button", { name: "Tambah angka" }).click();
-    await page.getByRole("spinbutton", { name: "Angka 2", exact: true }).fill("4");
+    // Statistik, Layanan, Kategori, dan Teks berjalan sudah tidak ada di menu (beranda dipendekkan).
+    for (const retired of [/^Statistik/, /^Layanan unggulan/, /^Kategori/, /^Teks berjalan/]) {
+      await expect(page.getByRole("menuitem", { name: retired })).toHaveCount(0);
+    }
+
+    // VISION_MISSION: error validasi baris ke-2 diarahkan ke baris yang tepat.
+    await page.getByRole("menuitem", { name: /^Visi & misi/ }).click();
+    await page.waitForURL(/type=VISION_MISSION$/);
+    await field(page, "Visi").fill(VISION_TEXT);
+    await page.getByRole("textbox", { name: "Misi 1", exact: true }).fill("Program relevan.");
+    await page.getByRole("button", { name: "Tambah misi" }).click();
     await page.getByRole("button", { name: "Simpan", exact: true }).click();
-    const rowError = page.getByText("Label wajib diisi.");
+    const rowError = page.getByText("Misi wajib diisi.");
     await expect(rowError).toBeVisible();
-    await expect(page.getByRole("textbox", { name: "Label 2", exact: true })).toHaveAttribute("aria-invalid", "true");
-    await expect(page.getByRole("textbox", { name: "Label 1", exact: true })).not.toHaveAttribute("aria-invalid", "true");
-    await page.getByRole("textbox", { name: "Label 2", exact: true }).fill("Negara");
-    await field(page, "Label internal").fill(`[UJI] Statistik ${id}`);
+    await expect(page.getByRole("textbox", { name: "Misi 2", exact: true })).toHaveAttribute("aria-invalid", "true");
+    await expect(page.getByRole("textbox", { name: "Misi 1", exact: true })).not.toHaveAttribute("aria-invalid", "true");
+    await page.getByRole("textbox", { name: "Misi 2", exact: true }).fill("Trainer praktisi.");
+    await field(page, "Label internal").fill(`[UJI] Visi ${id}`);
     await page.getByRole("button", { name: "Simpan", exact: true }).click();
     await page.waitForURL(/\/admin\/home\/[0-9a-f-]{36}$/);
     await toast(page, "Section disimpan");
 
-    // Urutkan: Statistik naik di atas Hero (langsung tersimpan).
+    // Urutkan: Visi & misi naik di atas Hero (langsung tersimpan).
     await page.goto("/admin/home");
-    await moveUp(page, `Statistik ([UJI] Statistik ${id})`);
+    await moveUp(page, `Visi & misi ([UJI] Visi ${id})`);
     await toast(page, "Urutan section disimpan");
-    expect((await sections(page.request)).map((section) => section.type)).toEqual(["STATS", "HERO"]);
+    expect((await sections(page.request)).map((section) => section.type)).toEqual(["VISION_MISSION", "HERO"]);
 
     // Toggle tampil: langsung tersimpan.
-    const statsSwitch = page.getByRole("switch", { name: `Tampilkan Statistik ([UJI] Statistik ${id}) di beranda` });
-    await statsSwitch.click();
+    const visionSwitch = page.getByRole("switch", { name: `Tampilkan Visi & misi ([UJI] Visi ${id}) di beranda` });
+    await visionSwitch.click();
     await toast(page, "Section disembunyikan");
-    await expect.poll(async () => (await sections(page.request)).find((s) => s.type === "STATS")?.visible).toBe(false);
+    await expect.poll(async () => (await sections(page.request)).find((s) => s.type === "VISION_MISSION")?.visible).toBe(false);
     await page.reload();
-    await expect(page.getByRole("switch", { name: /Tampilkan Statistik/ })).not.toBeChecked();
+    await expect(page.getByRole("switch", { name: /Tampilkan Visi & misi/ })).not.toBeChecked();
 
     // Gagal simpan: tampilan kembali seperti semula + toast.
     await page.route("**/api/admin/home-sections/*", async (route) => {
@@ -155,19 +159,30 @@ test.describe("builder beranda", () => {
         await route.fallback();
       }
     });
-    await page.getByRole("switch", { name: /Tampilkan Statistik/ }).click();
+    await page.getByRole("switch", { name: /Tampilkan Visi & misi/ }).click();
     await toast(page, "Gagal (uji).");
-    await expect(page.getByRole("switch", { name: /Tampilkan Statistik/ })).not.toBeChecked();
+    await expect(page.getByRole("switch", { name: /Tampilkan Visi & misi/ })).not.toBeChecked();
     await page.unroute("**/api/admin/home-sections/*");
 
     // Hapus + Urungkan.
     await page.getByRole("button", { name: /^Hapus Hero/ }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Hapus", exact: true }).click();
     await toast(page, "dipindahkan ke Sampah");
-    expect((await sections(page.request)).map((section) => section.type)).toEqual(["STATS"]);
+    expect((await sections(page.request)).map((section) => section.type)).toEqual(["VISION_MISSION"]);
     await page.locator("[data-sonner-toast]").getByRole("button", { name: "Urungkan" }).click();
     await toast(page, "dipulihkan");
-    expect((await sections(page.request)).map((section) => section.type)).toEqual(["STATS", "HERO"]);
+    expect((await sections(page.request)).map((section) => section.type)).toEqual(["VISION_MISSION", "HERO"]);
+  });
+
+  test("type yang dipensiunkan: dibuat lewat API ditolak 422", async ({ page }) => {
+    const response = await page.request.post("/api/admin/home-sections", {
+      headers: HEADERS,
+      data: { type: "STATS", content: { items: [{ value: 1, label: "x" }] } },
+    });
+    expect(response.status()).toBe(422);
+    expect(((await response.json()) as { error: { fields: Record<string, string[]> } }).error.fields.type).toEqual([
+      "Section ini tidak lagi ditampilkan di beranda.",
+    ]);
   });
 
   test("CTA satu instance: buat kedua dan pulihkan yang bentrok -> 409", async ({ page }) => {
@@ -203,14 +218,14 @@ test.describe("builder beranda", () => {
     const preview = ((await (await page.request.get("/api/admin/home-sections/preview")).json()) as {
       data: { sections: { type: string; visible: boolean; empty: boolean }[] };
     }).data.sections;
-    expect(preview.find((section) => section.type === "STATS")).toMatchObject({ visible: false, empty: false });
+    expect(preview.find((section) => section.type === "VISION_MISSION")).toMatchObject({ visible: false, empty: false });
     expect(preview.find((section) => section.type === "CLIENTS")).toMatchObject({ visible: true, empty: true });
 
     const publicHome = ((await (await page.request.get("/api/public/home")).json()) as {
       data: { sections: { type: string }[] };
     }).data.sections.map((section) => section.type);
-    // STATS tersembunyi dan CLIENTS kosong tidak tampil di publik.
-    expect(publicHome).not.toContain("STATS");
+    // VISION_MISSION tersembunyi dan CLIENTS kosong tidak tampil di publik.
+    expect(publicHome).not.toContain("VISION_MISSION");
     expect(publicHome).not.toContain("CLIENTS");
     expect(publicHome).toContain("HERO");
   });
@@ -223,20 +238,20 @@ test.describe("builder beranda", () => {
     expect(vision.status()).toBe(201);
     const visionId = ((await vision.json()) as { data: { id: string } }).data.id;
     const all = await sections(page.request);
-    const stats = all.find((section) => section.type === "STATS");
-    await page.request.patch(`/api/admin/home-sections/${stats?.id}`, { headers: HEADERS, data: { visible: true } });
+    const builder = all.find((section) => section.type === "VISION_MISSION" && section.id !== visionId);
+    await page.request.patch(`/api/admin/home-sections/${builder?.id}`, { headers: HEADERS, data: { visible: true } });
 
-    // Visi & misi dipindah ke atas statistik: urutan di HTML beranda ikut berubah.
+    // Visi & misi baru dipindah ke atas visi & misi dari builder: urutan di HTML beranda ikut berubah.
     const order = [visionId, ...all.map((section) => section.id).filter((id) => id !== visionId)];
     await page.request.post("/api/admin/home-sections/reorder", { headers: HEADERS, data: { ids: order } });
     const positions = async () => {
       const html = await (await page.request.get("/")).text();
-      return { vision: html.indexOf("[UJI] Visi beranda publik"), stats: html.indexOf("Negara") };
+      return { vision: html.indexOf("[UJI] Visi beranda publik"), builder: html.indexOf(VISION_TEXT) };
     };
     await expect
       .poll(async () => {
-        const { vision: v, stats: s } = await positions();
-        return v >= 0 && s >= 0 && v < s;
+        const { vision: v, builder: b } = await positions();
+        return v >= 0 && b >= 0 && v < b;
       }, { timeout: 5_000 })
       .toBe(true);
 

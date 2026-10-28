@@ -8,16 +8,11 @@ import { PlusMarker } from "@/components/decor/plus-marker";
 import { RotatingBadge } from "@/components/decor/rotating-badge";
 import { HeroPauseButton } from "@/components/motion/hero-pause-button";
 import { HeroSlideshow } from "@/components/motion/hero-slideshow";
-import { Reveal } from "@/components/motion/reveal";
 import { HeroWords } from "@/components/motion/hero-words";
-import { CountUp } from "@/components/motion/reveal-parts";
-import { VelocityMarquee } from "@/components/motion/velocity-marquee";
-import { ChipLink } from "@/components/public/chip-link";
 import { CtaLink } from "@/components/public/cta-link";
 import { ClientLogos } from "@/components/public/client-logos";
 import { PublicSection } from "@/components/public/public-section";
 import { ScheduleTable } from "@/components/public/schedule-table";
-import { ServiceRows } from "@/components/public/service-rows";
 import { TestimonialsScroller } from "@/components/public/testimonials-scroller";
 import { TrainingGrid } from "@/components/public/training-card";
 import { VisionMission } from "@/components/public/vision-mission";
@@ -25,22 +20,17 @@ import { buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import type { Cta, PreviewHomeSection, PublicHomeSection } from "@/lib/api/types";
-import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 // Judul h2 tersembunyi untuk section tanpa judul (label UI, bukan konten).
 const FALLBACK_HEADINGS: Record<PublicHomeSection["type"], string> = {
   HERO: "Beranda",
-  STATS: "Statistik",
-  SERVICES: "Layanan",
-  CATEGORIES: "Kategori pelatihan",
   LATEST_TRAININGS: "Pelatihan terbaru",
   UPCOMING_SCHEDULES: "Jadwal terdekat",
   CLIENTS: "Klien",
   VISION_MISSION: "Visi dan misi",
   TESTIMONIALS: "Testimoni",
   CTA: "Hubungi kami",
-  MARQUEE: "Bidang layanan",
 };
 
 // Tanda + di keempat sudut sebuah blok (DESIGN.md 6.1). Induk relative.
@@ -186,73 +176,6 @@ function HeroSection({ section }: { section: HeroData }) {
   );
 }
 
-// Statistik (DESIGN.md 8.6, palet C): kotak radius 12 px ber-border dengan garis kiri 4 px --accent,
-// angka besar mono --primary, tanda + di sudut tiap kotak, counter berjalan saat masuk layar. Hover:
-// border --primary + naik 3 px seperti kartu pelatihan. Label HUD tidak dipakai: belum ada data CMS untuknya (6.2).
-function StatsSection({ section }: { section: Extract<PublicHomeSection, { type: "STATS" }> }) {
-  return (
-    <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.STATS}>
-      <Reveal>
-        <dl data-reveal-children="item" className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
-          {section.items.map((item, index) => (
-            <div
-              key={index}
-              className={cn(
-                "relative flex flex-col gap-3 overflow-hidden rounded-card border border-border bg-bg px-5 pt-8 pb-7 md:px-6 md:pt-10",
-                "before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-accent",
-                "transition-[border-color,translate] ease-standard [transition-duration:150ms,300ms] hover:border-primary motion-safe:hover:-translate-y-[3px]",
-              )}
-            >
-              {section.decor ? <PlusMarker className="top-3 right-3" /> : null}
-              {/* Counter berjalan saat grup masuk viewport (hanya kalau seluruhnya di bawah layar awal). */}
-              <dd className="order-1 font-mono text-[40px] leading-none font-medium tracking-[-0.04em] text-primary md:text-[64px]">
-                {item.prefix}
-                <CountUp value={item.value} display={formatNumber(item.value)} />
-                {item.suffix}
-              </dd>
-              <dt className="order-2 text-body text-fg">{item.label}</dt>
-            </div>
-          ))}
-        </dl>
-      </Reveal>
-    </PublicSection>
-  );
-}
-
-// Teks besar berjalan mengikuti scroll (VelocityMarquee). Solid dan outline berselang-seling; salinan
-// kedua membalik pola supaya setiap item pernah tampil solid (juga kalau jumlahnya genap). Pembaca
-// layar: h2 sr-only + daftar teks sekali (salinan kedua aria-hidden). Reduced motion: teks dibungkus
-// ke beberapa baris, tanpa gerak.
-function MarqueeSection({ section }: { section: Extract<PublicHomeSection, { type: "MARQUEE" }> }) {
-  const titleId = `${section.id}-title`;
-  const list = (startOutline: boolean) => (
-    <ul className="flex motion-reduce:flex-wrap">
-      {section.items.map((item, index) => (
-        <li
-          key={`${index}-${item}`}
-          data-marquee-style={(index % 2 === 1) !== startOutline ? "outline" : "solid"}
-          className="marquee-text whitespace-nowrap pr-[0.3em]"
-        >
-          {item}
-          <span aria-hidden className="pl-[0.3em] text-fg-muted [-webkit-text-stroke:0]">
-            ·
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-  return (
-    <section aria-labelledby={titleId} className="py-16 md:py-24">
-      <h2 id={titleId} className="sr-only">
-        {section.heading || FALLBACK_HEADINGS.MARQUEE}
-      </h2>
-      <VelocityMarquee listClassName="motion-reduce:w-full motion-reduce:px-4" copy={list(true)}>
-        {list(false)}
-      </VelocityMarquee>
-    </section>
-  );
-}
-
 // CTA penutup (DESIGN.md 8.9): section hitam + grain + teks outline (bergeser pelan). Badge berputar
 // tidak dipakai: belum ada teks badge di CMS untuk section ini.
 function CtaSection({ section }: { section: Extract<PublicHomeSection, { type: "CTA" }> }) {
@@ -282,81 +205,10 @@ function CtaSection({ section }: { section: Extract<PublicHomeSection, { type: "
   );
 }
 
-// Nama kategori berjalan sebagai pemisah setelah section Kategori (DESIGN.md 13), mengikuti kecepatan
-// scroll. Dekoratif: nama yang sama sudah ada sebagai chip, jadi disembunyikan dari pembaca layar.
-// Reduced motion: tidak ditampilkan (daftar statis tidak menambah informasi).
-function CategoryMarquee({ names }: { names: string[] }) {
-  if (names.length === 0) return null;
-  const list = (
-    <ul className="flex">
-      {names.map((name, index) => (
-        <li key={`${index}-${name}`} className="flex items-center whitespace-nowrap">
-          <span className="px-6 text-[40px] leading-none font-semibold tracking-[-0.03em] text-on-primary md:px-7 md:text-[56px]">{name}</span>
-          <span className="text-[24px] text-accent-on-primary md:text-[32px]">✦</span>
-        </li>
-      ))}
-    </ul>
-  );
-  return (
-    // Palet C: pita --primary dengan teks --on-primary.
-    <div aria-hidden className="border-y border-primary bg-primary py-6 motion-reduce:hidden md:py-7">
-      <VelocityMarquee>{list}</VelocityMarquee>
-    </div>
-  );
-}
-
 export function HomeSectionView({ section }: { section: PublicHomeSection }): ReactNode {
   switch (section.type) {
     case "HERO":
       return <HeroSection section={section} />;
-    case "STATS":
-      return <StatsSection section={section} />;
-    case "SERVICES":
-      // Nomor raksasa + teks outline (bergeser pelan) di belakang (DESIGN.md 8.5).
-      return (
-        <PublicSection
-          eyebrow={section.eyebrow}
-          heading={section.heading}
-          fallbackHeading={FALLBACK_HEADINGS.SERVICES}
-          intro={section.intro}
-          background={
-            // Kanan bawah, di samping tombol: tidak menimpa judul section yang panjang.
-            <OutlineText decor={section.decor} parallax className="-right-6 bottom-6 md:-right-16 md:bottom-10">
-              {outlineLabel(section.eyebrow)}
-            </OutlineText>
-          }
-        >
-          <ServiceRows services={section.items} decor={section.decor} />
-          <SectionCta cta={section.cta} />
-        </PublicSection>
-      );
-    case "CATEGORIES":
-      // Latar abu + pola titik, lalu nama kategori berjalan sebagai pemisah (DESIGN.md 8.7 & 13).
-      return (
-        <>
-          <PublicSection
-            eyebrow={section.eyebrow}
-            heading={section.heading}
-            fallbackHeading={FALLBACK_HEADINGS.CATEGORIES}
-            intro={section.intro}
-            className="bg-bg-subtle"
-            background={<DotPattern decor={section.decor} />}
-          >
-            <Reveal as="ul" data-reveal-children="pop" className="flex flex-wrap gap-2">
-            {section.items.map((category) => (
-              <li key={category.slug}>
-                <ChipLink href={`/pelatihan/kategori/${category.slug}`} active={false} scroll>
-                  {category.name}
-                  <span className="ml-2 font-mono text-label text-fg-muted">{formatNumber(category.trainingCount)}</span>
-                </ChipLink>
-              </li>
-            ))}
-            </Reveal>
-            <SectionCta cta={section.cta} />
-          </PublicSection>
-          {section.decor ? <CategoryMarquee names={section.items.map((category) => category.name)} /> : null}
-        </>
-      );
     case "LATEST_TRAININGS":
       return (
         <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.LATEST_TRAININGS} intro={section.intro}>
@@ -401,8 +253,6 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
       );
     case "CTA":
       return <CtaSection section={section} />;
-    case "MARQUEE":
-      return <MarqueeSection section={section} />;
   }
 }
 

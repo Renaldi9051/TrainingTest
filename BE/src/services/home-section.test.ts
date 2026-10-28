@@ -78,9 +78,9 @@ describe("HERO/CTA maksimal satu", () => {
   });
 
   it("type lain boleh lebih dari satu (tidak dicek)", async () => {
-    mock.homeSection.create.mockImplementation(async ({ data }) => section("STATS", data.content as Prisma.JsonObject));
+    mock.homeSection.create.mockImplementation(async ({ data }) => section("VISION_MISSION", data.content as Prisma.JsonObject));
     await createHomeSection(
-      homeSectionCreateSchema.parse({ type: "STATS", content: { items: [{ value: 1, label: "x" }] } }),
+      homeSectionCreateSchema.parse({ type: "VISION_MISSION", content: { vision: "v", mission: ["m"] } }),
       "u1",
     );
     expect(mock.homeSection.count).not.toHaveBeenCalled();
@@ -159,10 +159,10 @@ function queryCounts() {
 function manySections(copies: number) {
   return Array.from({ length: copies }, () => [
     section("HERO", { headline: "x", slides: [{ mediaId: MEDIA }] }),
-    section("SERVICES", { mode: "manual", ids: [uuid(1)] }),
+    // Type yang dipensiunkan: dilewati tanpa query.
     section("SERVICES", { mode: "auto", limit: 3 }),
     section("CATEGORIES", { mode: "auto", limit: 8 }),
-    section("CATEGORIES", { mode: "manual", ids: [uuid(2)] }),
+    section("MARQUEE", { source: "services", limit: 6 }),
     section("LATEST_TRAININGS", { mode: "auto", limit: 6 }),
     section("LATEST_TRAININGS", { mode: "manual", ids: [uuid(3), uuid(4)] }),
     section("UPCOMING_SCHEDULES", { limit: 5 }),
@@ -178,7 +178,7 @@ describe("resolveHomeSections: jumlah query", () => {
   it("per entitas maksimal 1 query id manual + 1 query auto; jadwal & media 1 query; tidak bertambah saat section dilipatgandakan", async () => {
     await resolveHomeSections(manySections(1), now);
     const once = queryCounts();
-    expect(once).toEqual({ service: 2, category: 2, training: 2, schedule: 1, client: 2, testimonial: 2, media: 1 });
+    expect(once).toEqual({ service: 0, category: 0, training: 2, schedule: 1, client: 2, testimonial: 2, media: 1 });
 
     for (const model of [mock.service, mock.client, mock.testimonial, mock.training, mock.schedule, mock.category, mock.media]) {
       model.findMany.mockClear();
@@ -229,18 +229,15 @@ describe("resolveHomeSections: isi", () => {
     expect(resolved).not.toHaveProperty("mode");
   });
 
-  it("kategori auto: unggulan + punya pelatihan publik, dihitung di query", async () => {
-    await resolveHomeSections([section("CATEGORIES", { mode: "auto", limit: 8 })], now);
-    const where = mock.category.findMany.mock.calls[0][0].where;
-    expect(where).toMatchObject({ deletedAt: null, featured: true });
-    expect(where.trainings).toEqual({
-      some: { training: { deletedAt: null, status: "PUBLISHED", publishedAt: { lte: now } } },
-    });
+  it("isi tersimpan yang rusak dilewati", async () => {
+    const result = await resolveHomeSections([section("CTA", { heading: 1 }), section("VISION_MISSION", { vision: "v", mission: ["m"] })], now);
+    expect(result.map((item) => item.type)).toEqual(["VISION_MISSION"]);
   });
 
-  it("isi tersimpan yang rusak dilewati", async () => {
-    const result = await resolveHomeSections([section("CTA", { heading: 1 }), section("STATS", { items: [{ value: 2, label: "y" }] })], now);
-    expect(result.map((item) => item.type)).toEqual(["STATS"]);
+  it("pelatihan terbaru tersimpan dengan limit lama 12: diambil paling banyak 6", async () => {
+    const [latest] = await resolveHomeSections([section("LATEST_TRAININGS", { mode: "auto", limit: 12 })], now);
+    expect(latest.type).toBe("LATEST_TRAININGS");
+    expect(mock.training.findMany.mock.calls[0][0].take).toBe(6);
   });
 });
 
@@ -334,57 +331,49 @@ describe("jadwal terdekat: batas hari WIB", () => {
 describe("publik & pratinjau", () => {
   it("publik: hanya section tampil, tanpa section kosong & tanpa flag pratinjau", async () => {
     mock.homeSection.findMany.mockResolvedValue([
-      section("STATS", { items: [{ value: 1, label: "x" }] }),
+      section("VISION_MISSION", { vision: "v", mission: ["m"] }),
       section("CLIENTS", { mode: "auto", limit: 10 }),
     ]);
     const home = await getPublicHome(now);
     expect(mock.homeSection.findMany.mock.calls[0][0].where).toEqual({ deletedAt: null, visible: true });
-    expect(home.sections.map((item) => item.type)).toEqual(["STATS"]);
+    expect(home.sections.map((item) => item.type)).toEqual(["VISION_MISSION"]);
     expect(home.sections[0]).not.toHaveProperty("visible");
     expect(home.sections[0]).not.toHaveProperty("empty");
   });
 
   it("pratinjau: termasuk section tersembunyi dan kosong, dengan flag visible & empty", async () => {
     mock.homeSection.findMany.mockResolvedValue([
-      section("STATS", { items: [{ value: 1, label: "x" }] }, { visible: false }),
+      section("VISION_MISSION", { vision: "v", mission: ["m"] }, { visible: false }),
       section("TESTIMONIALS", { mode: "auto", limit: 6 }),
     ]);
     const preview = await getHomePreview(now);
     expect(mock.homeSection.findMany.mock.calls[0][0].where).toEqual({ deletedAt: null });
     expect(preview.sections.map(({ type, visible, empty }) => ({ type, visible, empty }))).toEqual([
-      { type: "STATS", visible: false, empty: false },
+      { type: "VISION_MISSION", visible: false, empty: false },
       { type: "TESTIMONIALS", visible: true, empty: true },
     ]);
   });
 });
 
-
-describe("resolveHomeSections: teks berjalan (MARQUEE)", () => {
-  it("teks sendiri dipakai apa adanya tanpa query", async () => {
-    const [marquee] = await resolveHomeSections([section("MARQUEE", { heading: "Bidang", source: "custom", items: ["BNSP", "In House"] })], now);
-    expect(marquee).toMatchObject({ type: "MARQUEE", heading: "Bidang", items: ["BNSP", "In House"], empty: false });
-    expect(queryCounts().service).toBe(0);
-  });
-
-  it("dari judul layanan: satu query layanan tayang (limit terbesar), urut sesuai urutan, dipotong per section", async () => {
-    mock.service.findMany.mockResolvedValue([{ title: "Top Training" }, { title: "TOT BNSP" }, { title: "Outbound" }]);
-    const sections = await resolveHomeSections(
-      [section("MARQUEE", { source: "services", limit: 2 }), section("MARQUEE", { source: "services", limit: 6 })],
-      now,
-    );
-    expect(mock.service.findMany).toHaveBeenCalledTimes(1);
-    const call = mock.service.findMany.mock.calls[0][0];
-    expect(call.where).toEqual({ deletedAt: null, status: "PUBLISHED" });
-    expect(call.take).toBe(6);
-    expect(sections.map((item) => (item.type === "MARQUEE" ? item.items : []))).toEqual([
-      ["Top Training", "TOT BNSP"],
-      ["Top Training", "TOT BNSP", "Outbound"],
+describe("type yang dipensiunkan (beranda dipendekkan)", () => {
+  it("statistik, layanan, kategori, dan teks berjalan tidak ikut publik maupun pratinjau", async () => {
+    mock.homeSection.findMany.mockResolvedValue([
+      section("STATS", { items: [{ value: 1, label: "x" }] }),
+      section("SERVICES", { mode: "auto", limit: 4 }),
+      section("CATEGORIES", { mode: "auto", limit: 12 }),
+      section("MARQUEE", { heading: "Bidang", source: "custom", items: ["BNSP", "In House"] }),
+      section("VISION_MISSION", { vision: "v", mission: ["m"] }),
     ]);
+    expect((await getPublicHome(now)).sections.map((item) => item.type)).toEqual(["VISION_MISSION"]);
+    expect((await getHomePreview(now)).sections.map((item) => item.type)).toEqual(["VISION_MISSION"]);
+    expect(queryCounts()).toMatchObject({ service: 0, category: 0 });
   });
 
-  it("belum ada layanan tayang: kosong (tidak dirender di publik)", async () => {
-    mock.service.findMany.mockResolvedValue([]);
-    const [marquee] = await resolveHomeSections([section("MARQUEE", { source: "services" })], now);
-    expect(marquee.empty).toBe(true);
+  it("tidak bisa dibuat baru", () => {
+    const result = homeSectionCreateSchema.safeParse({ type: "STATS", content: { items: [{ value: 1, label: "x" }] } });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toContainEqual(
+      expect.objectContaining({ path: ["type"], message: "Section ini tidak lagi ditampilkan di beranda." }),
+    );
   });
 });
