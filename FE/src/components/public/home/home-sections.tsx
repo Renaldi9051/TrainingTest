@@ -6,7 +6,6 @@ import { GrainOverlay } from "@/components/decor/grain-overlay";
 import { OutlineText } from "@/components/decor/outline-text";
 import { PlusMarker } from "@/components/decor/plus-marker";
 import { RotatingBadge } from "@/components/decor/rotating-badge";
-import { HeroPauseButton } from "@/components/motion/hero-pause-button";
 import { HeroSlideshow } from "@/components/motion/hero-slideshow";
 import { HeroWords } from "@/components/motion/hero-words";
 import { CtaLink } from "@/components/public/cta-link";
@@ -56,7 +55,7 @@ type HeroData = Extract<PublicHomeSection, { type: "HERO" }>;
 // scroll (DESIGN 9.3). Satu-satunya h1 beranda. Saat muat penuh hanya h1 yang bergerak: kata naik
 // dengan CSS murni <= 500 ms (tanpa JS, tanpa opacity 0). Setelah navigasi klien, eyebrow dan subjudul
 // ikut stagger masuk (PageEnter). inverse: di atas foto (teks terang).
-function HeroText({ section, inverse, aside }: { section: HeroData; inverse: boolean; aside?: ReactNode }) {
+function HeroText({ section, inverse }: { section: HeroData; inverse: boolean }) {
   const muted = inverse ? "text-inverse-fg/85" : "text-fg-muted";
   return (
     <div className="space-y-8 md:space-y-10">
@@ -67,7 +66,7 @@ function HeroText({ section, inverse, aside }: { section: HeroData; inverse: boo
           </Eyebrow>
         ) : null}
         <h1 id={`${section.id}-title`} className={cn("max-w-[16ch] text-display", inverse ? "text-inverse-fg" : "text-fg-strong")}>
-          {/* Kata kunci berganti tiap wordIntervalMs (RotatingWord), ikut tombol pause hero. */}
+          {/* Kata kunci berganti tiap wordIntervalMs (RotatingWord). */}
           <HeroWords
             text={section.headline}
             accents={section.rotatingWords}
@@ -83,7 +82,7 @@ function HeroText({ section, inverse, aside }: { section: HeroData; inverse: boo
         ) : null}
       </div>
 
-      {section.showSearch || section.primaryCta || section.secondaryCta || aside ? (
+      {section.showSearch || section.primaryCta || section.secondaryCta ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           {section.showSearch ? (
             <form action="/pelatihan" method="get" role="search" className="w-full max-w-[460px] space-y-2">
@@ -115,7 +114,6 @@ function HeroText({ section, inverse, aside }: { section: HeroData; inverse: boo
           ) : null}
           {section.primaryCta ? <CtaLink cta={section.primaryCta} variant={inverse ? "inverse" : "primary"} arrow /> : null}
           {section.secondaryCta ? <CtaLink cta={section.secondaryCta} variant={inverse ? "inverseOutline" : "secondary"} /> : null}
-          {aside}
         </div>
       ) : null}
     </div>
@@ -128,10 +126,9 @@ function heroBadge(section: HeroData): { text: string; href: string } | null {
 
 // Hero tanpa slide (DESIGN.md 8.1, keputusan pemilik): hero teks di latar putih, header tetap putih.
 // Decor tanpa gambar (maks 2): pola titik di belakang teks + tanda plus di sudut (atau badge berputar
-// kalau diaktifkan admin). Kata berganti tetap punya tombol pause.
+// kalau diaktifkan admin).
 function TextHero({ section }: { section: HeroData }) {
   const badge = heroBadge(section);
-  const words = section.rotatingWords.filter((word) => word.trim()).length;
   return (
     <section className="relative overflow-hidden py-20 md:py-32" aria-labelledby={`${section.id}-title`}>
       <DotPattern decor={section.decor} />
@@ -145,11 +142,7 @@ function TextHero({ section }: { section: HeroData }) {
             <PlusMarker decor={section.decor} className="-top-12 right-2.5 sm:right-4.5" />
           </>
         )}
-        <HeroText
-          section={section}
-          inverse={false}
-          aside={words > 1 ? <HeroPauseButton subject="kata berganti" className="border-border-strong text-fg hover:bg-bg-subtle sm:ml-auto" /> : null}
-        />
+        <HeroText section={section} inverse={false} />
       </Container>
     </section>
   );
@@ -168,7 +161,6 @@ function HeroSection({ section }: { section: HeroData }) {
       showViewfinder={section.showViewfinder}
       decor={section.decor}
       badge={heroBadge(section)}
-      hasRotatingWords={section.rotatingWords.filter((word) => word.trim()).length > 1}
     >
       {full ? <Container>{text}</Container> : text}
     </HeroSlideshow>

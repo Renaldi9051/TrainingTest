@@ -105,9 +105,9 @@ test.describe("animasi 4.1e", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
   });
 
-  // Keputusan pemilik 15 Okt 2026 (DESIGN.md 9.2): kata tetap berganti tiap 2 s, tapi ada tombol
-  // pause/play (WCAG 2.2.2). Kursor di judul tidak menahan pergantian.
-  test("kata hero berganti terus tiap 2 s (juga saat kursor di judul); tombol jeda menghentikan; nama h1 utuh", async ({ page }) => {
+  // Kata berganti tiap 2 s (default), tanpa tombol pause (pemilik, 29 Okt 2026). Kursor di judul tidak
+  // menahan pergantian.
+  test("kata hero berganti terus tiap 2 s (juga saat kursor di judul); nama h1 utuh", async ({ page }) => {
     test.setTimeout(60_000);
     await page.goto("/");
     const h1 = page.getByRole("heading", { level: 1 });
@@ -123,14 +123,6 @@ test.describe("animasi 4.1e", () => {
       await page.waitForTimeout(150);
     }
     expect(sequence.slice(0, 5)).toEqual([0, 1, 2, 0, 1]);
-
-    // Jeda: kata berhenti; putar: lanjut lagi.
-    await page.getByRole("button", { name: "Jeda kata berganti" }).click();
-    const paused = await visibleWord(page);
-    await page.waitForTimeout(3_000);
-    expect(await visibleWord(page)).toBe(paused);
-    await page.getByRole("button", { name: "Putar kata berganti" }).click();
-    await expect.poll(() => visibleWord(page), { timeout: 5_000 }).not.toBe(paused);
   });
 
   test("marquee logo: berjalan sendiri tanpa scroll, berhenti saat kursor di atasnya; fokus logo menghentikan dan menampilkannya", async ({ page }) => {

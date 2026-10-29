@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { autoplayAllowed, nextSlide, segmentFill, slideCounter, slideStatus, type SlideBlockers } from "./hero-slides-plan";
+import { autoplayAllowed, nextSlide, segmentFill, slideCounter, type SlideBlockers } from "./hero-slides-plan";
 
-const free: SlideBlockers = { userPaused: false, hover: false, focus: false, hidden: false, offscreen: false, reduced: false, pending: false };
+const free: SlideBlockers = { hover: false, focus: false, hidden: false, offscreen: false, reduced: false, pending: false };
 
 describe("hero slideshow", () => {
   it("autoplay hanya untuk 2+ slide tanpa penahan apa pun", () => {
@@ -11,14 +11,6 @@ describe("hero slideshow", () => {
     for (const key of Object.keys(free) as (keyof SlideBlockers)[]) {
       expect(autoplayAllowed(3, { ...free, [key]: true }), key).toBe(false);
     }
-  });
-
-  it("status: STATIS (1 slide / reduced motion), JEDA, PUTAR", () => {
-    expect(slideStatus(1, free)).toBe("STATIS");
-    expect(slideStatus(3, { ...free, reduced: true })).toBe("STATIS");
-    expect(slideStatus(3, { ...free, userPaused: true })).toBe("JEDA");
-    expect(slideStatus(3, { ...free, hover: true })).toBe("JEDA");
-    expect(slideStatus(3, free)).toBe("PUTAR");
   });
 
   it("slide berikutnya memutar ke awal", () => {

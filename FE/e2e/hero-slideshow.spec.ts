@@ -3,8 +3,8 @@ import path from "node:path";
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { loginViaApi, ORIGIN, photoLikeJpeg, runId } from "./helpers";
 
-// Hero slideshow beranda (DESIGN.md 8.1, fase 3 redesign v0.2): berganti otomatis, pause/play juga
-// menghentikan kata berganti, klik segmen & panah pindah slide, reduced motion tanpa autoplay, header
+// Hero slideshow beranda (DESIGN.md 8.1, fase 3 redesign v0.2): berganti otomatis tanpa tombol
+// pause dan tanpa label status (pemilik, 29 Okt 2026), klik segmen & panah pindah slide, reduced motion tanpa autoplay, header
 // transparan di atas foto, floating contact muncul setelah hero lewat. Data uji hanya di database
 // training_e2e (3 foto JPEG buatan generator, bukan foto mockup); isi hero dikembalikan di akhir.
 // Screenshot 360/768/1280 ke SCREENS_OUT (opsional): SCREENS_OUT=<folder> npx playwright test e2e/hero-slideshow.spec.ts
@@ -169,20 +169,13 @@ test.describe("hero slideshow", () => {
     await expect(header).toHaveCSS("position", "absolute");
   });
 
-  test("pause menghentikan slide dan kata berganti; play melanjutkan", async ({ page }) => {
+  test("tanpa tombol pause dan label status; slide dan kata tetap berganti sendiri", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 1400 });
     await page.goto("/");
-    await page.getByRole("button", { name: "Jeda slideshow" }).click();
-    await expect(page.getByRole("button", { name: "Putar slideshow" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^(Jeda|Putar) / })).toHaveCount(0);
+    for (const status of ["PUTAR", "JEDA", "STATIS"]) await expect(hero(page).getByText(status, { exact: true })).toHaveCount(0);
     await leaveHero(page);
     const word = await visibleWord(page);
-    await page.waitForTimeout(INTERVAL + 1500);
-    await expect(segment(page, 0)).toHaveAttribute("aria-current", "true");
-    expect(await visibleWord(page)).toBe(word);
-    await expect(hero(page).getByText("JEDA", { exact: true })).toBeAttached();
-
-    await page.getByRole("button", { name: "Putar slideshow" }).click();
-    await leaveHero(page);
     await expect(segment(page, 1)).toHaveAttribute("aria-current", "true", { timeout: INTERVAL + 4000 });
     await expect.poll(() => visibleWord(page), { timeout: 5000 }).not.toBe(word);
   });
@@ -201,7 +194,7 @@ test.describe("hero slideshow", () => {
     await expect(segment(page, 0)).toHaveAttribute("aria-current", "true");
   });
 
-  test("reduced motion: tanpa autoplay, kata pertama, tanpa tombol pause; segmen tetap bisa diklik", async ({ page }) => {
+  test("reduced motion: tanpa autoplay, kata pertama; segmen tetap bisa diklik", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.setViewportSize({ width: 1280, height: 1400 });
     await page.goto("/");
@@ -209,8 +202,6 @@ test.describe("hero slideshow", () => {
     await page.waitForTimeout(INTERVAL + 1500);
     await expect(segment(page, 0)).toHaveAttribute("aria-current", "true");
     expect(await visibleWord(page)).toBe(WORDS[0]);
-    await expect(hero(page).getByText("STATIS", { exact: true })).toBeAttached();
-    await expect(page.getByRole("button", { name: "Jeda slideshow" })).toBeHidden();
     await segment(page, 1).click();
     await expect(segment(page, 1)).toHaveAttribute("aria-current", "true");
   });

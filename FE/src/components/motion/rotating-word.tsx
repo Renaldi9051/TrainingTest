@@ -2,15 +2,14 @@
 
 import { animate } from "motion/mini";
 import { useEffect, useRef } from "react";
-import { getHeroPaused, subscribeHeroPaused } from "./hero-playback";
 import { nextRotateIndex, shouldRotate, type RotateBlockers } from "./rotate-plan";
 import { EASE, ROTATE_INTERVAL_MS, ROTATE_SWAP_MS } from "./tokens";
 
 const OUT = "translateY(-105%)";
 const IN = "translateY(105%)";
 
-// Kata kunci hero yang berganti tiap intervalMs (default 2 s, diatur admin; slot vertikal, DESIGN.md 9.2). Ditahan saat dijeda lewat
-// tombol pause hero (hero-playback.ts, WCAG 2.2.2) dan saat tidak terlihat (tab tidak aktif atau hero
+// Kata kunci hero yang berganti tiap intervalMs (default 2 s, diatur admin; slot vertikal, DESIGN.md 9.2).
+// Tanpa tombol pause (pemilik, 29 Okt 2026). Ditahan saat tidak terlihat (tab tidak aktif atau hero
 // di luar layar), lalu lanjut dari kata yang sedang tampil. Semua kata dirender di satu sel grid (lebar = kata terpanjang, tanpa geser layout);
 // tanpa JS hanya kata pertama terlihat. Slot aria-hidden: pembaca layar membaca kata pertama (sr-only)
 // sekali, tidak diumumkan ulang tiap berganti. Reduced motion: diam di kata pertama.
@@ -33,7 +32,7 @@ export function RotatingWord({
     const slot = slotRef.current;
     if (count < 2 || !slot || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const elements = refs.current;
-    const blockers: RotateBlockers = { hidden: document.hidden, offscreen: false, paused: getHeroPaused() };
+    const blockers: RotateBlockers = { hidden: document.hidden, offscreen: false };
     const animations: ReturnType<typeof animate>[] = [];
     let timer = 0;
 
@@ -66,7 +65,6 @@ export function RotatingWord({
 
     const onVisibility = () => update({ hidden: document.hidden });
     const observer = new IntersectionObserver(([entry]) => update({ offscreen: !entry.isIntersecting }));
-    const unsubscribe = subscribeHeroPaused(() => update({ paused: getHeroPaused() }));
     document.addEventListener("visibilitychange", onVisibility);
     observer.observe(slot);
     schedule();
@@ -76,7 +74,6 @@ export function RotatingWord({
       // Animasi yang terputus: cancel (bukan stop, lihat 4.1d). Nilai akhir sudah dipasang inline.
       animations.forEach((animation) => animation.cancel());
       observer.disconnect();
-      unsubscribe();
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [count, intervalMs]);

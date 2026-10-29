@@ -8,8 +8,7 @@ import { HERO_WORD_MS, heroWordStepMs } from "./tokens";
 
 // Headline hero: reveal per kata dengan CSS murni (keyframes langsung jalan tanpa menunggu JS),
 // hanya transform, total <= 500 ms. Reduced motion: tanpa animasi (lihat .hero-word di theme.css).
-// accents: kata kunci di akhir judul; lebih dari satu = berganti tiap accentIntervalMs (RotatingWord,
-// ikut tombol pause hero). accentClassName: gaya kata aksen (abu di latar putih, italic di atas foto).
+// accents: kata kunci di akhir judul; lebih dari satu = berganti tiap accentIntervalMs (RotatingWord). accentClassName: gaya kata aksen (abu di latar putih, italic di atas foto).
 export function HeroWords({
   text,
   accents = [],

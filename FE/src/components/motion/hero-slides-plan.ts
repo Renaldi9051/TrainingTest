@@ -1,8 +1,6 @@
 // Logika hero slideshow tanpa UI (DESIGN.md 8.1). Fungsi murni, dites di Vitest.
 
 export type SlideBlockers = {
-  // Tombol pause/play (status bersama dengan kata berganti, hero-playback.ts).
-  userPaused: boolean;
   // Kursor di atas hero.
   hover: boolean;
   // Fokus keyboard di dalam hero.
@@ -19,12 +17,6 @@ export type SlideBlockers = {
 
 export function autoplayAllowed(count: number, blockers: SlideBlockers): boolean {
   return count > 1 && !Object.values(blockers).some(Boolean);
-}
-
-// Label status mono di bingkai viewfinder: STATIS (reduced motion), JEDA, atau PUTAR.
-export function slideStatus(count: number, blockers: SlideBlockers): "PUTAR" | "JEDA" | "STATIS" {
-  if (count < 2 || blockers.reduced) return "STATIS";
-  return autoplayAllowed(count, blockers) ? "PUTAR" : "JEDA";
 }
 
 export function nextSlide(current: number, count: number): number {

@@ -11,9 +11,7 @@ import { segmentKeyTarget } from "@/components/ui/segmented-plan";
 import type { HeroLayout, HeroPhotoStyle, PublicHeroSlide } from "@/lib/api/types";
 import { HEADER_OVER_ATTR, HERO_HIDDEN_ATTR, PAST_HERO_ATTR } from "@/lib/hero-marker";
 import { cn } from "@/lib/utils";
-import { HeroPauseButton } from "./hero-pause-button";
-import { useHeroPaused } from "./hero-playback";
-import { autoplayAllowed, nextSlide, segmentFill, slideCounter, slideStatus, type SlideBlockers } from "./hero-slides-plan";
+import { autoplayAllowed, nextSlide, segmentFill, slideCounter, type SlideBlockers } from "./hero-slides-plan";
 
 // Gambar hero memenuhi lebar layar; > 1600 px memakai file WebP utama (image-loader).
 const SLIDE_SIZES_FULL = "100vw";
@@ -27,8 +25,6 @@ type Props = {
   showViewfinder: boolean;
   decor: boolean;
   badge: { text: string; href: string } | null;
-  // Ada kata berganti: tombol pause tetap perlu walau hanya 1 slide (WCAG 2.2.2).
-  hasRotatingWords: boolean;
   // Teks hero (eyebrow, h1, subjudul, search, CTA), dirender server.
   children: ReactNode;
 };
@@ -37,12 +33,13 @@ const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)"
 
 // Hero slideshow beranda (DESIGN.md 8.1): 1-6 slide dari CMS. 1 slide = foto statis tanpa indikator.
 // 2+ slide: ganti otomatis tiap intervalMs (wipe clip-path 900 ms + Ken Burns), progres bersegmen yang
-// bisa diklik, penghitung 01 / 04, caption, label HUD, tombol pause/play (juga menghentikan kata
-// berganti). Berhenti saat kursor/fokus di hero, tab tidak aktif, atau hero di luar layar; panah
+// bisa diklik, penghitung 01 / 04, caption, label HUD. Tanpa tombol pause/play dan tanpa label status
+// (pemilik, 29 Okt 2026, pengecualian DESIGN.md 8.1 / WCAG 2.2.2). Berhenti saat kursor/fokus di hero,
+// tab tidak aktif, atau hero di luar layar; panah
 // kiri/kanan di indikator. Slide pertama = LCP (priority); slide lain dipasang setelah event load.
 // Reduced motion: tanpa autoplay & Ken Burns, ganti slide langsung lewat indikator. fullbleed: foto
 // penuh di belakang teks terang, header transparan di atasnya ([data-header-over]).
-export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showViewfinder, decor, badge, hasRotatingWords, children }: Props) {
+export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showViewfinder, decor, badge, children }: Props) {
   const count = slides.length;
   const multiple = count > 1;
   const full = layout === "fullbleed";
@@ -52,8 +49,7 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
   const elapsed = useRef(0);
   const [active, setActive] = useState(0);
   const [previous, setPrevious] = useState<number | null>(null);
-  const userPaused = useHeroPaused();
-  const [blockers, setBlockers] = useState<Omit<SlideBlockers, "userPaused">>({
+  const [blockers, setBlockers] = useState<SlideBlockers>({
     hover: false,
     focus: false,
     hidden: false,
@@ -61,8 +57,7 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
     reduced: false,
     pending: multiple,
   });
-  const allBlockers: SlideBlockers = { ...blockers, userPaused };
-  const playing = autoplayAllowed(count, allBlockers);
+  const playing = autoplayAllowed(count, blockers);
   const block = (change: Partial<typeof blockers>) => setBlockers((current) => ({ ...current, ...change }));
 
   // Pindah halaman lewat navigasi klien menyembunyikan beranda di <Activity> tanpa melepasnya dari DOM;
@@ -150,10 +145,7 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
   }
 
   const current = slides[active];
-  const status = slideStatus(count, allBlockers);
-  const canPause = multiple || hasRotatingWords;
   const tone = full ? "text-inverse-fg" : "text-fg";
-  const subtle = full ? "border-inverse-fg/40 hover:bg-inverse-fg/10" : "border-border-strong hover:bg-bg-subtle";
 
   const stage = (
     // Latar gelap selama foto dimuat (teks terang tetap terbaca). Bukan "section terbalik" (DESIGN.md 2:
@@ -199,21 +191,12 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
         crosshair
         className={cn("z-[4]", full ? "top-[104px] right-4 bottom-[112px] left-4 md:right-8 md:left-8" : "inset-5")}
         topLeft={<HudLabel tone="photo">{current?.hudLabel}</HudLabel>}
-        topRight={
-          multiple ? (
-            <HudLabel tone="photo" dot>
-              {status}
-            </HudLabel>
-          ) : null
-        }
       />
     </div>
   );
 
-  const indicator = canPause ? (
+  const indicator = multiple ? (
     <div className={cn("flex items-center gap-4 md:gap-6", full ? "h-[88px] border-t border-inverse-fg/15" : "mt-4 border-t border-border pt-4")}>
-      {multiple ? (
-        <>
           <p className="min-w-[72px] font-mono text-[13px] tracking-[0.08em] whitespace-nowrap tabular-nums">{slideCounter(active, count)}</p>
           {current?.caption ? (
             <p className="hidden min-w-0 shrink truncate font-mono text-label font-medium uppercase tracking-[0.08em] opacity-85 sm:block sm:max-w-[260px]">
@@ -253,11 +236,6 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
               </button>
             ))}
           </div>
-        </>
-      ) : (
-        <span className="flex-1" />
-      )}
-      <HeroPauseButton subject={multiple ? "slideshow" : "kata berganti"} className={subtle} />
     </div>
   ) : null;
 
