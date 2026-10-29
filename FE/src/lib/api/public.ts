@@ -8,7 +8,6 @@ import type {
   PublicCategory,
   PublicHome,
   PublicMarketingContact,
-  PublicMediaPartner,
   PublicNav,
   PublicPage,
   PublicPageRef,
@@ -35,7 +34,6 @@ export const Tag = {
   PAGES: "pages",
   SERVICES: "services",
   PORTFOLIO: "portfolio",
-  MEDIA_PARTNERS: "media-partners",
   MARKETING: "marketing",
   category: (slug: string) => `category:${slug}`,
   training: (slug: string) => `training:${slug}`,
@@ -176,7 +174,7 @@ export function getSchedules(params: ScheduleParams): Promise<ScheduleList> {
   return getSchedulesByQuery(search.toString());
 }
 
-// ===== Beranda, halaman, layanan, portofolio, media partner (Fase 3) =====
+// ===== Beranda, halaman, layanan, portofolio (Fase 3) =====
 
 export async function getHome(): Promise<PublicHome> {
   "use cache";
@@ -222,13 +220,6 @@ export async function getPortfolio(): Promise<PublicPortfolioItem[]> {
   cacheLife("content");
   cacheTag(Tag.PORTFOLIO, Tag.MEDIA);
   return getRequired<PublicPortfolioItem[]>("/portfolio");
-}
-
-export async function getMediaPartners(): Promise<PublicMediaPartner[]> {
-  "use cache";
-  cacheLife("content");
-  cacheTag(Tag.MEDIA_PARTNERS);
-  return getRequired<PublicMediaPartner[]>("/media-partners");
 }
 
 // Kontak marketing aktif (halaman /kontak, floating contact).

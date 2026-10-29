@@ -30,7 +30,6 @@ describe("adminSearchHref", () => {
     expect(adminSearchHref("trainings", item("t1"))).toBe("/admin/trainings/t1");
     expect(adminSearchHref("home", item("h1"))).toBe("/admin/home/h1");
     expect(adminSearchHref("clients", item("c1"))).toBe("/admin/clients?edit=c1");
-    expect(adminSearchHref("mediaPartners", item("p1"))).toBe("/admin/media-partners?edit=p1");
     expect(adminSearchHref("media", item("m1"))).toBe("/admin/media?media=m1");
     expect(adminSearchHref("navigation", item("n1"))).toBe("/admin/navigation");
     expect(adminSearchHref("settings", item("site.contact", { field: "whatsapp" }))).toBe(

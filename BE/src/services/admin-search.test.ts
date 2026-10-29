@@ -69,7 +69,7 @@ describe("adminSearch", () => {
 
   it("entitas teks pendek: LIKE tanpa aksen dengan wildcard di-escape, Sampah tidak ikut", async () => {
     await adminSearch("50%_off");
-    for (const table of ["Category", "Service", "PortfolioItem", "Client", "Testimonial", "MarketingContact", "MediaPartner", "Media"]) {
+    for (const table of ["Category", "Service", "PortfolioItem", "Client", "Testimonial", "MarketingContact", "Media"]) {
       const call = callFor(table);
       expect(call?.sql, table).toContain(`"deletedAt" IS NULL`);
       expect(call?.sql, table).toContain("public.immutable_unaccent(lower(");

@@ -17,7 +17,6 @@ import {
   buildClients,
   buildHomeSections,
   buildMarketing,
-  buildMediaPartners,
   buildPortfolio,
   buildProfileBlocks,
   buildServices,
@@ -99,7 +98,6 @@ async function plan() {
   await replace("Testimoni", await db.testimonial.count(), buildTestimonials().length, "testimoni");
   await replace("Portofolio", await db.portfolioItem.count(), buildPortfolio().length, "kegiatan tanpa gambar");
   await replace("Marketing", await db.marketingContact.count(), buildMarketing().length, "kontak marketing");
-  await replace("Media partner", await db.mediaPartner.count(), buildMediaPartners().length, "media partner");
 
   // Halaman.
   const profile = await db.page.findFirst({ where: { kind: "PROFILE" }, select: { id: true } });
@@ -201,8 +199,6 @@ async function apply(result: Awaited<ReturnType<typeof plan>>) {
       });
       await tx.marketingContact.deleteMany({});
       await tx.marketingContact.createMany({ data: buildMarketing().map((row, order) => ({ ...row, order })) });
-      await tx.mediaPartner.deleteMany({});
-      await tx.mediaPartner.createMany({ data: buildMediaPartners().map((row, order) => ({ ...row, order })) });
 
       // Halaman profil & statis.
       const profileBlocks = buildProfileBlocks() as Prisma.InputJsonValue;

@@ -67,7 +67,6 @@ export type AdminSearchGroup =
   | "clients"
   | "testimonials"
   | "marketing"
-  | "mediaPartners"
   | "media"
   | "navigation"
   | "settings";
@@ -639,7 +638,7 @@ export type PublicServiceDetail = PublicServiceCard & {
   updatedAt: string;
 };
 
-// ===== Klien, testimoni, portofolio, kontak marketing, media partner =====
+// ===== Klien, testimoni, portofolio, kontak marketing =====
 
 export type Client = {
   id: string;
@@ -725,17 +724,6 @@ export type PublicMarketingContact = {
   defaultMessage: string | null;
   photo: PublicImage | null;
 };
-
-export type MediaPartner = {
-  id: string;
-  name: string;
-  url: string | null;
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type PublicMediaPartner = { name: string; url: string | null };
 
 // ===== Halaman (blok konten) =====
 

@@ -8,7 +8,6 @@ export type AdminResource =
   | "testimonials"
   | "portfolio"
   | "marketing"
-  | "media-partners"
   | "pages"
   | "inquiries";
 

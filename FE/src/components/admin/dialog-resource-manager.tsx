@@ -40,7 +40,7 @@ type DialogResourceManagerProps<TItem extends { id: string }> = {
 type DialogState<TItem> = { item: TItem | null } | null;
 
 // Halaman admin untuk entitas sederhana yang diedit lewat dialog (klien, testimoni, kontak
-// marketing, media partner): tabel + mode urutkan + tambah/ubah di dialog + hapus dengan
+// marketing): tabel + mode urutkan + tambah/ubah di dialog + hapus dengan
 // konfirmasi dan "Urungkan" (pulihkan). ?edit=<id> membuka dialog ubah item itu (search global).
 export function DialogResourceManager<TItem extends { id: string }>({
   resource,

@@ -27,7 +27,6 @@ const CASES: [ReorderResource, keyof MockDb, string, string[]][] = [
   ["testimonials", "testimonial", "Testimonial", ["testimonials", "home"]],
   ["portfolio", "portfolioItem", "PortfolioItem", ["portfolio"]],
   ["marketing", "marketingContact", "MarketingContact", ["marketing"]],
-  ["media-partners", "mediaPartner", "MediaPartner", ["media-partners"]],
   ["home-sections", "homeSection", "HomeSection", ["home"]],
 ];
 

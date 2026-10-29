@@ -15,7 +15,6 @@ describe("data contoh", () => {
     expect(built.testimonials).toHaveLength(3);
     expect(built.portfolio).toHaveLength(6);
     expect(built.marketing).toHaveLength(5);
-    expect(built.mediaPartners).toHaveLength(3);
     expect(built.homeSections.map((section) => section.type)).toEqual([
       "HERO",
       "VISION_MISSION",
@@ -110,7 +109,6 @@ describe("data contoh", () => {
     const contact = built.settings["site.contact"];
     expect([contact.email, contact.emailSecondary].every((email) => email.endsWith("@example.com"))).toBe(true);
     expect(built.marketing.map((item) => item.phone)).toEqual([1, 2, 3, 4, 5].map((n) => `628120000000${n}`));
-    expect(built.mediaPartners.every((partner) => /^https:\/\/contoh-[a-z]+\.id$/.test(partner.url ?? ""))).toBe(true);
     expect(JSON.stringify({ content, categories, trainings }).toLowerCase()).not.toContain("diotraining");
     expect(JSON.stringify(trainings)).not.toMatch(/\[UJI\]/);
     expect(content.clients.every((name) => name.startsWith("PT Contoh "))).toBe(true);

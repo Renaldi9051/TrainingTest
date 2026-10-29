@@ -1,5 +1,5 @@
 // Konten contoh Fase 3: menu, pengaturan kontak/footer, layanan, klien, testimoni, portofolio,
-// marketing, media partner, halaman statis, halaman profil, dan section beranda.
+// marketing, halaman statis, halaman profil, dan section beranda.
 // Dipakai prisma/seed-content.ts (database baru) dan scripts/sync-content-dev.ts (training_dev).
 //
 // Isi dan struktur menu mengikuti situs referensi; semua teks ditulis ulang sendiri. Tidak ada
@@ -97,7 +97,7 @@ export const services: SeedService[] = [
   },
 ];
 
-// ===== Klien, testimoni, portofolio, marketing, media partner =====
+// ===== Klien, testimoni, portofolio, marketing =====
 
 export const clients = [
   "PT Contoh Energi Nusantara",
@@ -182,11 +182,6 @@ export const marketing = ["Rina", "Dewi", "Andi", "Sari", "Budi"].map((name, ind
   name,
   phone: `0812-0000-000${index + 1}`,
   defaultMessage: "Halo, saya ingin mendaftar pelatihan",
-}));
-
-export const mediaPartners = ["contoh-satu.id", "contoh-dua.id", "contoh-tiga.id"].map((domain) => ({
-  name: domain,
-  url: `https://${domain}`,
 }));
 
 // Inquiry contoh (dummy, email example.com, nomor 0812-0000-00xx).

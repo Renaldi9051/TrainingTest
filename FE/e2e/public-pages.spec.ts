@@ -141,7 +141,6 @@ test.describe("halaman publik", () => {
       description: "Dokumentasi workshop dua hari.",
       imageIds: [galleryA, galleryB],
     });
-    await post(request, "/admin/media-partners", { name: `[UJI] Majalah Uji ${id}`, url: "https://media.example" });
     const staticPage = await post(request, "/admin/pages", {
       title: `[UJI] Syarat & ketentuan ${id}`,
       status: "PUBLISHED",
@@ -198,8 +197,8 @@ test.describe("halaman publik", () => {
       images.every((image) => image.getAttribute("loading") === "lazy"),
     );
     expect(lazy).toBe(true);
-    // Footer menampilkan media partner.
-    await expect(page.getByRole("contentinfo").getByRole("link", { name: new RegExp(`\\[UJI\\] Majalah Uji ${id}`) })).toBeVisible();
+    // Footer tanpa media partner.
+    await expect(page.getByRole("contentinfo")).not.toContainText(/media partner/i);
   });
 
   test("hero di viewport 360: srcset memilih varian 768, bukan 1600", async ({ browser }) => {

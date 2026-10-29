@@ -171,7 +171,7 @@ export const whatsappSchema = z
   .transform(normalizeWhatsapp)
   .refine(isWhatsappLength, { error: WHATSAPP_INVALID_ERROR });
 
-// URL http(s) opsional (link klien, media partner): kosong disimpan null.
+// URL http(s) opsional (link klien): kosong disimpan null.
 export const nullableHttpUrlSchema = z
   .string()
   .trim()

@@ -16,7 +16,6 @@ export const RevalidateTag = {
   TESTIMONIALS: "testimonials",
   PORTFOLIO: "portfolio",
   MARKETING: "marketing",
-  MEDIA_PARTNERS: "media-partners",
   category: (slug: string) => `category:${slug}`,
   training: (slug: string) => `training:${slug}`,
   page: (slug: string) => `page:${slug}`,

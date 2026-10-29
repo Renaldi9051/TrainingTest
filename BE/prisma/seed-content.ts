@@ -13,7 +13,6 @@ import {
   buildClients,
   buildHomeSections,
   buildMarketing,
-  buildMediaPartners,
   buildPortfolio,
   buildServices,
   buildStaticPages,
@@ -99,15 +98,6 @@ export async function seedContent(publishedAt: Date): Promise<ContentSeedResult>
     async () => {
       const rows = buildMarketing();
       await db.marketingContact.createMany({ data: rows.map((row, order) => ({ ...row, order })) });
-      return rows.length;
-    },
-  );
-
-  result["media partner"] = await ifEmpty(
-    () => db.mediaPartner.count(),
-    async () => {
-      const rows = buildMediaPartners();
-      await db.mediaPartner.createMany({ data: rows.map((row, order) => ({ ...row, order })) });
       return rows.length;
     },
   );

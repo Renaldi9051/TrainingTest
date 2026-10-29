@@ -19,7 +19,6 @@ export const ADMIN_SEARCH_GROUPS = [
   "clients",
   "testimonials",
   "marketing",
-  "mediaPartners",
   "media",
   "navigation",
   "settings",
@@ -99,7 +98,6 @@ const TEXT_SPECS = {
     columns: ['"name"', '"role"', '"company"', '"quote"'],
   },
   marketing: { table: "MarketingContact", title: '"name"', meta: '"phone"', columns: ['"name"', '"phone"', '"defaultMessage"'] },
-  mediaPartners: { table: "MediaPartner", title: '"name"', meta: '"url"', columns: ['"name"', '"url"'] },
   media: {
     table: "Media",
     title: `coalesce(nullif("originalName", ''), "path")`,
@@ -208,7 +206,6 @@ export async function adminSearch(rawQuery: string): Promise<AdminSearchResult> 
     clients: () => searchText(TEXT_SPECS.clients, q),
     testimonials: () => searchText(TEXT_SPECS.testimonials, q),
     marketing: () => searchText(TEXT_SPECS.marketing, q),
-    mediaPartners: () => searchText(TEXT_SPECS.mediaPartners, q),
     media: () => searchText(TEXT_SPECS.media, q),
     navigation: () => searchNavigation(q),
     settings: () => searchSettings(q),

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { clientCreateSchema, clientUpdateSchema } from "@/lib/validators/client";
 import { marketingCreateSchema, marketingListQuerySchema } from "@/lib/validators/marketing";
-import { mediaPartnerCreateSchema } from "@/lib/validators/media-partner";
 import { portfolioCreateSchema, portfolioUpdateSchema, PORTFOLIO_IMAGES_MAX } from "@/lib/validators/portfolio";
 import {
   readServiceBenefits,
@@ -164,12 +163,5 @@ describe("marketing", () => {
   it("filter active dari query string", () => {
     expect(marketingListQuerySchema.parse({ active: "false" }).active).toBe(false);
     expect(marketingListQuerySchema.parse({}).active).toBeUndefined();
-  });
-});
-
-describe("media partner", () => {
-  it("nama wajib, url opsional", () => {
-    expect(mediaPartnerCreateSchema.safeParse({ url: "https://x.example" }).success).toBe(false);
-    expect(mediaPartnerCreateSchema.parse({ name: "Majalah HR" })).toEqual({ name: "Majalah HR", url: null });
   });
 });

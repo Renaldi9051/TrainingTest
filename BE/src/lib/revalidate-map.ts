@@ -27,8 +27,7 @@ export type RevalidateEvent =
   | { entity: "Client" }
   | { entity: "Testimonial" }
   | { entity: "PortfolioItem" }
-  | { entity: "MarketingContact" }
-  | { entity: "MediaPartner" };
+  | { entity: "MarketingContact" };
 
 export type RevalidateEntityName = RevalidateEvent["entity"];
 
@@ -89,8 +88,6 @@ export function tagsForEvent(event: RevalidateEvent): string[] {
       return [RevalidateTag.PORTFOLIO];
     case "MarketingContact":
       return [RevalidateTag.MARKETING];
-    case "MediaPartner":
-      return [RevalidateTag.MEDIA_PARTNERS];
   }
 }
 

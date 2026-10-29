@@ -114,7 +114,6 @@ test.describe("konten pendukung", () => {
     { resource: "clients", noun: "klien", title: "Klien" },
     { resource: "testimonials", noun: "testimoni", title: "Testimoni" },
     { resource: "marketing", noun: "kontak marketing", title: "Marketing" },
-    { resource: "media-partners", noun: "media partner", title: "Media partner" },
   ] as const;
 
   for (const entity of DIALOG_ENTITIES) {

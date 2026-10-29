@@ -71,7 +71,6 @@ const endpoints: Endpoint[] = [
   ...contentEndpoints("testimonials", { options: true, reorder: true }),
   ...contentEndpoints("portfolio", { options: true, reorder: true }),
   ...contentEndpoints("marketing", { options: true, reorder: true }),
-  ...contentEndpoints("media-partners", { options: true, reorder: true }),
   ...contentEndpoints("pages", { preview: "/preview/x" }),
   ...contentEndpoints("home-sections", { reorder: true, preview: "/preview" }),
 ];

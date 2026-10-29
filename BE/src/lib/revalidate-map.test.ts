@@ -63,7 +63,6 @@ describe("tagsForEvent: beranda ikut di-revalidate saat datanya berubah", () => 
     { entity: "Media" } as const,
     { entity: "PortfolioItem" } as const,
     { entity: "MarketingContact" } as const,
-    { entity: "MediaPartner" } as const,
     { entity: "Page", slugs: ["a"] } as const,
   ])("%o tidak menyentuh beranda", (event) => {
     expect(tagsForEvent(event)).not.toContain("home");
@@ -81,7 +80,6 @@ describe("tagsForEvent: entitas Fase 3", () => {
     [{ entity: "Testimonial" } as const, ["testimonials", "home"]],
     [{ entity: "PortfolioItem" } as const, ["portfolio"]],
     [{ entity: "MarketingContact" } as const, ["marketing"]],
-    [{ entity: "MediaPartner" } as const, ["media-partners"]],
     [{ entity: "HomeSection" } as const, ["home"]],
   ])("%o", (event, expected) => {
     expect(tagsForEvent(event)).toEqual(expected);

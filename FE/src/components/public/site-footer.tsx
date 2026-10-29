@@ -2,7 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { BrandMark } from "@/components/decor/brand-mark";
 import { Container } from "@/components/ui/container";
-import { getMediaPartners, getNav, getSettings, Tag } from "@/lib/api/public";
+import { getNav, getSettings, Tag } from "@/lib/api/public";
 import type { PublicNavItem, SocialPlatform } from "@/lib/api/types";
 import { SiteLogo } from "./site-logo";
 
@@ -49,9 +49,9 @@ function NavColumn({ label, items }: { label: string; items: PublicNavItem[] }) 
 export async function SiteFooter() {
   "use cache";
   cacheLife("content");
-  cacheTag(Tag.SETTINGS, Tag.NAV, Tag.MEDIA, Tag.MEDIA_PARTNERS);
+  cacheTag(Tag.SETTINGS, Tag.NAV, Tag.MEDIA);
 
-  const [settings, nav, partners] = await Promise.all([getSettings(), getNav(), getMediaPartners()]);
+  const [settings, nav] = await Promise.all([getSettings(), getNav()]);
   const { identity, contact, social, footer } = settings;
   const year = new Date().getFullYear();
   const emails = [contact.email, contact.emailSecondary].filter(Boolean);
@@ -126,26 +126,6 @@ export async function SiteFooter() {
                 />
               </div>
             ) : null}
-          </div>
-        ) : null}
-
-        {partners.length > 0 ? (
-          <div className="border-t border-inverse-line pt-8 sm:col-span-2 lg:col-span-12">
-            <FooterHeading>Media partner</FooterHeading>
-            <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
-              {partners.map((partner, index) => (
-                <li key={`${partner.name}-${index}`} className="flex">
-                  {partner.url ? (
-                    <a href={partner.url} target="_blank" rel="noopener noreferrer" className={footerLink}>
-                      {partner.name}
-                      <span className="sr-only"> (tab baru)</span>
-                    </a>
-                  ) : (
-                    <span className="text-small text-inverse-fg/80">{partner.name}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
           </div>
         ) : null}
       </Container>

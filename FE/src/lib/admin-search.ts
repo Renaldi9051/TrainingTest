@@ -22,7 +22,6 @@ export const ADMIN_SEARCH_GROUP_LABELS: Record<AdminSearchGroup, string> = {
   clients: "Klien",
   testimonials: "Testimoni",
   marketing: "Kontak marketing",
-  mediaPartners: "Media partner",
   media: "Media",
   navigation: "Navigasi",
   settings: "Pengaturan",
@@ -44,8 +43,6 @@ export function adminSearchHref(group: AdminSearchGroup, item: AdminSearchItem):
     case "testimonials":
     case "marketing":
       return `/admin/${group}?edit=${id}`;
-    case "mediaPartners":
-      return `/admin/media-partners?edit=${id}`;
     case "media":
       return `/admin/media?media=${id}`;
     case "navigation":

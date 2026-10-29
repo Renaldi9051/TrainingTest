@@ -29,7 +29,6 @@ export function createMockDb() {
     client: model(),
     testimonial: model(),
     marketingContact: model(),
-    mediaPartner: model(),
     portfolioItem: model(),
     portfolioImage: model(),
     homeSection: model(),

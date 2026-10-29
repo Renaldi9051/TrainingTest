@@ -4,7 +4,6 @@
 import { clientCreateSchema } from "../../src/lib/validators/client";
 import { homeSectionCreateSchema } from "../../src/lib/validators/home-section";
 import { marketingCreateSchema } from "../../src/lib/validators/marketing";
-import { mediaPartnerCreateSchema } from "../../src/lib/validators/media-partner";
 import { pageBlocksSchema } from "../../src/lib/validators/page-blocks";
 import { portfolioCreateSchema } from "../../src/lib/validators/portfolio";
 import { serviceCreateSchema } from "../../src/lib/validators/service";
@@ -16,7 +15,6 @@ import {
   footerSetting,
   homeSections,
   marketing,
-  mediaPartners,
   paymentPage,
   portfolio,
   profilePage,
@@ -39,7 +37,6 @@ export const buildPortfolio = () => portfolio.map((item) => portfolioCreateSchem
 
 export const buildMarketing = () => marketing.map((item) => marketingCreateSchema.parse(item));
 
-export const buildMediaPartners = () => mediaPartners.map((item) => mediaPartnerCreateSchema.parse(item));
 
 export const buildProfileBlocks = () => pageBlocksSchema.parse(withIds(profilePage.blocks));
 
@@ -74,7 +71,6 @@ export function buildAll() {
     testimonials: buildTestimonials(),
     portfolio: buildPortfolio(),
     marketing: buildMarketing(),
-    mediaPartners: buildMediaPartners(),
     profileBlocks: buildProfileBlocks(),
     staticPages: buildStaticPages(),
     paymentPage: buildPaymentPage(),

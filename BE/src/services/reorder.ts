@@ -50,12 +50,6 @@ const REORDERABLE = {
     model: (db) => db.marketingContact,
     event: { entity: "MarketingContact" },
   },
-  "media-partners": {
-    entity: "MediaPartner",
-    noun: "media partner",
-    model: (db) => db.mediaPartner,
-    event: { entity: "MediaPartner" },
-  },
   "home-sections": {
     entity: "HomeSection",
     noun: "section",

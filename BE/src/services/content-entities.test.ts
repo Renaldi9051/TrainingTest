@@ -18,7 +18,6 @@ import {
   updateClient,
 } from "@/services/client";
 import { createMarketing, listPublicMarketing } from "@/services/marketing";
-import { listPublicMediaPartners, updateMediaPartner } from "@/services/media-partner";
 import { createTestimonial, listPublicTestimonials } from "@/services/testimonial";
 
 const ID = "0199b4d0-0000-7000-8000-000000000001";
@@ -163,16 +162,10 @@ describe("endpoint publik tidak membawa field internal", () => {
     expect(entry.whatsappUrl).toBe("https://wa.me/6281234567890?text=Halo%2C%20saya%20ingin%20bertanya");
     for (const field of INTERNAL_FIELDS) expect(entry).not.toHaveProperty(field);
   });
-
-  it("media partner", async () => {
-    mock.mediaPartner.findMany.mockResolvedValue([{ ...base, name: "Majalah HR", url: null }]);
-    const [entry] = await listPublicMediaPartners();
-    expect(entry).toEqual({ name: "Majalah HR", url: null });
-  });
 });
 
 describe("revalidate per entitas", () => {
-  it("testimoni: testimonials + home; marketing: marketing; media partner: media-partners", async () => {
+  it("testimoni: testimonials + home; marketing: marketing", async () => {
     mock.testimonial.aggregate.mockResolvedValue({ _max: { order: null } });
     mock.testimonial.create.mockResolvedValue({
       ...base,
@@ -198,10 +191,5 @@ describe("revalidate per entitas", () => {
     });
     await createMarketing({ name: "Sari", area: null, phone: "6281234567890", photoId: null, defaultMessage: null, active: true }, "u1");
     expect(revalidate).toHaveBeenLastCalledWith(["marketing"]);
-
-    mock.mediaPartner.findFirst.mockResolvedValue({ ...base, name: "A", url: null });
-    mock.mediaPartner.update.mockResolvedValue({ ...base, name: "B", url: null });
-    await updateMediaPartner(ID, { name: "B" }, "u1");
-    expect(revalidate).toHaveBeenLastCalledWith(["media-partners"]);
   });
 });
