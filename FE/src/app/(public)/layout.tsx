@@ -9,8 +9,8 @@ import { SiteHeader } from "@/components/public/site-header";
 import { getSettings } from "@/lib/api/public";
 import { getPublicEnv } from "@/lib/env";
 import { FALLBACK_ICON_PATH } from "@/lib/monogram";
-// Palet C hanya untuk halaman publik: semua aturannya di-scope ke [data-site="public"] (main di bawah).
-import "./palette-c.css";
+// Palet D hanya untuk halaman publik: semua aturannya di-scope ke [data-site="public"] (main di bawah).
+import "./palette-d.css";
 
 // Metadata dasar seluruh halaman publik dari pengaturan SEO default (bisa diubah admin).
 export async function generateMetadata(): Promise<Metadata> {
@@ -43,7 +43,7 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
       <SiteHeader />
       {/* isolate: garis grid (z negatif) di belakang semua isi main, tapi di atas latar halaman;
           section berlatar menutupinya seperti di mockup. */}
-      {/* data-site: penanda scope palet C (palette-c.css); admin tidak punya penanda ini. */}
+      {/* data-site: penanda scope palet D (palette-d.css); admin tidak punya penanda ini. */}
       <main id="konten" data-site="public" className="relative isolate flex-1">
         <GridLines className="-z-10" />
         {children}

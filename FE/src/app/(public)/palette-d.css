@@ -1,0 +1,104 @@
+/* Palet D "Kodachrome Klasik" (DESIGN.md v0.4), hanya untuk halaman publik: ivory, merah bata, kuning
+   mustard, biru tua, foto di-grading hangat. Di-import oleh (public)/layout.tsx, dan setiap aturan
+   di-scope ke halaman yang punya penanda [data-site="public"] (main layout publik). Admin tidak pernah
+   punya penanda itu, jadi tokennya tetap netral walau stylesheet ini masih termuat setelah navigasi
+   klien publik -> admin. Token dideklarasikan di :root supaya portal, ::backdrop, dan popover publik
+   ikut. Plain CSS (tanpa Tailwind): utilitas memakai token ini lewat @theme di theme.css (dengan
+   fallback ke token netral untuk admin). */
+:root:has([data-site="public"]) {
+  --bg: #fff8ec;
+  --bg-subtle: #f5ead6;
+  --bg-muted: #eddfc6;
+  --grid-line: #efe3cf;
+  --border: #e6d8c0;
+  --border-strong: #d3c2a5;
+  --fg-subtle: #a39684;
+  --fg-muted: #6c6258;
+  --fg: #2a2420;
+  --fg-strong: #1c1714;
+  --inverse-bg: #2a2420;
+  --inverse-fg: #faf3e6;
+  --inverse-muted: #b8ac9c;
+  --inverse-line: #3d352f;
+  --overlay-top: rgb(42 36 32 / 0.1);
+  --overlay-bottom: rgb(42 28 20 / 0.62);
+
+  /* Merah bata: aksi di latar terang. Teks bata kecil memakai --primary-ink (bata di --bg-subtle 4,2:1). */
+  --primary: #c0472f;
+  --primary-hover: #a63b26;
+  --on-primary: #ffffff;
+  --primary-ink: #a63b26;
+  /* Mustard: CTA di hero & section gelap, dekor. Bukan warna teks di latar terang (2,0:1). */
+  --accent: #e0a93b;
+  --on-accent: #2a1c02;
+  --accent-on-dark: #e0a93b;
+  /* Simbol ✦ di pita marquee (dekoratif). */
+  --accent-on-primary: var(--accent);
+  /* Biru tua: link, menu & tab aktif, label kategori kartu, ring fokus, latar CTA penutup. Bentrok nama
+     dengan token shadcn admin (--secondary = latar abu), jadi components/ui tidak boleh memakai
+     utilitas secondary polos (palette-guard.test.ts). */
+  --secondary: #2f5e8a;
+  --on-secondary: #ffffff;
+  --ok: #3e7a4c;
+
+  /* Tombol CTA di hero & section gelap: --accent dengan teks gelap (teks putih di mustard 2,1:1). */
+  --cta: var(--accent);
+  --cta-hover: #ebb955;
+  --on-cta: var(--on-accent);
+  /* Hover tombol sekunder, chip, dan paginasi: garis --primary, teks --primary-ink. */
+  --line-hover: var(--primary);
+  --ink-hover: var(--primary-ink);
+  /* Link teks (rich text, garis tombol ghost). */
+  --link: var(--secondary);
+  /* Ring fokus: --secondary di latar terang (6,4:1), --accent-on-dark di latar gelap/foto. */
+  --focus: var(--secondary);
+  --focus-dark: var(--accent-on-dark);
+
+  /* Elemen dekoratif (DESIGN.md 6). --decor-mark: sudut Viewfinder & PlusMarker; --primary di latar
+     terang, mustard di atas foto/latar gelap ([data-surface] di bawah). */
+  --decor-mark: var(--primary);
+  --outline-stroke: #ebd3b5;
+  --outline-stroke-dark: #4a3f37;
+  --dot: #e6cfa8;
+  --grid-opacity: 0.45;
+
+  /* Grading "film" foto publik (PublicImage film) dan lapisan hangat di atas foto hero. */
+  --photo-filter: saturate(0.92) contrast(1.05) sepia(0.1);
+  --photo-tint: rgb(224 169 59 / 0.1);
+
+  /* Radius DESIGN.md 5: tombol & input 8 px, kartu & kotak statistik 12 px. */
+  --radius: 8px;
+  --card-radius: 12px;
+
+  accent-color: var(--primary);
+}
+
+/* Permukaan gelap (foto hero, foto lebar dengan Viewfinder, footer): tanda dekoratif mustard. */
+:root:has([data-site="public"]) [data-surface="dark"] {
+  --decor-mark: var(--accent);
+}
+
+/* Permukaan biru (CTA penutup beranda & layanan): komponen tetap memakai kelas section terbalik
+   (bg-inverse-bg, text-inverse-*, ring-focus-dark, ring-offset-inverse-bg), tokennya dipetakan ulang di
+   sini. Mustard di atas biru hanya 3,2:1, jadi teks kecil (intro, eyebrow, cincin badge) dan ring fokus
+   memakai --on-secondary; mustard tetap untuk latar tombol CTA dan inti badge. */
+:root:has([data-site="public"]) [data-surface="secondary"] {
+  --inverse-bg: var(--secondary);
+  --inverse-muted: var(--on-secondary);
+  --accent-on-dark: var(--on-secondary);
+  --focus-dark: var(--on-secondary);
+  --decor-mark: var(--accent);
+}
+
+/* Header publik: hover tombol Cari bergaris --primary; di atas foto hero garis terang lebih tegas. */
+:root:has([data-site="public"]) .site-header {
+  --header-line-hover: var(--primary);
+}
+:root:has([data-site="public"]):has([data-header-over]):not(:has([data-preview-banner])) .site-header {
+  --header-line-hover: color-mix(in srgb, var(--inverse-fg) 70%, transparent);
+  --decor-mark: var(--accent);
+}
+/* Garis menu aktif di atas foto hero: biru tua tidak terbaca di foto gelap, pakai mustard. */
+:root:has([data-site="public"]):has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header [data-active-indicator="line"] {
+  background: var(--accent-on-dark);
+}
