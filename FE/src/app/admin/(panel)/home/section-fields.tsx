@@ -250,13 +250,18 @@ function Fieldset({ title, description, children }: { title: string; description
   );
 }
 
-function HeadingFields({ withIntro }: { withIntro?: boolean }) {
+function HeadingFields({ withIntro, withHeading = true }: { withIntro?: boolean; withHeading?: boolean }) {
+  const eyebrow = <TextField name="content.eyebrow" label="Eyebrow" description="Label kecil di atas judul, mis. 01 / LAYANAN." />;
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <TextField name="content.eyebrow" label="Eyebrow" description="Label kecil di atas judul, mis. 01 / LAYANAN." />
-        <TextField name="content.heading" label="Judul section" />
-      </div>
+      {withHeading ? (
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+          {eyebrow}
+          <TextField name="content.heading" label="Judul section" />
+        </div>
+      ) : (
+        eyebrow
+      )}
       {withIntro ? <TextField name="content.intro" label="Pengantar" rows={2} /> : null}
     </>
   );
@@ -548,11 +553,20 @@ export function SectionFields({ type, media }: { type: HomeSectionType; media: R
         </div>
       );
     case "CLIENTS":
-    case "TESTIMONIALS":
       return (
         <div className="space-y-6">
           <Fieldset title="Judul">
             <HeadingFields withIntro />
+          </Fieldset>
+          <SelectionFields type={type} />
+        </div>
+      );
+    // Tanpa judul section (keputusan pemilik, 29 Okt 2026).
+    case "TESTIMONIALS":
+      return (
+        <div className="space-y-6">
+          <Fieldset title="Label">
+            <HeadingFields withIntro withHeading={false} />
           </Fieldset>
           <SelectionFields type={type} />
         </div>

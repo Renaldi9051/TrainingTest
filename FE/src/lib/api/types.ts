@@ -904,7 +904,8 @@ export type HomeSectionContentMap = {
   UPCOMING_SCHEDULES: SectionHeading & Decor & { intro: string; limit: number; cta: Cta | null };
   CLIENTS: SectionHeading & SelectionConfig & Decor & { intro: string };
   VISION_MISSION: Decor & { eyebrow: string; vision: string; mission: string[]; motto: string };
-  TESTIMONIALS: SectionHeading & SelectionConfig & Decor & { intro: string };
+  // Tanpa judul (keputusan pemilik, 29 Okt 2026).
+  TESTIMONIALS: SelectionConfig & Decor & { eyebrow: string; intro: string };
   CTA: Decor & { eyebrow: string; heading: string; body: string; primaryCta: Cta; secondaryCta: Cta | null };
   // Teks berjalan: heading hanya untuk pembaca layar; source services = judul layanan tayang.
   MARQUEE: Decor & { heading: string; source: "custom" | "services"; items: string[]; limit: number };

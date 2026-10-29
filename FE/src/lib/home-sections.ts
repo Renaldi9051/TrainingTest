@@ -139,7 +139,7 @@ export function defaultContent<K extends HomeSectionType>(type: K): HomeSectionC
     UPCOMING_SCHEDULES: { ...heading, intro: "", limit: 5, cta: null, decor },
     CLIENTS: { ...heading, intro: "", ...selection("CLIENTS"), decor },
     VISION_MISSION: { eyebrow: "", vision: "", mission: [""], motto: "", decor },
-    TESTIMONIALS: { ...heading, intro: "", ...selection("TESTIMONIALS"), decor },
+    TESTIMONIALS: { eyebrow: "", intro: "", ...selection("TESTIMONIALS"), decor },
     CTA: { eyebrow: "", heading: "", body: "", primaryCta: { label: "", href: "" }, secondaryCta: null, decor },
     MARQUEE: { heading: "", source: "services", items: [], limit: 6, decor },
   };
@@ -236,11 +236,11 @@ const limit = (max: number) =>
     .min(1, { error: "Jumlah minimal 1." })
     .max(max, { error: `Jumlah maksimal ${max}.` });
 
-function selectionSchema(type: SelectionSectionType, extra: z.ZodRawShape) {
+function selectionSchema(type: SelectionSectionType, extra: z.ZodRawShape, { withHeading = true } = {}) {
   const { maxLimit } = SELECTION_LIMITS[type];
   return z
     .object({
-      ...headingFields,
+      ...(withHeading ? headingFields : { eyebrow: headingFields.eyebrow }),
       intro,
       mode: z.enum(["auto", "manual"]),
       limit: limit(maxLimit),
@@ -318,7 +318,7 @@ export const HOME_CONTENT_FORM_SCHEMAS = {
     motto: optionalText("Moto", 200),
     ...decorField,
   }),
-  TESTIMONIALS: selectionSchema("TESTIMONIALS", {}),
+  TESTIMONIALS: selectionSchema("TESTIMONIALS", {}, { withHeading: false }),
   CTA: z.object({
     eyebrow: optionalText("Eyebrow", 40),
     heading: requiredText("Judul", 120),

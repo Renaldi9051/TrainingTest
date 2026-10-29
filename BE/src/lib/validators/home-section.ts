@@ -229,8 +229,9 @@ const clientsContent = z
   .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 24, maxLimit: 48 }), decor })
   .superRefine(requireManualIds);
 
+// Tanpa judul (keputusan pemilik, 29 Okt 2026): `heading` lama yang masih tersimpan dibuang saat dibaca.
 const testimonialsContent = z
-  .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 6, maxLimit: 12 }), decor })
+  .object({ eyebrow: headingFields.eyebrow, intro, ...selectionFields({ defaultLimit: 6, maxLimit: 12 }), decor })
   .superRefine(requireManualIds);
 
 const visionMissionContent = z.object({ ...visionMissionFields, decor });

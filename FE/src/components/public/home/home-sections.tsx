@@ -247,8 +247,9 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
       );
     case "TESTIMONIALS":
       return (
-        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.TESTIMONIALS} intro={section.intro}>
-          <TestimonialsScroller testimonials={section.items} label={section.heading || FALLBACK_HEADINGS.TESTIMONIALS} decor={section.decor} />
+        // Tanpa judul tampil: h2 tersembunyi "Testimoni" dari PublicSection.
+        <PublicSection eyebrow={section.eyebrow} heading="" fallbackHeading={FALLBACK_HEADINGS.TESTIMONIALS} intro={section.intro}>
+          <TestimonialsScroller testimonials={section.items} label={FALLBACK_HEADINGS.TESTIMONIALS} decor={section.decor} />
         </PublicSection>
       );
     case "CTA":

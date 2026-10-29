@@ -328,4 +328,10 @@ describe("decor per section", () => {
       expect(parseHomeSectionContent(type, { ...(minimal[type] as object), decor: false }), type).toHaveProperty("decor", false);
     }
   });
+
+  it("testimoni tanpa judul: heading lama yang tersimpan dibuang", () => {
+    const content = parseHomeSectionContent("TESTIMONIALS", { eyebrow: "08 / Testimoni", heading: "Kata peserta" });
+    expect(content).not.toHaveProperty("heading");
+    expect(content).toHaveProperty("eyebrow", "08 / Testimoni");
+  });
 });
