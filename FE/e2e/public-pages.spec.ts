@@ -173,7 +173,7 @@ test.describe("halaman publik", () => {
     await section("UPCOMING_SCHEDULES", { eyebrow: "02 / Jadwal", heading: "Jadwal terdekat", limit: 5 });
     await section("CLIENTS", { eyebrow: "03 / Klien", heading: "Klien kami", mode: "auto", limit: 24 });
     await section("VISION_MISSION", { eyebrow: "04 / Visi & misi", vision: "Menjadi mitra belajar yang dipercaya.", mission: ["Program relevan.", "Trainer praktisi."] });
-    await section("TESTIMONIALS", { eyebrow: "05 / Testimoni", heading: "Kata peserta", mode: "auto", limit: 6 });
+    await section("TESTIMONIALS", { eyebrow: "05 / Testimoni", mode: "auto", limit: 6 });
     await section("CTA", {
       eyebrow: "Konsultasi",
       heading: "Butuh pelatihan khusus untuk tim Anda?",
@@ -186,9 +186,11 @@ test.describe("halaman publik", () => {
     await expect.poll(async () => (await page.request.get("/")).status()).toBe(200);
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1, name: /\[UJI\] Tim belajar lebih terarah/ })).toBeVisible();
-    for (const heading of ["Pelatihan terbaru", "Jadwal terdekat", "Klien kami", "Kata peserta"]) {
+    for (const heading of ["Pelatihan terbaru", "Jadwal terdekat", "Klien kami"]) {
       await expect(page.getByRole("heading", { level: 2, name: heading })).toBeVisible();
     }
+    // Testimoni tanpa judul: hanya h2 tersembunyi untuk pembaca layar.
+    await expect(page.getByRole("heading", { level: 2, name: "Testimoni" })).toHaveClass(/sr-only/);
     expect(await headingIssues(page)).toEqual([]);
     // Section terbalik: CTA penutup + footer saja.
     expect(await page.locator(".bg-inverse-bg").count()).toBe(2);
@@ -228,7 +230,7 @@ test.describe("halaman publik", () => {
   test("testimoni bisa digulir dengan keyboard", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 900 });
     await page.goto("/");
-    const scroller = page.getByRole("list", { name: /Kata peserta, gulir ke samping/ });
+    const scroller = page.getByRole("list", { name: /Testimoni, gulir ke samping/ });
     await scroller.focus();
     await expect(scroller).toBeFocused();
     const before = await scroller.evaluate((element) => element.scrollLeft);

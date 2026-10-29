@@ -489,7 +489,7 @@ export const homeSections = [
       cta: { label: "Semua jadwal", href: "/jadwal" },
     },
   },
-  { type: "TESTIMONIALS", content: { eyebrow: "05 / Testimoni", heading: "Kata peserta", mode: "auto", limit: 6 } },
+  { type: "TESTIMONIALS", content: { eyebrow: "05 / Testimoni", mode: "auto", limit: 6 } },
   {
     type: "CTA",
     content: {
