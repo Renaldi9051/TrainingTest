@@ -183,6 +183,7 @@ export default async function ServicePage({ params }: PageProps<"/layanan/[slug]
                   image={service.image}
                   sizes={SERVICE_IMAGE_SIZES}
                   priority
+                  film
                 />
                 <Viewfinder className="inset-4 md:inset-6" />
               </div>
@@ -219,7 +220,8 @@ export default async function ServicePage({ params }: PageProps<"/layanan/[slug]
         </section>
       ) : null}
 
-      <section aria-labelledby="layanan-cta" className="relative overflow-hidden bg-inverse-bg py-24 text-inverse-fg md:py-32">
+      {/* CTA penutup: permukaan biru (palet D, data-surface="secondary" di palette-d.css). */}
+      <section aria-labelledby="layanan-cta" data-surface="secondary" className="relative overflow-hidden bg-inverse-bg py-24 text-inverse-fg md:py-32">
         <GrainOverlay tone="inverse" />
         <Container className="relative">
           <h2 id="layanan-cta" className="max-w-[16ch] text-h1">
