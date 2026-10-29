@@ -1,6 +1,7 @@
 import type { ImageLoaderProps } from "next/image";
 
-// Lebar varian yang dibuat BE (BE/src/lib/image.ts). Harus sama dengan images.deviceSizes di next.config.
+// Lebar varian yang dibuat BE (BE/src/lib/image.ts). images.deviceSizes di next.config = varian ini + 2400
+// (lebih lebar dari varian terbesar -> file utama).
 export const MEDIA_VARIANT_WIDTHS = [320, 768, 1600] as const;
 
 const MAIN_WEBP = /^\/uploads\/(.+?)(?<!-(?:320|768|1600))\.webp$/;

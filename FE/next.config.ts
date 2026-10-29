@@ -40,7 +40,8 @@ const nextConfig: NextConfig = {
   images: {
     loader: "custom",
     loaderFile: "./src/lib/image-loader.ts",
-    deviceSizes: [320, 768, 1600],
+    // 2400: layar > 1600 px (gambar penuh lebar) memakai file WebP utama, bukan varian 1600 yang diregangkan.
+    deviceSizes: [320, 768, 1600, 2400],
     imageSizes: [160],
   },
   // Browser hanya bicara ke satu origin; /api dan /uploads diteruskan ke BE.
