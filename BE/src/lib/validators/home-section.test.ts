@@ -202,7 +202,7 @@ describe("create & update", () => {
       const result = homeSectionCreateSchema.safeParse({ type, content: FULL[type] });
       expect(result.success, type).toBe(!(RETIRED_HOME_SECTION_TYPES as readonly string[]).includes(type));
     }
-    expect([...RETIRED_HOME_SECTION_TYPES]).toEqual(["STATS", "SERVICES", "CATEGORIES", "MARQUEE"]);
+    expect([...RETIRED_HOME_SECTION_TYPES]).toEqual(["STATS", "SERVICES", "CATEGORIES", "MARQUEE", "TESTIMONIALS"]);
   });
 
   it("update: type tidak bisa diubah", () => {

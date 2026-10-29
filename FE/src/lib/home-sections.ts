@@ -20,9 +20,9 @@ export const HOME_SECTION_TYPES = [
 
 export const SINGLE_INSTANCE_TYPES = ["HERO", "CTA"] as const satisfies readonly HomeSectionType[];
 
-// Type yang tidak lagi tampil di beranda (beranda dipendekkan, 28 Okt 2026). Baris lama masih bisa
+// Type yang tidak lagi tampil di beranda (beranda dipendekkan, 28 Okt 2026; testimoni 29 Okt). Baris lama masih bisa
 // diubah & dihapus, tapi tidak bisa ditambah lagi; BE menolak pembuatannya.
-export const RETIRED_HOME_SECTION_TYPES = ["STATS", "SERVICES", "CATEGORIES", "MARQUEE"] as const satisfies readonly HomeSectionType[];
+export const RETIRED_HOME_SECTION_TYPES = ["STATS", "SERVICES", "CATEGORIES", "MARQUEE", "TESTIMONIALS"] as const satisfies readonly HomeSectionType[];
 
 export function isRetiredHomeSectionType(type: HomeSectionType): boolean {
   return (RETIRED_HOME_SECTION_TYPES as readonly HomeSectionType[]).includes(type);

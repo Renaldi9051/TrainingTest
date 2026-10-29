@@ -22,7 +22,6 @@ describe("data contoh", () => {
       "CLIENTS",
       "LATEST_TRAININGS",
       "UPCOMING_SCHEDULES",
-      "TESTIMONIALS",
       "CTA",
     ]);
     expect(built.homeSections.every((section) => section.visible)).toBe(true);

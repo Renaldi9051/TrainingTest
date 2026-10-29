@@ -163,14 +163,13 @@ function manySections(copies: number) {
     section("SERVICES", { mode: "auto", limit: 3 }),
     section("CATEGORIES", { mode: "auto", limit: 8 }),
     section("MARQUEE", { source: "services", limit: 6 }),
+    section("TESTIMONIALS", { mode: "auto", limit: 6 }),
     section("LATEST_TRAININGS", { mode: "auto", limit: 6 }),
     section("LATEST_TRAININGS", { mode: "manual", ids: [uuid(3), uuid(4)] }),
     section("UPCOMING_SCHEDULES", { limit: 5 }),
     section("UPCOMING_SCHEDULES", { limit: 3 }),
     section("CLIENTS", { mode: "auto", limit: 24 }),
     section("CLIENTS", { mode: "manual", ids: [uuid(5)] }),
-    section("TESTIMONIALS", { mode: "manual", ids: [uuid(6)] }),
-    section("TESTIMONIALS", { mode: "auto", limit: 6 }),
   ]).flat();
 }
 
@@ -178,7 +177,7 @@ describe("resolveHomeSections: jumlah query", () => {
   it("per entitas maksimal 1 query id manual + 1 query auto; jadwal & media 1 query; tidak bertambah saat section dilipatgandakan", async () => {
     await resolveHomeSections(manySections(1), now);
     const once = queryCounts();
-    expect(once).toEqual({ service: 0, category: 0, training: 2, schedule: 1, client: 2, testimonial: 2, media: 1 });
+    expect(once).toEqual({ service: 0, category: 0, training: 2, schedule: 1, client: 2, testimonial: 0, media: 1 });
 
     for (const model of [mock.service, mock.client, mock.testimonial, mock.training, mock.schedule, mock.category, mock.media]) {
       model.findMany.mockClear();
@@ -344,29 +343,30 @@ describe("publik & pratinjau", () => {
   it("pratinjau: termasuk section tersembunyi dan kosong, dengan flag visible & empty", async () => {
     mock.homeSection.findMany.mockResolvedValue([
       section("VISION_MISSION", { vision: "v", mission: ["m"] }, { visible: false }),
-      section("TESTIMONIALS", { mode: "auto", limit: 6 }),
+      section("CLIENTS", { mode: "auto", limit: 6 }),
     ]);
     const preview = await getHomePreview(now);
     expect(mock.homeSection.findMany.mock.calls[0][0].where).toEqual({ deletedAt: null });
     expect(preview.sections.map(({ type, visible, empty }) => ({ type, visible, empty }))).toEqual([
       { type: "VISION_MISSION", visible: false, empty: false },
-      { type: "TESTIMONIALS", visible: true, empty: true },
+      { type: "CLIENTS", visible: true, empty: true },
     ]);
   });
 });
 
 describe("type yang dipensiunkan (beranda dipendekkan)", () => {
-  it("statistik, layanan, kategori, dan teks berjalan tidak ikut publik maupun pratinjau", async () => {
+  it("statistik, layanan, kategori, teks berjalan, dan testimoni tidak ikut publik maupun pratinjau", async () => {
     mock.homeSection.findMany.mockResolvedValue([
       section("STATS", { items: [{ value: 1, label: "x" }] }),
       section("SERVICES", { mode: "auto", limit: 4 }),
       section("CATEGORIES", { mode: "auto", limit: 12 }),
       section("MARQUEE", { heading: "Bidang", source: "custom", items: ["BNSP", "In House"] }),
+      section("TESTIMONIALS", { mode: "auto", limit: 6 }),
       section("VISION_MISSION", { vision: "v", mission: ["m"] }),
     ]);
     expect((await getPublicHome(now)).sections.map((item) => item.type)).toEqual(["VISION_MISSION"]);
     expect((await getHomePreview(now)).sections.map((item) => item.type)).toEqual(["VISION_MISSION"]);
-    expect(queryCounts()).toMatchObject({ service: 0, category: 0 });
+    expect(queryCounts()).toMatchObject({ service: 0, category: 0, testimonial: 0 });
   });
 
   it("tidak bisa dibuat baru", () => {

@@ -13,7 +13,6 @@ import { CtaLink } from "@/components/public/cta-link";
 import { ClientLogos } from "@/components/public/client-logos";
 import { PublicSection } from "@/components/public/public-section";
 import { ScheduleTable } from "@/components/public/schedule-table";
-import { TestimonialsScroller } from "@/components/public/testimonials-scroller";
 import { TrainingGrid } from "@/components/public/training-card";
 import { VisionMission } from "@/components/public/vision-mission";
 import { buttonVariants } from "@/components/ui/button";
@@ -29,7 +28,6 @@ const FALLBACK_HEADINGS: Record<PublicHomeSection["type"], string> = {
   UPCOMING_SCHEDULES: "Jadwal terdekat",
   CLIENTS: "Klien",
   VISION_MISSION: "Visi dan misi",
-  TESTIMONIALS: "Testimoni",
   CTA: "Hubungi kami",
 };
 
@@ -243,13 +241,6 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
             <CornerMarkers decor={section.decor} />
             <VisionMission vision={section.vision} mission={section.mission} motto={section.motto} />
           </div>
-        </PublicSection>
-      );
-    case "TESTIMONIALS":
-      return (
-        // Tanpa judul tampil: h2 tersembunyi "Testimoni" dari PublicSection.
-        <PublicSection eyebrow={section.eyebrow} heading="" fallbackHeading={FALLBACK_HEADINGS.TESTIMONIALS} intro={section.intro}>
-          <TestimonialsScroller testimonials={section.items} label={FALLBACK_HEADINGS.TESTIMONIALS} decor={section.decor} />
         </PublicSection>
       );
     case "CTA":

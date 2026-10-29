@@ -23,7 +23,6 @@ import { assertMediaRefs, getMediaMap, toPublicImage, type MediaDto, type Public
 import { nextOrder } from "@/services/reorder";
 import { publicScheduleInclude, toPublicSchedule, type PublicSchedule } from "@/services/schedule";
 import { resolveSelections, type Selection } from "@/services/selection";
-import { toPublicTestimonial, type PublicTestimonial } from "@/services/testimonial";
 import { cardInclude, toCard, type PublicTrainingCard } from "@/services/training-public";
 import { publicTrainingWhere } from "@/services/training-visibility";
 
@@ -264,7 +263,6 @@ export type PublicHomeSection =
   | (Base<"UPCOMING_SCHEDULES"> & Omit<C<"UPCOMING_SCHEDULES">, "limit"> & { items: PublicSchedule[] })
   | (Base<"CLIENTS"> & Omit<C<"CLIENTS">, SelectionKeys> & { items: PublicClient[] })
   | (Base<"VISION_MISSION"> & C<"VISION_MISSION">)
-  | (Base<"TESTIMONIALS"> & Omit<C<"TESTIMONIALS">, SelectionKeys> & { items: PublicTestimonial[] })
   | (Base<"CTA"> & C<"CTA">);
 
 // Pratinjau admin: semua section (termasuk yang disembunyikan) + penanda tampil & kosong.
@@ -311,10 +309,9 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
   const trainings = selectionsOf(parsed, "LATEST_TRAININGS");
   const schedules = selectionsOf(parsed, "UPCOMING_SCHEDULES");
   const clients = selectionsOf(parsed, "CLIENTS");
-  const testimonials = selectionsOf(parsed, "TESTIMONIALS");
   const scheduleLimit = Math.max(0, ...schedules.map((item) => item.content.limit));
 
-  const [trainingItems, scheduleRows, clientItems, testimonialItems, media] =
+  const [trainingItems, scheduleRows, clientItems, media] =
     await Promise.all([
       resolveSelections(
         trainings.map((item) => item.content),
@@ -359,21 +356,6 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
           toItem: toPublicClient,
         },
       ),
-      resolveSelections(
-        testimonials.map((item) => item.content),
-        {
-          byIds: (ids) =>
-            db.testimonial.findMany({ where: { id: { in: ids }, deletedAt: null }, include: { photo: true } }),
-          top: (limit) =>
-            db.testimonial.findMany({
-              where: { deletedAt: null },
-              include: { photo: true },
-              orderBy: [{ order: "asc" }, { name: "asc" }],
-              take: limit,
-            }),
-          toItem: toPublicTestimonial,
-        },
-      ),
       getMediaMap(parsed.flatMap(({ section }) => homeSectionMediaRefs(section).map((ref) => ref.mediaId))),
     ]);
 
@@ -381,7 +363,6 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
     new Map(list.map((item, index) => [item.id, resolved[index] ?? []]));
   const trainingMap = itemsFor(trainings, trainingItems);
   const clientMap = itemsFor(clients, clientItems);
-  const testimonialMap = itemsFor(testimonials, testimonialItems);
   const scheduleItems = scheduleRows.map((row) => toPublicSchedule(row, today));
 
   return parsed.map(({ row, section }): PreviewHomeSection => {
@@ -423,10 +404,6 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
       case "CLIENTS": {
         const items = clientMap.get(row.id) ?? [];
         return { ...base, type: "CLIENTS", ...omitSelection(section.content), items, empty: items.length === 0 };
-      }
-      case "TESTIMONIALS": {
-        const items = testimonialMap.get(row.id) ?? [];
-        return { ...base, type: "TESTIMONIALS", ...omitSelection(section.content), items, empty: items.length === 0 };
       }
     }
   });

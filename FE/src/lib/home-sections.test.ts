@@ -44,7 +44,7 @@ describe("sinkron dengan BE", () => {
     expect(be).toContain(
       `export const RETIRED_HOME_SECTION_TYPES = [${RETIRED_HOME_SECTION_TYPES.map((type) => `"${type}"`).join(", ")}]`,
     );
-    expect(ADDABLE_HOME_SECTION_TYPES).toEqual(["HERO", "LATEST_TRAININGS", "UPCOMING_SCHEDULES", "CLIENTS", "VISION_MISSION", "TESTIMONIALS", "CTA"]);
+    expect(ADDABLE_HOME_SECTION_TYPES).toEqual(["HERO", "LATEST_TRAININGS", "UPCOMING_SCHEDULES", "CLIENTS", "VISION_MISSION", "CTA"]);
   });
 });
 

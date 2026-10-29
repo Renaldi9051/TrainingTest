@@ -173,7 +173,6 @@ test.describe("halaman publik", () => {
     await section("UPCOMING_SCHEDULES", { eyebrow: "02 / Jadwal", heading: "Jadwal terdekat", limit: 5 });
     await section("CLIENTS", { eyebrow: "03 / Klien", heading: "Klien kami", mode: "auto", limit: 24 });
     await section("VISION_MISSION", { eyebrow: "04 / Visi & misi", vision: "Menjadi mitra belajar yang dipercaya.", mission: ["Program relevan.", "Trainer praktisi."] });
-    await section("TESTIMONIALS", { eyebrow: "05 / Testimoni", mode: "auto", limit: 6 });
     await section("CTA", {
       eyebrow: "Konsultasi",
       heading: "Butuh pelatihan khusus untuk tim Anda?",
@@ -189,8 +188,6 @@ test.describe("halaman publik", () => {
     for (const heading of ["Pelatihan terbaru", "Jadwal terdekat", "Klien kami"]) {
       await expect(page.getByRole("heading", { level: 2, name: heading })).toBeVisible();
     }
-    // Testimoni tanpa judul: hanya h2 tersembunyi untuk pembaca layar.
-    await expect(page.getByRole("heading", { level: 2, name: "Testimoni" })).toHaveClass(/sr-only/);
     expect(await headingIssues(page)).toEqual([]);
     // Section terbalik: CTA penutup + footer saja.
     expect(await page.locator(".bg-inverse-bg").count()).toBe(2);
@@ -225,21 +222,6 @@ test.describe("halaman publik", () => {
     writeFileSync(path.join(path.dirname(SCREEN_DIR), "hero-360.json"), JSON.stringify(loaded, null, 2));
     // Lebar tampil 328 px: DPR 1-2 butuh <= 768 px, jadi varian 768 (bukan 1600).
     for (const entry of loaded.filter((item) => item.deviceScaleFactor <= 2)) expect(entry.file).toMatch(/-768\.webp$/);
-  });
-
-  test("testimoni bisa digulir dengan keyboard", async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 900 });
-    await page.goto("/");
-    const scroller = page.getByRole("list", { name: /Testimoni, gulir ke samping/ });
-    await scroller.focus();
-    await expect(scroller).toBeFocused();
-    const before = await scroller.evaluate((element) => element.scrollLeft);
-    await page.keyboard.press("ArrowRight");
-    await page.keyboard.press("ArrowRight");
-    await expect.poll(() => scroller.evaluate((element) => element.scrollLeft)).toBeGreaterThan(before);
-    await page.getByRole("button", { name: "Testimoni berikutnya" }).focus();
-    await page.keyboard.press("Enter");
-    await expect.poll(() => scroller.evaluate((element) => element.scrollLeft)).toBeGreaterThan(before + 1);
   });
 
   test("layanan: daftar, detail, perubahan admin tampil < 5 detik, slug lama redirect", async ({ page }) => {

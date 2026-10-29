@@ -934,7 +934,6 @@ export type PublicHomeSection =
   | (PublicBase<"UPCOMING_SCHEDULES"> & Omit<HomeSectionContentMap["UPCOMING_SCHEDULES"], "limit"> & { items: PublicSchedule[] })
   | (PublicBase<"CLIENTS"> & Omit3<HomeSectionContentMap["CLIENTS"]> & { items: PublicClient[] })
   | (PublicBase<"VISION_MISSION"> & HomeSectionContentMap["VISION_MISSION"])
-  | (PublicBase<"TESTIMONIALS"> & Omit3<HomeSectionContentMap["TESTIMONIALS"]> & { items: PublicTestimonial[] })
   | (PublicBase<"CTA"> & HomeSectionContentMap["CTA"]);
 
 export type PublicHome = { sections: PublicHomeSection[] };

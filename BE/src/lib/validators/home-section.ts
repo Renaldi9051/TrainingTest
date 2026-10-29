@@ -34,10 +34,10 @@ export const HOME_SECTION_TYPES = [
 // maksimal 2 per halaman: CTA penutup + footer.
 export const SINGLE_INSTANCE_TYPES = ["HERO", "CTA"] as const satisfies readonly HomeSectionType[];
 
-// Type yang tidak lagi tampil di beranda (pemilik, 28 Okt 2026: beranda dipendekkan). Baris lama
+// Type yang tidak lagi tampil di beranda (pemilik, 28 Okt 2026: beranda dipendekkan; testimoni 29 Okt). Baris lama
 // tetap bisa dibuka & dihapus di admin, tapi tidak bisa dibuat baru dan tidak ikut beranda maupun
 // pratinjau. Enum DB tidak diubah.
-export const RETIRED_HOME_SECTION_TYPES = ["STATS", "SERVICES", "CATEGORIES", "MARQUEE"] as const satisfies readonly HomeSectionType[];
+export const RETIRED_HOME_SECTION_TYPES = ["STATS", "SERVICES", "CATEGORIES", "MARQUEE", "TESTIMONIALS"] as const satisfies readonly HomeSectionType[];
 export type RetiredHomeSectionType = (typeof RETIRED_HOME_SECTION_TYPES)[number];
 
 export function isRetiredHomeSectionType(type: HomeSectionType): type is RetiredHomeSectionType {
