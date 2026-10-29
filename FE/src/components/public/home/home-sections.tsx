@@ -67,10 +67,11 @@ function HeroText({ section, inverse, aside }: { section: HeroData; inverse: boo
           </Eyebrow>
         ) : null}
         <h1 id={`${section.id}-title`} className={cn("max-w-[16ch] text-display", inverse ? "text-inverse-fg" : "text-fg-strong")}>
-          {/* Kata kunci berganti tiap 2 s (RotatingWord), ikut tombol pause hero. */}
+          {/* Kata kunci berganti tiap wordIntervalMs (RotatingWord), ikut tombol pause hero. */}
           <HeroWords
             text={section.headline}
             accents={section.rotatingWords}
+            accentIntervalMs={section.wordIntervalMs}
             // Palet C: kata berganti --accent-on-dark di atas foto, --accent-ink di latar terang.
             accentClassName={inverse ? "italic font-medium text-accent-on-dark" : "text-accent-ink"}
           />

@@ -877,6 +877,8 @@ export type HomeSectionContentMap = {
     layout: HeroLayout;
     // 4000-10000 ms.
     intervalMs: number;
+    // Kata kunci berganti, 1500-5000 ms (terpisah dari slide).
+    wordIntervalMs: number;
     photoStyle: HeroPhotoStyle;
     showViewfinder: boolean;
     showBadge: boolean;

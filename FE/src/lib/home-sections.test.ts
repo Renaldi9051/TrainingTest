@@ -9,6 +9,9 @@ import {
   HERO_INTERVAL_DEFAULT_MS,
   HERO_INTERVAL_MAX_MS,
   HERO_INTERVAL_MIN_MS,
+  HERO_WORD_INTERVAL_DEFAULT_MS,
+  HERO_WORD_INTERVAL_MAX_MS,
+  HERO_WORD_INTERVAL_MIN_MS,
   HERO_SLIDES_MAX,
   HOME_SECTION_TYPES,
   isContentHref,
@@ -31,6 +34,9 @@ describe("sinkron dengan BE", () => {
     expect(be).toContain(`export const HERO_INTERVAL_MIN_MS = ${HERO_INTERVAL_MIN_MS};`);
     expect(be).toContain(`export const HERO_INTERVAL_MAX_MS = ${HERO_INTERVAL_MAX_MS};`);
     expect(be).toContain(`export const HERO_INTERVAL_DEFAULT_MS = ${HERO_INTERVAL_DEFAULT_MS};`);
+    expect(be).toContain(`export const HERO_WORD_INTERVAL_MIN_MS = ${HERO_WORD_INTERVAL_MIN_MS};`);
+    expect(be).toContain(`export const HERO_WORD_INTERVAL_MAX_MS = ${HERO_WORD_INTERVAL_MAX_MS};`);
+    expect(be).toContain(`export const HERO_WORD_INTERVAL_DEFAULT_MS = ${HERO_WORD_INTERVAL_DEFAULT_MS};`);
     // Batas pelatihan terbaru di BE ditulis sebagai konstanta (juga dipakai untuk memotong data lama).
     const latestMax = SELECTION_LIMITS.LATEST_TRAININGS.maxLimit;
     expect(be).toContain(`export const LATEST_TRAININGS_MAX = ${latestMax};`);

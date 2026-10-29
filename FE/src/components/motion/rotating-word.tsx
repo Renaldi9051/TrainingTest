@@ -9,12 +9,20 @@ import { EASE, ROTATE_INTERVAL_MS, ROTATE_SWAP_MS } from "./tokens";
 const OUT = "translateY(-105%)";
 const IN = "translateY(105%)";
 
-// Kata kunci hero yang berganti tiap 2 s (slot vertikal, DESIGN.md 9.2). Ditahan saat dijeda lewat
+// Kata kunci hero yang berganti tiap intervalMs (default 2 s, diatur admin; slot vertikal, DESIGN.md 9.2). Ditahan saat dijeda lewat
 // tombol pause hero (hero-playback.ts, WCAG 2.2.2) dan saat tidak terlihat (tab tidak aktif atau hero
 // di luar layar), lalu lanjut dari kata yang sedang tampil. Semua kata dirender di satu sel grid (lebar = kata terpanjang, tanpa geser layout);
 // tanpa JS hanya kata pertama terlihat. Slot aria-hidden: pembaca layar membaca kata pertama (sr-only)
 // sekali, tidak diumumkan ulang tiap berganti. Reduced motion: diam di kata pertama.
-export function RotatingWord({ words, className }: { words: string[]; className?: string }) {
+export function RotatingWord({
+  words,
+  className,
+  intervalMs = ROTATE_INTERVAL_MS,
+}: {
+  words: string[];
+  className?: string;
+  intervalMs?: number;
+}) {
   const refs = useRef<(HTMLSpanElement | null)[]>([]);
   const slotRef = useRef<HTMLSpanElement>(null);
   // Kata yang sedang tampil; bertahan kalau effect dipasang ulang.
@@ -39,17 +47,17 @@ export function RotatingWord({ words, className }: { words: string[]; className?
       out.style.transform = OUT;
       into.style.transform = "translateY(0)";
       const options = { duration: ROTATE_SWAP_MS / 1000, ease: [...EASE] as [number, number, number, number] };
-      // Pergantian sebelumnya sudah lama selesai (300 ms dari jeda 2 s): cukup simpan yang terbaru.
+      // Pergantian sebelumnya sudah lama selesai (300 ms dari jeda >= 1,5 s): cukup simpan yang terbaru.
       animations.splice(0, animations.length, animate(out, { transform: ["translateY(0)", OUT] }, options), animate(into, { transform: [IN, "translateY(0)"] }, options));
     };
-    // Jadwal ulang dari nol setiap kondisi berubah: setelah terlihat lagi, kata tampil penuh 2 s dulu.
+    // Jadwal ulang dari nol setiap kondisi berubah: setelah terlihat lagi, kata tampil penuh satu interval dulu.
     const schedule = () => {
       window.clearTimeout(timer);
       if (!shouldRotate(count, blockers)) return;
       timer = window.setTimeout(() => {
         swap();
         schedule();
-      }, ROTATE_INTERVAL_MS);
+      }, intervalMs);
     };
     const update = (change: Partial<RotateBlockers>) => {
       Object.assign(blockers, change);
@@ -71,7 +79,7 @@ export function RotatingWord({ words, className }: { words: string[]; className?
       unsubscribe();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [count]);
+  }, [count, intervalMs]);
 
   return (
     <>

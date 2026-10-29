@@ -19,6 +19,8 @@ import {
   HERO_INTERVAL_MAX_MS,
   HERO_INTERVAL_MIN_MS,
   HERO_SLIDES_MAX,
+  HERO_WORD_INTERVAL_MAX_MS,
+  HERO_WORD_INTERVAL_MIN_MS,
   MARQUEE_ITEMS_MAX,
   MARQUEE_ITEMS_MIN,
   ROTATING_WORDS_MAX,
@@ -164,6 +166,43 @@ function SwitchField({ name, label, description }: { name: `content.${string}`; 
           </div>
         </div>
       )}
+    />
+  );
+}
+
+// Interval kata kunci berganti 1,5-5 detik, langkah 0,5 (disimpan dalam ms). Terpisah dari slide.
+function WordIntervalField() {
+  const sid = useScopedId("word-interval");
+  const { control } = useFormContext<SectionFormValues>();
+  const error = useFieldError("content.wordIntervalMs");
+  return (
+    <Controller
+      control={control}
+      name="content.wordIntervalMs"
+      render={({ field }) => {
+        const seconds = ((field.value as number) || 2000) / 1000;
+        const label = seconds.toLocaleString("id-ID");
+        return (
+          <FormField
+            id={sid("range")}
+            label={`Ganti kata kunci tiap ${label} detik`}
+            description="1,5-5 detik. Hanya berlaku kalau kata kunci lebih dari satu."
+            error={error}
+          >
+            <input
+              type="range"
+              min={HERO_WORD_INTERVAL_MIN_MS / 1000}
+              max={HERO_WORD_INTERVAL_MAX_MS / 1000}
+              step={0.5}
+              value={seconds}
+              onChange={(event) => field.onChange(Math.round(event.target.valueAsNumber * 1000))}
+              onBlur={field.onBlur}
+              aria-valuetext={`${label} detik`}
+              className="w-full max-w-sm accent-[var(--fg-strong)]"
+            />
+          </FormField>
+        );
+      }}
     />
   );
 }
@@ -468,7 +507,7 @@ export function SectionFields({ type, media }: { type: HomeSectionType; media: R
             <div className="space-y-2">
               <p className="text-sm font-medium">Kata kunci berganti</p>
               <p className="text-small text-fg-muted">
-                Opsional, maks {ROTATING_WORDS_MAX}. Kata pertama bagian dari headline; kata lain bergantian tiap 2 detik. Pengunjung bisa menjedanya, dan kata tidak berganti untuk pengunjung yang mengurangi animasi.
+                Opsional, maks {ROTATING_WORDS_MAX}. Kata pertama bagian dari headline; kata lain bergantian sesuai interval di bawah. Pengunjung bisa menjedanya, dan kata tidak berganti untuk pengunjung yang mengurangi animasi.
               </p>
               <StringList
                 name="content.rotatingWords"
@@ -479,6 +518,7 @@ export function SectionFields({ type, media }: { type: HomeSectionType; media: R
                 placeholder="Mis. jadwal"
               />
             </div>
+            <WordIntervalField />
             <TextField name="content.subheadline" label="Subjudul" rows={2} />
           </Fieldset>
           <Fieldset title="Pencarian">

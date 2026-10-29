@@ -71,6 +71,10 @@ export const HERO_SLIDES_MAX = 6;
 export const HERO_INTERVAL_MIN_MS = 4000;
 export const HERO_INTERVAL_MAX_MS = 10000;
 export const HERO_INTERVAL_DEFAULT_MS = 6000;
+// Kata kunci hero berganti tiap 1,5-5 detik (pemilik, 29 Okt 2026; dulu tetap 2 detik), terpisah dari slide.
+export const HERO_WORD_INTERVAL_MIN_MS = 1500;
+export const HERO_WORD_INTERVAL_MAX_MS = 5000;
+export const HERO_WORD_INTERVAL_DEFAULT_MS = 2000;
 export const HERO_LAYOUTS = ["fullbleed", "split"] as const;
 export const HERO_PHOTO_STYLES = ["color", "grayscale"] as const;
 
@@ -133,6 +137,12 @@ const heroFields = z.object({
     .min(HERO_INTERVAL_MIN_MS, { error: "Interval minimal 4 detik." })
     .max(HERO_INTERVAL_MAX_MS, { error: "Interval maksimal 10 detik." })
     .default(HERO_INTERVAL_DEFAULT_MS),
+  wordIntervalMs: z
+    .number({ error: "Interval kata harus berupa angka." })
+    .int({ error: "Interval kata harus bilangan bulat." })
+    .min(HERO_WORD_INTERVAL_MIN_MS, { error: "Interval kata minimal 1,5 detik." })
+    .max(HERO_WORD_INTERVAL_MAX_MS, { error: "Interval kata maksimal 5 detik." })
+    .default(HERO_WORD_INTERVAL_DEFAULT_MS),
   photoStyle: z.enum(HERO_PHOTO_STYLES, { error: "Gaya foto tidak dikenal." }).default("color"),
   showViewfinder: z.boolean().default(true),
   // Badge berputar: teksnya konten, jadi default mati sampai admin mengisinya.

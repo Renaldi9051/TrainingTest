@@ -66,6 +66,9 @@ export const HERO_SLIDES_MAX = 6;
 export const HERO_INTERVAL_MIN_MS = 4000;
 export const HERO_INTERVAL_MAX_MS = 10000;
 export const HERO_INTERVAL_DEFAULT_MS = 6000;
+export const HERO_WORD_INTERVAL_MIN_MS = 1500;
+export const HERO_WORD_INTERVAL_MAX_MS = 5000;
+export const HERO_WORD_INTERVAL_DEFAULT_MS = 2000;
 export const MARQUEE_ITEMS_MIN = 2;
 export const MARQUEE_ITEMS_MAX = 12;
 
@@ -124,6 +127,7 @@ export function defaultContent<K extends HomeSectionType>(type: K): HomeSectionC
       secondaryCta: null,
       layout: "fullbleed",
       intervalMs: HERO_INTERVAL_DEFAULT_MS,
+      wordIntervalMs: HERO_WORD_INTERVAL_DEFAULT_MS,
       photoStyle: "color",
       showViewfinder: true,
       showBadge: false,
@@ -273,6 +277,11 @@ export const HOME_CONTENT_FORM_SCHEMAS = {
       .int({ error: "Interval harus bilangan bulat." })
       .min(HERO_INTERVAL_MIN_MS, { error: "Interval minimal 4 detik." })
       .max(HERO_INTERVAL_MAX_MS, { error: "Interval maksimal 10 detik." }),
+    wordIntervalMs: z
+      .number({ error: "Interval kata harus berupa angka." })
+      .int({ error: "Interval kata harus bilangan bulat." })
+      .min(HERO_WORD_INTERVAL_MIN_MS, { error: "Interval kata minimal 1,5 detik." })
+      .max(HERO_WORD_INTERVAL_MAX_MS, { error: "Interval kata maksimal 5 detik." }),
     photoStyle: z.enum(["color", "grayscale"]),
     showViewfinder: z.boolean(),
     showBadge: z.boolean(),
