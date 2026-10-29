@@ -16,7 +16,7 @@ export function IndexNumber({
     <span
       aria-hidden
       className={cn(
-        "font-mono leading-none font-medium text-accent-ink",
+        "font-mono leading-none font-medium text-primary-ink",
         size === "md" ? "text-[32px] tracking-[-0.04em] md:text-[56px]" : "text-[72px] tracking-[-0.06em] md:text-[120px]",
         className,
       )}

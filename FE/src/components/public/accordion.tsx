@@ -40,7 +40,7 @@ export function Accordion({
             type="button"
             onClick={() => setAll(!allOpen)}
             aria-label={`${allOpen ? "Tutup" : "Buka"} semua ${label}`}
-            className="rounded-sm text-small text-fg underline underline-offset-4 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+            className="rounded-sm text-small text-fg underline underline-offset-4 outline-none hover:text-primary-ink focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             {allOpen ? "Tutup semua" : "Buka semua"}
           </button>
@@ -51,15 +51,15 @@ export function Accordion({
           <li key={item.id}>
             <details className="group" onToggle={syncCount}>
               <summary className="flex cursor-pointer list-none items-start gap-4 py-5 outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
-                {/* Palet C: judul item terbuka & ikon --primary. */}
-                <span className="min-w-0 flex-1 text-body font-medium text-fg-strong group-open:text-primary">{item.title}</span>
+                {/* Palet D: judul item terbuka & ikon --primary-ink. */}
+                <span className="min-w-0 flex-1 text-body font-medium text-fg-strong group-open:text-primary-ink">{item.title}</span>
                 {item.meta ? (
                   <span className="shrink-0 pt-0.5 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
                     {item.meta}
                   </span>
                 ) : null}
                 <ChevronDownIcon
-                  className="mt-0.5 size-5 shrink-0 text-primary transition-transform duration-150 group-open:rotate-180 motion-reduce:transition-none"
+                  className="mt-0.5 size-5 shrink-0 text-primary-ink transition-transform duration-150 group-open:rotate-180 motion-reduce:transition-none"
                   strokeWidth={1.5}
                   aria-hidden
                 />

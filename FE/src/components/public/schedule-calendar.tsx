@@ -32,7 +32,7 @@ function EventLink({ schedule }: { schedule: PublicSchedule }) {
       href={`/pelatihan/${schedule.training.slug}`}
       className={cn(
         "block rounded-sm px-2 py-1.5 text-[12px] leading-[1.3] outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1",
-        // Palet C: sesi dibuka --primary; penuh/selesai bergaris.
+        // Palet D: sesi dibuka --primary; penuh/selesai bergaris.
         open ? "bg-primary text-on-primary hover:bg-primary-hover" : "border border-border-strong text-fg-muted hover:text-fg-strong",
       )}
     >
@@ -114,7 +114,7 @@ export function ScheduleCalendar({
                 key={weekday.short}
                 scope="col"
                 abbr={weekday.long}
-                className="border-b border-border-strong bg-bg-subtle px-2 py-2 text-left font-mono text-label font-medium uppercase tracking-[0.08em] text-accent-ink"
+                className="border-b border-border-strong bg-bg-subtle px-2 py-2 text-left font-mono text-label font-medium uppercase tracking-[0.08em] text-primary-ink"
               >
                 {weekday.short}
               </th>

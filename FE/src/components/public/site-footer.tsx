@@ -58,7 +58,7 @@ export async function SiteFooter() {
   const hasOffice = Boolean(contact.address || contact.phone || emails.length > 0 || contact.whatsappUrl || contact.mapEmbedUrl);
 
   return (
-    <footer className="mt-auto border-t border-inverse-line bg-inverse-bg text-inverse-fg">
+    <footer data-surface="dark" className="mt-auto border-t border-inverse-line bg-inverse-bg text-inverse-fg">
       <Container className="grid gap-12 pt-20 pb-14 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
         <div className="space-y-4 lg:col-span-4">
           <p className="flex items-center gap-2.5 text-[18px] font-semibold tracking-[-0.02em]">

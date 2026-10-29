@@ -71,8 +71,8 @@ function HeroText({ section, inverse }: { section: HeroData; inverse: boolean })
             text={section.headline}
             accents={section.rotatingWords}
             accentIntervalMs={section.wordIntervalMs}
-            // Palet C: kata berganti --accent-on-dark di atas foto, --accent-ink di latar terang.
-            accentClassName={inverse ? "italic font-medium text-accent-on-dark" : "text-accent-ink"}
+            // Palet D: kata berganti --accent-on-dark di atas foto, --primary-ink di latar terang.
+            accentClassName={inverse ? "italic font-medium text-accent-on-dark" : "text-primary-ink"}
           />
         </h1>
         {section.subheadline ? (
@@ -167,7 +167,7 @@ function HeroSection({ section }: { section: HeroData }) {
   );
 }
 
-// CTA penutup (DESIGN.md 8.9): section hitam + grain + teks outline (bergeser pelan). Badge berputar
+// CTA penutup (DESIGN.md 8.9): section biru (palet D) + grain + teks outline (bergeser pelan). Badge berputar
 // tidak dipakai: belum ada teks badge di CMS untuk section ini.
 function CtaSection({ section }: { section: Extract<PublicHomeSection, { type: "CTA" }> }) {
   return (

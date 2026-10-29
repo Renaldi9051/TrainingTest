@@ -82,10 +82,11 @@ export function useActiveIndicator(
   }, [containerRef]);
 }
 
-// Palet C: pill (chip/filter aktif) --primary, garis (menu, tab, urutan) --accent.
+// Palet D: pill (chip/filter aktif) --primary, garis (menu, tab, urutan) --secondary (biru tua; di header
+// di atas foto hero mustard, palette-d.css).
 const INDICATOR_CLASS = {
   pill: "rounded-full bg-primary",
-  line: "bg-accent",
+  line: "bg-secondary",
 } as const;
 
 // Elemen indikator (aria-hidden). Letakkan sebagai anak pertama kontainer yang `relative`.

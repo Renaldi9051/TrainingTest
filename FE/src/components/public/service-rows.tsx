@@ -34,7 +34,7 @@ export function ServiceRows({
                 data-cursor-follow=""
                 className="pointer-events-none absolute top-0 left-0 z-10 hidden aspect-[4/3] w-60 overflow-hidden bg-bg-muted opacity-0 transition-[opacity,transform] duration-300 ease-standard data-active:opacity-100 pointer-fine:motion-safe:block"
               >
-                <PublicImage image={service.image} sizes="240px" />
+                <PublicImage film image={service.image} sizes="240px" />
               </div>
             ) : null}
             <div className="grid gap-3 py-8 transition-transform duration-150 ease-standard md:grid-cols-12 md:gap-6 md:py-10 motion-safe:group-hover:translate-x-2 motion-safe:group-focus-within:translate-x-2">
@@ -64,7 +64,7 @@ export function ServiceRows({
               <ArrowRightIcon
                 aria-hidden
                 strokeWidth={1.5}
-                className="hidden size-6 justify-self-end text-fg-strong transition-colors duration-150 ease-standard group-hover:text-primary group-focus-within:text-primary md:col-span-1 md:block"
+                className="hidden size-6 justify-self-end text-fg-strong transition-colors duration-150 ease-standard group-hover:text-primary-ink group-focus-within:text-primary-ink md:col-span-1 md:block"
               />
             </div>
           </li>

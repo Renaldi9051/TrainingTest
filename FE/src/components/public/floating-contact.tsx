@@ -45,7 +45,7 @@ export async function FloatingContact() {
   return (
     <>
       {/* Mobile: disembunyikan di halaman yang punya bar CTA bawah (public.css: data-contact-bar).
-          Border terang tipis supaya tombol tetap terlihat di atas footer gelap. Palet C: --primary. */}
+          Border terang tipis supaya tombol tetap terlihat di atas footer gelap. Palet D: --primary. */}
       <div className="floating-contact fixed right-4 bottom-4 z-30 md:right-6 md:bottom-6">
         <ContactPanelTrigger
           label="Hubungi marketing"

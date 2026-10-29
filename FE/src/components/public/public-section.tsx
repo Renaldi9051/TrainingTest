@@ -10,7 +10,8 @@ type PublicSectionProps = {
   // (h1 halaman -> h2 section -> h3 item) untuk pembaca layar.
   fallbackHeading: string;
   intro?: string;
-  // Section terbalik (hitam). Maksimal dua per halaman: CTA penutup + footer (DESIGN 2).
+  // Section terbalik: CTA penutup. Palet D: permukaan biru (data-surface="secondary" memetakan ulang token
+  // inverse di palette-d.css). Maksimal dua section terbalik per halaman: CTA penutup + footer (DESIGN 2).
   inverse?: boolean;
   className?: string;
   // Elemen dekoratif di belakang isi (DESIGN.md 6): dirender sebelum isi, isi di atasnya.
@@ -47,6 +48,7 @@ export function PublicSection({ eyebrow, heading, fallbackHeading, intro, invers
   return (
     <section
       aria-labelledby={headingId}
+      data-surface={inverse ? "secondary" : undefined}
       className={cn("py-20 md:py-32", background ? "relative overflow-hidden" : null, inverse && "bg-inverse-bg text-inverse-fg", className)}
     >
       {background}

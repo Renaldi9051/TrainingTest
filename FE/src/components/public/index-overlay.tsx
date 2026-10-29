@@ -100,7 +100,7 @@ export function IndexOverlay({
           <div className="gap-6 md:columns-2 lg:columns-4">
             {groups.map((group) => (
               <section key={group.letter} aria-label={`Huruf ${group.letter}`} className="mb-7 break-inside-avoid">
-                <p aria-hidden className="mb-2 font-mono text-[32px] leading-none font-medium tracking-[-0.04em] text-accent-ink">
+                <p aria-hidden className="mb-2 font-mono text-[32px] leading-none font-medium tracking-[-0.04em] text-primary-ink">
                   {group.letter}
                 </p>
                 <ul>

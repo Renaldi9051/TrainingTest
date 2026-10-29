@@ -150,7 +150,8 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
   const stage = (
     // Latar gelap selama foto dimuat (teks terang tetap terbaca). Bukan "section terbalik" (DESIGN.md 2:
     // hero bergambar tidak dihitung), jadi tidak memakai kelas bg-inverse-bg.
-    <div className="absolute inset-0 overflow-hidden bg-fg-strong" aria-live={playing ? "off" : "polite"}>
+    // data-surface: tanda dekoratif (sudut Viewfinder) mustard di atas foto (palet D, --decor-mark).
+    <div data-surface="dark" className="absolute inset-0 overflow-hidden bg-fg-strong" aria-live={playing ? "off" : "polite"}>
       {slides.map((slide, index) => {
         // Sebelum event load hanya slide pertama yang dipasang (LCP); sisanya menyusul.
         if (index !== 0 && blockers.pending && index !== active) return null;
@@ -170,15 +171,21 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
               sizes={full ? SLIDE_SIZES_FULL : SLIDE_SIZES_SPLIT}
               priority={index === 0}
               grayscale={photoStyle === "grayscale"}
+              film
               style={{ objectPosition: `${slide.focalX}% ${slide.focalY}%` }}
             />
           </div>
         );
       })}
+      {/* Lapisan hangat tipis di atas foto (palet D: --photo-tint, multiply), kedua layout. Tidak dipakai
+          untuk foto grayscale supaya tetap hitam putih. */}
+      {photoStyle === "grayscale" ? null : (
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-(--photo-tint) mix-blend-multiply" />
+      )}
       {full ? (
         <>
-          {/* Lapisan gelap agar teks terang terbaca (palet C: gradasi --overlay-top .60 -> tipis di 35% ->
-              --overlay-bottom .90; gradien gelap transparan hanya untuk overlay foto hero, DESIGN.md 5). */}
+          {/* Lapisan gelap agar teks terang terbaca (palet D: gradasi --overlay-top .10 -> tipis di 35% ->
+              --overlay-bottom .62; gradien gelap transparan hanya untuk overlay foto hero, DESIGN.md 5). */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 z-[3] bg-linear-to-b from-overlay-top via-overlay-top/15 via-35% to-overlay-bottom"
@@ -266,6 +273,14 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
         className={cn("hero-stage relative isolate flex flex-col", tone)}
       >
         {stage}
+        {/* Letterbox (palet D, DESIGN.md 6): garis --inverse-bg 8 px di atas & bawah hero fullbleed. Bukan
+            section terbalik, jadi tidak memakai kelas bg-inverse-bg (sama seperti latar stage). */}
+        {decor ? (
+          <>
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-2 bg-(--inverse-bg)" />
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-2 bg-(--inverse-bg)" />
+          </>
+        ) : null}
         <div className="relative z-10 mt-auto pt-36 pb-10 md:pb-14">{children}</div>
         {decor && badge ? (
           // Mobile: kanan atas (area foto kosong di bawah label HUD), supaya tidak menimpa search/CTA.

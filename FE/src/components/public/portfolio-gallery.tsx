@@ -59,7 +59,7 @@ export function PortfolioGallery({
           <ul className="grid gap-4 sm:grid-cols-2">
             {images.map((image) => (
               <li key={image.url} className="relative aspect-[4/3] overflow-hidden bg-bg-muted">
-                <PublicImage image={image} sizes={GALLERY_SIZES} />
+                <PublicImage film image={image} sizes={GALLERY_SIZES} />
               </li>
             ))}
           </ul>
