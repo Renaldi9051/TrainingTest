@@ -20,10 +20,13 @@ describe("cn", () => {
     expect(cn("text-h2", "text-display")).toBe("text-display");
   });
 
-  it("palet C: warna peran baru tetap warna, rounded-card satu grup dengan radius lain", () => {
+  it("palet D: warna peran baru tetap warna, rounded-card satu grup dengan radius lain", () => {
     expect(cn("bg-fg-strong", "bg-primary")).toBe("bg-primary");
     expect(cn("text-small text-on-primary")).toBe("text-small text-on-primary");
-    expect(cn("text-fg-muted", "text-accent-ink")).toBe("text-accent-ink");
+    expect(cn("text-fg-muted", "text-primary-ink")).toBe("text-primary-ink");
+    expect(cn("text-small text-secondary")).toBe("text-small text-secondary");
+    expect(cn("bg-secondary text-on-secondary")).toBe("bg-secondary text-on-secondary");
+    expect(cn("border-primary", "border-decor-mark")).toBe("border-decor-mark");
     expect(cn("ring-fg-strong", "ring-focus")).toBe("ring-focus");
     expect(cn("rounded-md", "rounded-card")).toBe("rounded-card");
     expect(cn("rounded-card", "rounded-full")).toBe("rounded-full");
