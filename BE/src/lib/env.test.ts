@@ -21,6 +21,48 @@ describe("parseEnv", () => {
     });
   });
 
+  describe("Cloudflare R2", () => {
+    const r2Env = {
+      R2_ACCOUNT_ID: "0123456789abcdef0123456789abcdef",
+      R2_ACCESS_KEY_ID: "access-key",
+      R2_SECRET_ACCESS_KEY: "secret-key",
+      R2_BUCKET: "training-media",
+      R2_PUBLIC_URL: "https://media.contoh.id",
+    };
+
+    it("opsional: semua kosong (\"R2_BUCKET=\" di .env) dianggap tidak diisi", () => {
+      const env = parseEnv({
+        ...validEnv,
+        R2_ACCOUNT_ID: "",
+        R2_ACCESS_KEY_ID: "",
+        R2_SECRET_ACCESS_KEY: "",
+        R2_BUCKET: "",
+        R2_PUBLIC_URL: "",
+      });
+      expect(env.R2_BUCKET).toBeUndefined();
+      expect(env.R2_PUBLIC_URL).toBeUndefined();
+    });
+
+    it("menerima semua variabel R2 terisi", () => {
+      expect(parseEnv({ ...validEnv, ...r2Env })).toMatchObject(r2Env);
+    });
+
+    it("R2_PUBLIC_URL opsional: kredensial & bucket saja sudah cukup", () => {
+      expect(parseEnv({ ...validEnv, ...r2Env, R2_PUBLIC_URL: "" }).R2_PUBLIC_URL).toBeUndefined();
+    });
+
+    it("menolak kalau kredensial & bucket hanya sebagian yang diisi", () => {
+      expect(() => parseEnv({ ...validEnv, ...r2Env, R2_SECRET_ACCESS_KEY: "" })).toThrow(/R2_SECRET_ACCESS_KEY/);
+      expect(() => parseEnv({ ...validEnv, R2_BUCKET: "training-media" })).toThrow(/R2_ACCOUNT_ID/);
+      expect(() => parseEnv({ ...validEnv, R2_PUBLIC_URL: "https://media.contoh.id" })).toThrow(/R2_BUCKET/);
+    });
+
+    it("menolak R2_PUBLIC_URL bergaris miring di akhir dan Account ID yang bukan hex 32", () => {
+      expect(() => parseEnv({ ...validEnv, ...r2Env, R2_PUBLIC_URL: "https://media.contoh.id/" })).toThrow(/R2_PUBLIC_URL/);
+      expect(() => parseEnv({ ...validEnv, ...r2Env, R2_ACCOUNT_ID: "bukan-id" })).toThrow(/R2_ACCOUNT_ID/);
+    });
+  });
+
   it("mewajibkan DATABASE_URL, termasuk menolak nilai kosong", () => {
     expect(() => parseEnv({ ...validEnv, DATABASE_URL: undefined })).toThrow(/DATABASE_URL/);
     expect(() => parseEnv({ ...validEnv, DATABASE_URL: "" })).toThrow(/DATABASE_URL/);

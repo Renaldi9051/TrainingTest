@@ -40,6 +40,7 @@
     "@node-rs/argon2": "^2.2.2",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "aws4fetch": "^1.0.20",
     "dompurify": "^3.4.16",
     "file-type": "^22.1.1",
     "jsdom": "^29.1.1",

@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+// Variabel opsional: kosong di .env ("R2_BUCKET=") dianggap tidak diisi.
+const optionalString = (schema: z.ZodType<string> = z.string()) =>
+  z.preprocess((value) => (value === "" ? undefined : value), schema.optional());
+
+// Kredensial & bucket R2: isi semua atau kosongkan semua.
+const R2_CREDENTIAL_KEYS = ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET"] as const;
+export const R2_ENV_KEYS = [...R2_CREDENTIAL_KEYS, "R2_PUBLIC_URL"] as const;
+
 const envSchema = z.object({
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   SESSION_SECRET: z.string().min(32),
@@ -18,6 +26,30 @@ const envSchema = z.object({
   // IP klien tidak terbaca (X-Forwarded-For kosong) di rate limit: "shared" = satu bucket bersama
   // (fail-safe, default, wajib di produksi); "skip" = lewati limit per IP (hanya Docker/dev lokal).
   RATE_LIMIT_UNKNOWN_IP: z.enum(["shared", "skip"], { error: "RATE_LIMIT_UNKNOWN_IP harus shared atau skip." }).default("shared"),
+  // Cloudflare R2. Kalau kredensial & bucket terisi, file upload disimpan di bucket (lihat lib/storage.ts);
+  // kalau semua kosong, disimpan di UPLOAD_DIR.
+  R2_ACCOUNT_ID: optionalString(z.string().regex(/^[a-f0-9]{32}$/, "harus 32 karakter hex (Account ID Cloudflare)")),
+  R2_ACCESS_KEY_ID: optionalString(),
+  R2_SECRET_ACCESS_KEY: optionalString(),
+  R2_BUCKET: optionalString(z.string().regex(/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/, "nama bucket tidak valid")),
+  // Opsional: URL publik bucket (custom domain), tanpa garis miring di akhir, mis. https://media.contoh.id.
+  // Kosong = file dilayani BE lewat /uploads (diambil dari bucket), tanpa domain publik bucket.
+  R2_PUBLIC_URL: optionalString(
+    z.url({ protocol: /^https?$/ }).refine((value) => !value.endsWith("/"), "tanpa garis miring di akhir"),
+  ),
+}).superRefine((env, ctx) => {
+  const filled = R2_CREDENTIAL_KEYS.filter((key) => env[key] !== undefined);
+  if (filled.length === R2_CREDENTIAL_KEYS.length) return;
+  if (filled.length === 0 && env.R2_PUBLIC_URL === undefined) return;
+  for (const key of R2_CREDENTIAL_KEYS) {
+    if (env[key] === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: [key],
+        message: "wajib diisi kalau variabel R2_* lain terisi (isi semua kredensial & bucket, atau kosongkan semua)",
+      });
+    }
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;
