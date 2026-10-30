@@ -161,7 +161,8 @@ export type MediaVariant = { url: string; width: number; height: number };
 
 export type Media = {
   id: string;
-  // Relatif terhadap origin, mis. /uploads/2026/10/<uuid>.webp
+  // Disk BE: relatif terhadap origin, mis. /uploads/2026/10/<uuid>.webp.
+  // Cloudflare R2: URL absolut di domain bucket, mis. https://media.contoh.id/2026/10/<uuid>.webp.
   url: string;
   originalName: string | null;
   mime: string;

@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { Client } from "pg";
-import { databaseName, E2E_DATABASE_NAME, parseE2eEnv } from "../src/lib/env";
+import { databaseName, E2E_DATABASE_NAME, parseE2eEnv, R2_ENV_KEYS } from "../src/lib/env";
 
 // Port & origin server e2e. Harus sama dengan FE/e2e/e2e-env.ts.
 export const E2E_BE_PORT = 4100;
@@ -16,6 +16,9 @@ export function e2eDatabaseUrl(): string {
   const rootEnv = path.resolve(BE_ROOT, "../.env");
   // Variabel yang sudah ada di environment tidak ditimpa.
   if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
+  // e2e selalu menyimpan upload di folder sementara, tidak pernah ke bucket R2 asli dari .env.
+  // Diwariskan ke semua proses anak (server BE e2e, seed).
+  for (const key of R2_ENV_KEYS) process.env[key] = "";
   const { DATABASE_URL_E2E } = parseE2eEnv(process.env);
   if (process.env.DATABASE_URL && databaseName(process.env.DATABASE_URL) === E2E_DATABASE_NAME) {
     throw new Error("DATABASE_URL tidak boleh menunjuk training_e2e; database e2e hanya untuk test.");

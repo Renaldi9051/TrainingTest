@@ -18,6 +18,12 @@ export default defineConfig({
       REVALIDATE_SECRET: "test-revalidate-secret",
       ALLOWED_ORIGINS: "http://localhost:3000",
       TRUST_PROXY_HOPS: "1",
+      // Unit test tidak pernah memakai bucket R2 asli, walau variabelnya ada di environment shell.
+      R2_ACCOUNT_ID: "",
+      R2_ACCESS_KEY_ID: "",
+      R2_SECRET_ACCESS_KEY: "",
+      R2_BUCKET: "",
+      R2_PUBLIC_URL: "",
     },
   },
 });
