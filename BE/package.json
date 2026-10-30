@@ -32,6 +32,7 @@
     "db:seed:themes": "dotenv -e ../.env -- tsx scripts/seed-theme-gallery.ts",
     "db:seed:bulk": "dotenv -e ../.env -- prisma db seed -- --bulk",
     "db:studio": "prisma studio",
+    "storage:sync-r2": "dotenv -e ../.env -- tsx scripts/sync-uploads-r2.ts",
     "postinstall": "prisma generate",
     "bench:search": "dotenv -e ../.env -- tsx scripts/bench-search.ts",
     "bench:search-admin": "dotenv -e ../.env -- tsx scripts/bench-admin-search.ts"
