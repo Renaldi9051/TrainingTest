@@ -7,9 +7,11 @@ type PublicImageProps = {
   image: PublicImageData;
   sizes: string;
   className?: string;
-  // Palet C (DESIGN 2, v0.3): foto tampil berwarna. Grayscale hanya untuk logo klien, opsi
-  // photoStyle "grayscale" di hero, dan sampul kartu pelatihan (berwarna saat hover/fokus).
+  // Grayscale hanya untuk logo klien dan opsi photoStyle "grayscale" di hero (DESIGN 2).
   grayscale?: boolean;
+  // Palet D (DESIGN 2, v0.4): grading "film" (--photo-filter) untuk foto publik (hero, kartu, layanan,
+  // portofolio, visi misi, detail, landing kategori). Bukan untuk logo. Diabaikan kalau grayscale.
+  film?: boolean;
   // Gambar utama di layar pertama (LCP): dimuat langsung dengan prioritas tinggi.
   priority?: boolean;
   fit?: "cover" | "contain";
@@ -19,7 +21,7 @@ type PublicImageProps = {
 
 // Gambar dari media library dalam kotak berukuran tetap (parent menentukan rasio).
 // Placeholder saat memuat: blok --bg-muted (bukan spinner).
-export function PublicImage({ image, sizes, className, grayscale = false, priority, fit = "cover", style }: PublicImageProps) {
+export function PublicImage({ image, sizes, className, grayscale = false, film = false, priority, fit = "cover", style }: PublicImageProps) {
   return (
     <Image
       src={image.url}
@@ -34,7 +36,7 @@ export function PublicImage({ image, sizes, className, grayscale = false, priori
       className={cn(
         "bg-bg-muted",
         fit === "cover" ? "object-cover" : "object-contain",
-        grayscale && "grayscale",
+        grayscale ? "grayscale" : film && "filter-(--photo-filter)",
         className,
       )}
     />

@@ -7,8 +7,9 @@ import { badgeRingChars } from "./badge-ring";
 // tengah, berputar 360 derajat per 20 s; hover: putaran melambat & panah bergeser. Berupa link CTA
 // (bisa difokus), teks melingkarnya dekoratif; nama aksesibelnya dari `label`. Mobile 50%
 // (origin sudut, default kanan bawah). Reduced motion: diam (motion-safe).
-// - tone "light": di atas foto/section hitam (teks terang, inti terang).
-// - tone "dark": di atas latar terang.
+// - tone "light": di atas foto/section gelap (cincin --accent-on-dark, inti mustard). Di permukaan biru
+//   (CTA penutup) cincin & ring fokus otomatis --on-secondary lewat data-surface="secondary".
+// - tone "dark": di atas latar terang (inti --primary).
 export function RotatingBadge({
   href,
   text,
@@ -33,7 +34,7 @@ export function RotatingBadge({
       className={cn(
         "group/badge absolute block size-[120px] origin-bottom-right rounded-full outline-none max-md:scale-50",
         "focus-visible:ring-2 focus-visible:ring-offset-2",
-        // Palet C: di atas foto/section gelap teks cincin --accent-on-dark & inti --accent; di latar
+        // Palet D: di atas foto/section gelap teks cincin --accent-on-dark & inti --accent; di latar
         // terang inti --primary.
         tone === "light"
           ? "text-accent-on-dark focus-visible:ring-focus-dark focus-visible:ring-offset-inverse-bg"

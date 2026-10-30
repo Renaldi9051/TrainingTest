@@ -26,7 +26,7 @@ export function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
               ) : (
                 <Link
                   href={crumb.href}
-                  className="rounded-sm outline-none transition-colors duration-150 hover:text-accent-ink focus-visible:ring-2 focus-visible:ring-focus"
+                  className="rounded-sm outline-none transition-colors duration-150 hover:text-primary-ink focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   {crumb.label}
                 </Link>
@@ -39,7 +39,7 @@ export function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
   );
 }
 
-// Kepala halaman dalam (mockup .phero; palet C: latar --bg-subtle): breadcrumb mono, satu h1, lead di kolom kanan (desktop),
+// Kepala halaman dalam (mockup .phero; palet D: latar --bg-subtle): breadcrumb mono, satu h1, lead di kolom kanan (desktop),
 // teks outline raksasa opsional di belakang, garis bawah. Langsung terbaca tanpa reveal (layar
 // pertama); stagger masuk hanya setelah navigasi klien (PageEnter, elemen data-page-enter).
 // crumbs: induk setelah Beranda + halaman ini (label terakhir biasanya = judul).

@@ -99,15 +99,18 @@
   --color-transparent: transparent;
   --color-current: currentColor;
 
-  /* Palet C (v0.3): nilainya hanya dideklarasikan di (public)/palette-c.css (scope halaman publik).
+  /* Palet D (v0.4): nilainya hanya dideklarasikan di (public)/palette-d.css (scope halaman publik).
      Fallback = token netral lama, jadi komponen bersama (components/ui) yang juga dirender di admin
-     menghasilkan nilai yang sama persis dengan sebelumnya. Utilitas --accent polos bentrok dengan
-     token shadcn admin (--accent = latar hover), jadi bg/text/border-accent hanya untuk komponen
-     publik (dijaga test components/ui/palette-guard.test.ts). */
+     menghasilkan nilai yang sama persis dengan sebelumnya. Utilitas --accent dan --secondary polos
+     bentrok dengan token shadcn admin (latar hover / latar abu), jadi bg/text/border-accent dan
+     -secondary hanya untuk komponen publik (dijaga test components/ui/palette-guard.test.ts). */
   --color-primary-hover: var(--primary-hover, var(--fg-strong-hover));
   --color-on-primary: var(--on-primary, var(--inverse-fg));
+  --color-primary-ink: var(--primary-ink, var(--fg-muted));
+  --color-on-secondary: var(--on-secondary, var(--inverse-fg));
   --color-on-accent: var(--on-accent, var(--fg-strong));
-  --color-accent-ink: var(--accent-ink, var(--fg-muted));
+  --color-link: var(--link, var(--fg-strong));
+  --color-decor-mark: var(--decor-mark, var(--fg-strong));
   --color-accent-on-dark: var(--accent-on-dark, var(--inverse-fg));
   --color-accent-on-primary: var(--accent-on-primary, var(--inverse-fg));
   --color-inverse-muted: var(--inverse-muted, var(--inverse-fg));
@@ -119,7 +122,6 @@
   --color-ink-hover: var(--ink-hover, var(--fg));
   --color-focus: var(--focus, var(--fg-strong));
   --color-focus-dark: var(--focus-dark, var(--inverse-fg));
-  --color-overlay-top: var(--overlay-top, var(--overlay));
   --color-overlay-bottom: var(--overlay-bottom, var(--overlay));
   --color-dot: var(--dot, var(--border-strong));
 
@@ -160,7 +162,7 @@
   --radius-md: var(--radius);
   --radius-lg: var(--radius);
   --radius-xl: var(--radius);
-  /* Kartu & kotak statistik publik (palet C: 12 px); di admin sama dengan --radius. */
+  /* Kartu & kotak statistik publik (12 px); di admin sama dengan --radius. */
   --radius-card: var(--card-radius, var(--radius));
 
   /* Bayangan: hanya shadow-sm (popover/dropdown/dialog admin). Kelas shadow lain sengaja tidak ada. */
@@ -284,8 +286,8 @@
     color: var(--fg-muted);
   }
   .rich-text a {
-    /* Palet C: link --accent-ink di halaman publik; editor admin tetap --fg-strong (fallback). */
-    color: var(--accent-ink, var(--fg-strong));
+    /* Palet D: link --link (biru tua) di halaman publik; editor admin tetap --fg-strong (fallback). */
+    color: var(--link, var(--fg-strong));
     text-decoration: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;

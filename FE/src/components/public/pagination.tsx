@@ -21,7 +21,7 @@ export function Pagination({ meta, hrefFor }: { meta: PaginationMeta; hrefFor: (
   return (
     <nav aria-label="Halaman" className="flex items-center justify-between gap-4 border-t border-border pt-6">
       {page > 1 ? (
-        <Link href={hrefFor(page - 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary")}>
+        <Link href={hrefFor(page - 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary-ink")}>
           <ArrowLeftIcon className="size-4" strokeWidth={1.5} aria-hidden />
           <span className="font-sans">Sebelumnya</span>
         </Link>
@@ -40,7 +40,7 @@ export function Pagination({ meta, hrefFor }: { meta: PaginationMeta; hrefFor: (
                 href={hrefFor(item)}
                 aria-current={item === page ? "page" : undefined}
                 aria-label={`Halaman ${item}`}
-                className={cn(itemClass, item === page ? "bg-primary text-on-primary" : "hover:bg-bg-subtle hover:text-primary")}
+                className={cn(itemClass, item === page ? "bg-primary text-on-primary" : "hover:bg-bg-subtle hover:text-primary-ink")}
               >
                 {item}
               </Link>
@@ -52,7 +52,7 @@ export function Pagination({ meta, hrefFor }: { meta: PaginationMeta; hrefFor: (
         {page} / {totalPages}
       </p>
       {page < totalPages ? (
-        <Link href={hrefFor(page + 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary")}>
+        <Link href={hrefFor(page + 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary-ink")}>
           <span className="font-sans">Berikutnya</span>
           <ArrowRightIcon className="size-4" strokeWidth={1.5} aria-hidden />
         </Link>

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { loginViaApi } from "./helpers";
@@ -99,4 +99,35 @@ test("admin tetap netral: token :root semua halaman admin sama dengan baseline",
     if (id) await capture(`${prefix}${id}`);
   }
   if (out) writeFileSync(out, JSON.stringify(result, null, 2));
+});
+
+// ADMIN_SCREENS_OUT=<folder>: screenshot 5 halaman admin utama untuk dibandingkan per piksel sebelum
+// dan sesudah perubahan palet publik (mis. palet D). Tanpa variabel itu test dilewati.
+test("screenshot admin utama @manual", async ({ page }) => {
+  const out = process.env.ADMIN_SCREENS_OUT;
+  test.skip(!out, "Butuh ADMIN_SCREENS_OUT.");
+  test.setTimeout(180_000);
+  mkdirSync(out ?? "", { recursive: true });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  const shoot = async (name: string, url: string) => {
+    await page.goto(url);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("[data-slot=skeleton], .animate-pulse, [aria-busy=true]")).toHaveCount(0, { timeout: 20_000 });
+    await page.mouse.move(0, 0);
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: path.join(out ?? "", `${name}.png`), fullPage: true });
+  };
+
+  await shoot("login", "/admin/login");
+  await loginViaApi(page.request);
+  await shoot("dashboard", "/admin");
+  await shoot("pelatihan-daftar", "/admin/trainings");
+  const training = (await (await page.request.get("/api/admin/trainings?pageSize=1")).json()) as { data: { id: string }[] };
+  await shoot("pelatihan-form", training.data[0] ? `/admin/trainings/${training.data[0].id}` : "/admin/trainings/new");
+  const sections = (await (await page.request.get("/api/admin/home-sections")).json()) as { data: { id: string; type: string }[] };
+  const hero = sections.data.find((section) => section.type === "HERO") ?? sections.data[0];
+  await shoot("editor-beranda", hero ? `/admin/home/${hero.id}` : "/admin/home");
 });

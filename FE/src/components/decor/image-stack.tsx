@@ -43,6 +43,7 @@ export function ImageStack({
           <PublicImage
             image={images[index]}
             sizes={SLOT_SIZES[slot]}
+            film
           />
         </RevealImage>
       ))}

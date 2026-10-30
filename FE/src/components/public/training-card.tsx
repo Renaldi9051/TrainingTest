@@ -10,9 +10,10 @@ import { PublicImage } from "./public-image";
 
 export const CARD_IMAGE_SIZES = "(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw";
 
-// Kartu pelatihan DESIGN 8.4 (palet C v0.3): kotak radius 12 px ber-border, gambar 4:3 -> label mono
-// --accent-ink -> judul h3 -> meta, teks berjarak 18 px dari tepi. Gambar hitam putih dan kembali
-// berwarna saat hover/fokus (pemilik, 28 Okt 2026, menggantikan foto kartu berwarna di DESIGN 2 v0.3).
+// Kartu pelatihan DESIGN 8.4 (palet D v0.4): kotak radius 12 px ber-border, gambar 4:3 -> label mono
+// --secondary -> judul h3 -> meta, teks berjarak 18 px dari tepi. Gambar memakai grading film
+// (--photo-filter) yang lepas saat hover/fokus (transisi filter 300 ms, pengecualian DESIGN 9.3 v0.4;
+// menggantikan gambar hitam putih keputusan 28 Okt 2026).
 // Hover: border --primary + kartu naik 3 px, gambar zoom 1.03, sudut Viewfinder 12 px masuk, judul bergaris bawah,
 // label "Lihat →" mengikuti kursor (PointerEffects, hanya desktop). Di grid: gambar wipe dari bawah
 // + zoom 1,15 -> 1 bersama kartunya.
@@ -56,15 +57,15 @@ export function TrainingCard({
             <PublicImage
               image={training.cover}
               sizes={CARD_IMAGE_SIZES}
-              grayscale
-              className="transition-[transform,filter] duration-300 ease-standard group-hover:scale-[1.03] group-hover:grayscale-0 group-focus-within:grayscale-0 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              film
+              className="transition-[transform,filter] duration-300 ease-standard group-hover:scale-[1.03] group-hover:filter-none group-focus-within:filter-none motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             />
             <Viewfinder size="sm" tone="plain" hover />
           </>
         ) : (
           <>
             {/* Sudut selalu tampil (sedikit di luar posisi), bergeser masuk saat hover/fokus. */}
-            <Viewfinder size="sm" tone="dark" hover className="opacity-100" />
+            <Viewfinder size="sm" tone="mark" hover className="opacity-100" />
             {training.categories[0] ? (
               <p
                 aria-hidden
@@ -77,7 +78,7 @@ export function TrainingCard({
         )}
       </RevealImage>
       {labelText ? (
-        <p className="mt-5 px-[18px] font-mono text-label uppercase tracking-[0.08em] text-accent-ink">{labelText}</p>
+        <p className="mt-5 px-[18px] font-mono text-label uppercase tracking-[0.08em] text-secondary">{labelText}</p>
       ) : null}
       <Heading className={cn("mt-2 px-[18px] text-h3", isUntitled(training.title) ? "text-fg-muted" : "text-fg-strong")}>
         {/* Seluruh kartu bisa diklik lewat pseudo-element, tapi tetap satu link untuk pembaca layar. */}

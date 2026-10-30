@@ -243,7 +243,7 @@ function ListPanel({ list, categoryHrefs }: { list: ListBlock; categoryHrefs: Ma
                   {href ? (
                     <Link
                       href={href}
-                      className={cn(chip, "outline-none transition-colors duration-150 hover:border-primary hover:text-primary focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2")}
+                      className={cn(chip, "outline-none transition-colors duration-150 hover:border-primary hover:text-primary-ink focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2")}
                     >
                       {item}
                     </Link>
@@ -280,7 +280,7 @@ function PhotoBlock({ block }: { block: Extract<Block, { type: "IMAGE" }> }) {
       <Container>
         <Reveal>
           <RevealImage className="relative aspect-[4/3] overflow-hidden bg-bg-muted sm:aspect-video lg:aspect-auto lg:h-[560px]">
-            <PublicImage image={block.image} sizes="(min-width: 1280px) 1232px, 100vw" />
+            <PublicImage film image={block.image} sizes="(min-width: 1280px) 1232px, 100vw" />
             <Viewfinder className="inset-4 md:inset-6" topLeft={block.caption ? <HudLabel tone="photo">{block.caption}</HudLabel> : undefined} />
           </RevealImage>
         </Reveal>

@@ -4,8 +4,8 @@ import type { ComponentProps, ReactNode } from "react";
 import { RollText } from "@/components/motion/roll-text";
 import { cn } from "@/lib/utils";
 
-// Tombol publik DESIGN.md 8.2 (palet C v0.3: primer --primary, CTA di hero/section gelap --accent
-// dengan teks gelap). Juga dirender di admin (/admin/dev/ui, pencarian admin): kelas warnanya punya
+// Tombol publik DESIGN.md 8.2 (palet D v0.4: primer --primary, CTA di hero/section gelap --accent
+// dengan teks gelap, garis ghost --link). Juga dirender di admin (/admin/dev/ui, pencarian admin): kelas warnanya punya
 // fallback netral di theme.css, jadi tampilan admin tidak berubah.
 // Tombol publik DESIGN.md 7. Tombol CTA besar: tambahkan {...MAGNETIC} di elemennya dan `roll` di
 // ButtonContent (DESIGN.md 8.2; efeknya dari PointerEffects dan RollText).
@@ -24,7 +24,7 @@ export const buttonVariants = cva(
         primary: "rounded-md bg-primary text-on-primary hover:bg-primary-hover",
         secondary:
           "rounded-md border border-border-strong bg-bg text-fg hover:border-line-hover hover:bg-bg-subtle hover:text-ink-hover",
-        // Untuk section terbalik (latar --inverse-bg): CTA penutup.
+        // Untuk section terbalik (latar --inverse-bg) dan di atas foto hero: CTA penutup.
         inverse: "rounded-md bg-cta text-on-cta hover:bg-cta-hover focus-visible:ring-focus-dark focus-visible:ring-offset-inverse-bg",
         inverseOutline:
           "rounded-md border border-inverse-fg/40 text-inverse-fg hover:border-inverse-fg hover:bg-inverse-fg/10 focus-visible:ring-focus-dark focus-visible:ring-offset-inverse-bg",
@@ -32,7 +32,7 @@ export const buttonVariants = cva(
         ghost: [
           "rounded-none px-0 text-fg-strong",
           "before:absolute before:inset-x-0 before:bottom-0 before:h-px before:bg-border-strong",
-          "after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:scale-x-0 after:bg-primary",
+          "after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:scale-x-0 after:bg-link",
           "after:transition-transform after:duration-300 after:ease-standard",
           "hover:after:scale-x-100 focus-visible:after:scale-x-100",
         ],

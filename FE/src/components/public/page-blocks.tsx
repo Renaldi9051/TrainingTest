@@ -105,7 +105,7 @@ function Block({ block, anchor }: { block: PublicPageBlock; anchor: string }) {
         <figure id={anchor} className="scroll-mt-28 space-y-3 py-10 first:pt-0 md:py-12">
           <Reveal>
             <RevealImage className="relative aspect-video overflow-hidden bg-bg-muted">
-              <PublicImage image={block.image} sizes={BLOCK_IMAGE_SIZES} />
+              <PublicImage film image={block.image} sizes={BLOCK_IMAGE_SIZES} />
             </RevealImage>
           </Reveal>
           {block.caption ? <figcaption className="text-small text-fg-muted">{block.caption}</figcaption> : null}

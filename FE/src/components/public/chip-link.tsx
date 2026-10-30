@@ -24,10 +24,10 @@ export function ChipLink({
       className={cn(
         "relative inline-flex h-8 items-center rounded-full border px-3 text-small whitespace-nowrap outline-none transition-colors duration-150 [[data-indicator-ready]_&]:duration-300",
         "focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
-        // Palet C: aktif --primary (indikator pill di dalam ActiveIndicator), hover garis & teks --primary.
+        // Palet D: aktif --primary (indikator pill di dalam ActiveIndicator), hover garis --primary & teks --primary-ink.
         active
           ? "border-primary bg-primary text-on-primary [[data-indicator-ready]_&]:bg-transparent"
-          : "border-border-strong text-fg hover:border-primary hover:text-primary",
+          : "border-border-strong text-fg hover:border-primary hover:text-primary-ink",
       )}
     >
       {children}

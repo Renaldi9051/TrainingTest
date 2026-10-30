@@ -253,7 +253,7 @@ export async function ScheduleStats() {
       {stats.map((stat) => (
         <div key={stat.label} className="flex flex-col-reverse">
           <dt className="mt-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{stat.label}</dt>
-          <dd className="font-mono text-[40px] leading-none font-medium tracking-[-0.03em] text-primary">
+          <dd className="font-mono text-[40px] leading-none font-medium tracking-[-0.03em] text-primary-ink">
             {String(stat.value).padStart(2, "0")}
           </dd>
         </div>

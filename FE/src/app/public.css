@@ -42,7 +42,7 @@
 :root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header .site-brand-dark {
   display: flex;
 }
-/* Di atas foto hero: CTA --accent dengan teks gelap (palet C; fallback netral = terang/teks gelap). */
+/* Di atas foto hero: CTA --accent dengan teks gelap (palet D; fallback netral = terang/teks gelap). */
 :root:has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header .site-header-cta {
   background: var(--cta, var(--inverse-fg));
   color: var(--on-cta, var(--fg-strong));
@@ -178,6 +178,17 @@
   clip-path: inset(0);
   z-index: 2;
   transition: clip-path 900ms var(--ease-standard);
+}
+/* Scrim terarah hero fullbleed (palet D, token di palette-d.css): lapisan 1 ikut tiap slide (ikut
+   wipe), kekuatannya dari slide (--overlay-strength, default 0,8). Mobile: vertikal; md+: dari kiri. */
+.hero-scrim {
+  background-image: var(--overlay-mobile);
+  opacity: var(--overlay-strength, 0.8);
+}
+@media (width >= 48rem) {
+  .hero-scrim {
+    background-image: var(--overlay-side);
+  }
 }
 @keyframes hero-kenburns {
   from {

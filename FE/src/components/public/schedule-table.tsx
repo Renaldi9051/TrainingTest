@@ -20,7 +20,7 @@ export type ScheduleRow = {
 
 // Status ditulis teks mono tanpa warna (DESIGN 7).
 const STATUS_TEXT: Record<ScheduleStatus, string> = { OPEN: "DIBUKA", FULL: "PENUH", COMPLETED: "SELESAI" };
-// Palet C: titik status (dekoratif) di samping label teks; DIBUKA --ok, PENUH --fg-muted.
+// Palet D: titik status (dekoratif) di samping label teks; DIBUKA --ok, PENUH --fg-muted.
 const STATUS_DOT: Record<ScheduleStatus, string> = { OPEN: "bg-ok", FULL: "bg-fg-muted", COMPLETED: "bg-border-strong" };
 
 const PRICE_HIDDEN = "Hubungi marketing";
@@ -115,7 +115,7 @@ function BigDate({ start, end }: { start: string; end: string }) {
   const { day, monthYear } = dateBadgeParts(start);
   return (
     <span className="flex flex-col items-start gap-2">
-      {/* Palet C: kotak tanggal --primary / --on-primary. */}
+      {/* Palet D: kotak tanggal --primary / --on-primary. */}
       <span aria-hidden className="flex w-20 flex-col items-center gap-1 rounded-md bg-primary px-2 py-2.5 text-on-primary">
         <span className="text-[28px] leading-none font-semibold tracking-[-0.03em]">{day}</span>
         <span className="font-mono text-[11px] leading-none font-medium uppercase tracking-[0.08em]">{monthYear}</span>

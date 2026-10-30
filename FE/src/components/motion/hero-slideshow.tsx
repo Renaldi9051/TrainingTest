@@ -150,7 +150,8 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
   const stage = (
     // Latar gelap selama foto dimuat (teks terang tetap terbaca). Bukan "section terbalik" (DESIGN.md 2:
     // hero bergambar tidak dihitung), jadi tidak memakai kelas bg-inverse-bg.
-    <div className="absolute inset-0 overflow-hidden bg-fg-strong" aria-live={playing ? "off" : "polite"}>
+    // data-surface: tanda dekoratif (sudut Viewfinder) mustard di atas foto (palet D, --decor-mark).
+    <div data-surface="dark" className="absolute inset-0 overflow-hidden bg-fg-strong" aria-live={playing ? "off" : "polite"}>
       {slides.map((slide, index) => {
         // Sebelum event load hanya slide pertama yang dipasang (LCP); sisanya menyusul.
         if (index !== 0 && blockers.pending && index !== active) return null;
@@ -170,19 +171,26 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
               sizes={full ? SLIDE_SIZES_FULL : SLIDE_SIZES_SPLIT}
               priority={index === 0}
               grayscale={photoStyle === "grayscale"}
+              film
               style={{ objectPosition: `${slide.focalX}% ${slide.focalY}%` }}
             />
+            {/* Fullbleed: scrim lapisan 1 per slide (public.css .hero-scrim). */}
+            {full ? <div aria-hidden className="hero-scrim pointer-events-none absolute inset-0" /> : null}
           </div>
         );
       })}
+      {/* Lapisan hangat tipis di atas foto (palet D: --photo-tint, multiply), kedua layout. Tidak dipakai
+          untuk foto grayscale supaya tetap hitam putih. */}
+      {photoStyle === "grayscale" ? null : (
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-(--photo-tint) mix-blend-multiply" />
+      )}
       {full ? (
         <>
-          {/* Lapisan gelap agar teks terang terbaca (palet C: gradasi --overlay-top .60 -> tipis di 35% ->
-              --overlay-bottom .90; gradien gelap transparan hanya untuk overlay foto hero, DESIGN.md 5). */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 z-[3] bg-linear-to-b from-overlay-top via-overlay-top/15 via-35% to-overlay-bottom"
-          />
+          {/* Lapisan gelap agar teks terang terbaca (palet D; gradien gelap transparan hanya untuk overlay
+              foto hero, DESIGN.md 5): --overlay-head di atas untuk header transparan, dan dasar
+              transparan -> --overlay-bottom di bawah 35%. Lapisan 1 (scrim terarah) ada di tiap slide. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-(image:--overlay-head)" />
+          <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-linear-to-b from-transparent from-35% to-overlay-bottom" />
         </>
       ) : null}
       <GrainOverlay decor={decor} tone="photo" className="z-[3]" />
@@ -266,6 +274,14 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
         className={cn("hero-stage relative isolate flex flex-col", tone)}
       >
         {stage}
+        {/* Letterbox (palet D, DESIGN.md 6): garis --inverse-bg 8 px di atas & bawah hero fullbleed. Bukan
+            section terbalik, jadi tidak memakai kelas bg-inverse-bg (sama seperti latar stage). */}
+        {decor ? (
+          <>
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-2 bg-(--inverse-bg)" />
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-2 bg-(--inverse-bg)" />
+          </>
+        ) : null}
         <div className="relative z-10 mt-auto pt-36 pb-10 md:pb-14">{children}</div>
         {decor && badge ? (
           // Mobile: kanan atas (area foto kosong di bawah label HUD), supaya tidak menimpa search/CTA.
@@ -290,9 +306,11 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
       style={stageStyle}
       className={cn("hero-stage relative mx-auto grid w-full max-w-[1280px] gap-10 px-4 py-16 sm:px-6 md:grid-cols-12 md:items-center md:gap-6 md:py-24", tone)}
     >
-      <div className="md:col-span-5">{children}</div>
+      {/* min-w-0 + overflow-wrap: pengaman supaya kata panjang tidak keluar kolom dan menimpa foto. */}
+      <div className="min-w-0 wrap-break-word md:col-span-5">{children}</div>
       <div className="md:col-span-7">
-        <div className="relative aspect-[4/3]">
+        {/* Foto 3:2 di desktop (sejajar tengah dengan kolom teks), 16:9 di bawah teks di mobile. */}
+        <div className="relative aspect-video md:aspect-[3/2]">
           {stage}
           {decor && badge ? (
             <RotatingBadge href={badge.href} text={badge.text} className="right-4 bottom-4 z-10" />

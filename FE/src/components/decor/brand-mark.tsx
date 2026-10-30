@@ -15,7 +15,7 @@ export function BrandMark({ className }: { className?: string }) {
       {CORNERS.map((corner) => (
         <span key={corner} className={cn("absolute size-2 border-current", corner)} />
       ))}
-      <span className="absolute top-[9px] left-[9px] size-1 rounded-full bg-accent" />
+      <span className="absolute top-[9px] left-[9px] size-1 rounded-full bg-decor-mark" />
     </span>
   );
 }

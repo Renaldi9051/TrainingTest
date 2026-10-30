@@ -145,6 +145,7 @@ function PortfolioCard({ item, wide, priority }: { item: PublicPortfolioItem; wi
             sizes={CARD_SIZES}
             priority={priority}
             className="transition-transform duration-300 ease-standard motion-safe:group-hover:scale-[1.03]"
+            film
           />
           <Viewfinder size="sm" hover />
           <span className="absolute bottom-3.5 left-4 bg-fg-strong/60 px-2 py-1 font-mono text-label uppercase tracking-[0.08em] text-inverse-fg">
