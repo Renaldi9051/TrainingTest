@@ -20,7 +20,13 @@
   --inverse-fg: #faf3e6;
   --inverse-muted: #b8ac9c;
   --inverse-line: #3d352f;
-  --overlay-top: rgb(42 36 32 / 0.1);
+  /* Scrim hero fullbleed (DESIGN.md 8.1). --overlay-side: dari kiri di belakang blok teks (md+);
+     --overlay-mobile: vertikal di layar < 768 px (teks selebar layar). Keduanya per slide dengan
+     opacity --overlay-strength (overlayStrength slide, default 0,8). --overlay-head: atas, untuk header
+     transparan. --overlay-bottom: dasar area teks & indikator. */
+  --overlay-side: linear-gradient(90deg, rgb(28 20 14 / 0.78) 0%, rgb(28 20 14 / 0.55) 40%, rgb(28 20 14 / 0) 75%);
+  --overlay-mobile: linear-gradient(180deg, rgb(28 20 14 / 0.35), rgb(28 20 14 / 0.8));
+  --overlay-head: linear-gradient(180deg, rgb(28 20 14 / 0.45) 0%, transparent 18%);
   --overlay-bottom: rgb(42 28 20 / 0.62);
 
   /* Merah bata: aksi di latar terang. Teks bata kecil memakai --primary-ink (bata di --bg-subtle 4,2:1). */

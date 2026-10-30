@@ -122,7 +122,6 @@
   --color-ink-hover: var(--ink-hover, var(--fg));
   --color-focus: var(--focus, var(--fg-strong));
   --color-focus-dark: var(--focus-dark, var(--inverse-fg));
-  --color-overlay-top: var(--overlay-top, var(--overlay));
   --color-overlay-bottom: var(--overlay-bottom, var(--overlay));
   --color-dot: var(--dot, var(--border-strong));
 

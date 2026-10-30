@@ -174,6 +174,8 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
               film
               style={{ objectPosition: `${slide.focalX}% ${slide.focalY}%` }}
             />
+            {/* Fullbleed: scrim lapisan 1 per slide (public.css .hero-scrim). */}
+            {full ? <div aria-hidden className="hero-scrim pointer-events-none absolute inset-0" /> : null}
           </div>
         );
       })}
@@ -184,12 +186,11 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
       )}
       {full ? (
         <>
-          {/* Lapisan gelap agar teks terang terbaca (palet D: gradasi --overlay-top .10 -> tipis di 35% ->
-              --overlay-bottom .62; gradien gelap transparan hanya untuk overlay foto hero, DESIGN.md 5). */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 z-[3] bg-linear-to-b from-overlay-top via-overlay-top/15 via-35% to-overlay-bottom"
-          />
+          {/* Lapisan gelap agar teks terang terbaca (palet D; gradien gelap transparan hanya untuk overlay
+              foto hero, DESIGN.md 5): --overlay-head di atas untuk header transparan, dan dasar
+              transparan -> --overlay-bottom di bawah 35%. Lapisan 1 (scrim terarah) ada di tiap slide. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-(image:--overlay-head)" />
+          <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-linear-to-b from-transparent from-35% to-overlay-bottom" />
         </>
       ) : null}
       <GrainOverlay decor={decor} tone="photo" className="z-[3]" />

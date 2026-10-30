@@ -179,6 +179,17 @@
   z-index: 2;
   transition: clip-path 900ms var(--ease-standard);
 }
+/* Scrim terarah hero fullbleed (palet D, token di palette-d.css): lapisan 1 ikut tiap slide (ikut
+   wipe), kekuatannya dari slide (--overlay-strength, default 0,8). Mobile: vertikal; md+: dari kiri. */
+.hero-scrim {
+  background-image: var(--overlay-mobile);
+  opacity: var(--overlay-strength, 0.8);
+}
+@media (width >= 48rem) {
+  .hero-scrim {
+    background-image: var(--overlay-side);
+  }
+}
 @keyframes hero-kenburns {
   from {
     transform: scale(1.08);
