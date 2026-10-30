@@ -54,8 +54,9 @@ type HeroData = Extract<PublicHomeSection, { type: "HERO" }>;
 // Teks hero (eyebrow, h1, subjudul, search, CTA). Konten layar pertama: langsung terbaca tanpa reveal
 // scroll (DESIGN 9.3). Satu-satunya h1 beranda. Saat muat penuh hanya h1 yang bergerak: kata naik
 // dengan CSS murni <= 500 ms (tanpa JS, tanpa opacity 0). Setelah navigasi klien, eyebrow dan subjudul
-// ikut stagger masuk (PageEnter). inverse: di atas foto (teks terang).
-function HeroText({ section, inverse }: { section: HeroData; inverse: boolean }) {
+// ikut stagger masuk (PageEnter). inverse: di atas foto (teks terang). split: kolom 5/12 di samping
+// foto, headline lebih kecil (clamp 44-72 px) supaya kata terpanjang tetap di dalam kolom.
+function HeroText({ section, inverse, split = false }: { section: HeroData; inverse: boolean; split?: boolean }) {
   const muted = inverse ? "text-inverse-fg/85" : "text-fg-muted";
   return (
     <div className="space-y-8 md:space-y-10">
@@ -65,7 +66,14 @@ function HeroText({ section, inverse }: { section: HeroData; inverse: boolean })
             {section.eyebrow}
           </Eyebrow>
         ) : null}
-        <h1 id={`${section.id}-title`} className={cn("max-w-[16ch] text-display", inverse ? "text-inverse-fg" : "text-fg-strong")}>
+        <h1
+          id={`${section.id}-title`}
+          className={cn(
+            "max-w-[16ch]",
+            split ? "text-[clamp(44px,4.6vw,72px)] leading-[0.95] font-semibold tracking-[-0.03em]" : "text-display",
+            inverse ? "text-inverse-fg" : "text-fg-strong",
+          )}
+        >
           {/* Kata kunci berganti tiap wordIntervalMs (RotatingWord). */}
           <HeroWords
             text={section.headline}
@@ -151,7 +159,7 @@ function TextHero({ section }: { section: HeroData }) {
 function HeroSection({ section }: { section: HeroData }) {
   if (section.slides.length === 0) return <TextHero section={section} />;
   const full = section.layout === "fullbleed";
-  const text = <HeroText section={section} inverse={full} />;
+  const text = <HeroText section={section} inverse={full} split={!full} />;
   return (
     <HeroSlideshow
       slides={section.slides}

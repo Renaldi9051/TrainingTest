@@ -306,9 +306,11 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
       style={stageStyle}
       className={cn("hero-stage relative mx-auto grid w-full max-w-[1280px] gap-10 px-4 py-16 sm:px-6 md:grid-cols-12 md:items-center md:gap-6 md:py-24", tone)}
     >
-      <div className="md:col-span-5">{children}</div>
+      {/* min-w-0 + overflow-wrap: pengaman supaya kata panjang tidak keluar kolom dan menimpa foto. */}
+      <div className="min-w-0 wrap-break-word md:col-span-5">{children}</div>
       <div className="md:col-span-7">
-        <div className="relative aspect-[4/3]">
+        {/* Foto 3:2 di desktop (sejajar tengah dengan kolom teks), 16:9 di bawah teks di mobile. */}
+        <div className="relative aspect-video md:aspect-[3/2]">
           {stage}
           {decor && badge ? (
             <RotatingBadge href={badge.href} text={badge.text} className="right-4 bottom-4 z-10" />
