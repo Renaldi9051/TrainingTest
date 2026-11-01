@@ -26,6 +26,7 @@ import { seedManifestGallery } from "./seed-manifest-gallery";
 import { seedThemeGallery } from "./seed-theme-gallery";
 import { seedTrainingPhotos } from "./seed-training-photos";
 import { seedPaymentPage } from "./seed-payment-page";
+import { seedArticles } from "./seed-articles";
 import { buildProfileBlocks, buildSettings } from "./seed-data/build";
 import { writeCatalog } from "./seed-data/catalog-writer";
 import { profilePage } from "./seed-data/content";
@@ -161,6 +162,8 @@ async function main() {
   // Mode minimal (e2e) tanpa halaman pembayaran; spec e2e membuat halamannya sendiri.
   const paymentResult = MINIMAL ? null : await seedPaymentPage(PUBLISHED_AT);
   const contentResult = MINIMAL ? null : await seedContent(PUBLISHED_AT);
+  // Dua artikel contoh (tayang). Mode minimal (e2e) tanpa artikel; spec e2e membuat datanya sendiri.
+  const articleResult = MINIMAL ? null : await seedArticles();
   // Gambar contoh hanya untuk data contoh yang baru dibuat di run ini (database baru), supaya gambar
   // yang dihapus admin tidak muncul lagi di setiap `docker compose up`: placeholder untuk layanan &
   // portofolio, JPG contoh untuk sampul pelatihan. Database yang sudah berisi:
@@ -241,6 +244,11 @@ async function main() {
           .join(", ")}.`
       : "Mode minimal: konten contoh Fase 3 dilewati.",
   );
+  if (articleResult) {
+    console.info(
+      `Artikel contoh: ${articleResult.created} dibuat, ${articleResult.skipped} dilewati (slug sudah pernah ada).`,
+    );
+  }
   if (imageResult) {
     console.info(
       imageResult.media > 0
