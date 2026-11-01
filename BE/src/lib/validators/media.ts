@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isHttpUrl, requiredText } from "@/lib/validators/common";
 
 // Nama folder bebas tapi sederhana; string kosong = tanpa folder (null).
 const folderSchema = z
@@ -44,3 +45,17 @@ export const mediaUploadFieldsSchema = z.object({
 });
 
 export const mediaIdSchema = z.uuid({ error: "ID media tidak valid." });
+
+// Impor gambar dari URL luar: BE mengunduh lalu menyimpannya seperti upload biasa (lib/remote-image.ts).
+export const mediaImportUrlSchema = z.object({
+  url: z
+    .string({ error: "URL gambar wajib diisi." })
+    .trim()
+    .min(1, { error: "URL gambar wajib diisi." })
+    .max(2000, { error: "URL maksimal 2000 karakter." })
+    .refine(isHttpUrl, { error: "URL harus diawali http:// atau https://." }),
+  // Alt wajib: gambar hasil impor biasanya langsung dipakai sebagai sampul publik.
+  alt: requiredText("Alt text", 300),
+  folder: folderSchema.nullable().default(null),
+});
+export type MediaImportUrlInput = z.infer<typeof mediaImportUrlSchema>;

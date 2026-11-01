@@ -5,11 +5,12 @@ import { detectFileType, MAX_UPLOAD_BYTES } from "@/lib/file-type";
 import { HttpError } from "@/lib/http";
 import { processRasterImage, readSvgSize, VARIANT_WIDTHS } from "@/lib/image";
 import { collectMediaRefs, type MediaKind } from "@/lib/media-refs";
+import { fetchRemoteImage, type RemoteImageOptions } from "@/lib/remote-image";
 import { revalidateEntity } from "@/lib/revalidate-map";
 import { monthFolder, saveUpload, uploadUrl } from "@/lib/storage";
 import { sanitizeSvg } from "@/lib/svg";
 import { HOME_SECTION_LABELS } from "@/lib/validators/home-section";
-import type { MediaListQuery, MediaUpdateInput } from "@/lib/validators/media";
+import type { MediaImportUrlInput, MediaListQuery, MediaUpdateInput } from "@/lib/validators/media";
 import { PAGE_BLOCK_LABELS, type PageBlockType } from "@/lib/validators/page-blocks";
 import {
   SETTING_KEYS,
@@ -108,12 +109,16 @@ function uploadError(code: string, message: string): HttpError {
   return new HttpError(422, code, message);
 }
 
+// Data tambahan saat file berasal dari impor URL (alt langsung diisi, URL asal dicatat di audit).
+type StoreExtra = { alt?: string | null; sourceUrl?: string };
+
 // Memproses satu file: validasi, konversi, tulis ke disk, simpan ke DB. Melempar HttpError per file.
 async function storeOne(
   file: UploadInput,
   folder: string | null,
   userId: string,
   now: Date,
+  extra: StoreExtra = {},
 ): Promise<MediaDto> {
   if (file.data.byteLength === 0) throw uploadError("EMPTY_FILE", "File kosong.");
   if (file.data.byteLength > MAX_UPLOAD_BYTES) {
@@ -184,14 +189,20 @@ async function storeOne(
   }
 
   const media = await getDb().media.create({
-    data: { ...data, folder, updatedBy: { connect: { id: userId } } },
+    data: { ...data, folder, alt: extra.alt ?? null, updatedBy: { connect: { id: userId } } },
   });
   await writeAudit({
     userId,
     action: AuditAction.CREATE,
     entity: "Media",
     entityId: media.id,
-    diff: { path: media.path, mime: media.mime, size: media.size, originalName },
+    diff: {
+      path: media.path,
+      mime: media.mime,
+      size: media.size,
+      originalName,
+      ...(extra.sourceUrl ? { sourceUrl: extra.sourceUrl } : {}),
+    },
   });
   return toMediaDto(media);
 }
@@ -217,6 +228,29 @@ export async function uploadMedia(
 
   if (created.length > 0 && options.revalidate !== false) await revalidateEntity({ entity: "Media" });
   return { created, failed };
+}
+
+// Impor satu gambar dari URL luar: diunduh BE (lib/remote-image.ts), lalu disimpan seperti upload
+// biasa (WebP + varian, ke disk/R2). Hanya JPG/PNG/WebP; SVG dan PDF dari URL ditolak.
+export async function importMediaFromUrl(
+  input: MediaImportUrlInput,
+  userId: string,
+  options: RemoteImageOptions = {},
+  now = new Date(),
+): Promise<MediaDto> {
+  const remote = await fetchRemoteImage(input.url, options);
+  const type = await detectFileType(remote.data);
+  if (type?.kind !== "raster") {
+    throw new HttpError(422, "UNSUPPORTED_TYPE", "Format gambar dari URL harus JPG, PNG, atau WebP.", {
+      url: ["Format gambar dari URL harus JPG, PNG, atau WebP."],
+    });
+  }
+  const media = await storeOne({ name: remote.name, data: remote.data }, input.folder, userId, now, {
+    alt: input.alt,
+    sourceUrl: input.url,
+  });
+  await revalidateEntity({ entity: "Media" });
+  return media;
 }
 
 // ===== List & update =====
