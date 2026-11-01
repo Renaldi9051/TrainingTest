@@ -16,6 +16,7 @@ export const HOME_SECTION_TYPES = [
   "TESTIMONIALS",
   "CTA",
   "MARQUEE",
+  "LATEST_ARTICLES",
 ] as const satisfies readonly HomeSectionType[];
 
 export const SINGLE_INSTANCE_TYPES = ["HERO", "CTA"] as const satisfies readonly HomeSectionType[];
@@ -43,6 +44,7 @@ export const HOME_SECTION_LABELS: Record<HomeSectionType, string> = {
   TESTIMONIALS: "Testimoni",
   CTA: "CTA penutup",
   MARQUEE: "Teks berjalan",
+  LATEST_ARTICLES: "Artikel terbaru",
 };
 
 export const HOME_SECTION_DESCRIPTIONS: Record<HomeSectionType, string> = {
@@ -57,6 +59,7 @@ export const HOME_SECTION_DESCRIPTIONS: Record<HomeSectionType, string> = {
   TESTIMONIALS: "Kutipan peserta atau klien.",
   CTA: "Blok hitam penutup dengan ajakan konsultasi.",
   MARQUEE: "Teks besar yang bergerak mengikuti scroll, dari teks sendiri atau judul layanan.",
+  LATEST_ARTICLES: "Kartu berita & artikel tayang terbaru.",
 };
 
 export const ROTATING_WORDS_MAX = 5;
@@ -82,6 +85,7 @@ export const SELECTION_LIMITS = {
 } as const;
 export type SelectionSectionType = keyof typeof SELECTION_LIMITS;
 export const UPCOMING_LIMIT_MAX = 10;
+export const LATEST_ARTICLES_MAX = 6;
 
 export function isSingleInstance(type: HomeSectionType): boolean {
   return (SINGLE_INSTANCE_TYPES as readonly HomeSectionType[]).includes(type);
@@ -146,6 +150,7 @@ export function defaultContent<K extends HomeSectionType>(type: K): HomeSectionC
     TESTIMONIALS: { eyebrow: "", intro: "", ...selection("TESTIMONIALS"), decor },
     CTA: { eyebrow: "", heading: "", body: "", primaryCta: { label: "", href: "" }, secondaryCta: null, decor },
     MARQUEE: { heading: "", source: "services", items: [], limit: 6, decor },
+    LATEST_ARTICLES: { ...heading, intro: "", limit: 3, cta: null, decor },
   };
   return content[type];
 }
@@ -170,6 +175,8 @@ export function sectionSummary(section: Pick<HomeSection, "type" | "content">): 
         : ((content.items as string[] | undefined) ?? []).join(" · ").slice(0, 80);
     case "UPCOMING_SCHEDULES":
       return text("heading") || `${content.limit as number} sesi terdekat`;
+    case "LATEST_ARTICLES":
+      return text("heading") ? `${text("heading")} · ${content.limit as number} artikel` : `${content.limit as number} artikel terbaru`;
     default: {
       const mode = content.mode === "manual" ? `${(content.ids as unknown[]).length} dipilih` : `Otomatis, ${content.limit as number}`;
       return text("heading") ? `${text("heading")} · ${mode}` : mode;
@@ -319,6 +326,7 @@ export const HOME_CONTENT_FORM_SCHEMAS = {
   CATEGORIES: selectionSchema("CATEGORIES", { cta: cta.nullable() }),
   LATEST_TRAININGS: selectionSchema("LATEST_TRAININGS", { cta: cta.nullable() }),
   UPCOMING_SCHEDULES: z.object({ ...headingFields, intro, limit: limit(UPCOMING_LIMIT_MAX), cta: cta.nullable(), ...decorField }),
+  LATEST_ARTICLES: z.object({ ...headingFields, intro, limit: limit(LATEST_ARTICLES_MAX), cta: cta.nullable(), ...decorField }),
   CLIENTS: selectionSchema("CLIENTS", {}),
   VISION_MISSION: z.object({
     eyebrow: optionalText("Eyebrow", 40),
