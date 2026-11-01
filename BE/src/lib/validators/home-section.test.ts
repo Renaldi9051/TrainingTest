@@ -59,6 +59,7 @@ const FULL: Record<(typeof HOME_SECTION_TYPES)[number], unknown> = {
     secondaryCta: { label: "Telepon", href: "tel:+62215550101" },
   },
   MARQUEE: { heading: "Bidang pelatihan", source: "custom", items: ["BNSP", "In House", "Public Training"], limit: 6 },
+  LATEST_ARTICLES: { eyebrow: "Informasi", heading: "Berita & artikel terbaru", limit: 3, cta: { label: "Semua artikel", href: "/artikel" } },
 };
 
 describe("skema per type", () => {
@@ -312,6 +313,13 @@ describe("hero lama -> slides (preprocess)", () => {
   });
 });
 
+describe("artikel terbaru", () => {
+  it("default 3 artikel, maksimal 6", () => {
+    expect(parseHomeSectionContent("LATEST_ARTICLES", {})).toMatchObject({ limit: 3, cta: null });
+    expect(homeSectionContentSchema.safeParse({ type: "LATEST_ARTICLES", content: { limit: 7 } }).success).toBe(false);
+  });
+});
+
 describe("decor per section", () => {
   it("semua type punya decor, default menyala (data lama tanpa field)", () => {
     const minimal: Record<(typeof HOME_SECTION_TYPES)[number], unknown> = {
@@ -326,6 +334,7 @@ describe("decor per section", () => {
       TESTIMONIALS: {},
       CTA: { heading: "Judul", primaryCta: { label: "Hubungi", href: "/kontak" } },
       MARQUEE: { source: "services" },
+      LATEST_ARTICLES: {},
     };
     for (const type of HOME_SECTION_TYPES) {
       expect(parseHomeSectionContent(type, minimal[type]), type).toHaveProperty("decor", true);

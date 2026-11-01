@@ -11,7 +11,7 @@ import {
 } from "@/lib/validators/content-common";
 
 // Isi section beranda (HomeSection.content), divalidasi per type. Section berbasis data
-// (SERVICES, CATEGORIES, LATEST_TRAININGS, UPCOMING_SCHEDULES, CLIENTS, TESTIMONIALS) hanya
+// (SERVICES, CATEGORIES, LATEST_TRAININGS, UPCOMING_SCHEDULES, CLIENTS, TESTIMONIALS, LATEST_ARTICLES) hanya
 // menyimpan konfigurasi; datanya di-resolve saat GET /api/public/home.
 // Semua href lewat ctaSchema (path internal, https, mailto, tel). Gambar: { mediaId }.
 
@@ -27,6 +27,7 @@ export const HOME_SECTION_TYPES = [
   "TESTIMONIALS",
   "CTA",
   "MARQUEE",
+  "LATEST_ARTICLES",
 ] as const satisfies readonly HomeSectionType[];
 
 // Type yang hanya boleh ada satu di antara section yang belum dihapus (juga dijaga partial
@@ -56,6 +57,7 @@ export const HOME_SECTION_LABELS: Record<HomeSectionType, string> = {
   TESTIMONIALS: "Testimoni",
   CTA: "CTA penutup",
   MARQUEE: "Teks berjalan",
+  LATEST_ARTICLES: "Artikel terbaru",
 };
 
 export const ROTATING_WORDS_MAX = 5;
@@ -67,6 +69,7 @@ export const MARQUEE_HEADING_MAX = 60;
 export const STATS_MAX = 6;
 // Beranda menampilkan paling banyak 6 pelatihan terbaru (pemilik, 28 Okt 2026; dulu 12).
 export const LATEST_TRAININGS_MAX = 6;
+export const LATEST_ARTICLES_MAX = 6;
 export const HERO_SLIDES_MAX = 6;
 export const HERO_INTERVAL_MIN_MS = 4000;
 export const HERO_INTERVAL_MAX_MS = 10000;
@@ -235,6 +238,20 @@ const upcomingSchedulesContent = z.object({
   decor,
 });
 
+// Selalu otomatis: artikel tayang dengan waktu terbit terbaru.
+const latestArticlesContent = z.object({
+  ...headingFields,
+  intro,
+  limit: z
+    .number({ error: "Jumlah harus berupa angka." })
+    .int({ error: "Jumlah harus bilangan bulat." })
+    .min(1, { error: "Jumlah minimal 1." })
+    .max(LATEST_ARTICLES_MAX, { error: `Jumlah maksimal ${LATEST_ARTICLES_MAX}.` })
+    .default(3),
+  cta: optionalCta,
+  decor,
+});
+
 const clientsContent = z
   .object({ ...headingFields, intro, ...selectionFields({ defaultLimit: 24, maxLimit: 48 }), decor })
   .superRefine(requireManualIds);
@@ -291,6 +308,7 @@ export const HOME_SECTION_CONTENT_SCHEMAS = {
   TESTIMONIALS: testimonialsContent,
   CTA: ctaContent,
   MARQUEE: marqueeContent,
+  LATEST_ARTICLES: latestArticlesContent,
 } as const satisfies Record<HomeSectionType, z.ZodType>;
 
 export type HomeSectionContentMap = {
@@ -312,6 +330,7 @@ export const homeSectionContentSchema = z.discriminatedUnion(
     z.object({ type: z.literal("TESTIMONIALS"), content: testimonialsContent }),
     z.object({ type: z.literal("CTA"), content: ctaContent }),
     z.object({ type: z.literal("MARQUEE"), content: marqueeContent }),
+    z.object({ type: z.literal("LATEST_ARTICLES"), content: latestArticlesContent }),
   ],
   { error: "Tipe section tidak dikenal." },
 );
@@ -390,6 +409,7 @@ export function homeSectionMediaRefs(section: HomeSectionContent): TypedMediaRef
     case "TESTIMONIALS":
     case "CTA":
     case "MARQUEE":
+    case "LATEST_ARTICLES":
       return [];
   }
 }

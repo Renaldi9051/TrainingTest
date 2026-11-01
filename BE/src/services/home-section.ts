@@ -18,6 +18,12 @@ import {
   type HomeSectionUpdateInput,
 } from "@/lib/validators/home-section";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
+import {
+  articleCardInclude,
+  publicArticleWhere,
+  toArticleCard,
+  type PublicArticleCard,
+} from "@/services/article-public";
 import { toPublicClient, type PublicClient } from "@/services/client";
 import { assertMediaRefs, getMediaMap, toPublicImage, type MediaDto, type PublicImage } from "@/services/media";
 import { nextOrder } from "@/services/reorder";
@@ -263,7 +269,8 @@ export type PublicHomeSection =
   | (Base<"UPCOMING_SCHEDULES"> & Omit<C<"UPCOMING_SCHEDULES">, "limit"> & { items: PublicSchedule[] })
   | (Base<"CLIENTS"> & Omit<C<"CLIENTS">, SelectionKeys> & { items: PublicClient[] })
   | (Base<"VISION_MISSION"> & C<"VISION_MISSION">)
-  | (Base<"CTA"> & C<"CTA">);
+  | (Base<"CTA"> & C<"CTA">)
+  | (Base<"LATEST_ARTICLES"> & Omit<C<"LATEST_ARTICLES">, "limit"> & { items: PublicArticleCard[] });
 
 // Pratinjau admin: semua section (termasuk yang disembunyikan) + penanda tampil & kosong.
 export type PreviewHomeSection = PublicHomeSection & {
@@ -310,8 +317,9 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
   const schedules = selectionsOf(parsed, "UPCOMING_SCHEDULES");
   const clients = selectionsOf(parsed, "CLIENTS");
   const scheduleLimit = Math.max(0, ...schedules.map((item) => item.content.limit));
+  const articleLimit = Math.max(0, ...selectionsOf(parsed, "LATEST_ARTICLES").map((item) => item.content.limit));
 
-  const [trainingItems, scheduleRows, clientItems, media] =
+  const [trainingItems, scheduleRows, clientItems, media, articleRows] =
     await Promise.all([
       resolveSelections(
         trainings.map((item) => item.content),
@@ -357,6 +365,15 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
         },
       ),
       getMediaMap(parsed.flatMap(({ section }) => homeSectionMediaRefs(section).map((ref) => ref.mediaId))),
+      // Artikel terbaru: satu query untuk limit terbesar, tiap section memotong sendiri.
+      articleLimit
+        ? db.article.findMany({
+            where: publicArticleWhere(now),
+            include: articleCardInclude,
+            orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+            take: articleLimit,
+          })
+        : Promise.resolve([]),
     ]);
 
   const itemsFor = <T,>(list: { id: string }[], resolved: T[][]) =>
@@ -364,6 +381,7 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
   const trainingMap = itemsFor(trainings, trainingItems);
   const clientMap = itemsFor(clients, clientItems);
   const scheduleItems = scheduleRows.map((row) => toPublicSchedule(row, today));
+  const articleItems = articleRows.map(toArticleCard);
 
   return parsed.map(({ row, section }): PreviewHomeSection => {
     const base = { id: row.id, visible: row.visible };
@@ -404,6 +422,11 @@ export async function resolveHomeSections(rows: HomeSection[], now = new Date())
       case "CLIENTS": {
         const items = clientMap.get(row.id) ?? [];
         return { ...base, type: "CLIENTS", ...omitSelection(section.content), items, empty: items.length === 0 };
+      }
+      case "LATEST_ARTICLES": {
+        const { limit, ...rest } = section.content;
+        const items = articleItems.slice(0, limit);
+        return { ...base, type: "LATEST_ARTICLES", ...rest, items, empty: items.length === 0 };
       }
     }
   });
