@@ -132,6 +132,8 @@ model User {
   updatedMedia             Media[]
   updatedInquiries         Inquiry[]
   updatedRedirects         Redirect[]
+  updatedArticles          Article[]
+  updatedArticleCategories ArticleCategory[]
 }
 
 model Session {
@@ -515,6 +517,63 @@ model MediaPartner {
   @@index([deletedAt])
 }
 
+// ===== Artikel =====
+
+// Kategori artikel (mis. Teknologi, Berita), terpisah dari kategori pelatihan.
+model ArticleCategory {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  slug        String
+  name        String
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+  updatedById String?   @db.Uuid
+  updatedBy   User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  articles Article[]
+
+  @@unique([slug], map: "ArticleCategory_slug_active_key", where: raw("\"deletedAt\" IS NULL"))
+  @@index([order])
+  @@index([deletedAt])
+}
+
+// Status tampil sama dengan pelatihan: DRAFT, atau PUBLISHED (Terjadwal kalau publishedAt di masa depan).
+model Article {
+  id                   String           @id @default(uuid(7)) @db.Uuid
+  slug                 String
+  title                String
+  // Ringkasan 2-3 kalimat untuk kartu artikel & deskripsi SEO bawaan.
+  excerpt              String?
+  // Rich text Tiptap.
+  body                 Json
+  coverId              String?          @db.Uuid
+  cover                Media?           @relation(fields: [coverId], references: [id], onDelete: SetNull)
+  // Teks bebas, mis. "Tim Media"; bukan relasi ke User.
+  authorName           String
+  // Sumber berita (opsional), mis. "Kementerian Perhubungan RI".
+  sourceName           String?
+  sourceUrl            String?
+  categoryId           String?          @db.Uuid
+  category             ArticleCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  status               ContentStatus    @default(DRAFT)
+  publishedAt          DateTime?        @db.Timestamptz(3)
+  // Sama dengan Training.publishRevalidatedAt: penanda scheduler untuk artikel terjadwal.
+  publishRevalidatedAt DateTime?        @db.Timestamptz(3)
+  seo                  Json?
+  createdAt            DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime         @updatedAt @db.Timestamptz(3)
+  deletedAt            DateTime?        @db.Timestamptz(3)
+  updatedById          String?          @db.Uuid
+  updatedBy            User?            @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@unique([slug], map: "Article_slug_active_key", where: raw("\"deletedAt\" IS NULL"))
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@index([coverId])
+  @@index([deletedAt])
+}
+
 // ===== Media =====
 
 model Media {
@@ -543,6 +602,7 @@ model Media {
   portfolioImages   PortfolioImage[]
   trainingImages    TrainingImage[]
   categoryImages    Category[]
+  articleCovers     Article[]
 
   @@index([folder])
   @@index([deletedAt])
