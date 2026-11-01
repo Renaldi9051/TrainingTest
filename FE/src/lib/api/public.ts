@@ -4,6 +4,10 @@ import { getPublicEnv } from "@/lib/env";
 import type {
   ApiSuccess,
   PaginationMeta,
+  PublicArticleCard,
+  PublicArticleCategoryCount,
+  PublicArticleDetail,
+  PublicArticleListMeta,
   PublicCatalogMeta,
   PublicCategory,
   PublicHome,
@@ -35,10 +39,12 @@ export const Tag = {
   SERVICES: "services",
   PORTFOLIO: "portfolio",
   MARKETING: "marketing",
+  ARTICLES: "articles",
   category: (slug: string) => `category:${slug}`,
   training: (slug: string) => `training:${slug}`,
   page: (slug: string) => `page:${slug}`,
   service: (slug: string) => `service:${slug}`,
+  article: (slug: string) => `article:${slug}`,
 } as const;
 
 class PublicApiError extends Error {
@@ -228,6 +234,51 @@ export async function getMarketing(): Promise<PublicMarketingContact[]> {
   cacheLife("content");
   cacheTag(Tag.MARKETING, Tag.MEDIA);
   return getRequired<PublicMarketingContact[]>("/marketing");
+}
+
+// ===== Artikel =====
+
+export type ArticleListParams = { kategori?: string; hal?: number };
+
+export type ArticleList = { items: PublicArticleCard[]; meta: PublicArticleListMeta };
+
+async function getArticlesByQuery(query: string): Promise<ArticleList> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(Tag.ARTICLES, Tag.MEDIA);
+  const body = await getJson<PublicArticleCard[], PublicArticleListMeta>(`/articles?${query}`);
+  if (!body?.meta) throw new PublicApiError(404, "/articles");
+  return { items: body.data, meta: body.meta };
+}
+
+export function getArticles(params: ArticleListParams): Promise<ArticleList> {
+  const search = new URLSearchParams();
+  if (params.kategori) search.set("kategori", params.kategori);
+  if (params.hal && params.hal > 1) search.set("hal", String(params.hal));
+  return getArticlesByQuery(search.toString());
+}
+
+// Kategori yang punya artikel tayang (chip filter /artikel).
+export async function getArticleCategories(): Promise<PublicArticleCategoryCount[]> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(Tag.ARTICLES);
+  return getRequired<PublicArticleCategoryCount[]>("/article-categories");
+}
+
+export async function getArticle(slug: string): Promise<PublicArticleDetail | null> {
+  "use cache";
+  cacheLife("content");
+  // Artikel terkait ikut berubah saat artikel lain diubah/ditayangkan, jadi ikut tag `articles`.
+  cacheTag(Tag.article(slug), Tag.ARTICLES, Tag.MEDIA);
+  return (await getJson<PublicArticleDetail>(`/articles/${encodeURIComponent(slug)}`))?.data ?? null;
+}
+
+export async function getArticleSlugs(limit: number): Promise<string[]> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(Tag.ARTICLES);
+  return getRequired<string[]>(`/article-slugs?limit=${limit}`);
 }
 
 export type PublicRedirect = { to: string; permanent: boolean };

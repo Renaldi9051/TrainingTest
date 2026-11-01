@@ -39,6 +39,8 @@ export function createMockDb() {
     trainingCategory: model(),
     trainingImage: model(),
     inquiry: model(),
+    article: model(),
+    articleCategory: model(),
     $transaction: vi.fn(),
     $queryRaw: vi.fn(),
     $executeRaw: vi.fn(),

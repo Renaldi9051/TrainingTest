@@ -12,6 +12,7 @@ import {
   LayoutListIcon,
   MenuIcon,
   MessageSquareQuoteIcon,
+  NewspaperIcon,
   PhoneIcon,
   Settings2Icon,
   SignpostIcon,
@@ -54,6 +55,10 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { slug: "trainings", label: "Pelatihan", icon: BookOpenIcon, available: true },
       { slug: "schedules", label: "Jadwal", icon: CalendarDaysIcon, available: true },
     ],
+  },
+  {
+    label: "Publikasi",
+    modules: [{ slug: "articles", label: "Artikel", icon: NewspaperIcon, available: true }],
   },
   {
     label: "Konten pendukung",

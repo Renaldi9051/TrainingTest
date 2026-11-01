@@ -13,7 +13,7 @@ import { slugify } from "@/lib/slug";
 
 type SlugFieldProps = {
   id: string;
-  entity: "category" | "training" | "service" | "page";
+  entity: "category" | "training" | "service" | "page" | "article" | "article-category";
   value: string;
   onChange: (value: string) => void;
   // Judul/nama sumber slug otomatis.

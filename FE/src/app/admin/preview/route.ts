@@ -13,6 +13,10 @@ const TARGETS = {
     endpoint: (id: string) => `/admin/trainings/${id}`,
     path: (data: PreviewData) => `/pelatihan/${data.slug}`,
   },
+  article: {
+    endpoint: (id: string) => `/admin/articles/${id}`,
+    path: (data: PreviewData) => `/artikel/${data.slug}`,
+  },
   service: {
     endpoint: (id: string) => `/admin/services/${id}`,
     path: (data: PreviewData) => `/layanan/${data.slug}`,
@@ -26,7 +30,7 @@ const TARGETS = {
 
 // Beranda tidak punya id: sesi dicek lewat endpoint pratinjau beranda, tujuan selalu "/".
 const querySchema = z.discriminatedUnion("type", [
-  z.object({ type: z.enum(["training", "service", "page"]), id: z.uuid() }),
+  z.object({ type: z.enum(["training", "article", "service", "page"]), id: z.uuid() }),
   z.object({ type: z.literal("home") }),
 ]);
 

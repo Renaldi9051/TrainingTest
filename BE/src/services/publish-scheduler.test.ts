@@ -12,11 +12,18 @@ vi.mock("@/lib/revalidate", async (importOriginal) => ({
 import { revalidateDuePublications, revalidateOnDayChange } from "@/services/publish-scheduler";
 
 const now = new Date("2026-10-10T05:00:00.000Z");
-let mock: MockDb & { training: MockDb["training"] & { fields: { publishedAt: string } } };
+type WithFields<T> = T & { fields: { publishedAt: string } };
+let mock: MockDb & { training: WithFields<MockDb["training"]>; article: WithFields<MockDb["article"]> };
 
 beforeEach(() => {
   const base = createMockDb();
-  mock = { ...base, training: { ...base.training, fields: { publishedAt: "publishedAt-ref" } } };
+  mock = {
+    ...base,
+    training: { ...base.training, fields: { publishedAt: "publishedAt-ref" } },
+    article: { ...base.article, fields: { publishedAt: "article-publishedAt-ref" } },
+  };
+  mock.training.findMany.mockResolvedValue([]);
+  mock.article.findMany.mockResolvedValue([]);
   db.current = mock;
   revalidate.mockReset();
   revalidate.mockResolvedValue(true);
@@ -50,6 +57,22 @@ describe("revalidateDuePublications", () => {
     revalidate.mockResolvedValue(false);
     expect(await revalidateDuePublications(now)).toBe(0);
     expect(mock.training.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("artikel terjadwal yang waktunya tiba: revalidate tag artikel lalu ditandai", async () => {
+    mock.article.findMany.mockResolvedValue([{ id: "b", slug: "drone-mapping" }]);
+    expect(await revalidateDuePublications(now)).toBe(1);
+    expect(mock.article.findMany.mock.calls[0][0].where).toEqual({
+      status: "PUBLISHED",
+      deletedAt: null,
+      publishedAt: { lte: now },
+      OR: [{ publishRevalidatedAt: null }, { publishRevalidatedAt: { lt: "article-publishedAt-ref" } }],
+    });
+    expect(revalidate).toHaveBeenCalledWith(["articles", "home", "article:drone-mapping"]);
+    expect(mock.article.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["b"] } },
+      data: { publishRevalidatedAt: now },
+    });
   });
 });
 

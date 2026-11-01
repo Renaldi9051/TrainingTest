@@ -180,6 +180,7 @@ export type Media = {
 export type MediaUsage = {
   entity:
     | "Training"
+    | "Article"
     | "Category"
     | "Service"
     | "Client"
@@ -932,3 +933,89 @@ export type PublicHome = { sections: PublicHomeSection[] };
 // GET /api/admin/home-sections/preview: termasuk section tersembunyi dan kosong.
 export type PreviewHomeSection = PublicHomeSection & { visible: boolean; empty: boolean };
 export type HomePreview = { sections: PreviewHomeSection[] };
+
+// ===== Artikel =====
+
+// Sama dengan pelatihan: SCHEDULED = PUBLISHED dengan publishedAt di masa depan.
+export type ArticlePublicState = TrainingPublicState;
+
+export type ArticleCategoryRef = { id: string; slug: string; name: string };
+
+export type ArticleListItem = {
+  id: string;
+  slug: string;
+  title: string;
+  authorName: string;
+  status: ContentStatus;
+  publicState: ArticlePublicState;
+  publishedAt: string | null;
+  // null kalau kategorinya sudah dihapus.
+  category: ArticleCategoryRef | null;
+  cover: Media | null;
+  updatedAt: string;
+  createdAt: string;
+};
+
+export type ArticleStatusCounts = Record<"ALL" | ArticlePublicState, number>;
+
+export type ArticleListMeta = PaginationMeta & { counts: ArticleStatusCounts };
+
+export type Article = ArticleListItem & {
+  excerpt: string | null;
+  // null = belum ada isi.
+  body: RichTextDoc | null;
+  sourceName: string | null;
+  sourceUrl: string | null;
+  categoryId: string | null;
+  coverId: string | null;
+  seo: TrainingSeo;
+  ogImage: Media | null;
+};
+
+export type ArticleCalendarItem = Pick<
+  ArticleListItem,
+  "id" | "slug" | "title" | "publicState" | "category" | "authorName"
+> & { publishedAt: string };
+
+export type ArticleBulkAction = { action: "publish" | "unpublish" | "delete"; ids: string[] };
+
+export type ArticleBulkResult = {
+  affected: number;
+  // Publish: artikel tanpa isi dilewati.
+  skipped: { id: string; title: string; reason: string }[];
+};
+
+export type ArticleCategory = {
+  id: string;
+  slug: string;
+  name: string;
+  order: number;
+  // Jumlah artikel (semua status, belum dihapus).
+  articleCount: number;
+};
+
+export type PublicArticleCategory = { slug: string; name: string };
+
+export type PublicArticleCategoryCount = PublicArticleCategory & { count: number };
+
+export type PublicArticleCard = {
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  authorName: string;
+  cover: PublicImage | null;
+  category: PublicArticleCategory | null;
+  publishedAt: string;
+};
+
+export type PublicArticleListMeta = PaginationMeta & { kategori: string | null };
+
+export type PublicArticleDetail = PublicArticleCard & {
+  // HTML dari BE (rich text allowlist, sudah di-escape).
+  bodyHtml: string | null;
+  sourceName: string | null;
+  sourceUrl: string | null;
+  seo: { title: string; description: string; ogImage: PublicImage | null };
+  related: PublicArticleCard[];
+  updatedAt: string;
+};

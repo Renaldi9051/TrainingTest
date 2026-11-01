@@ -10,6 +10,7 @@ export const publicPath = {
   category: (slug: string) => `/pelatihan/kategori/${slug}`,
   service: (slug: string) => `/layanan/${slug}`,
   page: (slug: string) => `/${slug}`,
+  article: (slug: string) => `/artikel/${slug}`,
 };
 
 // Path yang sekarang dipakai konten aktif tidak boleh di-redirect ke tempat lain.

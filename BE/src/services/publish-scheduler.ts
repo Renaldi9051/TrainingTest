@@ -3,9 +3,9 @@ import { revalidateEntity } from "@/lib/revalidate-map";
 import { appDateString } from "@/lib/time";
 import { purgeExpiredInquiries } from "@/services/inquiry";
 
-// Cache FE tidak tahu kapan `publishedAt` sebuah pelatihan tiba, dan tidak tahu kapan hari berganti
+// Cache FE tidak tahu kapan `publishedAt` sebuah pelatihan/artikel tiba, dan tidak tahu kapan hari berganti
 // (sesi yang lewat harus tampil SELESAI). Scheduler ini me-revalidate tag terkait:
-// - setiap TICK_MS: pelatihan PUBLISHED yang waktu publish-nya sudah lewat tapi belum di-revalidate
+// - setiap TICK_MS: pelatihan & artikel PUBLISHED yang waktu publish-nya sudah lewat tapi belum di-revalidate
 //   (publishRevalidatedAt null atau < publishedAt). Penanda disimpan di DB, jadi kalau BE mati saat
 //   waktunya tiba, scheduler mengejar saat start lagi. Jeda maksimal ~TICK_MS.
 // - sekali saat tanggal WIB berganti: tag jadwal & katalog.
@@ -15,6 +15,10 @@ export const TICK_MS = 30_000;
 const BATCH = 200;
 
 export async function revalidateDuePublications(now = new Date()): Promise<number> {
+  return (await revalidateDueTrainings(now)) + (await revalidateDueArticles(now));
+}
+
+async function revalidateDueTrainings(now: Date): Promise<number> {
   const db = getDb();
   const due = await db.training.findMany({
     where: {
@@ -37,6 +41,35 @@ export async function revalidateDuePublications(now = new Date()): Promise<numbe
   if (!ok) return 0;
 
   await db.training.updateMany({
+    where: { id: { in: due.map((row) => row.id) } },
+    data: { publishRevalidatedAt: now },
+  });
+  return due.length;
+}
+
+// Artikel terjadwal: aturan sama dengan pelatihan (kolom publishRevalidatedAt).
+async function revalidateDueArticles(now: Date): Promise<number> {
+  const db = getDb();
+  const due = await db.article.findMany({
+    where: {
+      status: "PUBLISHED",
+      deletedAt: null,
+      publishedAt: { lte: now },
+      OR: [
+        { publishRevalidatedAt: null },
+        { publishRevalidatedAt: { lt: db.article.fields.publishedAt } },
+      ],
+    },
+    select: { id: true, slug: true },
+    orderBy: { publishedAt: "asc" },
+    take: BATCH,
+  });
+  if (due.length === 0) return 0;
+
+  const ok = await revalidateEntity({ entity: "Article", slugs: due.map((row) => row.slug) });
+  if (!ok) return 0;
+
+  await db.article.updateMany({
     where: { id: { in: due.map((row) => row.id) } },
     data: { publishRevalidatedAt: now },
   });

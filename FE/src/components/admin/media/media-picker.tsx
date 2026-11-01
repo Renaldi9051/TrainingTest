@@ -6,11 +6,12 @@ import {
   ChevronRightIcon,
   ImageIcon,
   ImagePlusIcon,
+  LinkIcon,
   Loader2Icon,
   SearchIcon,
   UploadIcon,
 } from "lucide-react";
-import { useDeferredValue, useId, useRef, useState } from "react";
+import { useDeferredValue, useId, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/admin/empty-state";
 import { MediaThumbnail } from "@/components/admin/media/media-thumbnail";
@@ -26,8 +27,9 @@ import {
   DialogTitle,
 } from "@/components/admin/ui/dialog";
 import { Input } from "@/components/admin/ui/input";
+import { Label } from "@/components/admin/ui/label";
 import { Skeleton } from "@/components/admin/ui/skeleton";
-import { ApiError, apiFetch } from "@/lib/api/client";
+import { ApiError, apiFetch, apiSend } from "@/lib/api/client";
 import type { Media, MediaUploadResult, PaginationMeta } from "@/lib/api/types";
 import { uploadWithProgress } from "@/lib/api/upload";
 import { cn } from "@/lib/utils";
@@ -70,6 +72,8 @@ type MediaPickerProps = {
   kind?: MediaPickerKind;
   // false = alt opsional (logo, foto orang: nama dipakai sebagai alt), badge "Tanpa alt" disembunyikan.
   altRequired?: boolean;
+  // Tampilkan "Ambil dari URL": BE mengunduh gambar dari URL luar ke media library (bukan hotlink).
+  allowUrlImport?: boolean;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 };
@@ -94,6 +98,7 @@ export function MediaPicker({
   kind = "image",
   dialogTitle = kind === "pdf" ? "Pilih file PDF" : "Pilih gambar",
   altRequired = true,
+  allowUrlImport = false,
   ...aria
 }: MediaPickerProps) {
   const [open, setOpen] = useState(false);
@@ -166,6 +171,7 @@ export function MediaPicker({
           title={dialogTitle}
           kind={kind}
           currentId={value}
+          allowUrlImport={allowUrlImport && kind === "image"}
           onClose={() => setOpen(false)}
           onSelect={(selected) => {
             queryClient.setQueryData(mediaPreviewKey(selected.id), selected);
@@ -182,12 +188,20 @@ export type MediaPickerDialogProps = {
   title: string;
   kind?: MediaPickerKind;
   currentId: string | null;
+  allowUrlImport?: boolean;
   onClose: () => void;
   onSelect: (media: Media) => void;
 };
 
 // Dialog pilih/upload gambar; juga dipakai langsung oleh editor galeri.
-export function MediaPickerDialog({ title, kind = "image", currentId, onClose, onSelect }: MediaPickerDialogProps) {
+export function MediaPickerDialog({
+  title,
+  kind = "image",
+  currentId,
+  allowUrlImport = false,
+  onClose,
+  onSelect,
+}: MediaPickerDialogProps) {
   const copy = KIND_COPY[kind];
   const queryClient = useQueryClient();
   const searchId = useId();
@@ -197,6 +211,8 @@ export function MediaPickerDialog({ title, kind = "image", currentId, onClose, o
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Media | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [urlImportOpen, setUrlImportOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const list = useQuery({
     queryKey: [...mediaKeys.all, "picker", { page, q, kind }],
@@ -234,9 +250,24 @@ export function MediaPickerDialog({ title, kind = "image", currentId, onClose, o
     }
   }
 
+  async function importFromUrl(input: { url: string; alt: string }) {
+    setImporting(true);
+    try {
+      const created = (await apiSend<Media>("/admin/media/import-url", "POST", input)).data;
+      await queryClient.invalidateQueries({ queryKey: mediaKeys.all });
+      toast.success("Gambar dari URL disimpan ke media library.");
+      onSelect(created);
+    } catch (error) {
+      // Pesan dari BE sudah spesifik (bukan gambar, terlalu besar, alamat tidak diizinkan, dst.).
+      toast.error(error instanceof ApiError ? error.message : "Gambar tidak dapat diambil. Coba lagi.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   const items = list.data?.data ?? [];
   const meta = list.data?.meta;
-  const uploading = uploadProgress !== null;
+  const uploading = uploadProgress !== null || importing;
 
   return (
     <Dialog open onOpenChange={(next) => (!next && !uploading ? onClose() : undefined)}>
@@ -282,10 +313,23 @@ export function MediaPickerDialog({ title, kind = "image", currentId, onClose, o
             }}
           />
           <Button type="button" variant="outline" disabled={uploading} onClick={() => fileRef.current?.click()}>
-            {uploading ? <Loader2Icon className="animate-spin" aria-hidden /> : <UploadIcon aria-hidden />}
-            {uploading ? `Mengupload ${Math.round((uploadProgress ?? 0) * 100)}%` : `Upload ${copy.noun}`}
+            {uploadProgress !== null ? <Loader2Icon className="animate-spin" aria-hidden /> : <UploadIcon aria-hidden />}
+            {uploadProgress !== null ? `Mengupload ${Math.round(uploadProgress * 100)}%` : `Upload ${copy.noun}`}
           </Button>
+          {allowUrlImport ? (
+            <Button
+              type="button"
+              variant={urlImportOpen ? "secondary" : "outline"}
+              aria-expanded={urlImportOpen}
+              disabled={uploading}
+              onClick={() => setUrlImportOpen((current) => !current)}
+            >
+              <LinkIcon aria-hidden />
+              Ambil dari URL
+            </Button>
+          ) : null}
         </div>
+        {allowUrlImport && urlImportOpen ? <UrlImportForm pending={importing} onSubmit={importFromUrl} /> : null}
 
         {list.isPending ? (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-6" role="status" aria-label={`Memuat ${copy.noun}`}>
@@ -376,5 +420,65 @@ export function MediaPickerDialog({ title, kind = "image", currentId, onClose, o
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Gambar dari URL luar: BE mengunduh & menyimpannya ke media library (WebP + varian), jadi situs
+// tidak bergantung pada server lain. Alt wajib karena gambar langsung dipakai di halaman publik.
+function UrlImportForm({
+  pending,
+  onSubmit,
+}: {
+  pending: boolean;
+  onSubmit: (input: { url: string; alt: string }) => void;
+}) {
+  const urlId = useId();
+  const altId = useId();
+  const [url, setUrl] = useState("");
+  const [alt, setAlt] = useState("");
+  const validUrl = /^https?:\/\/\S+$/i.test(url.trim());
+
+  function submit(event: FormEvent) {
+    // Form ini ada di dalam dialog yang dirender di atas form halaman: jangan ikut men-submit form itu.
+    event.preventDefault();
+    event.stopPropagation();
+    if (validUrl && alt.trim()) onSubmit({ url: url.trim(), alt: alt.trim() });
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3 rounded-md border border-dashed border-border-strong p-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor={urlId}>URL gambar</Label>
+          <Input
+            id={urlId}
+            type="url"
+            inputMode="url"
+            placeholder="https://contoh.com/foto.jpg"
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={altId}>Alt text</Label>
+          <Input
+            id={altId}
+            placeholder="Mis. Pilot menerbangkan drone di lapangan"
+            maxLength={300}
+            value={alt}
+            onChange={(event) => setAlt(event.target.value)}
+          />
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-small text-fg-muted">
+          Tautan langsung ke file JPG, PNG, atau WebP (maks. 10 MB). Pastikan gambarnya boleh dipakai.
+        </p>
+        <Button type="submit" size="sm" disabled={!validUrl || !alt.trim() || pending}>
+          {pending ? <Loader2Icon className="animate-spin" aria-hidden /> : <LinkIcon aria-hidden />}
+          {pending ? "Mengunduh..." : "Ambil gambar"}
+        </Button>
+      </div>
+    </form>
   );
 }
