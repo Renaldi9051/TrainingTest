@@ -1,6 +1,6 @@
-import type { PublicTrainingDetail, ScheduleStatus, TrainingMethod } from "@/lib/api/types";
+import type { PublicArticleDetail, PublicTrainingDetail, ScheduleStatus, TrainingMethod } from "@/lib/api/types";
 
-// JSON-LD schema.org untuk SEO (PRD 8): Course di detail pelatihan, Event per jadwal.
+// JSON-LD schema.org untuk SEO (PRD 8): Course di detail pelatihan, Event per jadwal, Article di detail artikel.
 
 type EventInput = {
   title: string;
@@ -102,5 +102,21 @@ export function courseJsonLd(training: PublicTrainingDetail, siteUrl: string, pr
             })),
         }
       : {}),
+  };
+}
+
+export function articleJsonLd(article: PublicArticleDetail, siteUrl: string, publisher: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.seo.description || article.excerpt || article.title,
+    url: absolute(siteUrl, `/artikel/${article.slug}`),
+    datePublished: article.publishedAt,
+    dateModified: article.updatedAt,
+    author: { "@type": "Organization", name: article.authorName },
+    publisher: { "@type": "Organization", name: publisher, url: siteUrl },
+    ...(article.cover ? { image: absolute(siteUrl, article.cover.url) } : {}),
+    ...(article.category ? { articleSection: article.category.name } : {}),
   };
 }

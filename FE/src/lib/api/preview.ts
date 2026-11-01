@@ -1,6 +1,13 @@
 import "server-only";
 import { adminServerFetch } from "./server";
-import type { ApiSuccess, HomePreview, PublicPage, PublicServiceDetail, PublicTrainingDetail } from "./types";
+import type {
+  ApiSuccess,
+  HomePreview,
+  PublicArticleDetail,
+  PublicPage,
+  PublicServiceDetail,
+  PublicTrainingDetail,
+} from "./types";
 
 // Pratinjau draft (draft mode, sesi admin): tidak di-cache, membawa cookie sesi admin ke BE.
 // null = sesi tidak valid atau konten tidak ada; halaman lalu memakai data publik biasa.
@@ -27,4 +34,8 @@ export function getServicePreview(slug: string): Promise<PublicServiceDetail | n
 // Semua section (termasuk tersembunyi & kosong) dengan flag visible/empty.
 export function getHomePreview(): Promise<HomePreview | null> {
   return previewJson<HomePreview>("/admin/home-sections/preview");
+}
+
+export function getArticlePreview(slug: string): Promise<PublicArticleDetail | null> {
+  return previewJson<PublicArticleDetail>(`/admin/articles/preview/${encodeURIComponent(slug)}`);
 }
