@@ -90,4 +90,38 @@ test.describe("artikel", () => {
     const agenda = page.getByRole("region", { name: "Agenda bulan ini" });
     await expect(agenda.getByRole("link", { name: title, exact: true })).toBeVisible();
   });
+
+  test("section beranda Artikel terbaru menampilkan artikel tayang terbaru", async ({ page }) => {
+    await loginViaApi(page.request);
+    const id = runId();
+    const category = await createCategory(page.request, `[UJI] Kabar ${id}`);
+    const title = `[UJI] Kabar terbaru ${id}`;
+    const created = await page.request.post("/api/admin/articles", {
+      headers: HEADERS,
+      data: { title, authorName: "Tim Media", categoryId: category.id, body: body("Isi."), status: "PUBLISHED" },
+    });
+    expect(created.status(), await created.text()).toBe(201);
+    const heading = `[UJI] Berita & artikel ${id}`;
+    const section = await page.request.post("/api/admin/home-sections", {
+      headers: HEADERS,
+      data: {
+        type: "LATEST_ARTICLES",
+        content: { heading, limit: 3, cta: { label: "Lihat semua artikel", href: "/artikel" } },
+      },
+    });
+    expect(section.status(), await section.text()).toBe(201);
+    const sectionId = ((await section.json()) as { data: { id: string } }).data.id;
+
+    try {
+      await expect(async () => {
+        await page.goto("/");
+        await expect(page.getByRole("heading", { level: 2, name: heading })).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 20_000 });
+      const region = page.locator("section", { has: page.getByRole("heading", { level: 2, name: heading }) });
+      await expect(region.getByRole("link", { name: title, exact: true })).toBeVisible();
+      await expect(region.getByRole("link", { name: "Lihat semua artikel" })).toHaveAttribute("href", "/artikel");
+    } finally {
+      await page.request.delete(`/api/admin/home-sections/${sectionId}`, { headers: HEADERS });
+    }
+  });
 });

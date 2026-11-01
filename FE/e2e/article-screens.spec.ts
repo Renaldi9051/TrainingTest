@@ -103,6 +103,32 @@ test.describe("screenshot artikel @manual", () => {
       }
     }
 
+    // Section beranda "Artikel terbaru" (screenshot elemen section saja).
+    const heading = `[UJI] Berita & artikel terbaru ${id}`;
+    const section = await page.request.post("/api/admin/home-sections", {
+      headers: HEADERS,
+      data: {
+        type: "LATEST_ARTICLES",
+        content: { eyebrow: "Informasi", heading, limit: 3, cta: { label: "Lihat semua artikel", href: "/artikel" } },
+      },
+    });
+    const sectionId = ((await section.json()) as { data: { id: string } }).data.id;
+    try {
+      for (const width of [360, 1280]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect(async () => {
+          await page.goto("/", { waitUntil: "networkidle" });
+          await expect(page.getByRole("heading", { level: 2, name: heading })).toBeVisible({ timeout: 2_000 });
+        }).toPass({ timeout: 30_000 });
+        const region = page.locator("section", { has: page.getByRole("heading", { level: 2, name: heading }) });
+        await region.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(1200);
+        await region.screenshot({ path: path.join(OUT, `beranda-artikel-${width}.png`) });
+      }
+    } finally {
+      await page.request.delete(`/api/admin/home-sections/${sectionId}`, { headers: HEADERS });
+    }
+
     await page.setViewportSize({ width: 1280, height: 900 });
     for (const [name, url] of [
       ["admin-daftar", "/admin/articles"],

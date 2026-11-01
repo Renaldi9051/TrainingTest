@@ -832,7 +832,8 @@ export type HomeSectionType =
   | "VISION_MISSION"
   | "TESTIMONIALS"
   | "CTA"
-  | "MARQUEE";
+  | "MARQUEE"
+  | "LATEST_ARTICLES";
 
 export type Cta = { label: string; href: string };
 type SectionHeading = { eyebrow: string; heading: string };
@@ -901,6 +902,8 @@ export type HomeSectionContentMap = {
   CTA: Decor & { eyebrow: string; heading: string; body: string; primaryCta: Cta; secondaryCta: Cta | null };
   // Teks berjalan: heading hanya untuk pembaca layar; source services = judul layanan tayang.
   MARQUEE: Decor & { heading: string; source: "custom" | "services"; items: string[]; limit: number };
+  // Selalu otomatis: artikel tayang terbaru (1-6).
+  LATEST_ARTICLES: SectionHeading & Decor & { intro: string; limit: number; cta: Cta | null };
 };
 
 export type HomeSection = {
@@ -926,7 +929,8 @@ export type PublicHomeSection =
   | (PublicBase<"UPCOMING_SCHEDULES"> & Omit<HomeSectionContentMap["UPCOMING_SCHEDULES"], "limit"> & { items: PublicSchedule[] })
   | (PublicBase<"CLIENTS"> & Omit3<HomeSectionContentMap["CLIENTS"]> & { items: PublicClient[] })
   | (PublicBase<"VISION_MISSION"> & HomeSectionContentMap["VISION_MISSION"])
-  | (PublicBase<"CTA"> & HomeSectionContentMap["CTA"]);
+  | (PublicBase<"CTA"> & HomeSectionContentMap["CTA"])
+  | (PublicBase<"LATEST_ARTICLES"> & Omit<HomeSectionContentMap["LATEST_ARTICLES"], "limit"> & { items: PublicArticleCard[] });
 
 export type PublicHome = { sections: PublicHomeSection[] };
 

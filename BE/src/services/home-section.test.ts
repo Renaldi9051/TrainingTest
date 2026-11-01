@@ -238,6 +238,36 @@ describe("resolveHomeSections: isi", () => {
     expect(latest.type).toBe("LATEST_TRAININGS");
     expect(mock.training.findMany.mock.calls[0][0].take).toBe(6);
   });
+  it("artikel terbaru: satu query untuk limit terbesar, tiap section memotong sendiri, kosong = disembunyikan", async () => {
+    const article = (n: number) => ({
+      id: uuid(n),
+      slug: `artikel-${n}`,
+      title: `Artikel ${n}`,
+      excerpt: null,
+      authorName: "Tim Media",
+      cover: null,
+      category: { slug: "teknologi", name: "Teknologi", deletedAt: null },
+      publishedAt: now,
+      createdAt: now,
+    });
+    mock.article.findMany.mockResolvedValue([article(1), article(2), article(3), article(4)]);
+    const [three, four] = await resolveHomeSections(
+      [section("LATEST_ARTICLES", { limit: 3 }), section("LATEST_ARTICLES", { limit: 4 })],
+      now,
+    );
+    expect(mock.article.findMany).toHaveBeenCalledTimes(1);
+    expect(mock.article.findMany.mock.calls[0][0]).toMatchObject({
+      where: { deletedAt: null, status: "PUBLISHED", publishedAt: { lte: now } },
+      take: 4,
+    });
+    expect(three).toMatchObject({ type: "LATEST_ARTICLES", empty: false, items: [{ slug: "artikel-1" }, {}, {}] });
+    expect(three).not.toHaveProperty("limit");
+    expect(four.type === "LATEST_ARTICLES" && four.items).toHaveLength(4);
+
+    mock.article.findMany.mockResolvedValue([]);
+    const [empty] = await resolveHomeSections([section("LATEST_ARTICLES", { limit: 3 })], now);
+    expect(empty.empty).toBe(true);
+  });
 });
 
 describe("resolveHomeSections: slide hero", () => {

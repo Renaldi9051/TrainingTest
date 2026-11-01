@@ -50,7 +50,24 @@ describe("sinkron dengan BE", () => {
     expect(be).toContain(
       `export const RETIRED_HOME_SECTION_TYPES = [${RETIRED_HOME_SECTION_TYPES.map((type) => `"${type}"`).join(", ")}]`,
     );
-    expect(ADDABLE_HOME_SECTION_TYPES).toEqual(["HERO", "LATEST_TRAININGS", "UPCOMING_SCHEDULES", "CLIENTS", "VISION_MISSION", "CTA"]);
+    expect(ADDABLE_HOME_SECTION_TYPES).toEqual([
+      "HERO",
+      "LATEST_TRAININGS",
+      "UPCOMING_SCHEDULES",
+      "CLIENTS",
+      "VISION_MISSION",
+      "CTA",
+      "LATEST_ARTICLES",
+    ]);
+  });
+
+  it("artikel terbaru: isi bawaan 3 artikel valid, maksimal 6", () => {
+    const base = { title: "", visible: true };
+    expect(sectionFormSchema("LATEST_ARTICLES").safeParse({ ...base, content: defaultContent("LATEST_ARTICLES") }).success).toBe(true);
+    expect(defaultContent("LATEST_ARTICLES")).toMatchObject({ limit: 3, cta: null, decor: true });
+    expect(
+      sectionFormSchema("LATEST_ARTICLES").safeParse({ ...base, content: { ...defaultContent("LATEST_ARTICLES"), limit: 7 } }).success,
+    ).toBe(false);
   });
 });
 

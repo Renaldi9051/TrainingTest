@@ -35,14 +35,14 @@ export type PublicArticleDetail = PublicArticleCard & {
 
 export type PublicArticleCategoryCount = PublicArticleCategory & { count: number };
 
-const cardInclude = {
+export const articleCardInclude = {
   cover: true,
   category: { select: { slug: true, name: true, deletedAt: true } },
 } satisfies Prisma.ArticleInclude;
 
-type CardRow = Prisma.ArticleGetPayload<{ include: typeof cardInclude }>;
+type CardRow = Prisma.ArticleGetPayload<{ include: typeof articleCardInclude }>;
 
-function toCard(row: CardRow): PublicArticleCard {
+export function toArticleCard(row: CardRow): PublicArticleCard {
   const category = row.category && row.category.deletedAt === null ? row.category : null;
   return {
     slug: row.slug,
@@ -70,11 +70,11 @@ export async function listPublicArticles(
   };
   const db = getDb();
   const [rows, total] = await Promise.all([
-    db.article.findMany({ where, include: cardInclude, orderBy: newestFirst, ...pagination(query.hal, query.per) }),
+    db.article.findMany({ where, include: articleCardInclude, orderBy: newestFirst, ...pagination(query.hal, query.per) }),
     db.article.count({ where }),
   ]);
   return {
-    items: rows.map(toCard),
+    items: rows.map(toArticleCard),
     meta: { ...listMeta(query.hal, query.per, total), kategori: query.kategori ?? null },
   };
 }
@@ -113,7 +113,7 @@ async function relatedArticles(row: CardRow & { id: string; categoryId: string |
   const sameCategory = row.categoryId
     ? await db.article.findMany({
         where: { ...base, categoryId: row.categoryId },
-        include: cardInclude,
+        include: articleCardInclude,
         orderBy: newestFirst,
         take: RELATED_LIMIT,
       })
@@ -123,22 +123,22 @@ async function relatedArticles(row: CardRow & { id: string; categoryId: string |
     missing > 0
       ? await db.article.findMany({
           where: { ...base, id: { notIn: [row.id, ...sameCategory.map((item) => item.id)] } },
-          include: cardInclude,
+          include: articleCardInclude,
           orderBy: newestFirst,
           take: missing,
         })
       : [];
-  return [...sameCategory, ...others].map(toCard);
+  return [...sameCategory, ...others].map(toArticleCard);
 }
 
 async function toDetail(
-  row: Prisma.ArticleGetPayload<{ include: typeof cardInclude }>,
+  row: Prisma.ArticleGetPayload<{ include: typeof articleCardInclude }>,
   now: Date,
 ): Promise<PublicArticleDetail> {
   const seo = parseSeo(row.seo);
   const media = await getMediaMap([seo.ogImageId]);
   return {
-    ...toCard(row),
+    ...toArticleCard(row),
     bodyHtml: renderRichText(row.body),
     sourceName: row.sourceName,
     sourceUrl: row.sourceUrl,
@@ -153,12 +153,12 @@ async function toDetail(
 }
 
 export async function getPublicArticle(slug: string, now = new Date()): Promise<PublicArticleDetail | null> {
-  const row = await getDb().article.findFirst({ where: { ...publicArticleWhere(now), slug }, include: cardInclude });
+  const row = await getDb().article.findFirst({ where: { ...publicArticleWhere(now), slug }, include: articleCardInclude });
   return row ? toDetail(row, now) : null;
 }
 
 // Pratinjau admin (draft mode): draf & terjadwal ikut, yang di Sampah tidak.
 export async function getArticlePreview(slug: string, now = new Date()): Promise<PublicArticleDetail | null> {
-  const row = await getDb().article.findFirst({ where: { slug, deletedAt: null }, include: cardInclude });
+  const row = await getDb().article.findFirst({ where: { slug, deletedAt: null }, include: articleCardInclude });
   return row ? toDetail(row, now) : null;
 }

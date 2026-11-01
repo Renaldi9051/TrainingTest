@@ -8,6 +8,7 @@ import { PlusMarker } from "@/components/decor/plus-marker";
 import { RotatingBadge } from "@/components/decor/rotating-badge";
 import { HeroSlideshow } from "@/components/motion/hero-slideshow";
 import { HeroWords } from "@/components/motion/hero-words";
+import { ArticleGrid } from "@/components/public/article-card";
 import { CtaLink } from "@/components/public/cta-link";
 import { ClientLogos } from "@/components/public/client-logos";
 import { PublicSection } from "@/components/public/public-section";
@@ -28,6 +29,7 @@ const FALLBACK_HEADINGS: Record<PublicHomeSection["type"], string> = {
   CLIENTS: "Klien",
   VISION_MISSION: "Visi dan misi",
   CTA: "Hubungi kami",
+  LATEST_ARTICLES: "Berita & artikel terbaru",
 };
 
 // Tanda + di keempat sudut sebuah blok (DESIGN.md 6.1). Induk relative.
@@ -246,6 +248,18 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
       );
     case "CTA":
       return <CtaSection section={section} />;
+    case "LATEST_ARTICLES":
+      return (
+        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.LATEST_ARTICLES} intro={section.intro}>
+          {/* Pola sama dengan pelatihan terbaru: tanda + di sudut grid. */}
+          <div className="relative">
+            <CornerMarkers decor={section.decor} inset="-top-5" />
+            <ArticleGrid articles={section.items} />
+            <CornerMarkers decor={section.decor} inset="-bottom-5" />
+          </div>
+          <SectionCta cta={section.cta} />
+        </PublicSection>
+      );
   }
 }
 

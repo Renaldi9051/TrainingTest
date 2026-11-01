@@ -21,6 +21,7 @@ import {
   HERO_SLIDES_MAX,
   HERO_WORD_INTERVAL_MAX_MS,
   HERO_WORD_INTERVAL_MIN_MS,
+  LATEST_ARTICLES_MAX,
   MARQUEE_ITEMS_MAX,
   MARQUEE_ITEMS_MIN,
   ROTATING_WORDS_MAX,
@@ -655,6 +656,26 @@ export function SectionFields({ type, media }: { type: HomeSectionType; media: R
       );
     case "MARQUEE":
       return <MarqueeFields />;
+    case "LATEST_ARTICLES":
+      return (
+        <div className="space-y-6">
+          <Fieldset title="Judul">
+            <HeadingFields withIntro />
+          </Fieldset>
+          <Fieldset title="Isi" description="Artikel tayang dengan waktu terbit terbaru, otomatis dari modul Artikel.">
+            <NumberField
+              name="content.limit"
+              label="Jumlah artikel"
+              min={1}
+              max={LATEST_ARTICLES_MAX}
+              description={`1-${LATEST_ARTICLES_MAX}. Disarankan 3 supaya pas satu baris.`}
+            />
+          </Fieldset>
+          <Fieldset title="Tombol">
+            <CtaField name="content.cta" label="Tombol di bawah section" optional />
+          </Fieldset>
+        </div>
+      );
   }
 }
 

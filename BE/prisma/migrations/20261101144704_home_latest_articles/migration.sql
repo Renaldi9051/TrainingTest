@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "HomeSectionType" ADD VALUE 'LATEST_ARTICLES';
