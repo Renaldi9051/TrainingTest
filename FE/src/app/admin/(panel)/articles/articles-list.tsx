@@ -95,7 +95,7 @@ function useArticleColumns(onAction: (action: RowAction) => void): DataTableColu
       columnHelper.accessor("title", {
         header: "Judul",
         cell: ({ row }) => (
-          <div className="min-w-0 max-w-[32rem]">
+          <div className="min-w-0 max-w-[24rem]">
             <Link
               href={`/admin/articles/${row.original.id}`}
               className="font-medium text-fg-strong underline-offset-4 hover:underline"
@@ -123,10 +123,6 @@ function useArticleColumns(onAction: (action: RowAction) => void): DataTableColu
           </div>
         ),
       }),
-      columnHelper.accessor("updatedAt", {
-        header: "Diperbarui",
-        cell: ({ getValue }) => <span className="text-small text-fg-muted">{formatDateTime(getValue())}</span>,
-      }),
       columnHelper.display({
         id: "actions",
         header: () => <span className="sr-only">Aksi</span>,
@@ -134,21 +130,27 @@ function useArticleColumns(onAction: (action: RowAction) => void): DataTableColu
           const item = row.original;
           const live = item.publicState !== "DRAFT";
           return (
-            <div className="flex flex-wrap justify-end gap-1">
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/admin/articles/${item.id}`} aria-label={`Ubah ${item.title}`}>
+            // Ringkas supaya muat di samping kolom lain (1280 px): ikon untuk Ubah/Pratinjau/Hapus
+            // (label lengkap di aria-label & tooltip), teks untuk aksi publikasi.
+            <div className="flex flex-nowrap items-center justify-end gap-1">
+              <Button variant="outline" size="icon-sm" asChild>
+                <Link href={`/admin/articles/${item.id}`} aria-label={`Ubah ${item.title}`} title="Ubah">
                   <PencilIcon aria-hidden />
-                  Ubah
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <a href={articlePreviewHref(item.id)} target="_blank" rel="noreferrer" aria-label={`Pratinjau ${item.title}`}>
+              <Button variant="ghost" size="icon-sm" asChild>
+                <a
+                  href={articlePreviewHref(item.id)}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Pratinjau ${item.title}`}
+                  title="Pratinjau"
+                >
                   <EyeIcon aria-hidden />
-                  Pratinjau
                 </a>
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => onAction({ action: live ? "unpublish" : "publish", item })}
                 aria-label={`${live ? "Tarik" : "Tayangkan"} ${item.title}`}
@@ -161,6 +163,7 @@ function useArticleColumns(onAction: (action: RowAction) => void): DataTableColu
                 className="text-status-error"
                 onClick={() => onAction({ action: "delete", item })}
                 aria-label={`Hapus ${item.title}`}
+                title="Hapus"
               >
                 <Trash2Icon aria-hidden />
               </Button>
