@@ -48,6 +48,7 @@ function noUsages() {
     mock.trainingImage,
     mock.siteSetting,
     mock.page,
+    mock.article,
   ]) {
     model.findMany.mockResolvedValue([]);
   }

@@ -418,6 +418,7 @@ export async function updateMedia(
 export type MediaUsage = {
   entity:
     | "Training"
+    | "Article"
     | "Category"
     | "Service"
     | "Client"
@@ -488,8 +489,8 @@ function pageUsages(rows: PageRow[], mediaId: string): MediaUsage[] {
   });
 }
 
-// Semua referensi ke Media: relasi di skema (cover, gambar kategori/layanan, logo, photo, galeri), mediaId di JSON
-// (SEO pelatihan/layanan/halaman, pengaturan situs, isi section beranda, blok halaman),
+// Semua referensi ke Media: relasi di skema (cover pelatihan/artikel, gambar kategori/layanan, logo, photo,
+// galeri), mediaId di JSON (SEO pelatihan/layanan/halaman/artikel, pengaturan situs, isi section beranda, blok halaman),
 // termasuk item di Sampah.
 export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
   const db = getDb();
@@ -508,6 +509,8 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
     settings,
     homeSections,
     pages,
+    articles,
+    articleSeo,
   ] = await Promise.all([
     db.training.findMany({
       where: { coverId: mediaId },
@@ -567,6 +570,14 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
       FROM "Page"
       WHERE jsonb_path_exists("blocks", ${JSON_MEDIA_REF_PATH}::jsonpath, jsonb_build_object('id', ${mediaId}::text))
     `,
+    db.article.findMany({
+      where: { coverId: mediaId },
+      select: { id: true, title: true, deletedAt: true },
+    }),
+    db.article.findMany({
+      where: { seo: { path: ["ogImageId"], equals: mediaId } },
+      select: { id: true, title: true, deletedAt: true },
+    }),
   ]);
 
   const settingUsages: MediaUsage[] = settings.flatMap((row) => {
@@ -668,6 +679,22 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
     ...pageSeo.map((row) => ({
       entity: "Page" as const,
       entityLabel: "Halaman",
+      id: row.id,
+      label: row.title,
+      field: "Gambar OG",
+      inTrash: row.deletedAt !== null,
+    })),
+    ...articles.map((row) => ({
+      entity: "Article" as const,
+      entityLabel: "Artikel",
+      id: row.id,
+      label: row.title,
+      field: "Sampul",
+      inTrash: row.deletedAt !== null,
+    })),
+    ...articleSeo.map((row) => ({
+      entity: "Article" as const,
+      entityLabel: "Artikel",
       id: row.id,
       label: row.title,
       field: "Gambar OG",

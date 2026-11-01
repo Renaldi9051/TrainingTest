@@ -17,6 +17,7 @@ export const RESERVED_PAGE_SLUGS = new Set([
   "pelatihan",
   "jadwal",
   "kontak",
+  "artikel",
   "admin",
   "api",
   "uploads",

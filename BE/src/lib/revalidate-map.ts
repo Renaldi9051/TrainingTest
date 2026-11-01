@@ -27,7 +27,11 @@ export type RevalidateEvent =
   | { entity: "Client" }
   | { entity: "Testimonial" }
   | { entity: "PortfolioItem" }
-  | { entity: "MarketingContact" };
+  | { entity: "MarketingContact" }
+  // Slug lama + baru kalau slug berubah.
+  | { entity: "Article"; slugs: Slugs }
+  // Nama/slug/urutan kategori artikel tampil di kartu & chip filter semua halaman artikel.
+  | { entity: "ArticleCategory" };
 
 export type RevalidateEntityName = RevalidateEvent["entity"];
 
@@ -88,6 +92,11 @@ export function tagsForEvent(event: RevalidateEvent): string[] {
       return [RevalidateTag.PORTFOLIO];
     case "MarketingContact":
       return [RevalidateTag.MARKETING];
+    // Artikel terbaru tampil di beranda (section LATEST_ARTICLES).
+    case "Article":
+      return tags(RevalidateTag.ARTICLES, RevalidateTag.HOME, ...slugTags(event.slugs, RevalidateTag.article));
+    case "ArticleCategory":
+      return [RevalidateTag.ARTICLES, RevalidateTag.HOME];
   }
 }
 

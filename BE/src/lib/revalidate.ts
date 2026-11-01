@@ -16,10 +16,12 @@ export const RevalidateTag = {
   TESTIMONIALS: "testimonials",
   PORTFOLIO: "portfolio",
   MARKETING: "marketing",
+  ARTICLES: "articles",
   category: (slug: string) => `category:${slug}`,
   training: (slug: string) => `training:${slug}`,
   page: (slug: string) => `page:${slug}`,
   service: (slug: string) => `service:${slug}`,
+  article: (slug: string) => `article:${slug}`,
 } as const;
 
 // Gabungkan tag tanpa duplikat; nilai kosong dilewati (mis. slug lama yang sama dengan slug baru).
