@@ -158,6 +158,30 @@ describe("R2 (S3 API)", () => {
     expect(request.headers.get("Authorization")).toMatch(/^AWS4-HMAC-SHA256 Credential=test-access-key\/\d{8}\/auto\/s3\//);
   });
 
+  // fetch Next.js mengirim body stream (dari objek Request) tanpa Content-Length: R2 membalas 411.
+  it("body PUT dikirim sebagai Uint8Array, bukan Request/stream", async () => {
+    const fetchMock = stubFetch(new Response(null, { status: 200 }));
+    const data = new Uint8Array(40_000).fill(7);
+    await putR2Object(r2, "2026/10/a.webp", data);
+
+    expect(fetchMock.mock.calls[0][0]).not.toBeInstanceOf(Request);
+    const { body } = call(fetchMock);
+    expect(body).toBeInstanceOf(Uint8Array);
+    expect(body).toEqual(data);
+  });
+
+  // Timer asli (jeda 0,5 s): fake timer tidak cocok dengan penandatanganan crypto.subtle yang asinkron.
+  it("mengulang respons 5xx/429 dengan tanda tangan baru, lalu berhasil", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(putR2Object(r2, "2026/10/a.webp", new Uint8Array([1]))).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(call(fetchMock, 1).headers.get("Authorization")).toMatch(/^AWS4-HMAC-SHA256 /);
+  });
+
   it("melempar error kalau R2 menolak upload", async () => {
     stubFetch(new Response("<Error><Code>AccessDenied</Code></Error>", { status: 403 }));
     await expect(putR2Object(r2, "2026/10/a.webp", new Uint8Array([1]))).rejects.toThrow(/403/);
