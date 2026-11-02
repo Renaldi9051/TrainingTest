@@ -488,8 +488,8 @@ export const homeSections = [
     type: "CTA",
     content: {
       eyebrow: "Konsultasi",
-      heading: "Butuh pelatihan drone atau kreatif untuk tim Anda?",
-      body: "Ceritakan kebutuhan tim, kami bantu susun program, jadwal, unit latihan, dan anggarannya.",
+      heading: "Butuh pelatihan yang pas untuk tim Anda?",
+      body: "Ceritakan kebutuhan tim, kami bantu susun materi, jadwal, trainer, dan anggarannya, untuk public maupun in-house training.",
       primaryCta: { label: "Lihat layanan", href: "/layanan" },
       secondaryCta: { label: "Jadwal training", href: "/jadwal" },
     },
