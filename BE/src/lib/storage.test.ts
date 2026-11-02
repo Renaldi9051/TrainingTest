@@ -141,12 +141,17 @@ describe("R2 (S3 API)", () => {
     return fetchMock;
   }
 
+  function call(fetchMock: ReturnType<typeof stubFetch>, index = 0) {
+    const [url, init] = fetchMock.mock.calls[index];
+    return { url: String(url), method: init?.method, headers: new Headers(init?.headers), body: init?.body };
+  }
+
   it("saveUpload mengirim PUT bertanda tangan ke endpoint bucket", async () => {
     const fetchMock = stubFetch(new Response(null, { status: 200 }));
     await saveUpload("2026/10/a.webp", new Uint8Array([1, 2, 3]), r2);
 
     expect(fetchMock).toHaveBeenCalledOnce();
-    const request = fetchMock.mock.calls[0][0] as Request;
+    const request = call(fetchMock);
     expect(request.method).toBe("PUT");
     expect(request.url).toBe(`https://${r2.accountId}.r2.cloudflarestorage.com/training-media/2026/10/a.webp`);
     expect(request.headers.get("Content-Type")).toBe("image/webp");
@@ -186,7 +191,7 @@ describe("R2 (S3 API)", () => {
     const fetchMock = stubFetch(new Response("isi", { status: 200 }));
     const object = await getR2Object(r2, "2026/10/a.webp");
     expect(await object?.text()).toBe("isi");
-    expect((fetchMock.mock.calls[0][0] as Request).method).toBe("GET");
+    expect(call(fetchMock).method).toBe("GET");
     stubFetch(new Response(null, { status: 404 }));
     expect(await getR2Object(r2, "2026/10/a.webp")).toBeNull();
   });

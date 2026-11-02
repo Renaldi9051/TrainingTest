@@ -117,22 +117,30 @@ export function r2ObjectHeaders(key: string): Record<string, string> {
   return headers;
 }
 
-const NETWORK_ATTEMPTS = 3;
+const ATTEMPTS = 3;
 
-// aws4fetch sudah mengulang respons 5xx/429; ini mengulang error jaringan (koneksi timeout/putus) yang
-// sesekali terjadi. Aman karena PUT/HEAD ke key yang sama idempoten.
-async function r2Fetch(config: R2Config, key: string, init: RequestInit): Promise<Response> {
+type R2Init = { method: "GET" | "HEAD" | "PUT"; headers?: Record<string, string>; body?: Uint8Array<ArrayBuffer> };
+
+// Ditandatangani aws4fetch tapi dikirim sendiri. AwsClient.fetch meneruskan objek Request (body jadi
+// stream); fetch yang di-patch Next.js di route handler mengirim stream itu tanpa Content-Length, dan R2
+// menolak PUT di atas ~16 KB dengan 411 MissingContentLength. Body Uint8Array asli menjaga Content-Length.
+// Error jaringan dan respons 5xx/429 diulang; aman karena PUT/GET/HEAD ke key yang sama idempoten.
+async function r2Fetch(config: R2Config, key: string, init: R2Init): Promise<Response> {
   const url = r2ObjectUrl(config, key);
   for (let attempt = 1; ; attempt++) {
+    const last = attempt >= ATTEMPTS;
+    // Tanda tangan baru tiap percobaan: berisi waktu kirim.
+    const signed = await r2Client(config).sign(url, init);
     try {
-      return await r2Client(config).fetch(url, init);
+      const response = await fetch(signed.url, { method: signed.method, headers: signed.headers, body: init.body });
+      if (last || (response.status < 500 && response.status !== 429)) return response;
     } catch (error) {
-      if (attempt >= NETWORK_ATTEMPTS) {
+      if (last) {
         const cause = error instanceof Error && error.cause instanceof Error ? `: ${error.cause.message}` : "";
         throw new Error(`Koneksi ke R2 gagal untuk ${key}${cause}`, { cause: error });
       }
-      await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
     }
+    await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
   }
 }
 
