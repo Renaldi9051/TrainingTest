@@ -7,8 +7,9 @@ export const MARQUEE_GAIN = 0.35;
 export const MARQUEE_MAX_SPEED = 14;
 export const MARQUEE_DECAY = 0.9;
 export const MARQUEE_MIN_SPEED = 0.05;
-// Laju dasar logo klien saat tidak di-scroll: px per frame 60 Hz (~36 px/detik), ke kiri.
-export const MARQUEE_AUTO_SPEED = 0.6;
+// Laju dasar logo klien saat tidak di-scroll: px per frame 60 Hz (~90 px/detik), ke kiri. Dinaikkan dari
+// 0,6 (~36 px/detik) atas permintaan pemilik 2 Nov 2026: terlalu lambat.
+export const MARQUEE_AUTO_SPEED = 1.5;
 // Durasi satu frame acuan (60 Hz): gerak dikali dt / FRAME_MS supaya laju sama di layar 120 Hz.
 export const FRAME_MS = 1000 / 60;
 
