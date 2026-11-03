@@ -32,7 +32,7 @@ export const socialSetting = {
 
 export const footerSetting = {
   description:
-    "Lembaga pelatihan drone dan industri kreatif: pilot drone, pemetaan udara, fotografi, videografi, desain, sampai keuangan untuk pelaku usaha kreatif.",
+    "Lembaga pelatihan untuk perusahaan, instansi, dan perorangan: keuangan, SDM, manajemen, K3, pertambangan, migas, sampai teknologi informasi, dalam kelas public maupun in-house.",
   copyright: "Lembaga Pelatihan Contoh",
 };
 
@@ -44,16 +44,16 @@ export const services: SeedService[] = [
   {
     slug: "top-training",
     title: "Top Training",
-    icon: "plane",
+    icon: "award",
     summary:
-      "Program unggulan drone dan industri kreatif: pilot drone, pemetaan udara, foto dan video, sampai desain, dalam kelas public maupun in-house.",
+      "Program unggulan pelatihan korporat: keuangan, SDM, manajemen, K3, sampai teknik dan migas, dalam kelas public maupun in-house.",
     body: doc(
-      p("Top Training adalah rangkaian program paling diminati kami. Peserta belajar langsung dari praktisi yang setiap hari menerbangkan drone untuk survei, inspeksi, dan produksi, atau bekerja di studio foto, video, dan desain."),
-      p("Kelas drone menggabungkan teori singkat dengan jam terbang di area latihan. Kelas kreatif berbasis proyek: setiap peserta pulang membawa karya yang bisa langsung masuk portofolio."),
+      p("Top Training adalah rangkaian program paling diminati kami. Peserta belajar langsung dari praktisi yang setiap hari menangani pekerjaan di bidangnya, dari keuangan dan SDM sampai operasi tambang dan migas."),
+      p("Setiap kelas menggabungkan teori singkat dengan studi kasus, diskusi, dan latihan dari situasi kerja nyata, supaya peserta bisa langsung menerapkannya di tempat kerja."),
       h3("Bidang yang tersedia"),
-      ul("Pilot drone, sertifikasi, dan perawatan drone", "Pemetaan, survei udara, dan inspeksi industri", "Fotografi, videografi, dan sinematografi", "Desain grafis, animasi, dan konten digital"),
+      ul("Keuangan, akuntansi, dan perpajakan", "SDM, kepemimpinan, dan manajemen", "K3, lingkungan, dan manajemen risiko", "Teknik, pertambangan, migas, dan teknologi informasi"),
       h3("Format pelaksanaan"),
-      ul("Public training di beberapa kota dengan jadwal tetap", "In-house training dengan materi dan studi kasus organisasi Anda", "Kelas online untuk materi teori, desain, dan konten"),
+      ul("Public training di beberapa kota dengan jadwal tetap", "In-house training dengan materi dan studi kasus organisasi Anda", "Kelas online dan hybrid untuk peserta dari berbagai kota"),
     ),
   },
   {
@@ -61,9 +61,9 @@ export const services: SeedService[] = [
     title: "TOT LSP - IKI BNSP",
     icon: "graduation-cap",
     summary:
-      "Persiapan sertifikasi kompetensi trainer dan instruktur, cocok bagi pilot drone senior dan praktisi kreatif yang ingin mengajar secara profesional.",
+      "Persiapan sertifikasi kompetensi trainer dan instruktur, cocok bagi praktisi senior dan tim pelatihan internal yang ingin mengajar secara profesional.",
     body: doc(
-      p("Banyak praktisi drone dan kreatif sudah ahli di bidangnya, tetapi belum terbiasa mengajar. Program Training of Trainers ini membekali peserta cara menganalisis kebutuhan belajar, menyusun rencana sesi, dan memandu praktik dengan aman."),
+      p("Banyak praktisi sudah ahli di bidangnya, tetapi belum terbiasa mengajar. Program Training of Trainers ini membekali peserta cara menganalisis kebutuhan belajar, menyusun rencana sesi, dan memandu praktik dengan aman."),
       p("Di akhir program, peserta dibimbing menyiapkan portofolio bukti dan berlatih menghadapi asesmen. Pelaksanaan uji kompetensi mengikuti ketentuan lembaga sertifikasi yang ditunjuk."),
       h3("Yang dipelajari"),
       ul("Analisis kebutuhan pelatihan", "Penyusunan rencana dan materi sesi teori maupun praktik", "Teknik fasilitasi dan demonstrasi", "Evaluasi hasil belajar", "Persiapan portofolio dan simulasi asesmen"),
@@ -74,12 +74,12 @@ export const services: SeedService[] = [
     title: "Persiapan Pensiun & Kewirausahaan",
     icon: "lightbulb",
     summary:
-      "Bekal menyambut masa pensiun dengan semangat, sekaligus peluang usaha di bidang jasa drone, fotografi, dan produksi konten.",
+      "Bekal menyambut masa pensiun dengan semangat, sekaligus mengenali peluang usaha yang bisa dimulai dengan modal terukur.",
     body: doc(
-      p("Masa pensiun adalah awal babak baru. Program ini menyiapkan peserta secara mental dan finansial, lalu memperkenalkan peluang usaha yang bisa dimulai dengan modal terukur, seperti jasa foto udara, pemetaan lahan skala kecil, atau produksi konten untuk UMKM."),
+      p("Masa pensiun adalah awal babak baru. Program ini menyiapkan peserta secara mental dan finansial, lalu memperkenalkan peluang usaha yang bisa dimulai dengan modal terukur, seperti usaha jasa, perdagangan skala kecil, atau usaha berbasis keahlian yang dimiliki selama bekerja."),
       p("Sesi kewirausahaan membahas cara memilih jenis usaha, menghitung kelayakan sederhana, menentukan harga jasa, dan memisahkan keuangan usaha dari keuangan keluarga."),
       h3("Materi utama"),
-      ul("Kesiapan mental dan motivasi menghadapi pensiun", "Perencanaan keuangan masa pensiun", "Peluang usaha jasa drone dan kreatif", "Pemasaran sederhana dan pengelolaan kas usaha"),
+      ul("Kesiapan mental dan motivasi menghadapi pensiun", "Perencanaan keuangan masa pensiun", "Memilih peluang usaha sesuai keahlian dan modal", "Pemasaran sederhana dan pengelolaan kas usaha"),
     ),
   },
   {
@@ -87,10 +87,10 @@ export const services: SeedService[] = [
     title: "Outbound Training",
     icon: "users",
     summary:
-      "Team building dan acara perusahaan berpeserta banyak, lengkap dengan dokumentasi foto, video, dan liputan udara.",
+      "Team building dan acara perusahaan berpeserta banyak, lengkap dengan fasilitator, perlengkapan, dan dokumentasi acara.",
     body: doc(
       p("Outbound training memadukan permainan luar ruang dengan refleksi yang terarah. Setiap aktivitas dipilih untuk melatih satu aspek kerja sama: komunikasi, kepercayaan, pembagian peran, atau pengambilan keputusan."),
-      p("Kami menangani acara dari puluhan sampai ratusan peserta, termasuk lokasi, fasilitator, perlengkapan, serta dokumentasi foto, video, dan rekaman drone yang siap dibagikan setelah acara."),
+      p("Kami menangani acara dari puluhan sampai ratusan peserta, termasuk lokasi, fasilitator, perlengkapan, serta dokumentasi foto dan video yang siap dibagikan setelah acara."),
       h3("Cocok untuk"),
       ul("Team building antardivisi", "Gathering dan family day perusahaan", "Pembukaan program pengembangan karyawan", "Pembekalan kepemimpinan"),
     ),
