@@ -6,8 +6,9 @@ import { createTraining, deleteTraining, firstCategory, loginViaApi, ORIGIN, pho
 
 // Halaman pelatihan redesign v0.2 (fase 4): katalog dengan sidebar filter (kategori pilih banyak
 // tanpa role checkbox, chip filter aktif, empty state, overlay indeks A-Z, panel terlipat di mobile),
-// kartu tanpa sampul (blok UI 4:3), landing kategori (label tingkat, filter metode), detail (satu
-// navigasi isi, tingkat & sertifikat, silabus per hari, sesi di form inquiry).
+// kartu tanpa sampul (blok UI 4:3), landing kategori v2 (daftar judul tanpa kartu; detail lengkap
+// di category-landing.spec.ts), detail (satu navigasi isi, tingkat & sertifikat, silabus per hari,
+// sesi di form inquiry).
 // Data uji hanya di database training_e2e: foto JPEG buatan generator (bukan foto mockup).
 // Screenshot 360/768/1280 (opsional): SCREENS_OUT=<folder> npx playwright test e2e/training-pages.spec.ts
 
@@ -140,7 +141,7 @@ test.describe("halaman pelatihan v0.2", () => {
     await page.goto("/pelatihan?metode=online");
     await expect(page.getByRole("group", { name: "Metode" })).toBeVisible();
 
-    // Tanpa scroll horizontal di 360 px (kotak cari, tab isi yang bisa digeser, chip kategori lain).
+    // Tanpa scroll horizontal di 360 px (kotak cari, tab isi yang bisa digeser).
     await page.setViewportSize({ width: 360, height: 800 });
     for (const url of ["/pelatihan", `/pelatihan/kategori/${category.slug}`, `/pelatihan/${withCover.slug}`]) {
       await page.goto(url);
@@ -149,12 +150,8 @@ test.describe("halaman pelatihan v0.2", () => {
     }
   });
 
-  test("kartu tanpa sampul: blok 4:3 berisi label kategori; landing kategori memakai label tingkat", async ({ page }) => {
-    await page.goto(`/pelatihan/kategori/${category.slug}`);
-    await expect(page.getByRole("heading", { level: 1, name: category.name })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Kategori lain" })).toBeVisible();
-    await expect(page.getByText("Judul / aktif")).toBeVisible();
-
+  test("kartu tanpa sampul: blok 4:3 berisi label kategori; landing kategori: daftar judul tanpa kartu", async ({ page }) => {
+    await page.goto(`/pelatihan?kategori=${category.slug}`);
     const bare = card(page, withoutCover.title);
     const block = bare.locator("[data-reveal=image]");
     await expect(block.locator("img")).toHaveCount(0);
@@ -165,14 +162,17 @@ test.describe("halaman pelatihan v0.2", () => {
 
     const covered = card(page, withCover.title);
     await expect(covered.getByRole("img")).toHaveAttribute("alt", "[UJI] Foto sampul pelatihan");
-    // Label tingkat (bukan kategori) di landing kategori.
-    await expect(covered.locator("p").first()).toHaveText("Dasar");
 
-    // Filter metode di landing (query ?metode=).
-    await page.getByRole("group", { name: "Metode" }).getByRole("link", { name: "Online" }).click();
-    await expect(page).toHaveURL(/metode=online/);
-    await expect(card(page, withoutCover.title)).toBeVisible();
-    await expect(card(page, withCover.title)).toHaveCount(0);
+    // Landing kategori v2: tanpa chip kategori lain, statistik, kartu, filter metode, maupun paginasi.
+    await page.goto(`/pelatihan/kategori/${category.slug}`);
+    await expect(page.getByRole("heading", { level: 1, name: category.name })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Kategori lain" })).toHaveCount(0);
+    await expect(page.getByText("Judul / aktif")).toHaveCount(0);
+    await expect(page.getByRole("group", { name: "Metode" })).toHaveCount(0);
+    await expect(page.locator("article[data-cursor-label]")).toHaveCount(0);
+    const list = page.locator("#daftar ol");
+    await expect(list.getByRole("link", { name: new RegExp(escapeRegExp(withCover.title)) })).toHaveAttribute("href", `/pelatihan/${withCover.slug}`);
+    await expect(list.getByRole("link", { name: new RegExp(escapeRegExp(withoutCover.title)) })).toBeVisible();
   });
 
   test("detail: satu navigasi isi, tingkat & sertifikat, silabus per hari, sesi di form inquiry, foto ber-HUD", async ({ page }) => {
@@ -220,8 +220,8 @@ test.describe("halaman pelatihan v0.2", () => {
       await expect(page.locator("h1, h2, h3").filter({ hasText: /^\s*$/ })).toHaveCount(0);
 
       await page.goto(`/pelatihan/kategori/${category.slug}`);
-      const untitled = page.locator(`article[data-cursor-label]:has(a[href="/pelatihan/${blank.slug}"])`);
-      await expect(untitled.getByRole("link", { name: "Tanpa judul" })).toBeVisible();
+      const untitled = page.locator(`#daftar ol a[href="/pelatihan/${blank.slug}"]`);
+      await expect(untitled).toContainText("Tanpa judul");
       await expect(page.locator("h1, h2, h3").filter({ hasText: /^\s*$/ })).toHaveCount(0);
     } finally {
       await deleteTraining(request, blank.id);
