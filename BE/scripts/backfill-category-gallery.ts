@@ -15,11 +15,13 @@
 import { getDb } from "../src/lib/db";
 import { databaseName } from "../src/lib/env";
 import { revalidateEntity } from "../src/lib/revalidate-map";
+import { nonEmptyPublicCategoryWhere } from "../src/services/category";
+import { publicTrainingWhere } from "../src/services/training-visibility";
 import { CATEGORY_GALLERY_MAX } from "../src/lib/validators/category";
 
 const APPLY = process.argv.includes("--apply");
 
-type PlannedPhoto = { mediaId: string; trainingTitle: string };
+type PlannedPhoto = { mediaId: string; trainingTitle: string; reused: boolean };
 type PlannedCategory = {
   categoryId: string;
   slug: string;
@@ -27,47 +29,68 @@ type PlannedCategory = {
   photos: PlannedPhoto[];
 };
 
-// Pilih maks CATEGORY_GALLERY_MAX foto: 1 per pelatihan (terbaru dulu), lalu putaran berikutnya.
-function pickPhotos(
+// Kandidat foto per kategori: tiap pelatihan (terbaru dulu) menyumbang fotonya berurutan.
+// Dikembalikan sebagai antrean putaran: ronde 0 = foto pertama tiap pelatihan, dst.
+function candidatePhotos(
   trainings: { title: string; images: { mediaId: string }[] }[],
+): { mediaId: string; trainingTitle: string }[] {
+  const queue: { mediaId: string; trainingTitle: string }[] = [];
+  const maxLen = Math.max(0, ...trainings.map((t) => t.images.length));
+  // Utamakan sebaran: 1 foto per pelatihan dulu (ronde 0), baru foto berikutnya (ronde 1, ...).
+  for (let round = 0; round < maxLen; round += 1) {
+    for (const training of trainings) {
+      const photo = training.images[round];
+      if (photo) queue.push({ mediaId: photo.mediaId, trainingTitle: training.title });
+    }
+  }
+  return queue;
+}
+
+// Pilih maks N foto dari antrean kandidat, utamakan media yang belum dipakai kategori lain
+// (globalUsed). Foto yang sama (sudah dipakai kategori lain) hanya dipakai kalau tidak ada
+// pilihan lain untuk memenuhi slot. Tidak pernah mengulang media yang sama dalam satu kategori.
+function pickPhotos(
+  candidates: { mediaId: string; trainingTitle: string }[],
+  globalUsed: Set<string>,
+  max: number,
 ): PlannedPhoto[] {
   const picked: PlannedPhoto[] = [];
-  const seenMedia = new Set<string>();
-  let round = 0;
-  // Beberapa putaran: ambil foto ke-`round` dari tiap pelatihan sampai penuh atau habis.
-  while (picked.length < CATEGORY_GALLERY_MAX) {
-    let addedThisRound = false;
-    for (const training of trainings) {
-      if (picked.length >= CATEGORY_GALLERY_MAX) break;
-      const photo = training.images[round];
-      if (!photo || seenMedia.has(photo.mediaId)) continue;
-      seenMedia.add(photo.mediaId);
-      picked.push({ mediaId: photo.mediaId, trainingTitle: training.title });
-      addedThisRound = true;
-    }
-    if (!addedThisRound) break;
-    round += 1;
+  const localSeen = new Set<string>();
+
+  // Lewat 1: hanya media yang belum pernah dipakai kategori mana pun.
+  for (const candidate of candidates) {
+    if (picked.length >= max) break;
+    if (localSeen.has(candidate.mediaId) || globalUsed.has(candidate.mediaId)) continue;
+    localSeen.add(candidate.mediaId);
+    picked.push({ ...candidate, reused: false });
+  }
+  // Lewat 2: isi sisa slot dengan media yang sudah dipakai kategori lain (reuse), kalau perlu.
+  for (const candidate of candidates) {
+    if (picked.length >= max) break;
+    if (localSeen.has(candidate.mediaId)) continue;
+    localSeen.add(candidate.mediaId);
+    picked.push({ ...candidate, reused: true });
   }
   return picked;
 }
 
 async function plan(now: Date): Promise<PlannedCategory[]> {
   const db = getDb();
-  // Kategori aktif yang galerinya masih kosong.
+  // Hanya kategori yang TAMPIL PUBLIK (belum dihapus + punya pelatihan tayang, sama dengan indeks
+  // publik) dan galerinya masih kosong. Idempoten: kategori yang sudah punya galeri dilewati.
   const categories = await db.category.findMany({
-    where: { deletedAt: null, images: { none: {} } },
+    where: { ...nonEmptyPublicCategoryWhere(now), images: { none: {} } },
     select: { id: true, slug: true, name: true },
     orderBy: [{ order: "asc" }, { name: "asc" }],
   });
 
+  // Media yang sudah dialokasikan ke kategori lain dalam rencana ini, untuk utamakan foto unik.
+  const globalUsed = new Set<string>();
   const result: PlannedCategory[] = [];
   for (const category of categories) {
-    // Pelatihan tayang di kategori ini yang punya foto galeri, terbaru dulu.
     const trainings = await db.training.findMany({
       where: {
-        deletedAt: null,
-        status: "PUBLISHED",
-        publishedAt: { lte: now },
+        ...publicTrainingWhere(now),
         categories: { some: { categoryId: category.id } },
         images: { some: { media: { deletedAt: null } } },
       },
@@ -81,8 +104,10 @@ async function plan(now: Date): Promise<PlannedCategory[]> {
       },
       orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
     });
-    const photos = pickPhotos(trainings);
-    if (photos.length > 0) result.push({ categoryId: category.id, slug: category.slug, name: category.name, photos });
+    const photos = pickPhotos(candidatePhotos(trainings), globalUsed, CATEGORY_GALLERY_MAX);
+    if (photos.length === 0) continue;
+    for (const photo of photos) globalUsed.add(photo.mediaId);
+    result.push({ categoryId: category.id, slug: category.slug, name: category.name, photos });
   }
   return result;
 }
@@ -122,14 +147,26 @@ async function main() {
   }
 
   for (const item of plans) {
-    console.info(`  [isi] ${item.name} (${item.slug}): ${item.photos.length} foto`);
+    const short = item.photos.length < CATEGORY_GALLERY_MAX ? ` (kurang dari ${CATEGORY_GALLERY_MAX})` : "";
+    console.info(`  [isi] ${item.name} (${item.slug}): ${item.photos.length} foto${short}`);
     for (const [index, photo] of item.photos.entries()) {
-      console.info(`        ${String(index + 1).padStart(2, "0")}. media ${photo.mediaId}  <- ${photo.trainingTitle}`);
+      const tag = photo.reused ? " [dipakai ulang]" : "";
+      console.info(`        ${String(index + 1).padStart(2, "0")}. media ${photo.mediaId}${tag}  <- ${photo.trainingTitle}`);
     }
   }
-  console.info(
-    `\nTotal: ${plans.length} kategori, ${plans.reduce((sum, p) => sum + p.photos.length, 0)} foto akan dipasang.`,
-  );
+
+  const totalPhotos = plans.reduce((sum, p) => sum + p.photos.length, 0);
+  const shortCategories = plans.filter((p) => p.photos.length < CATEGORY_GALLERY_MAX).length;
+  // Media yang muncul di lebih dari satu galeri kategori.
+  const mediaCount = new Map<string, number>();
+  for (const item of plans) for (const photo of item.photos) mediaCount.set(photo.mediaId, (mediaCount.get(photo.mediaId) ?? 0) + 1);
+  const reusedMedia = [...mediaCount.values()].filter((count) => count > 1).length;
+
+  console.info("\nRingkasan:");
+  console.info(`  Kategori yang diisi      : ${plans.length}`);
+  console.info(`  Total foto dipasang      : ${totalPhotos}`);
+  console.info(`  Kategori < ${CATEGORY_GALLERY_MAX} foto        : ${shortCategories}`);
+  console.info(`  Media dipakai > 1 galeri : ${reusedMedia}`);
 
   if (!APPLY) {
     console.info("\nJalankan dengan --apply untuk menerapkan (pastikan sudah backup pg_dump).");
