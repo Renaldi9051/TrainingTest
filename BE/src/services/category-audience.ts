@@ -70,7 +70,13 @@ export function aggregateAudience(
       for (const rawRole of splitRoles(item.role)) {
         const key = normalizeRoleKey(rawRole);
         if (!key) continue;
-        const label = rawRole.replace(/\s+/g, " ").trim();
+        // Label tampilan: spasi dirapikan, tanda baca di ujung dibuang, huruf besar/kecil dipertahankan.
+        const label = rawRole
+          .replace(/\s+/g, " ")
+          .trim()
+          .replace(/^[\p{P}]+/u, "")
+          .replace(/[\p{P}]+$/u, "")
+          .trim();
         let stat = stats.get(key);
         if (!stat) {
           stat = { labels: new Map(), firstLabel: label, trainingCount: 0 };
@@ -121,6 +127,8 @@ export async function getAudienceSuggestions(
   const rows = await db.training.findMany({
     where: { ...publicTrainingWhere(now), categories: { some: { categoryId } } },
     select: { audience: true },
+    // Urutan tetap supaya label pemenang seri selalu sama (pelatihan terbaru dulu).
+    orderBy: [{ publishedAt: "desc" }, { id: "asc" }],
   });
 
   const perTraining = rows.map((row) => readAudience(row.audience).map((item) => ({ role: item.role })));

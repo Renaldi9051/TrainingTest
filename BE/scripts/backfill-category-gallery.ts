@@ -9,17 +9,22 @@
 // - Utamakan 1 foto per pelatihan, pelatihan terbaru (publishedAt desc) dulu; sisanya diisi foto
 //   berikutnya dari pelatihan yang sama sampai 4.
 // - Non-destruktif: TrainingImage tidak pernah diubah/dihapus; hanya menambah baris CategoryMedia.
-// - Guard: hanya database training_dev (menolak *prod* dan training_e2e).
+// - Guard (scripts/backfill-guard.ts): tanpa flag hanya training_dev. Database lain (production)
+//   hanya dengan --production DAN env CONFIRM_DB_NAME yang sama persis dengan nama database tujuan:
+//     CONFIRM_DB_NAME=training_prod npm run db:backfill:category-gallery -- --production          # dry run
+//     CONFIRM_DB_NAME=training_prod npm run db:backfill:category-gallery -- --production --apply  # terapkan
 //
-// Backup pg_dump DB dev WAJIB sebelum menjalankan --apply (lihat PROMPT-KIRO-KATEGORI-V2.md).
+// Backup pg_dump database tujuan WAJIB sebelum menjalankan --apply (lihat PROMPT-KIRO-KATEGORI-V2.md).
 import { getDb } from "../src/lib/db";
 import { databaseName } from "../src/lib/env";
 import { revalidateEntity } from "../src/lib/revalidate-map";
 import { nonEmptyPublicCategoryWhere } from "../src/services/category";
 import { publicTrainingWhere } from "../src/services/training-visibility";
 import { CATEGORY_GALLERY_MAX } from "../src/lib/validators/category";
+import { assertBackfillTarget } from "./backfill-guard";
 
 const APPLY = process.argv.includes("--apply");
+const PRODUCTION = process.argv.includes("--production");
 
 type PlannedPhoto = { mediaId: string; trainingTitle: string; reused: boolean };
 type PlannedCategory = {
@@ -137,8 +142,13 @@ async function apply(
 async function main() {
   const url = process.env.DATABASE_URL ?? "";
   const name = url ? databaseName(url) : "";
-  if (name !== "training_dev") {
-    throw new Error(`Menolak jalan: database "${name}" bukan training_dev.`);
+  const { mode } = assertBackfillTarget({
+    databaseName: name,
+    production: PRODUCTION,
+    confirmDbName: process.env.CONFIRM_DB_NAME,
+  });
+  if (mode === "production") {
+    console.warn(`MODE PRODUCTION: database "${name}" (dikonfirmasi lewat CONFIRM_DB_NAME).`);
   }
 
   console.info(
