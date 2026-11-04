@@ -24,6 +24,10 @@ import { cn } from "@/lib/utils";
 
 // Halaman landing kategori v2: hero + cover, tab anchor, Tentang, Daftar pelatihan (judul saja),
 // Target peserta, Galeri. Slug tidak ada = redirect (slug diganti/kategori digabung) atau 404.
+// Rute blocking (bukan prerender penuh): getRedirect/getMarketing diakses per request; data kategori
+// tetap di-cache lewat tag.
+export const instant = false;
+
 export async function generateMetadata({ params }: PageProps<"/pelatihan/kategori/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const category = await getCategory(slug);
