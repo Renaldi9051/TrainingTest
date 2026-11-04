@@ -10,6 +10,7 @@ import type {
   PublicArticleListMeta,
   PublicCatalogMeta,
   PublicCategory,
+  PublicCategoryDetail,
   PublicHome,
   PublicMarketingContact,
   PublicNav,
@@ -95,11 +96,11 @@ export async function getCategories(): Promise<PublicCategory[]> {
   return getRequired<PublicCategory[]>("/categories");
 }
 
-export async function getCategory(slug: string): Promise<PublicCategory | null> {
+export async function getCategory(slug: string): Promise<PublicCategoryDetail | null> {
   "use cache";
   cacheLife("content");
   cacheTag(Tag.CATEGORIES, Tag.category(slug), Tag.TRAININGS, Tag.MEDIA);
-  return (await getJson<PublicCategory>(`/categories/${encodeURIComponent(slug)}`))?.data ?? null;
+  return (await getJson<PublicCategoryDetail>(`/categories/${encodeURIComponent(slug)}`))?.data ?? null;
 }
 
 export type CatalogParams = {
