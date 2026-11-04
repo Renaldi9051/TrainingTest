@@ -111,7 +111,7 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
             </div>
             {category.image ? (
               <div className="lg:col-span-6">
-                <div className="relative aspect-video overflow-hidden rounded-card bg-bg-muted">
+                <div data-category-cover="" className="relative aspect-video overflow-hidden rounded-card bg-bg-muted">
                   <PublicImage
                     film
                     priority
@@ -127,11 +127,11 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
       </section>
 
       {/* Tab anchor sticky di bawah header. */}
-      <div className="sticky top-18 z-30 border-b border-border bg-bg/90 backdrop-blur">
+      <nav aria-label="Isi kategori" className="sticky top-18 z-30 border-b border-border bg-bg/90 backdrop-blur">
         <Container>
           <ScrollSpyToc orientation="horizontal" sections={tabs} />
         </Container>
-      </div>
+      </nav>
 
       {hasAbout ? (
         <section id="tentang" aria-labelledby="tentang-title" className="scroll-mt-32 border-b border-border py-16 md:py-20">
@@ -143,7 +143,7 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
                   Tentang {category.name}
                 </h2>
               </div>
-              <div className="space-y-5 md:col-span-7 md:col-start-6">
+              <div data-category-description="" className="space-y-5 md:col-span-7 md:col-start-6">
                 {category.descriptionParagraphs.map((paragraph, index) => (
                   <p key={index} className="max-w-[65ch] text-body-lg text-fg-muted">
                     {paragraph}

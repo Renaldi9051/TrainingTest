@@ -100,7 +100,7 @@ export function CategoryGallery({ images, categoryName }: { images: PublicImageD
 
           <div className="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-6 md:px-16">
             {current ? (
-              <div className="relative max-h-full w-full max-w-4xl">
+              <div className="relative max-h-full w-full max-w-[56rem]">
                 <div className="relative aspect-[4/3] w-full">
                   <PublicImage image={current} sizes="(min-width: 1024px) 896px, 100vw" className="object-contain" />
                 </div>

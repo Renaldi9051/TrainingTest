@@ -476,6 +476,7 @@ function AudienceEditor({
   const update = (next: CategoryAudienceItem[]) => onChange(next, next.length === 0 ? "manual" : undefined);
 
   return (
+    <>
     <FormField id={id} label="Target peserta" description="Siapa yang cocok ikut. Maksimal 12 peran. Bisa diambil dari pelatihan lalu dirapikan." error={error}>
       <div className="space-y-3">
         {value.length === 0 ? (
@@ -560,6 +561,8 @@ function AudienceEditor({
           </p>
         </div>
       </div>
+    </FormField>
+      {/* Di luar FormField: Slot di FormField hanya menerima satu elemen anak. */}
       {pickerOpen && categoryId ? (
         <AudienceSuggestionDialog
           categoryId={categoryId}
@@ -572,7 +575,7 @@ function AudienceEditor({
           }}
         />
       ) : null}
-    </FormField>
+    </>
   );
 }
 
