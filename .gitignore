@@ -27,6 +27,7 @@ test-results/
 
 # backup database lokal (pg_dump), tidak pernah di-commit
 /backups/
+/BE/backups/
 
 # dokumen kerja lokal (tidak di-push ke GitHub)
 AGENTS.md

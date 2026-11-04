@@ -273,13 +273,23 @@ model Category {
   id          String    @id @default(uuid(7)) @db.Uuid
   slug        String
   name        String
+  // Teks biasa (bukan rich text). Badan "Tentang kategori" di landing: paragraf dipisah baris kosong.
   description String?
+  // Ringkasan 1 kalimat (maks 160, divalidasi Zod). Dipakai sebagai meta description landing;
+  // kalau kosong, publik memakai 160 karakter pertama description.
+  summary     String?
   icon        String?
   order       Int       @default(0)
   featured    Boolean   @default(false)
-  // Gambar kategori: fallback sampul pelatihan tanpa cover dan foto di landing kategori.
+  // Gambar kategori: cover landing kategori + fallback sampul pelatihan tanpa cover.
   imageId     String?   @db.Uuid
   image       Media?    @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  // Alt kontekstual untuk cover di landing; kosong = pakai alt Media.
+  coverAlt    String?
+  // Target peserta ringkasan kategori: { label, trainingCount? }[] (maks 12, label maks 120).
+  audience    Json      @default("[]")
+  // "manual" = diisi admin; "auto" = diambil dari pelatihan lewat saran, lalu disimpan.
+  audienceSource String @default("manual")
   // Kata kunci judul pelatihan: admin melihat pelatihan yang judulnya cocok tapi belum tertaut,
   // lalu menautkannya sendiri (tidak ada penautan otomatis). Kosong = fitur tidak dipakai.
   keywords    String[]  @default([])
@@ -290,11 +300,29 @@ model Category {
   updatedBy   User?     @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 
   trainings TrainingCategory[]
+  // Galeri foto kategori (maks 4, diurutkan lewat order). Menggantikan galeri per pelatihan di publik.
+  images    CategoryMedia[]
 
   @@unique([slug], map: "Category_slug_active_key", where: raw("\"deletedAt\" IS NULL"))
   @@index([featured])
   @@index([order])
   @@index([deletedAt])
+}
+
+// Galeri kategori (maks 4, dicek di service/validator), diurutkan lewat `order`.
+// Pola sama dengan PortfolioImage. alt/caption kontekstual; alt kosong = pakai alt Media.
+model CategoryMedia {
+  categoryId String   @db.Uuid
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  mediaId    String   @db.Uuid
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  order      Int      @default(0)
+  alt        String?
+  caption    String?
+
+  @@id([categoryId, mediaId])
+  @@index([categoryId, order])
+  @@index([mediaId])
 }
 
 model Training {
@@ -604,6 +632,7 @@ model Media {
   portfolioImages   PortfolioImage[]
   trainingImages    TrainingImage[]
   categoryImages    Category[]
+  categoryGallery   CategoryMedia[]
   articleCovers     Article[]
 
   @@index([folder])
