@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { FormField } from "@/components/admin/form-field";
-import { GalleryEditor } from "@/components/admin/media/gallery-editor";
 import { MediaPicker } from "@/components/admin/media/media-picker";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { SEO_DESCRIPTION_MAX, SEO_TITLE_MAX, SeoPanel } from "@/components/admin/seo-panel";
@@ -67,9 +66,9 @@ import { trainingKeys } from "./training-keys";
 import { previewHref } from "./trainings-list";
 
 const NO_METHOD = "none";
-// Galeri foto kegiatan (sama dengan BE TRAINING_IMAGES_MAX); hint 4-6, kosong boleh.
+// Galeri pelatihan dipindah ke galeri kategori (Halaman Kategori v2); imageIds tetap dikirim apa
+// adanya supaya data lama tidak hilang, tapi tidak lagi bisa diedit dari form pelatihan.
 const IMAGES_MAX = 6;
-const IMAGES_MIN_HINT = 4;
 const NO_LEVEL = "none";
 // Sertifikat: belum diisi (null) / ya / tidak. Belum diisi = fakta tidak tampil di situs.
 const CERTIFICATE_OPTIONS = [
@@ -252,10 +251,6 @@ export function TrainingForm({ training }: { training: Training | null }) {
   const dirty = form.formState.isDirty;
   useUnsavedChangesGuard(dirty);
   const errors = form.formState.errors;
-  const imageErrors = errors.imageIds;
-  const imageItemErrors = Array.isArray(imageErrors)
-    ? Array.from({ length: imageErrors.length }, (_, index) => imageErrors[index]?.message)
-    : [];
   const title = useWatch({ control: form.control, name: "title" });
   const summary = useWatch({ control: form.control, name: "summary" });
   const showPrice = useWatch({ control: form.control, name: "showPrice" });
@@ -628,32 +623,24 @@ export function TrainingForm({ training }: { training: Training | null }) {
             <div>
               <h2 className="text-sm font-medium">Galeri</h2>
               <p className="mt-1 text-small text-fg-muted">
-                Foto kegiatan pelatihan, disarankan {IMAGES_MIN_HINT}-{IMAGES_MAX} gambar. Urutan di sini dipakai di
-                situs. Setiap gambar wajib punya alt text.
+                Galeri foto sekarang diatur per kategori, bukan per pelatihan. Dokumentasi kegiatan tampil di halaman
+                kategori.
+                {training && training.categories[0] ? (
+                  <>
+                    {" "}
+                    <Link
+                      href={`/admin/categories/${training.categories[0].id}`}
+                      className="underline underline-offset-4"
+                    >
+                      Atur galeri kategori {training.categories[0].name}
+                    </Link>
+                    .
+                  </>
+                ) : (
+                  " Pilih kategori pelatihan ini lalu atur galerinya di form kategori."
+                )}
               </p>
-              {imageErrors?.message ?? imageErrors?.root?.message ? (
-                <p role="alert" className="mt-1 text-small text-status-error">
-                  {imageErrors?.message ?? imageErrors?.root?.message}
-                </p>
-              ) : null}
             </div>
-            <Controller
-              control={form.control}
-              name="imageIds"
-              render={({ field }) => (
-                <GalleryEditor
-                  value={field.value}
-                  onChange={(ids) => {
-                    // Error per index dari simpan sebelumnya tidak berlaku lagi setelah urutan berubah.
-                    form.clearErrors("imageIds");
-                    field.onChange(ids);
-                  }}
-                  initialMedia={training?.images}
-                  itemErrors={imageItemErrors}
-                  max={IMAGES_MAX}
-                />
-              )}
-            />
           </fieldset>
         </div>
 
