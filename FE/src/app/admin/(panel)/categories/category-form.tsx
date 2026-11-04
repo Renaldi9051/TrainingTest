@@ -575,6 +575,13 @@ function AudienceEditor({
   );
 }
 
+// Peran generik dari seed katalog referensi: "Staf dan praktisi bidang ..." / "Supervisor dan
+// manajer terkait". Dipakai untuk memperingatkan (bukan memfilter) di dialog ambil dari pelatihan.
+function isGenericRole(label: string): boolean {
+  const normalized = label.trim().toLocaleLowerCase("id-ID");
+  return normalized.startsWith("staf dan praktisi bidang ") || normalized === "supervisor dan manajer terkait";
+}
+
 // Dialog "Ambil dari pelatihan": tampilkan saran peran + jumlah pelatihan, admin mencentang yang
 // dipakai, lalu dimasukkan ke daftar (menggantikan daftar saat ini) dan audienceSource jadi "auto".
 function AudienceSuggestionDialog({
@@ -599,6 +606,9 @@ function AudienceSuggestionDialog({
   });
   const suggestions = query.data?.suggestions ?? [];
   const selectedCount = suggestions.filter((item) => checked.has(item.label)).length;
+  // Pola peran generik dari seed katalog referensi (bukan hasil edit admin).
+  const allGeneric =
+    suggestions.length > 0 && suggestions.every((item) => isGenericRole(item.label));
 
   return (
     <Dialog open onOpenChange={(open) => (!open ? onClose() : undefined)}>
@@ -611,6 +621,12 @@ function AudienceSuggestionDialog({
               : "Merangkum target peserta dari pelatihan tayang di kategori ini."}
           </DialogDescription>
         </DialogHeader>
+
+        {allGeneric ? (
+          <p className="rounded-md border border-border bg-muted px-3 py-2 text-small text-status-warning">
+            Data target peserta pelatihan di kategori ini masih generik, sebaiknya isi manual.
+          </p>
+        ) : null}
 
         {query.isPending ? (
           <p className="py-6 text-center text-small text-fg-muted">Memuat saran...</p>
