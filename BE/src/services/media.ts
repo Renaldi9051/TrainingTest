@@ -499,6 +499,7 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
     trainingSeo,
     trainingGallery,
     categories,
+    categoryGallery,
     services,
     serviceSeo,
     pageSeo,
@@ -527,6 +528,10 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
     db.category.findMany({
       where: { imageId: mediaId },
       select: { id: true, name: true, deletedAt: true },
+    }),
+    db.categoryMedia.findMany({
+      where: { mediaId },
+      select: { category: { select: { id: true, name: true, deletedAt: true } } },
     }),
     db.service.findMany({
       where: { imageId: mediaId },
@@ -626,6 +631,14 @@ export async function getMediaUsages(mediaId: string): Promise<MediaUsage[]> {
       id: row.id,
       label: row.name,
       field: "Gambar",
+      inTrash: row.deletedAt !== null,
+    })),
+    ...categoryGallery.map(({ category: row }) => ({
+      entity: "Category" as const,
+      entityLabel: "Kategori",
+      id: row.id,
+      label: row.name,
+      field: "Galeri kategori",
       inTrash: row.deletedAt !== null,
     })),
     ...services.map((row) => ({
