@@ -60,11 +60,12 @@ export function toCatalogParams(state: CatalogState, per?: number): CatalogParam
 }
 
 // URL katalog dengan urutan parameter tetap. Mengubah filter selalu kembali ke halaman 1.
+// Kategori bukan lagi parameter katalog (keputusan atasan 4 Nov 2026): tidak pernah ditulis ke URL,
+// dan /pelatihan?kategori= dialihkan ke halaman kategori v2 (lihat app/(public)/pelatihan/page.tsx).
 export function catalogHref(state: CatalogState, change: Partial<CatalogState> = {}): string {
   const next: CatalogState = { ...state, hal: 1, ...change };
   const params = new URLSearchParams();
   if (next.q) params.set("q", next.q);
-  if (next.kategori.length > 0) params.set("kategori", next.kategori.join(","));
   if (next.metode) params.set("metode", next.metode);
   if (next.tipe) params.set("tipe", next.tipe);
   if (next.urut) params.set("urut", next.urut);
@@ -73,15 +74,8 @@ export function catalogHref(state: CatalogState, change: Partial<CatalogState> =
   return query ? `/pelatihan?${query}` : "/pelatihan";
 }
 
-export function toggleCategory(state: CatalogState, slug: string): string {
-  const kategori = state.kategori.includes(slug)
-    ? state.kategori.filter((item) => item !== slug)
-    : [...state.kategori, slug];
-  return catalogHref(state, { kategori });
-}
-
 export function hasFilters(state: CatalogState): boolean {
-  return Boolean(state.q || state.kategori.length > 0 || state.metode || state.tipe);
+  return Boolean(state.q || state.metode || state.tipe);
 }
 
 // Canonical katalog terfilter: landing kategori kalau filternya hanya satu kategori,

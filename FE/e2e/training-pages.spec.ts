@@ -100,16 +100,27 @@ test.describe("halaman pelatihan v0.2", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
   });
 
-  test("katalog: kategori pilih banyak tanpa role checkbox, chip filter aktif bisa dilepas, empty state", async ({ page }) => {
-    await page.goto(`/pelatihan?kategori=${category.slug}`);
+  test("katalog: kategori di sidebar jadi tautan ke halaman kategori (bukan filter), metode/tipe tetap chip, empty state", async ({ page }) => {
+    await page.goto("/pelatihan");
     const filter = page.getByRole("complementary", { name: "Filter" });
+    // Kategori bukan filter lagi: tidak ada checkbox, dan tidak ada chip "Filter aktif" untuk kategori.
     await expect(filter.getByRole("checkbox")).toHaveCount(0);
-    const selected = page.getByRole("group", { name: "Kategori" }).locator('a[aria-current="true"]');
-    await expect(selected).toHaveCount(1);
-    // Teks tersembunyi "terpilih" untuk pembaca layar.
-    await expect(selected).toHaveAccessibleName(new RegExp(`${escapeRegExp(category.name)}.*terpilih`));
+    await expect(page.getByRole("list", { name: "Filter aktif" })).toHaveCount(0);
 
-    const remove = page.getByRole("list", { name: "Filter aktif" }).getByRole("link", { name: `Hapus filter ${category.name}` });
+    // Setiap kategori di sidebar adalah tautan ke halaman kategori v2 (10 pertama urut abjad;
+    // kategori uji belum tentu termasuk, jadi ambil tautan pertama yang tampil).
+    const categoryNav = page.getByRole("navigation", { name: "Kategori" });
+    const firstLink = categoryNav.getByRole("link").first();
+    const href = (await firstLink.getAttribute("href")) ?? "";
+    expect(href).toMatch(/^\/pelatihan\/kategori\/[a-z0-9-]+$/);
+    const name = (await firstLink.locator("span").first().innerText()).trim();
+    await firstLink.click();
+    await expect(page).toHaveURL(new RegExp(`${escapeRegExp(href)}$`));
+    await expect(page.getByRole("heading", { level: 1, name, exact: true })).toBeVisible();
+
+    // Metode tetap filter chip (satu pilih) dengan chip "Filter aktif" yang bisa dilepas.
+    await page.goto("/pelatihan?metode=offline");
+    const remove = page.getByRole("list", { name: "Filter aktif" }).getByRole("link", { name: "Hapus filter Offline" });
     await remove.click();
     await expect(page).toHaveURL(/\/pelatihan$/);
     await expect(page.getByRole("list", { name: "Filter aktif" })).toHaveCount(0);
@@ -119,15 +130,33 @@ test.describe("halaman pelatihan v0.2", () => {
     await expect(page.getByRole("link", { name: "Reset filter" })).toHaveAttribute("href", "/pelatihan");
   });
 
-  test("katalog: Tampilkan semua (indeks A-Z) membuka overlay, saringan ketik, pilihan menambah filter", async ({ page }) => {
+  test("katalog: /pelatihan?kategori=<slug> dialihkan 308 ke halaman kategori v2", async ({ page }) => {
+    // Status 308 + Location dari server (bukan alih di klien).
+    const raw = await page.request.get(`/pelatihan?kategori=${category.slug}&metode=offline`, { maxRedirects: 0 });
+    expect(raw.status()).toBe(308);
+    expect(new URL(raw.headers()["location"] ?? "", ORIGIN).pathname).toBe(`/pelatihan/kategori/${category.slug}`);
+
+    // Alih server-side: parameter lain dibuang, URL akhir adalah halaman kategori.
+    await page.goto(`/pelatihan?kategori=${category.slug}&metode=offline&q=apa`);
+    await expect(page).toHaveURL(new RegExp(`/pelatihan/kategori/${category.slug}$`));
+    await expect(page.getByRole("heading", { level: 1, name: category.name })).toBeVisible();
+
+    // Slug tak dikenal: kembali ke katalog.
+    await page.goto(`/pelatihan?kategori=tidak-ada-kategori-${id}`);
+    await expect(page).toHaveURL(/\/pelatihan$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Katalog pelatihan" })).toBeVisible();
+  });
+
+  test("katalog: Tampilkan semua (indeks A-Z) membuka overlay, saringan ketik, tautan ke halaman kategori", async ({ page }) => {
     await page.goto("/pelatihan");
     await page.getByRole("button", { name: /^Tampilkan semua kategori/ }).click();
     const overlay = page.getByRole("dialog", { name: "Indeks kategori / A-Z" });
     await expect(overlay).toBeVisible();
     await overlay.getByLabel("Saring kategori").fill(category.name);
-    await overlay.getByRole("link", { name: new RegExp(`^${escapeRegExp(category.name)}`) }).first().click();
-    await expect(page).toHaveURL(new RegExp(`kategori=${category.slug}`));
-    await expect(overlay).toBeHidden();
+    const link = overlay.getByRole("link", { name: new RegExp(`^${escapeRegExp(category.name)}`) }).first();
+    await expect(link).toHaveAttribute("href", `/pelatihan/kategori/${category.slug}`);
+    await link.click();
+    await expect(page).toHaveURL(new RegExp(`/pelatihan/kategori/${category.slug}$`));
   });
 
   test("katalog mobile: panel filter terlipat, terbuka otomatis kalau ada filter", async ({ page }) => {
@@ -151,8 +180,10 @@ test.describe("halaman pelatihan v0.2", () => {
   });
 
   test("kartu tanpa sampul: blok 4:3 berisi label kategori; landing kategori: daftar judul tanpa kartu", async ({ page }) => {
-    await page.goto(`/pelatihan?kategori=${category.slug}`);
+    // Kategori bukan filter katalog lagi: cari kartu di katalog umum.
+    await page.goto("/pelatihan");
     const bare = card(page, withoutCover.title);
+    await bare.scrollIntoViewIfNeeded();
     const block = bare.locator("[data-reveal=image]");
     await expect(block.locator("img")).toHaveCount(0);
     await expect(block).toContainText(category.name);
@@ -265,7 +296,7 @@ test.describe("halaman pelatihan v0.2", () => {
       }
       const shots: [string, string, (p: Page) => Promise<void>][] = [
         ["katalog", "/pelatihan", async () => {}],
-        ["katalog-filter", `/pelatihan?kategori=${category.slug}&metode=offline`, async () => {}],
+        ["katalog-filter", `/pelatihan?metode=offline`, async () => {}],
         ["katalog-kosong", `/pelatihan?q=tidakadasamasekali${id}`, async () => {}],
         ["katalog-az", "/pelatihan", async (p) => {
           await p.getByRole("button", { name: /^Tampilkan semua kategori/ }).click();

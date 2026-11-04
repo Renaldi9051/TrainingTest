@@ -304,10 +304,12 @@ test.describe("halaman kategori v2", () => {
     expect((await cards(`Beta tanpa sampul ${id}`))[0].cover?.alt).toBe(COVER_ALT);
     expect((await cards(`Alpha bersampul ${id}`))[0]).toMatchObject({ coverSource: "training", cover: { alt: "[UJI] Foto sampul sendiri" } });
 
-    await gotoUntil(page, `/pelatihan?kategori=${category.slug}`, async () =>
+    // Kategori bukan filter katalog lagi: kartu dicari lewat pencarian judul di katalog.
+    await gotoUntil(page, `/pelatihan?q=${encodeURIComponent(withoutCover.title)}`, async () =>
       (await card(page, withoutCover.title).getAttribute("data-cover-source")) === "category",
     );
     await expect(card(page, withoutCover.title).getByRole("img", { name: COVER_ALT })).toHaveCount(1);
+    await page.goto(`/pelatihan?q=${encodeURIComponent(withCover.title)}`);
     await expect(card(page, withCover.title)).toHaveAttribute("data-cover-source", "training");
 
     await page.goto(`/pelatihan/${withoutCover.slug}`);

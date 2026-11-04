@@ -57,7 +57,7 @@ export function FilterDisclosure({
 }
 
 // Tombol "Tampilkan semua": overlay indeks A-Z layar penuh (sama dengan menu header) berisi semua kategori
-// yang punya pelatihan. Di katalog tautannya menambah/melepas filter kategori.
+// yang punya pelatihan. Tiap tautan menuju halaman kategori v2 (href disiapkan pemanggil).
 export function CategoryIndexButton({ items }: { items: IndexItem[] }) {
   const [open, setOpen] = useState(false);
   return (

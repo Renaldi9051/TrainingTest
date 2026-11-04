@@ -1,4 +1,4 @@
-import { CheckIcon, SearchIcon, XIcon } from "lucide-react";
+import { SearchIcon, XIcon } from "lucide-react";
 import Form from "next/form";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -16,7 +16,6 @@ import {
   METHOD_PARAMS,
   parseCatalogState,
   toCatalogParams,
-  toggleCategory,
   TYPE_PARAMS,
   type CatalogState,
 } from "@/lib/catalog-url";
@@ -30,7 +29,7 @@ const METHOD_TEXT: Record<(typeof METHOD_PARAMS)[number], string> = {
 };
 const TYPE_TEXT: Record<(typeof TYPE_PARAMS)[number], string> = { public: "Public", "in-house": "In-house" };
 // Kategori di sidebar (10 pertama urut abjad, keputusan pemilik 15 Okt); sisanya lewat "Tampilkan semua" yang
-// membuka overlay indeks A-Z (PRD 5.2).
+// membuka overlay indeks A-Z (PRD 5.2). Tiap kategori adalah tautan ke halaman kategori v2, bukan filter.
 const VISIBLE_CATEGORIES = 10;
 // 15 per halaman (keputusan sebelumnya, pas untuk 3 kolom).
 const PAGE_SIZE = 15;
@@ -40,7 +39,8 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
   const [catalog, categories] = await Promise.all([getCatalog(toCatalogParams(state, PAGE_SIZE)), getCategories()]);
   const { items, meta } = catalog;
   const filtered = hasFilters(state);
-  const activeCount = state.kategori.length + (state.metode ? 1 : 0) + (state.tipe ? 1 : 0);
+  // Kategori bukan filter lagi; hanya metode & tipe yang dihitung aktif.
+  const activeCount = (state.metode ? 1 : 0) + (state.tipe ? 1 : 0);
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start lg:gap-6">
@@ -50,7 +50,7 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
             <p className="font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-strong">Filter</p>
             {activeCount > 0 ? (
               <Link
-                href={catalogHref(state, { kategori: [], metode: null, tipe: null })}
+                href={catalogHref(state, { metode: null, tipe: null })}
                 scroll={false}
                 className="rounded-sm text-small text-fg-muted underline underline-offset-4 outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-focus"
               >
@@ -58,7 +58,7 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
               </Link>
             ) : null}
           </div>
-          <CategoryFilter state={state} categories={categories} />
+          <CategoryLinks categories={categories} />
           <FilterGroup label="Metode">
             <ChipLink href={catalogHref(state, { metode: null })} active={!state.metode}>
               Semua
@@ -89,7 +89,7 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
               {formatNumber(meta.total)} pelatihan
               {state.q ? <span className="normal-case tracking-normal text-fg-muted"> untuk “{state.q}”</span> : null}
             </p>
-            <ActiveFilterChips state={state} categories={categories} />
+            <ActiveFilterChips state={state} />
           </div>
           <SortLinks state={state} />
         </div>
@@ -126,7 +126,7 @@ export async function Catalog({ searchParams }: { searchParams: PageProps<"/pela
   );
 }
 
-// Kotak cari besar di kepala katalog (mockup: 56 px, garis --fg-strong). Filter lain ikut terbawa.
+// Kotak cari besar di kepala katalog (mockup: 56 px, garis --fg-strong). Filter metode/tipe ikut terbawa.
 export function CatalogSearch({ state }: { state?: CatalogState }) {
   return (
     // next/form: navigasi GET di sisi klien, tetap jalan sebagai form biasa tanpa JavaScript.
@@ -148,7 +148,6 @@ export function CatalogSearch({ state }: { state?: CatalogState }) {
           placeholder="Judul, topik, atau kategori"
           className="h-full min-w-0 flex-1 bg-transparent text-body text-fg outline-none placeholder:text-fg-subtle"
         />
-        {state && state.kategori.length > 0 ? <input type="hidden" name="kategori" value={state.kategori.join(",")} /> : null}
         {state?.metode ? <input type="hidden" name="metode" value={state.metode} /> : null}
         {state?.tipe ? <input type="hidden" name="tipe" value={state.tipe} /> : null}
         <button type="submit" className={buttonVariants({ variant: "primary", size: "md" })}>
@@ -175,93 +174,48 @@ function FilterGroup({ label, last, children }: { label: string; last?: boolean;
   );
 }
 
-// Kategori pilih banyak: link bergaya kotak centang (state di URL, tanpa JS). Bukan role checkbox;
-// yang terpilih ditandai aria-current="true" + teks tersembunyi "terpilih".
-function CategoryFilter({ state, categories }: { state: CatalogState; categories: PublicCategory[] }) {
-  const available = categories.filter(
-    (category) => category.trainingCount > 0 || state.kategori.includes(category.slug),
-  );
-  // Terpilih dulu (supaya tetap terlihat), lalu sisanya urut abjad A-Z.
-  const byName = (a: PublicCategory, b: PublicCategory) =>
-    a.name.localeCompare(b.name, "id", { sensitivity: "base" });
-  const selected = available.filter((category) => state.kategori.includes(category.slug)).sort(byName);
-  const rest = available.filter((category) => !state.kategori.includes(category.slug)).sort(byName);
-  const shown = [...selected, ...rest].slice(0, Math.max(VISIBLE_CATEGORIES, selected.length));
+// Daftar kategori sebagai navigasi ke halaman kategori v2 (bukan filter katalog). Menampilkan jumlah
+// pelatihan; sisanya lewat "Tampilkan semua" (overlay indeks A-Z), juga menuju halaman kategori.
+function CategoryLinks({ categories }: { categories: PublicCategory[] }) {
+  const available = categories
+    .filter((category) => category.trainingCount > 0)
+    .sort((a, b) => a.name.localeCompare(b.name, "id", { sensitivity: "base" }));
+  const shown = available.slice(0, VISIBLE_CATEGORIES);
 
   return (
-    <div className="border-b border-border py-5">
+    <nav aria-label="Kategori" className="border-b border-border py-5">
       <p aria-hidden className="mb-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
         Kategori
       </p>
-      <div role="group" aria-label="Kategori" className="flex flex-col">
-        <CheckLink href={catalogHref(state, { kategori: [] })} active={state.kategori.length === 0}>
-          Semua kategori
-        </CheckLink>
+      <ul className="flex flex-col">
         {shown.map((category) => (
-          <CheckLink
-            key={category.slug}
-            href={toggleCategory(state, category.slug)}
-            active={state.kategori.includes(category.slug)}
-            count={category.trainingCount}
-          >
-            {category.name}
-          </CheckLink>
+          <li key={category.slug}>
+            <Link
+              href={`/pelatihan/kategori/${category.slug}`}
+              className="group/cat flex min-h-10 items-center gap-3 rounded-sm py-1.5 text-small text-fg outline-none hover:text-primary-ink focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              <span className="min-w-0 flex-1 group-hover/cat:underline underline-offset-4">{category.name}</span>
+              <span className="font-mono text-label text-fg-muted tabular-nums">{category.trainingCount}</span>
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
       {available.length > shown.length ? (
         <CategoryIndexButton
           items={available.map((category) => ({
             label: category.name,
-            href: toggleCategory(state, category.slug),
+            href: `/pelatihan/kategori/${category.slug}`,
             count: category.trainingCount,
           }))}
         />
       ) : null}
-    </div>
+    </nav>
   );
 }
 
-function CheckLink({
-  href,
-  active,
-  count,
-  children,
-}: {
-  href: string;
-  active: boolean;
-  count?: number;
-  children: ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      scroll={false}
-      aria-current={active ? "true" : undefined}
-      className="group/check flex min-h-10 items-center gap-3 rounded-sm py-1.5 text-small text-fg outline-none hover:text-fg-strong focus-visible:ring-2 focus-visible:ring-focus"
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "flex size-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors duration-150",
-          active ? "border-primary bg-primary text-on-primary" : "border-border-strong group-hover/check:border-primary",
-        )}
-      >
-        {active ? <CheckIcon strokeWidth={2} className="size-3" /> : null}
-      </span>
-      <span className={cn("min-w-0 flex-1", active && "font-medium text-fg-strong")}>
-        {children}
-        {active ? <span className="sr-only">, terpilih</span> : null}
-      </span>
-      {count !== undefined ? <span className="font-mono text-label text-fg-muted tabular-nums">{count}</span> : null}
-    </Link>
-  );
-}
-
-// Filter aktif sebagai chip yang bisa dilepas (mockup).
-function ActiveFilterChips({ state, categories }: { state: CatalogState; categories: PublicCategory[] }) {
-  const names = new Map(categories.map((category) => [category.slug, category.name]));
+// Filter aktif (metode/tipe) sebagai chip yang bisa dilepas. Kategori bukan filter lagi.
+function ActiveFilterChips({ state }: { state: CatalogState }) {
   const chips = [
-    ...state.kategori.map((slug) => ({ key: `k-${slug}`, label: names.get(slug) ?? slug, href: toggleCategory(state, slug) })),
     ...(state.metode ? [{ key: "metode", label: METHOD_TEXT[state.metode], href: catalogHref(state, { metode: null }) }] : []),
     ...(state.tipe ? [{ key: "tipe", label: TYPE_TEXT[state.tipe], href: catalogHref(state, { tipe: null }) }] : []),
   ];

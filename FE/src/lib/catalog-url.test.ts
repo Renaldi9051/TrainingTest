@@ -4,7 +4,6 @@ import {
   catalogCanonical,
   catalogHref,
   parseCatalogState,
-  toggleCategory,
 } from "@/lib/catalog-url";
 
 describe("parseCatalogState", () => {
@@ -22,17 +21,15 @@ describe("parseCatalogState", () => {
 });
 
 describe("catalogHref", () => {
+  // Kategori di state tetap diparse (dipakai redirect), tapi catalogHref tidak pernah menuliskannya:
+  // kategori bukan parameter katalog lagi (keputusan atasan 4 Nov 2026).
   const state = parseCatalogState({ q: "kpi", kategori: "sdm", hal: "4" });
 
-  it("urutan parameter tetap dan filter baru kembali ke halaman 1", () => {
-    expect(catalogHref(state, { metode: "offline" })).toBe("/pelatihan?q=kpi&kategori=sdm&metode=offline");
-    expect(catalogHref(state, { hal: 5 })).toBe("/pelatihan?q=kpi&kategori=sdm&hal=5");
+  it("urutan parameter tetap, tanpa kategori, filter baru kembali ke halaman 1", () => {
+    expect(catalogHref(state, { metode: "offline" })).toBe("/pelatihan?q=kpi&metode=offline");
+    expect(catalogHref(state, { hal: 5 })).toBe("/pelatihan?q=kpi&hal=5");
+    expect(catalogHref(state, { tipe: "in-house" })).toBe("/pelatihan?q=kpi&tipe=in-house");
     expect(catalogHref(parseCatalogState({}))).toBe("/pelatihan");
-  });
-
-  it("chip kategori menambah/menghapus dari daftar (multi)", () => {
-    expect(toggleCategory(state, "keuangan")).toBe("/pelatihan?q=kpi&kategori=sdm%2Ckeuangan");
-    expect(toggleCategory(state, "sdm")).toBe("/pelatihan?q=kpi");
   });
 });
 
