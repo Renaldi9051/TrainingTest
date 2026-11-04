@@ -472,7 +472,8 @@ function AudienceEditor({
   const rows: AudienceRow[] = value.map((item, index) => ({ ...item, id: `aud-${index}` }));
   const full = value.length >= max;
 
-  const update = (next: CategoryAudienceItem[]) => onChange(next);
+  // Mengubah daftar peran manual. Kalau jadi kosong, sumber kembali "manual" (invariant badge).
+  const update = (next: CategoryAudienceItem[]) => onChange(next, next.length === 0 ? "manual" : undefined);
 
   return (
     <FormField id={id} label="Target peserta" description="Siapa yang cocok ikut. Maksimal 12 peran. Bisa diambil dari pelatihan lalu dirapikan." error={error}>

@@ -177,7 +177,7 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
                 <p className="mt-4 max-w-[40ch] text-body text-fg-muted">
                   Rangkuman target peserta dari pelatihan di kategori ini.
                 </p>
-                {category.audienceSource === "auto" ? (
+                {category.audienceSource === "auto" && category.audience.length > 0 ? (
                   <p className="mt-4 inline-flex items-center gap-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
                     <span aria-hidden className="inline-block size-1.5 rounded-full bg-accent" />
                     Dirangkum dari {formatNumber(category.trainingCount)} pelatihan

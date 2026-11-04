@@ -21,6 +21,7 @@ import {
   getPublicCategory,
   listCategories,
   listPublicCategories,
+  normalizeAudienceSource,
   reorderCategories,
   restoreCategory,
   updateCategory,
@@ -506,5 +507,47 @@ describe("getPublicCategory (landing v2)", () => {
     const detail = await getPublicCategory("keuangan", now);
     expect(detail?.coverAlt).toBe("Alt khusus");
     expect(detail?.images).toHaveLength(1);
+  });
+});
+
+
+describe("audienceSource invariant (badge 'Dirangkum dari')", () => {
+  it("normalizeAudienceSource: audience kosong selalu manual; auto hanya kalau ada isinya", () => {
+    expect(normalizeAudienceSource([], "auto")).toBe("manual");
+    expect(normalizeAudienceSource([], "manual")).toBe("manual");
+    expect(normalizeAudienceSource([{ label: "Staf", trainingCount: null }], "auto")).toBe("auto");
+    expect(normalizeAudienceSource([{ label: "Staf", trainingCount: null }], "manual")).toBe("manual");
+  });
+
+  it("createCategory: audience kosong + source auto disimpan sebagai manual", async () => {
+    mock.category.findFirst.mockResolvedValue(null);
+    mock.category.aggregate.mockResolvedValue({ _max: { order: 0 } });
+    mock.category.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) =>
+      category({ ...data, images: [] }),
+    );
+    mock.auditLog.create.mockResolvedValue({});
+
+    await createCategory(createInput({ name: "Kosong", audience: [], audienceSource: "auto" }), "u1");
+    expect(mock.category.create.mock.calls[0][0].data.audienceSource).toBe("manual");
+  });
+
+  it("updateCategory: mengosongkan audience memaksa source kembali manual", async () => {
+    mock.category.findFirst.mockResolvedValueOnce(
+      category({ audience: [{ label: "Staf", trainingCount: 3 }], audienceSource: "auto" }),
+    );
+    mock.category.update.mockResolvedValue(category());
+    mock.auditLog.create.mockResolvedValue({});
+
+    await updateCategory(ID, { audience: [] }, "u1");
+    expect(mock.category.update.mock.calls[0][0].data.audienceSource).toBe("manual");
+  });
+
+  it("updateCategory: audience terisi + source auto tetap auto", async () => {
+    mock.category.findFirst.mockResolvedValueOnce(category({ audienceSource: "manual" }));
+    mock.category.update.mockResolvedValue(category());
+    mock.auditLog.create.mockResolvedValue({});
+
+    await updateCategory(ID, { audience: [{ label: "Staf", trainingCount: 2 }], audienceSource: "auto" }, "u1");
+    expect(mock.category.update.mock.calls[0][0].data.audienceSource).toBe("auto");
   });
 });

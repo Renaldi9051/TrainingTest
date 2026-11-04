@@ -55,6 +55,15 @@ export function readCategoryAudience(value: unknown): CategoryAudienceItem[] {
   return parsed.success ? parsed.data : [];
 }
 
+// Invariant: audienceSource hanya boleh "auto" kalau audience tidak kosong. Audience kosong selalu
+// "manual" (badge "Dirangkum dari ..." tidak boleh tampil tanpa data). Dipakai saat create/update.
+export function normalizeAudienceSource(
+  audience: CategoryAudienceItem[],
+  source: CategoryAudienceSource,
+): CategoryAudienceSource {
+  return audience.length === 0 ? "manual" : source;
+}
+
 export type CategoryDto = {
   id: string;
   slug: string;
@@ -242,7 +251,7 @@ export async function createCategory(input: CategoryCreateInput, userId: string)
           imageId: input.imageId,
           coverAlt: input.coverAlt,
           audience: input.audience as Prisma.InputJsonValue,
-          audienceSource: input.audienceSource,
+          audienceSource: normalizeAudienceSource(input.audience, input.audienceSource),
           keywords: input.keywords,
           order,
           updatedById: userId,
@@ -291,8 +300,14 @@ export async function updateCategory(
   if (input.featured !== undefined) data.featured = input.featured;
   if (input.imageId !== undefined) data.imageId = input.imageId;
   if (input.coverAlt !== undefined) data.coverAlt = input.coverAlt;
-  if (input.audience !== undefined) data.audience = input.audience as Prisma.InputJsonValue;
-  if (input.audienceSource !== undefined) data.audienceSource = input.audienceSource;
+  // Audience & source saling tergantung: kalau salah satu diubah, hitung ulang invariant
+  // (source "auto" hanya sah kalau audience tidak kosong) dari nilai efektif (input atau lama).
+  if (input.audience !== undefined || input.audienceSource !== undefined) {
+    const effectiveAudience = input.audience ?? readCategoryAudience(before.audience);
+    const effectiveSource = input.audienceSource ?? (before.audienceSource === "auto" ? "auto" : "manual");
+    if (input.audience !== undefined) data.audience = input.audience as Prisma.InputJsonValue;
+    data.audienceSource = normalizeAudienceSource(effectiveAudience, effectiveSource);
+  }
   if (input.keywords !== undefined) data.keywords = input.keywords;
 
   const updated = await withSlugConflict(() =>
