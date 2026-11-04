@@ -112,21 +112,26 @@ async function plan(now: Date): Promise<PlannedCategory[]> {
   return result;
 }
 
-async function apply(plans: PlannedCategory[]): Promise<{ categories: number; photos: number; revalidated: boolean }> {
+async function apply(
+  plans: PlannedCategory[],
+): Promise<{ categories: number; photos: number; failedSlugs: string[] }> {
   const db = getDb();
   let photoCount = 0;
-  const slugs: string[] = [];
   for (const item of plans) {
     await db.categoryMedia.createMany({
       data: item.photos.map((photo, index) => ({ categoryId: item.categoryId, mediaId: photo.mediaId, order: index })),
       skipDuplicates: true,
     });
     photoCount += item.photos.length;
-    slugs.push(item.slug);
   }
-  // Revalidate di luar batch (skrip): kirim langsung. Gagal tidak membatalkan backfill.
-  const revalidated = slugs.length > 0 ? await revalidateEntity({ entity: "Category", slugs }) : true;
-  return { categories: plans.length, photos: photoCount, revalidated };
+  // Revalidate FE per kategori (tag category:<slug> + daftar). Di luar batch = dikirim langsung.
+  // Gagal (FE tidak bisa dihubungi) tidak membatalkan backfill: dikumpulkan untuk dilaporkan.
+  const failedSlugs: string[] = [];
+  for (const item of plans) {
+    const ok = await revalidateEntity({ entity: "Category", slugs: [item.slug] });
+    if (!ok) failedSlugs.push(item.slug);
+  }
+  return { categories: plans.length, photos: photoCount, failedSlugs };
 }
 
 async function main() {
@@ -172,9 +177,17 @@ async function main() {
     console.info("\nJalankan dengan --apply untuk menerapkan (pastikan sudah backup pg_dump).");
     return;
   }
-  const { categories, photos, revalidated } = await apply(plans);
+  const { categories, photos, failedSlugs } = await apply(plans);
   console.info(`\nDipasang: ${photos} foto di ${categories} kategori.`);
-  console.info(revalidated ? "Cache FE direvalidasi." : "Revalidate FE gagal (FE tidak menyala?). Data tetap tersimpan.");
+  if (failedSlugs.length === 0) {
+    console.info("Cache FE direvalidasi per kategori.");
+  } else {
+    console.warn(
+      `\nPERINGATAN: revalidate FE gagal untuk ${failedSlugs.length} kategori (FE tidak dapat dihubungi). ` +
+        "Data tersimpan; revalidasi ulang setelah FE menyala (mis. simpan ulang kategori di admin, atau panggil revalidate tag). Slug:",
+    );
+    for (const slug of failedSlugs) console.warn(`  category:${slug}`);
+  }
   console.info("Selesai.");
 }
 
