@@ -145,8 +145,8 @@ describe("getPublicTraining", () => {
     expect((await getPublicTraining("kpi", now))?.facilities).toEqual(["Makan siang"]);
   });
 
-  it("galeri: urutan admin, gambar di Sampah dilewati, terpisah dari sampul", async () => {
-    const media = (id: string, deletedAt: Date | null = null) => ({
+  it("galeri pelatihan tidak dikirim ke publik (dipindah ke galeri kategori)", async () => {
+    const media = (id: string) => ({
       id,
       path: `2026/10/${id}.webp`,
       originalName: `${id}.jpg`,
@@ -159,26 +159,16 @@ describe("getPublicTraining", () => {
       variants: null,
       createdAt: now,
       updatedAt: now,
-      deletedAt,
+      deletedAt: null,
       updatedById: null,
     });
-    mock.training.findFirst.mockResolvedValue(
-      detailRow({
-        cover: media("sampul"),
-        images: [
-          { mediaId: "g1", order: 0, media: media("g1") },
-          { mediaId: "g2", order: 1, media: media("g2", now) },
-          { mediaId: "g3", order: 2, media: media("g3") },
-        ],
-      }),
-    );
+    mock.training.findFirst.mockResolvedValue(detailRow({ cover: media("sampul") }));
     const detail = await getPublicTraining("kpi", now);
-    expect(detail?.images.map((image) => image.alt)).toEqual(["Alt g1", "Alt g3"]);
+    // Galeri tidak ada lagi di detail publik.
+    expect(detail && "images" in detail).toBe(false);
     expect(detail?.cover?.alt).toBe("Alt sampul");
-    expect(mock.training.findFirst.mock.calls[0][0].include.images).toEqual({
-      orderBy: { order: "asc" },
-      include: { media: true },
-    });
+    // Include publik tidak lagi meminta relasi images.
+    expect(mock.training.findFirst.mock.calls[0][0].include.images).toBeUndefined();
   });
 });
 

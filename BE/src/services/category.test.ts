@@ -18,6 +18,7 @@ vi.mock("@/lib/revalidate", async (importOriginal) => ({
 import {
   createCategory,
   deleteCategory,
+  getPublicCategory,
   listCategories,
   listPublicCategories,
   reorderCategories,
@@ -31,6 +32,7 @@ const category = (extra: Record<string, unknown> = {}) => ({
   slug: "keuangan",
   name: "Keuangan",
   description: null,
+  summary: null,
   icon: null,
   order: 0,
   featured: false,
@@ -40,8 +42,28 @@ const category = (extra: Record<string, unknown> = {}) => ({
   updatedById: null,
   imageId: null,
   image: null,
+  coverAlt: null,
+  audience: [],
+  audienceSource: "manual",
   keywords: [],
+  images: [],
   _count: { trainings: 0 },
+  ...extra,
+});
+
+// Input lengkap untuk createCategory (CategoryCreateInput sudah ter-parse).
+const createInput = (extra: Record<string, unknown> = {}) => ({
+  name: "Keuangan",
+  description: null,
+  summary: null,
+  icon: null,
+  featured: false,
+  imageId: null,
+  coverAlt: null,
+  audience: [],
+  audienceSource: "manual" as const,
+  imageIds: [],
+  keywords: [],
   ...extra,
 });
 
@@ -136,11 +158,13 @@ describe("createCategory", () => {
       where.slug === "keuangan-dan-akuntansi" ? { id: "lain" } : null,
     );
     mock.category.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) =>
-      category(data),
+      // data.images di sini berbentuk payload tulis Prisma ({ create: [...] }); DTO butuh relasi
+      // yang sudah dimuat, jadi mock mengembalikan galeri kosong seperti adminInclude yang resolved.
+      category({ ...data, images: [] }),
     );
 
     const created = await createCategory(
-      { name: "Keuangan & Akuntansi", description: null, icon: null, featured: false, imageId: null, keywords: [] },
+      createInput({ name: "Keuangan & Akuntansi" }),
       "u1",
     );
     expect(created.slug).toBe("keuangan-dan-akuntansi-2");
@@ -154,7 +178,7 @@ describe("createCategory", () => {
     mock.category.findFirst.mockResolvedValue({ id: "lain" });
     await expect(
       createCategory(
-        { name: "Keuangan", slug: "keuangan", description: null, icon: null, featured: false, imageId: null, keywords: [] },
+        createInput({ name: "Keuangan", slug: "keuangan" }),
         "u1",
       ),
     ).rejects.toMatchObject({ status: 409, fields: { slug: [expect.any(String)] } });
@@ -300,7 +324,7 @@ describe("gambar kategori (admin)", () => {
     mock.category.findFirst.mockResolvedValue(null);
     mock.media.findMany.mockResolvedValue([{ id: IMAGE_ID, mime: "image/webp", alt: null }]);
     await expect(
-      createCategory({ name: "Keuangan", description: null, icon: null, featured: false, imageId: IMAGE_ID, keywords: [] }, "u1"),
+      createCategory(createInput({ name: "Keuangan", imageId: IMAGE_ID }), "u1"),
     ).rejects.toMatchObject({ status: 422, fields: { imageId: [expect.stringContaining("alt")] } });
     expect(mock.category.create).not.toHaveBeenCalled();
   });
@@ -393,6 +417,7 @@ describe("listPublicCategories", () => {
       slug: "keuangan",
       name: "Keuangan",
       description: null,
+      summary: null,
       icon: null,
       featured: false,
       image: null,
@@ -408,5 +433,78 @@ describe("listPublicCategories", () => {
       deletedAt: null,
       trainings: { some: { training: { deletedAt: null, status: "PUBLISHED", publishedAt: { lte: now } } } },
     });
+  });
+});
+
+
+
+describe("getPublicCategory (landing v2)", () => {
+  const now = new Date("2026-10-10T00:00:00Z");
+
+  it("null kalau kategori tidak ada / tanpa pelatihan tayang", async () => {
+    mock.category.findFirst.mockResolvedValue(null);
+    expect(await getPublicCategory("tidak-ada", now)).toBeNull();
+  });
+
+  it("metaDescription pakai summary; paragraf dipecah per baris kosong; trainings A-Z", async () => {
+    mock.category.findFirst.mockResolvedValue(
+      category({
+        summary: "Ringkasan kategori.",
+        description: "Paragraf satu.\n\nParagraf dua.",
+        audience: [{ label: "Staf", trainingCount: 3 }],
+        audienceSource: "auto",
+        images: [],
+        _count: { trainings: 2 },
+      }),
+    );
+    mock.training.findMany.mockResolvedValue([
+      { slug: "a", title: "Aaa", types: ["PUBLIC"] },
+      { slug: "b", title: "Bbb", types: ["IN_HOUSE"] },
+    ]);
+
+    const detail = await getPublicCategory("keuangan", now);
+    expect(detail?.metaDescription).toBe("Ringkasan kategori.");
+    expect(detail?.descriptionParagraphs).toEqual(["Paragraf satu.", "Paragraf dua."]);
+    expect(detail?.audience).toEqual([{ label: "Staf", trainingCount: 3 }]);
+    expect(detail?.audienceSource).toBe("auto");
+    expect(detail?.trainings).toEqual([
+      { slug: "a", title: "Aaa", types: ["PUBLIC"] },
+      { slug: "b", title: "Bbb", types: ["IN_HOUSE"] },
+    ]);
+    // Hanya pelatihan tayang, difilter di query.
+    expect(mock.training.findMany.mock.calls[0][0].where).toMatchObject({
+      deletedAt: null,
+      status: "PUBLISHED",
+      publishedAt: { lte: now },
+    });
+  });
+
+  it("metaDescription jatuh ke 160 karakter pertama description kalau summary kosong", async () => {
+    const long = "Kata ".repeat(60).trim(); // > 160 karakter
+    mock.category.findFirst.mockResolvedValue(
+      category({ summary: null, description: long, images: [], _count: { trainings: 1 } }),
+    );
+    mock.training.findMany.mockResolvedValue([]);
+    const detail = await getPublicCategory("keuangan", now);
+    expect(detail?.metaDescription.length).toBeLessThanOrEqual(160);
+    expect(detail?.metaDescription.length).toBeGreaterThan(0);
+  });
+
+  it("coverAlt: pakai coverAlt kalau ada, lalu alt media; galeri buang media di Sampah", async () => {
+    mock.category.findFirst.mockResolvedValue(
+      category({
+        coverAlt: "Alt khusus",
+        image: imageMedia(),
+        images: [
+          { mediaId: "g1", order: 0, media: imageMedia({ id: "g1", path: "2026/10/g1.webp" }) },
+          { mediaId: "g2", order: 1, media: imageMedia({ id: "g2", deletedAt: new Date() }) },
+        ],
+        _count: { trainings: 1 },
+      }),
+    );
+    mock.training.findMany.mockResolvedValue([]);
+    const detail = await getPublicCategory("keuangan", now);
+    expect(detail?.coverAlt).toBe("Alt khusus");
+    expect(detail?.images).toHaveLength(1);
   });
 });
