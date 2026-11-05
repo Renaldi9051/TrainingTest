@@ -17,6 +17,7 @@ vi.mock("@/lib/revalidate", async (importOriginal) => ({
 }));
 
 import {
+  categoryIndexLetter,
   createCategory,
   deleteCategory,
   getPublicCategory,
@@ -630,7 +631,45 @@ describe("listPublicCategoryGrid (/pelatihan)", () => {
   });
 
   it("query tak valid tidak error: page bukan angka -> 1, q kosong -> tanpa filter", () => {
-    expect(parse({ page: "abc", q: "   " })).toEqual({ page: 1, q: undefined });
-    expect(parse({ page: "-3" })).toEqual({ page: 1, q: undefined });
+    expect(parse({ page: "abc", q: "   " })).toEqual({ page: 1, q: undefined, huruf: undefined });
+    expect(parse({ page: "-3" })).toEqual({ page: 1, q: undefined, huruf: undefined });
+  });
+
+  it("huruf: satu huruf A-Z (huruf kecil diterima) atau #; nilai lain diabaikan", () => {
+    expect(parse({ huruf: "a" }).huruf).toBe("A");
+    expect(parse({ huruf: " Z " }).huruf).toBe("Z");
+    expect(parse({ huruf: "#" }).huruf).toBe("#");
+    for (const huruf of ["", "AB", "1", "é", "?"]) expect(parse({ huruf }).huruf).toBeUndefined();
+  });
+
+  it("categoryIndexLetter: huruf awal tanpa aksen, angka/simbol -> #", () => {
+    expect(categoryIndexLetter("accounting")).toBe("A");
+    expect(categoryIndexLetter("  Émail Marketing")).toBe("E");
+    expect(categoryIndexLetter("K3 Umum")).toBe("K");
+    expect(categoryIndexLetter("3D Printing")).toBe("#");
+    expect(categoryIndexLetter("(Umum)")).toBe("#");
+  });
+
+  it("huruf menyaring huruf awal nama (tanpa beda besar/kecil & aksen), urutan & paginasi tetap", async () => {
+    mock.category.findMany.mockResolvedValue([
+      gridRow("Banking"),
+      gridRow("audit"),
+      gridRow("Ékonomi"),
+      gridRow("Accounting", { featured: true }),
+      gridRow("3D Printing"),
+      gridRow("energy"),
+    ]);
+    const a = await listPublicCategoryGrid(parse({ huruf: "a" }), now);
+    expect(a.items.map((item) => item.name)).toEqual(["Accounting", "audit"]);
+    expect(a.meta).toEqual({ page: 1, pageSize: 24, total: 2, totalPages: 1 });
+    // Filter huruf di service (bukan where DB), jadi where tetap hanya kategori publik.
+    expect(mock.category.findMany.mock.calls[0][0].where.name).toBeUndefined();
+
+    const e = await listPublicCategoryGrid(parse({ huruf: "E" }), now);
+    expect(e.items.map((item) => item.name)).toEqual(["Ékonomi", "energy"]);
+    const other = await listPublicCategoryGrid(parse({ huruf: "#" }), now);
+    expect(other.items.map((item) => item.name)).toEqual(["3D Printing"]);
+    const none = await listPublicCategoryGrid(parse({ huruf: "Q", page: "3" }), now);
+    expect(none).toEqual({ items: [], meta: { page: 1, pageSize: 24, total: 0, totalPages: 1 } });
   });
 });

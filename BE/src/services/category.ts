@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
 import { listMeta, pagination, type ListMeta } from "@/lib/list-query";
 import { revalidateEntity } from "@/lib/revalidate-map";
+import { foldText } from "@/lib/search";
 import {
   assertSlugAvailable,
   nextAvailableSlug,
@@ -586,9 +587,17 @@ export type PublicCategoryGridItem = {
   cover: PublicImage | null;
 };
 
-// GET /api/public/categories?q=&page= (24 per halaman). Urutan: unggulan dulu, lalu nama A-Z
+// Huruf indeks nama kategori: huruf awal tanpa aksen ("Émail" -> "E"); selain A-Z masuk "#".
+// Sama dengan indexLetter di FE (src/lib/index-groups.ts), supaya jumlah per huruf di FE cocok.
+export function categoryIndexLetter(name: string): string {
+  const first = foldText(name).charAt(0).toUpperCase();
+  return /^[A-Z]$/.test(first) ? first : "#";
+}
+
+// GET /api/public/categories?q=&huruf=&page= (24 per halaman). Urutan: unggulan dulu, lalu nama A-Z
 // (localeCompare "id", sama dengan sidebar lama), dihitung di sini supaya tidak tergantung collation DB.
-// q mencocokkan nama (case-insensitive). page di luar batas dijepit ke halaman terakhir yang valid.
+// q mencocokkan nama (case-insensitive); huruf menyaring huruf awal nama (categoryIndexLetter).
+// page di luar batas dijepit ke halaman terakhir yang valid.
 export async function listPublicCategoryGrid(
   query: PublicCategoryGridQuery,
   now = new Date(),
@@ -607,9 +616,9 @@ export async function listPublicCategoryGrid(
       _count: { select: { trainings: { where: { training: publicTrainingWhere(now) } } } },
     },
   });
-  const sorted = rows.sort(
-    (a, b) => Number(b.featured) - Number(a.featured) || a.name.localeCompare(b.name, "id", { sensitivity: "base" }),
-  );
+  const sorted = rows
+    .filter((row) => !query.huruf || categoryIndexLetter(row.name) === query.huruf)
+    .sort((a, b) => Number(b.featured) - Number(a.featured) || a.name.localeCompare(b.name, "id", { sensitivity: "base" }));
   const totalPages = Math.max(1, Math.ceil(sorted.length / PUBLIC_CATEGORY_PAGE_SIZE));
   const page = Math.min(query.page, totalPages);
   const { skip, take } = pagination(page, PUBLIC_CATEGORY_PAGE_SIZE);

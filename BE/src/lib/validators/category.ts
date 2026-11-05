@@ -198,8 +198,11 @@ export type CategoryDeleteQuery = z.infer<typeof categoryDeleteQuerySchema>;
 
 export const PUBLIC_CATEGORY_PAGE_SIZE = 24;
 
-// GET /api/public/categories?q=&page=. Nilai tak dikenal diabaikan (URL bisa diketik sembarang);
-// page di luar batas dijepit service ke halaman terakhir yang valid.
+// Huruf indeks A-Z grid kategori: satu huruf A-Z, atau "#" untuk nama berawalan angka/simbol.
+export const CATEGORY_INDEX_LETTER = /^[A-Z#]$/;
+
+// GET /api/public/categories?q=&huruf=&page=. Nilai tak dikenal diabaikan (URL bisa diketik
+// sembarang); page di luar batas dijepit service ke halaman terakhir yang valid.
 export const publicCategoryGridQuerySchema = z.object({
   q: z
     .string()
@@ -207,6 +210,12 @@ export const publicCategoryGridQuerySchema = z.object({
     .optional()
     .catch(undefined)
     .transform((value) => value || undefined),
+  huruf: z
+    .string()
+    .transform((value) => value.trim().toUpperCase())
+    .pipe(z.string().regex(CATEGORY_INDEX_LETTER))
+    .optional()
+    .catch(undefined),
   page: z.coerce.number().int().min(1).max(1000).default(1).catch(1),
 });
 export type PublicCategoryGridQuery = z.infer<typeof publicCategoryGridQuerySchema>;
