@@ -103,6 +103,53 @@ const pageHeadersSchema = z.object(
 // Alur kerja sama di /layanan. Tanpa langkah = section disembunyikan.
 export const PROCESS_STEPS_MAX = 6;
 
+// Teks section halaman /pelatihan (bento unggulan, grid A-Z, CTA penutup). Field kosong = label
+// bawaan di FE. Tombol CTA: label & tautan diisi sekaligus atau dikosongkan (kosong = tombol bawaan).
+const EMPTY_TRAININGS_PAGE = {
+  featured: { eyebrow: "", heading: "", lead: "" },
+  all: { eyebrow: "", heading: "" },
+  cta: {
+    eyebrow: "",
+    heading: "",
+    lead: "",
+    primaryLabel: "",
+    primaryHref: "",
+    secondaryLabel: "",
+    secondaryHref: "",
+    outline: "",
+    decor: true,
+  },
+};
+const trainingsPageSchema = z.object({
+  featured: z
+    .object({ eyebrow: plainText("Eyebrow", 60), heading: plainText("Judul", 120), lead: plainText("Keterangan", 200) })
+    .default(EMPTY_TRAININGS_PAGE.featured),
+  all: z.object({ eyebrow: plainText("Eyebrow", 60), heading: plainText("Judul", 120) }).default(EMPTY_TRAININGS_PAGE.all),
+  cta: z
+    .object({
+      eyebrow: plainText("Eyebrow", 60),
+      heading: plainText("Judul", 120),
+      lead: plainText("Pengantar", 300),
+      primaryLabel: plainText("Label tombol utama", 40),
+      primaryHref: optionalHref,
+      secondaryLabel: plainText("Label tombol kedua", 40),
+      secondaryHref: optionalHref,
+      // Teks outline raksasa di belakang CTA (dekoratif).
+      outline: plainText("Teks outline", 24),
+      // Elemen dekoratif (grain + teks outline), DESIGN.md 6.2.
+      decor: z.boolean({ error: "Elemen dekoratif harus ya/tidak." }).default(true),
+    })
+    .refine((value) => (value.primaryLabel === "") === (value.primaryHref === ""), {
+      error: "Isi label dan tautan tombol utama sekaligus, atau kosongkan keduanya.",
+      path: ["primaryHref"],
+    })
+    .refine((value) => (value.secondaryLabel === "") === (value.secondaryHref === ""), {
+      error: "Isi label dan tautan tombol kedua sekaligus, atau kosongkan keduanya.",
+      path: ["secondaryHref"],
+    })
+    .default(EMPTY_TRAININGS_PAGE.cta),
+});
+
 const coordinateSchema = (label: string, limit: number) =>
   z
     .number({ error: `${label} harus angka.` })
@@ -196,6 +243,7 @@ export const settingSchemas = {
       .max(PROCESS_STEPS_MAX, { error: `Langkah maksimal ${PROCESS_STEPS_MAX}.` })
       .default([]),
   }),
+  "trainings.page": trainingsPageSchema,
 } as const;
 
 export type SettingKey = keyof typeof settingSchemas;
@@ -217,6 +265,7 @@ export const SETTING_LABELS: Record<SettingKey, string> = {
   "seo.default": "SEO default",
   "page.headers": "Kepala halaman",
   "services.process": "Alur kerja sama",
+  "trainings.page": "Halaman pelatihan",
 };
 
 // Field berisi mediaId per key, beserta label untuk "media dipakai di mana".
@@ -252,6 +301,7 @@ export const SETTING_DEFAULTS: SettingValues = {
   "seo.default": { titleTemplate: "%s", defaultTitle: "", description: "", ogImageId: null },
   "page.headers": Object.fromEntries(PAGE_HEADER_PAGES.map((page) => [page, EMPTY_PAGE_HEADER])) as SettingValues["page.headers"],
   "services.process": { eyebrow: "", heading: "", steps: [] },
+  "trainings.page": EMPTY_TRAININGS_PAGE,
 };
 
 export function parseStoredSetting<K extends SettingKey>(key: K, stored: unknown): SettingValues[K] {

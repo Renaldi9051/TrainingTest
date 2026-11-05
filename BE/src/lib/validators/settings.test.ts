@@ -173,3 +173,30 @@ describe("services.process", () => {
     for (const key of SETTING_KEYS) expect(parseStoredSetting(key, SETTING_DEFAULTS[key])).toEqual(SETTING_DEFAULTS[key]);
   });
 });
+
+describe("trainings.page", () => {
+  it("belum ada di DB: semua teks kosong (FE memakai label bawaan), dekorasi menyala", () => {
+    const value = parseStoredSetting("trainings.page", undefined);
+    expect(value.featured).toEqual({ eyebrow: "", heading: "", lead: "" });
+    expect(value.all).toEqual({ eyebrow: "", heading: "" });
+    expect(value.cta).toMatchObject({ heading: "", primaryLabel: "", primaryHref: "", outline: "", decor: true });
+  });
+
+  it("isi sebagian dirapikan; grup lain tetap default", () => {
+    const value = settingSchemas["trainings.page"].parse({ cta: { heading: "  Butuh topik khusus? ", decor: false } });
+    expect(value.cta.heading).toBe("Butuh topik khusus?");
+    expect(value.cta.decor).toBe(false);
+    expect(value.featured.heading).toBe("");
+  });
+
+  it("tombol CTA: label & tautan diisi sekaligus, tautan harus path atau http(s)", () => {
+    const parse = (cta: Record<string, unknown>) => settingSchemas["trainings.page"].safeParse({ cta });
+    expect(parse({ primaryLabel: "Hubungi kami", primaryHref: "/kontak" }).success).toBe(true);
+    const missingHref = parse({ primaryLabel: "Hubungi kami" });
+    expect(missingHref.success).toBe(false);
+    expect(missingHref.error?.issues[0].path).toEqual(["cta", "primaryHref"]);
+    expect(parse({ secondaryHref: "/jadwal" }).success).toBe(false);
+    expect(parse({ primaryLabel: "Tes", primaryHref: "javascript:alert(1)" }).success).toBe(false);
+    expect(parse({ outline: "a".repeat(25) }).success).toBe(false);
+  });
+});

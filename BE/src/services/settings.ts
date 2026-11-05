@@ -93,6 +93,8 @@ export type PublicSettings = {
   // Kosong per field = FE memakai label lama.
   pageHeaders: SettingValues["page.headers"];
   servicesProcess: SettingValues["services.process"];
+  // Teks section /pelatihan; kosong per field = label bawaan FE.
+  trainingsPage: SettingValues["trainings.page"];
   seo: {
     titleTemplate: string;
     defaultTitle: string;
@@ -129,6 +131,7 @@ export async function getPublicSettings(): Promise<PublicSettings> {
     footer: values["site.footer"],
     pageHeaders: values["page.headers"],
     servicesProcess: values["services.process"],
+    trainingsPage: values["trainings.page"],
     seo: {
       titleTemplate: seo.titleTemplate,
       defaultTitle: seo.defaultTitle || identity.name,
