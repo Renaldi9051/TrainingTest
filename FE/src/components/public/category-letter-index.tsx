@@ -1,64 +1,72 @@
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { ActiveIndicator } from "@/components/motion/active-indicator";
 import { gridHref, INDEX_LETTERS } from "@/lib/category-grid-url";
 import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { ChipLink } from "./chip-link";
 import { ScrollToActive } from "./scroll-to-active";
-
-const LETTER_CHIP = "min-w-8 justify-center px-2 font-mono";
 
 // Nama huruf untuk pembaca layar ("#" = nama berawalan angka/simbol).
 function letterName(letter: string): string {
   return letter === "#" ? "Angka dan simbol" : `Huruf ${letter}`;
 }
 
-// Indeks huruf A-Z di atas grid /pelatihan (keputusan pemilik 5 Nov 2026). Tiap huruf berupa link
-// ?huruf= (state di URL, tetap jalan tanpa JavaScript), aktif = chip --primary dengan indikator yang
-// bergeser (DESIGN.md 8.7, FLIP lewat ActiveIndicator). Huruf tanpa kategori tampil redup dan tidak
-// bisa diklik. Di mobile baris di-scroll ke samping dan huruf aktif digeser ke tengah (ScrollToActive);
-// indikator ada di elemen dalam (w-max) yang tidak ikut di-scroll, supaya posisinya dihitung benar.
+function LetterLink({ href, active, label, wide, children }: { href: string; active: boolean; label?: string; wide?: boolean; children: ReactNode }) {
+  return (
+    <Link
+      href={href}
+      scroll={false}
+      aria-current={active ? "true" : undefined}
+      aria-label={label}
+      className={cn(
+        "relative inline-flex h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-fg-strong outline-none",
+        "transition-colors duration-150 [[data-indicator-ready]_&]:duration-300",
+        "focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
+        wide ? "px-3.5 text-small" : "font-mono text-small",
+        // Aktif: kotak --primary (indikator yang bergeser di dalam ActiveIndicator; tanpa JS latar sendiri).
+        active ? "bg-primary text-on-primary [[data-indicator-ready]_&]:bg-transparent" : "hover:bg-bg-subtle",
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
+// Indeks huruf A-Z di toolbar grid /pelatihan (mockup redesign 5 Nov 2026): kotak 40 px mono, aktif
+// --primary dengan indikator yang bergeser (FLIP, ActiveIndicator). Hanya huruf yang punya kategori
+// yang tampil. Tiap huruf berupa link ?huruf= (tetap jalan tanpa JavaScript). Baris di-scroll ke
+// samping kalau meluap, huruf aktif digeser ke tengah (ScrollToActive); indikator ada di elemen dalam
+// (w-max) yang ikut bergeser bersama isinya, supaya posisinya dihitung benar.
 // counts: jumlah kategori publik per huruf (indexLetter, sama dengan BE categoryIndexLetter).
-export function CategoryLetterIndex({ counts, active }: { counts: Readonly<Record<string, number>>; active: string }) {
+export function CategoryLetterIndex({
+  counts,
+  active,
+  className,
+}: {
+  counts: Readonly<Record<string, number>>;
+  active: string;
+  className?: string;
+}) {
   return (
     <ScrollToActive
       activeKey={active}
       label="Indeks huruf kategori"
-      className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0"
+      className={cn("min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", className)}
     >
-      <ActiveIndicator variant="pill" className="flex w-max gap-1.5 py-1 sm:w-auto sm:flex-wrap">
-        <ChipLink href={gridHref({ q: "", huruf: "", page: 1 })} active={!active}>
+      <ActiveIndicator variant="pill" indicatorClassName="rounded-md" className="flex w-max gap-1.5">
+        <LetterLink href={gridHref({ q: "", huruf: "", page: 1 })} active={!active} wide>
           Semua
-        </ChipLink>
-        {INDEX_LETTERS.map((letter) => {
-          const count = counts[letter] ?? 0;
-          if (count === 0) {
-            return (
-              <span
-                key={letter}
-                aria-disabled="true"
-                data-letter={letter}
-                className={cn(
-                  "inline-flex h-8 items-center rounded-full border border-border text-small text-fg-subtle select-none",
-                  LETTER_CHIP,
-                )}
-              >
-                <span aria-hidden>{letter}</span>
-                <span className="sr-only">{letterName(letter)}, tidak ada kategori</span>
-              </span>
-            );
-          }
-          return (
-            <ChipLink
-              key={letter}
-              href={gridHref({ q: "", huruf: letter, page: 1 })}
-              active={active === letter}
-              label={`${letterName(letter)}, ${formatNumber(count)} kategori`}
-              className={LETTER_CHIP}
-            >
-              {letter}
-            </ChipLink>
-          );
-        })}
+        </LetterLink>
+        {INDEX_LETTERS.filter((letter) => (counts[letter] ?? 0) > 0).map((letter) => (
+          <LetterLink
+            key={letter}
+            href={gridHref({ q: "", huruf: letter, page: 1 })}
+            active={active === letter}
+            label={`${letterName(letter)}, ${formatNumber(counts[letter] ?? 0)} kategori`}
+          >
+            {letter}
+          </LetterLink>
+        ))}
       </ActiveIndicator>
     </ScrollToActive>
   );

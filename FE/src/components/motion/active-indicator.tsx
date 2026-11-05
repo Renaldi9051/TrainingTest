@@ -116,6 +116,7 @@ export function ActiveIndicator({
   className,
   selector,
   thickness,
+  indicatorClassName,
   children,
 }: {
   variant: IndicatorVariant;
@@ -123,6 +124,8 @@ export function ActiveIndicator({
   selector?: string;
   // Tebal garis (variant line), px.
   thickness?: number;
+  // Mis. "rounded-md" untuk indikator kotak (indeks huruf), menimpa radius penuh pill.
+  indicatorClassName?: string;
   children: ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -130,7 +133,7 @@ export function ActiveIndicator({
   useActiveIndicator(containerRef, indicatorRef, { variant, selector, thickness });
   return (
     <div ref={containerRef} className={cn("relative", className)}>
-      <IndicatorMark variant={variant} ref={indicatorRef} />
+      <IndicatorMark variant={variant} ref={indicatorRef} className={indicatorClassName} />
       {children}
     </div>
   );
