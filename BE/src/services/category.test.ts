@@ -568,7 +568,7 @@ describe("listPublicCategoryGrid (/pelatihan)", () => {
   });
   const parse = (raw: Record<string, string>) => publicCategoryGridQuerySchema.parse(raw);
 
-  it("unggulan dulu, lalu nama A-Z (localeCompare id, tanpa beda huruf besar)", async () => {
+  it("nama A-Z murni (localeCompare id, tanpa beda huruf besar); unggulan tidak didahulukan", async () => {
     mock.category.findMany.mockResolvedValue([
       gridRow("zeta"),
       gridRow("Beta"),
@@ -577,8 +577,8 @@ describe("listPublicCategoryGrid (/pelatihan)", () => {
       gridRow("Delta", { featured: true }),
     ]);
     const { items } = await listPublicCategoryGrid(parse({ page: "1" }), now);
-    expect(items.map((item) => item.name)).toEqual(["Delta", "Omega", "alpha", "Beta", "zeta"]);
-    expect(items[0]).toEqual({ slug: "delta", name: "Delta", featured: true, trainingCount: 2, cover: null });
+    expect(items.map((item) => item.name)).toEqual(["alpha", "Beta", "Delta", "Omega", "zeta"]);
+    expect(items[2]).toEqual({ slug: "delta", name: "Delta", featured: true, trainingCount: 2, cover: null });
   });
 
   it("q mencocokkan nama case-insensitive, hanya kategori publik", async () => {

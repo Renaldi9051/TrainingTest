@@ -594,8 +594,9 @@ export function categoryIndexLetter(name: string): string {
   return /^[A-Z]$/.test(first) ? first : "#";
 }
 
-// GET /api/public/categories?q=&huruf=&page= (24 per halaman). Urutan: unggulan dulu, lalu nama A-Z
-// (localeCompare "id", sama dengan sidebar lama), dihitung di sini supaya tidak tergantung collation DB.
+// GET /api/public/categories?q=&huruf=&page= (24 per halaman). Urutan: nama A-Z murni (localeCompare
+// "id", sama dengan sidebar lama), dihitung di sini supaya tidak tergantung collation DB. Unggulan tidak
+// didahulukan: /pelatihan menampilkannya terpisah (bento, urutan admin) di atas grid A-Z.
 // q mencocokkan nama (case-insensitive); huruf menyaring huruf awal nama (categoryIndexLetter).
 // page di luar batas dijepit ke halaman terakhir yang valid.
 export async function listPublicCategoryGrid(
@@ -618,7 +619,7 @@ export async function listPublicCategoryGrid(
   });
   const sorted = rows
     .filter((row) => !query.huruf || categoryIndexLetter(row.name) === query.huruf)
-    .sort((a, b) => Number(b.featured) - Number(a.featured) || a.name.localeCompare(b.name, "id", { sensitivity: "base" }));
+    .sort((a, b) => a.name.localeCompare(b.name, "id", { sensitivity: "base" }));
   const totalPages = Math.max(1, Math.ceil(sorted.length / PUBLIC_CATEGORY_PAGE_SIZE));
   const page = Math.min(query.page, totalPages);
   const { skip, take } = pagination(page, PUBLIC_CATEGORY_PAGE_SIZE);
