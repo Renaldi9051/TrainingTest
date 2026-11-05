@@ -153,7 +153,12 @@ test.describe("katalog & detail pelatihan", () => {
     );
     await expect(page.getByRole("status").filter({ hasText: /kategori$/i })).toHaveText(new RegExp(`^${api.meta.total.toLocaleString("id-ID")} kategori$`, "i"));
     const featured = api.data.find((category) => category.featured);
-    if (featured) await expect(page.locator(`[data-category-card="${featured.slug}"]`)).toContainText("Unggulan");
+    // Unggulan tidak berbadge per kartu; kartunya masuk kelompok "Kategori unggulan".
+    if (featured) {
+      const group = page.locator('[data-category-group="unggulan"]');
+      await expect(group.getByRole("heading", { level: 2, name: "Kategori unggulan" })).toBeVisible();
+      await expect(group.locator(`[data-category-card="${featured.slug}"]`)).toBeVisible();
+    }
 
     // Ketik tanpa Enter: URL berubah setelah jeda (tanpa reload penuh: penanda window tetap ada).
     const target = api.data[api.data.length - 1];
@@ -175,6 +180,47 @@ test.describe("katalog & detail pelatihan", () => {
     await expect(page.getByText(`Kategori “${missing}” tidak ditemukan`)).toBeVisible();
     await expect(page.locator("#konten").getByRole("button", { name: /Tekan/ })).toHaveCount(2);
     await expect(page.getByRole("link", { name: "Lihat semua kategori" })).toHaveAttribute("href", "/pelatihan");
+  });
+
+  // Keputusan pemilik 5 Nov 2026: indeks huruf A-Z; huruf & kata cari saling menggantikan.
+  test("grid kategori: indeks huruf menyaring huruf awal, huruf kosong nonaktif, huruf & cari saling menggantikan", async ({ page }) => {
+    const all = (await (await page.request.get("/api/public/categories")).json()) as { data: { slug: string; name: string }[] };
+    const letterOf = (name: string) => {
+      const first = name.normalize("NFKD").replace(/\p{M}/gu, "").trim().charAt(0).toUpperCase();
+      return /^[A-Z]$/.test(first) ? first : "#";
+    };
+    const letters = new Set(all.data.map((category) => letterOf(category.name)));
+    const letter = letterOf(all.data[0].name);
+    const expected = all.data.filter((category) => letterOf(category.name) === letter).map((category) => category.slug).sort();
+    const empty = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].find((candidate) => !letters.has(candidate));
+
+    await page.goto("/pelatihan?q=sembarang");
+    const index = page.getByRole("navigation", { name: "Indeks huruf kategori" });
+    const letterName = letter === "#" ? "Angka dan simbol" : `Huruf ${letter}`;
+    await index.getByRole("link", { name: new RegExp(`^${letterName},`) }).click();
+    await page.waitForURL((url) => url.searchParams.get("huruf") === letter && !url.searchParams.has("q"));
+    await expect(page.getByRole("searchbox", { name: "Cari kategori" })).toHaveValue("");
+    await expect(index.getByRole("link", { name: new RegExp(`^${letterName},`) })).toHaveAttribute("aria-current", "true");
+    await expect(page.getByRole("status").filter({ hasText: /kategori/i })).toContainText(letter === "#" ? "angka & simbol" : `huruf ${letter}`, { ignoreCase: true });
+    const cards = page.locator("[data-category-card]");
+    await expect(cards).toHaveCount(Math.min(expected.length, 24));
+    const shown = await cards.evaluateAll((links) => links.map((link) => link.getAttribute("data-category-card") ?? ""));
+    expect(shown.every((slug) => expected.includes(slug))).toBe(true);
+
+    // Huruf tanpa kategori: tidak bisa diklik.
+    if (empty) {
+      await expect(index.locator(`[data-letter="${empty}"]`)).toHaveAttribute("aria-disabled", "true");
+      await expect(index.getByRole("link", { name: new RegExp(`^Huruf ${empty},`) })).toHaveCount(0);
+    }
+
+    // Mengetik menghapus huruf; "Semua" kembali aktif.
+    await page.getByRole("searchbox", { name: "Cari kategori" }).fill(all.data[0].name);
+    await page.waitForURL((url) => url.searchParams.has("q") && !url.searchParams.has("huruf"));
+    await expect(index.getByRole("link", { name: "Semua" })).toHaveAttribute("aria-current", "true");
+
+    // Huruf di URL tanpa JS + canonical ke /pelatihan.
+    await page.goto(`/pelatihan?huruf=${encodeURIComponent(letter)}`);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/pelatihan$/);
   });
 
   test("grid kategori: paginasi bernomor di URL, judul & canonical per halaman, halaman di luar batas", async ({ page }) => {

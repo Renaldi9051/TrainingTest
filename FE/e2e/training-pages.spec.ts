@@ -112,7 +112,7 @@ test.describe("halaman pelatihan v0.2", () => {
     await page.goto(`/pelatihan?q=${encodeURIComponent(category.name)}`);
     const tile = page.locator(`[data-category-card="${category.slug}"]`);
     await expect(tile).toHaveAttribute("href", `/pelatihan/kategori/${category.slug}`);
-    await expect(tile.getByRole("heading", { level: 2 })).toHaveText(category.name);
+    await expect(tile.getByRole("heading", { level: 3 })).toHaveText(category.name);
     await expect(tile).toContainText(/\d+ pelatihan/i);
     await expect(tile.locator("a")).toHaveCount(0);
     await tile.click();
