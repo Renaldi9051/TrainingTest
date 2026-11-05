@@ -274,6 +274,30 @@ test.describe("halaman kategori v2", () => {
     await expect(page.getByRole("heading", { level: 1, name: CATEGORY_NAME })).toBeVisible();
   });
 
+  test("grid /pelatihan: cari kategori, cover dari Category.image lalu foto galeri, badge unggulan, klik ke landing", async ({ page }) => {
+    const tile = page.locator(`[data-category-card="${category.slug}"]`);
+    await gotoUntil(page, `/pelatihan?q=${token}`, async () => (await tile.count()) === 1);
+    await expect(page.getByRole("status").filter({ hasText: /kategori cocok/i })).toHaveText(/^1 kategori cocok$/i);
+    await expect(tile.getByRole("img")).toHaveAttribute("alt", COVER_ALT);
+    await expect(tile).toContainText(/2 pelatihan/i);
+    await expect(tile).not.toContainText("Unggulan");
+
+    // Cover kosong -> foto pertama galeri; unggulan -> badge.
+    await loginViaApi(page.request);
+    await patchCategory(page.request, { imageId: null, featured: true });
+    try {
+      await gotoUntil(page, `/pelatihan?q=${token}`, async () => (await tile.getByText("Unggulan").count()) === 1);
+      await expect(tile.getByRole("img")).toHaveCount(1);
+      await expect(tile.getByRole("img")).toHaveAttribute("alt", /^\[UJI\] Dokumentasi \d$/);
+    } finally {
+      await patchCategory(page.request, { imageId: coverImage, featured: false });
+    }
+
+    await tile.click();
+    await expect(page).toHaveURL(new RegExp(`${escapeRegExp(landing())}$`));
+    await expect(page.getByRole("heading", { level: 1, name: CATEGORY_NAME })).toBeVisible();
+  });
+
   test("detail pelatihan: tanpa galeri sendiri; tautan 'Lihat galeri kategori' ke #galeri", async ({ page }) => {
     await gotoUntil(page, `/pelatihan/${withoutCover.slug}`, async () =>
       (await page.getByRole("link", { name: new RegExp(`Lihat galeri kategori ${escapeRegExp(CATEGORY_NAME)}`) }).count()) === 1,
@@ -304,12 +328,12 @@ test.describe("halaman kategori v2", () => {
     expect((await cards(`Beta tanpa sampul ${id}`))[0].cover?.alt).toBe(COVER_ALT);
     expect((await cards(`Alpha bersampul ${id}`))[0]).toMatchObject({ coverSource: "training", cover: { alt: "[UJI] Foto sampul sendiri" } });
 
-    // Kategori bukan filter katalog lagi: kartu dicari lewat pencarian judul di katalog.
-    await gotoUntil(page, `/pelatihan?q=${encodeURIComponent(withoutCover.title)}`, async () =>
+    // Kartu pelatihan tidak lagi di /pelatihan: cek di "Pelatihan terkait" (kategori uji hanya berisi dua pelatihan ini).
+    await gotoUntil(page, `/pelatihan/${withCover.slug}`, async () =>
       (await card(page, withoutCover.title).getAttribute("data-cover-source")) === "category",
     );
     await expect(card(page, withoutCover.title).getByRole("img", { name: COVER_ALT })).toHaveCount(1);
-    await page.goto(`/pelatihan?q=${encodeURIComponent(withCover.title)}`);
+    await page.goto(`/pelatihan/${withoutCover.slug}`);
     await expect(card(page, withCover.title)).toHaveAttribute("data-cover-source", "training");
 
     await page.goto(`/pelatihan/${withoutCover.slug}`);

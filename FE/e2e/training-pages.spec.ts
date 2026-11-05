@@ -4,11 +4,11 @@ import path from "node:path";
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { createTraining, deleteTraining, firstCategory, loginViaApi, ORIGIN, photoLikeJpeg, runId, type CreatedTraining } from "./helpers";
 
-// Halaman pelatihan redesign v0.2 (fase 4): katalog dengan sidebar filter (kategori pilih banyak
-// tanpa role checkbox, chip filter aktif, empty state, overlay indeks A-Z, panel terlipat di mobile),
-// kartu tanpa sampul (blok UI 4:3), landing kategori v2 (daftar judul tanpa kartu; detail lengkap
-// di category-landing.spec.ts), detail (satu navigasi isi, tingkat & sertifikat, silabus per hari,
-// sesi di form inquiry).
+// Halaman pelatihan: /pelatihan = grid kategori (keputusan atasan 5 Nov 2026; tanpa sidebar filter,
+// urutan, atau kartu pelatihan; kartu ke halaman kategori; URL lama ?kategori= -> 308), kartu
+// pelatihan tanpa sampul (blok UI 4:3, dicek di "Pelatihan terkait"), landing kategori v2 (daftar
+// judul tanpa kartu; detail lengkap di category-landing.spec.ts), detail (satu navigasi isi, tingkat
+// & sertifikat, silabus per hari, sesi di form inquiry).
 // Data uji hanya di database training_e2e: foto JPEG buatan generator (bukan foto mockup).
 // Screenshot 360/768/1280 (opsional): SCREENS_OUT=<folder> npx playwright test e2e/training-pages.spec.ts
 
@@ -100,34 +100,31 @@ test.describe("halaman pelatihan v0.2", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
   });
 
-  test("katalog: kategori di sidebar jadi tautan ke halaman kategori (bukan filter), metode/tipe tetap chip, empty state", async ({ page }) => {
+  test("/pelatihan: grid kategori (tanpa sidebar/urutan/kartu pelatihan), kartu ke halaman kategori, cari kosong", async ({ page }) => {
     await page.goto("/pelatihan");
-    const filter = page.getByRole("complementary", { name: "Filter" });
-    // Kategori bukan filter lagi: tidak ada checkbox, dan tidak ada chip "Filter aktif" untuk kategori.
-    await expect(filter.getByRole("checkbox")).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 1, name: "Pilih kategori pelatihan" })).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "Filter" })).toHaveCount(0);
+    await expect(page.getByRole("group", { name: "Metode" })).toHaveCount(0);
     await expect(page.getByRole("list", { name: "Filter aktif" })).toHaveCount(0);
+    await expect(page.locator("article[data-cursor-label]")).toHaveCount(0);
 
-    // Setiap kategori di sidebar adalah tautan ke halaman kategori v2 (10 pertama urut abjad;
-    // kategori uji belum tentu termasuk, jadi ambil tautan pertama yang tampil).
-    const categoryNav = page.getByRole("navigation", { name: "Kategori" });
-    const firstLink = categoryNav.getByRole("link").first();
-    const href = (await firstLink.getAttribute("href")) ?? "";
-    expect(href).toMatch(/^\/pelatihan\/kategori\/[a-z0-9-]+$/);
-    const name = (await firstLink.locator("span").first().innerText()).trim();
-    await firstLink.click();
-    await expect(page).toHaveURL(new RegExp(`${escapeRegExp(href)}$`));
-    await expect(page.getByRole("heading", { level: 1, name, exact: true })).toBeVisible();
-
-    // Metode tetap filter chip (satu pilih) dengan chip "Filter aktif" yang bisa dilepas.
-    await page.goto("/pelatihan?metode=offline");
-    const remove = page.getByRole("list", { name: "Filter aktif" }).getByRole("link", { name: "Hapus filter Offline" });
-    await remove.click();
-    await expect(page).toHaveURL(/\/pelatihan$/);
-    await expect(page.getByRole("list", { name: "Filter aktif" })).toHaveCount(0);
+    // Cari kategori uji lewat GET ?q=, lalu kartunya (satu tautan) membuka halaman kategori.
+    await page.goto(`/pelatihan?q=${encodeURIComponent(category.name)}`);
+    const tile = page.locator(`[data-category-card="${category.slug}"]`);
+    await expect(tile).toHaveAttribute("href", `/pelatihan/kategori/${category.slug}`);
+    await expect(tile.getByRole("heading", { level: 2 })).toHaveText(category.name);
+    await expect(tile).toContainText(/\d+ pelatihan/i);
+    await expect(tile.locator("a")).toHaveCount(0);
+    await tile.click();
+    await expect(page).toHaveURL(new RegExp(`/pelatihan/kategori/${category.slug}$`));
+    await expect(page.getByRole("heading", { level: 1, name: category.name })).toBeVisible();
 
     await page.goto(`/pelatihan?q=tidakadasamasekali${id}`);
-    await expect(page.getByText("Pelatihan tidak ditemukan.")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Reset filter" })).toHaveAttribute("href", "/pelatihan");
+    await expect(page.getByText(`Kategori “tidakadasamasekali${id}” tidak ditemukan`)).toBeVisible();
+    await expect(page.getByRole("link", { name: "Lihat semua kategori" })).toHaveAttribute("href", "/pelatihan");
+
+    // CTA penutup ke kontak.
+    await expect(page.getByRole("region", { name: "Tidak menemukan topik yang dicari?" }).getByRole("link", { name: /Request pelatihan in-house/ })).toHaveAttribute("href", "/kontak");
   });
 
   test("katalog: /pelatihan?kategori=<slug> dialihkan 308 ke halaman kategori v2", async ({ page }) => {
@@ -141,36 +138,13 @@ test.describe("halaman pelatihan v0.2", () => {
     await expect(page).toHaveURL(new RegExp(`/pelatihan/kategori/${category.slug}$`));
     await expect(page.getByRole("heading", { level: 1, name: category.name })).toBeVisible();
 
-    // Slug tak dikenal: kembali ke katalog.
+    // Slug tak dikenal: kembali ke /pelatihan.
     await page.goto(`/pelatihan?kategori=tidak-ada-kategori-${id}`);
     await expect(page).toHaveURL(/\/pelatihan$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Katalog pelatihan" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Pilih kategori pelatihan" })).toBeVisible();
   });
 
-  test("katalog: Tampilkan semua (indeks A-Z) membuka overlay, saringan ketik, tautan ke halaman kategori", async ({ page }) => {
-    await page.goto("/pelatihan");
-    await page.getByRole("button", { name: /^Tampilkan semua kategori/ }).click();
-    const overlay = page.getByRole("dialog", { name: "Indeks kategori / A-Z" });
-    await expect(overlay).toBeVisible();
-    await overlay.getByLabel("Saring kategori").fill(category.name);
-    const link = overlay.getByRole("link", { name: new RegExp(`^${escapeRegExp(category.name)}`) }).first();
-    await expect(link).toHaveAttribute("href", `/pelatihan/kategori/${category.slug}`);
-    await link.click();
-    await expect(page).toHaveURL(new RegExp(`/pelatihan/kategori/${category.slug}$`));
-  });
-
-  test("katalog mobile: panel filter terlipat, terbuka otomatis kalau ada filter", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 800 });
-    await page.goto("/pelatihan");
-    const metode = page.getByRole("group", { name: "Metode" });
-    await expect(metode).toBeHidden();
-    await page.locator("summary", { hasText: "Filter" }).click();
-    await expect(metode).toBeVisible();
-
-    await page.goto("/pelatihan?metode=online");
-    await expect(page.getByRole("group", { name: "Metode" })).toBeVisible();
-
-    // Tanpa scroll horizontal di 360 px (kotak cari, tab isi yang bisa digeser).
+  test("tanpa scroll horizontal di 360 px (grid kategori, halaman kategori, detail)", async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 });
     for (const url of ["/pelatihan", `/pelatihan/kategori/${category.slug}`, `/pelatihan/${withCover.slug}`]) {
       await page.goto(url);
@@ -180,8 +154,8 @@ test.describe("halaman pelatihan v0.2", () => {
   });
 
   test("kartu tanpa sampul: blok 4:3 berisi label kategori; landing kategori: daftar judul tanpa kartu", async ({ page }) => {
-    // Kategori bukan filter katalog lagi: cari kartu di katalog umum.
-    await page.goto("/pelatihan");
+    // Kartu pelatihan tidak lagi di /pelatihan; cek di "Pelatihan terkait" detail (kategori sama, terbaru dulu).
+    await page.goto(`/pelatihan/${withCover.slug}`);
     const bare = card(page, withoutCover.title);
     await bare.scrollIntoViewIfNeeded();
     const block = bare.locator("[data-reveal=image]");
@@ -191,7 +165,9 @@ test.describe("halaman pelatihan v0.2", () => {
     if (!box) throw new Error("blok gambar tidak terlihat");
     expect(box.width / box.height).toBeCloseTo(4 / 3, 1);
 
+    await page.goto(`/pelatihan/${withoutCover.slug}`);
     const covered = card(page, withCover.title);
+    await covered.scrollIntoViewIfNeeded();
     await expect(covered.getByRole("img")).toHaveAttribute("alt", "[UJI] Foto sampul pelatihan");
 
     // Landing kategori v2: tanpa chip kategori lain, statistik, kartu, filter metode, maupun paginasi.
@@ -296,13 +272,9 @@ test.describe("halaman pelatihan v0.2", () => {
       }
       const shots: [string, string, (p: Page) => Promise<void>][] = [
         ["katalog", "/pelatihan", async () => {}],
-        ["katalog-filter", `/pelatihan?metode=offline`, async () => {}],
+        ["katalog-hal-2", "/pelatihan?page=2", async () => {}],
         ["katalog-kosong", `/pelatihan?q=tidakadasamasekali${id}`, async () => {}],
-        ["katalog-az", "/pelatihan", async (p) => {
-          await p.getByRole("button", { name: /^Tampilkan semua kategori/ }).click();
-          await expect(p.getByRole("dialog", { name: "Indeks kategori / A-Z" })).toBeVisible();
-          await p.waitForTimeout(400);
-        }],
+        ["katalog-cari", `/pelatihan?q=${encodeURIComponent(category.name.split(" ")[0])}`, async () => {}],
         ["kategori", `/pelatihan/kategori/${category.slug}`, async () => {}],
         ["detail", `/pelatihan/${withCover.slug}`, async () => {}],
         ["detail-tanpa-sampul", `/pelatihan/${withoutCover.slug}`, async () => {}],
@@ -311,21 +283,17 @@ test.describe("halaman pelatihan v0.2", () => {
         await page.setViewportSize({ width, height: 900 });
         for (const [name, url, prepare] of shots) {
           await page.goto(url);
-          // Mobile/tablet: tombol indeks ada di dalam panel filter yang terlipat.
-          if (name === "katalog-az" && width < 1024) await page.locator("summary", { hasText: "Filter" }).click();
           await prepare(page);
           // Reveal saat scroll: gulir sampai bawah supaya semua kartu tampil di screenshot penuh.
-          if (name !== "katalog-az") {
-            await page.evaluate(async () => {
-              for (let y = 0; y < document.body.scrollHeight; y += 400) {
-                window.scrollTo(0, y);
-                await new Promise((resolve) => setTimeout(resolve, 60));
-              }
-              window.scrollTo(0, 0);
-            });
-            await page.waitForTimeout(700);
-          }
-          await page.screenshot({ path: path.join(dir, `${name}-${width}.png`), fullPage: name !== "katalog-az" });
+          await page.evaluate(async () => {
+            for (let y = 0; y < document.body.scrollHeight; y += 400) {
+              window.scrollTo(0, y);
+              await new Promise((resolve) => setTimeout(resolve, 60));
+            }
+            window.scrollTo(0, 0);
+          });
+          await page.waitForTimeout(700);
+          await page.screenshot({ path: path.join(dir, `${name}-${width}.png`), fullPage: true });
         }
       }
     } finally {

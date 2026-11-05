@@ -194,6 +194,23 @@ export const categoryDeleteQuerySchema = z.object({
 });
 export type CategoryDeleteQuery = z.infer<typeof categoryDeleteQuerySchema>;
 
+// ===== Grid kategori publik (/pelatihan) =====
+
+export const PUBLIC_CATEGORY_PAGE_SIZE = 24;
+
+// GET /api/public/categories?q=&page=. Nilai tak dikenal diabaikan (URL bisa diketik sembarang);
+// page di luar batas dijepit service ke halaman terakhir yang valid.
+export const publicCategoryGridQuerySchema = z.object({
+  q: z
+    .string()
+    .transform((value) => value.replace(/\s+/g, " ").trim().slice(0, 100))
+    .optional()
+    .catch(undefined)
+    .transform((value) => value || undefined),
+  page: z.coerce.number().int().min(1).max(1000).default(1).catch(1),
+});
+export type PublicCategoryGridQuery = z.infer<typeof publicCategoryGridQuerySchema>;
+
 // trainingCount = jumlah pelatihan aktif (bukan di Sampah), dihitung di service.
 export const CATEGORY_SORT_FIELDS = ["order", "name", "updatedAt", "createdAt", "trainingCount"] as const;
 

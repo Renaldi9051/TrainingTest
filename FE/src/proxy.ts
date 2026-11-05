@@ -1,26 +1,33 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { PublicRedirect } from "@/lib/api/public";
-import { parseCatalogState } from "@/lib/catalog-url";
+import { firstCategorySlug, legacyCatalogTarget } from "@/lib/category-grid-url";
 import { getPublicEnv } from "@/lib/env";
 import { ADMIN_LOGIN, PREVIEW_EXIT, SESSION_COOKIE } from "@/lib/session";
 
 const CATALOG = "/pelatihan";
 
 export async function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname === CATALOG) return redirectCategoryParam(request);
+  if (request.nextUrl.pathname === CATALOG) return redirectLegacyCatalog(request);
   return adminGuard(request);
 }
 
-// Kategori tidak lagi memfilter katalog (keputusan atasan 4 Nov 2026): /pelatihan?kategori=<slug>
-// dialihkan 308 ke /pelatihan/kategori/<slug>, parameter lain dibuang, >1 kategori ambil yang pertama.
-// Slug tak dikenal: ikuti tabel Redirect (slug lama), selain itu 308 ke /pelatihan.
-// Di proxy (bukan di page) supaya status 308 terkirim sebelum streaming dan halaman katalog tetap
-// bisa di-prerender (Cache Components melarang membaca searchParams di luar <Suspense>).
-async function redirectCategoryParam(request: NextRequest) {
-  if (!request.nextUrl.searchParams.has("kategori")) return NextResponse.next();
-  const slug = parseCatalogState({ kategori: request.nextUrl.searchParams.get("kategori") ?? "" }).kategori[0];
-  const landing = `${CATALOG}/kategori/${slug}`;
+// /pelatihan sekarang grid kategori (keputusan atasan 5 Nov 2026). URL katalog kartu lama:
+// - ?kategori=<slug> -> 308 ke /pelatihan/kategori/<slug> (lihat redirectCategoryParam);
+// - ?metode=, ?tipe=, ?sort=/?urut=, ?hal= -> 308 ke /pelatihan, q dan page dipertahankan.
+// Di proxy (bukan di page) supaya status 308 terkirim sebelum streaming dan halaman tetap bisa
+// di-prerender (Cache Components melarang membaca searchParams di luar <Suspense>).
+async function redirectLegacyCatalog(request: NextRequest) {
+  const params = request.nextUrl.searchParams;
+  if (params.has("kategori")) return redirectCategoryParam(request, firstCategorySlug(params.get("kategori")));
+  const target = legacyCatalogTarget(params);
+  return target ? NextResponse.redirect(new URL(target, request.url), 308) : NextResponse.next();
+}
+
+// ?kategori=: parameter lain dibuang, >1 kategori ambil yang pertama. Slug tak dikenal: ikuti tabel
+// Redirect (slug lama), selain itu 308 ke /pelatihan.
+async function redirectCategoryParam(request: NextRequest, slug: string | null) {
   if (!slug) return NextResponse.redirect(new URL(CATALOG, request.url), 308);
+  const landing = `${CATALOG}/kategori/${slug}`;
 
   const base = `${getPublicEnv().BE_INTERNAL_URL}/api/public`;
   const get = (path: string) => fetch(`${base}${path}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(5_000) });
@@ -51,8 +58,8 @@ function adminGuard(request: NextRequest) {
   return NextResponse.redirect(loginUrl);
 }
 
-// Halaman admin + katalog (hanya untuk redirect ?kategori=). /api/* sengaja tidak lewat proxy
-// supaya body upload tidak di-buffer.
+// Halaman admin + /pelatihan (hanya untuk redirect URL katalog lama). /api/* sengaja tidak lewat
+// proxy supaya body upload tidak di-buffer.
 export const config = {
   matcher: ["/admin", "/admin/:path*", "/pelatihan"],
 };

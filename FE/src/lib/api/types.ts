@@ -386,6 +386,16 @@ export type PublicCategory = {
   trainingCount: number;
 };
 
+// GET /api/public/categories?q=&page= (grid /pelatihan, 24 per halaman, meta PaginationMeta).
+export type PublicCategoryGridItem = {
+  slug: string;
+  name: string;
+  featured: boolean;
+  trainingCount: number;
+  // Category.image, lalu foto pertama galeri kategori; null kalau keduanya kosong.
+  cover: PublicImage | null;
+};
+
 // Pelatihan ringkas untuk daftar judul di landing kategori (tanpa kartu bergambar).
 export type PublicCategoryTraining = { slug: string; title: string; types: TrainingType[] };
 

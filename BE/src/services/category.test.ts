@@ -4,6 +4,7 @@ import {
   categoryDeleteQuerySchema,
   categoryListQuerySchema,
   categoryUpdateSchema,
+  publicCategoryGridQuerySchema,
 } from "@/lib/validators/category";
 import { createMockDb, passThroughTransactions, type MockDb } from "@/test/mock-db";
 
@@ -21,6 +22,7 @@ import {
   getPublicCategory,
   listCategories,
   listPublicCategories,
+  listPublicCategoryGrid,
   normalizeAudienceSource,
   reorderCategories,
   restoreCategory,
@@ -549,5 +551,86 @@ describe("audienceSource invariant (badge 'Dirangkum dari')", () => {
 
     await updateCategory(ID, { audience: [{ label: "Staf", trainingCount: 2 }], audienceSource: "auto" }, "u1");
     expect(mock.category.update.mock.calls[0][0].data.audienceSource).toBe("auto");
+  });
+});
+
+describe("listPublicCategoryGrid (/pelatihan)", () => {
+  const now = new Date("2026-11-05T00:00:00Z");
+  const gridRow = (name: string, extra: Record<string, unknown> = {}) => ({
+    slug: name.toLowerCase().replace(/\s+/g, "-"),
+    name,
+    featured: false,
+    image: null,
+    images: [],
+    _count: { trainings: 2 },
+    ...extra,
+  });
+  const parse = (raw: Record<string, string>) => publicCategoryGridQuerySchema.parse(raw);
+
+  it("unggulan dulu, lalu nama A-Z (localeCompare id, tanpa beda huruf besar)", async () => {
+    mock.category.findMany.mockResolvedValue([
+      gridRow("zeta"),
+      gridRow("Beta"),
+      gridRow("Omega", { featured: true }),
+      gridRow("alpha"),
+      gridRow("Delta", { featured: true }),
+    ]);
+    const { items } = await listPublicCategoryGrid(parse({ page: "1" }), now);
+    expect(items.map((item) => item.name)).toEqual(["Delta", "Omega", "alpha", "Beta", "zeta"]);
+    expect(items[0]).toEqual({ slug: "delta", name: "Delta", featured: true, trainingCount: 2, cover: null });
+  });
+
+  it("q mencocokkan nama case-insensitive, hanya kategori publik", async () => {
+    mock.category.findMany.mockResolvedValue([]);
+    await listPublicCategoryGrid(parse({ q: "  Pajak  " }), now);
+    const where = mock.category.findMany.mock.calls[0][0].where;
+    expect(where.name).toEqual({ contains: "Pajak", mode: "insensitive" });
+    expect(where).toMatchObject({ deletedAt: null, trainings: { some: { training: { status: "PUBLISHED", publishedAt: { lte: now } } } } });
+    // Tanpa q: tidak ada filter nama.
+    await listPublicCategoryGrid(parse({ page: "1" }), now);
+    expect(mock.category.findMany.mock.calls[1][0].where.name).toBeUndefined();
+  });
+
+  it("cover: Category.image, lalu foto pertama galeri, lalu null; media di Sampah dilewati", async () => {
+    mock.category.findMany.mockResolvedValue([
+      gridRow("A image", { image: imageMedia() }),
+      gridRow("B galeri", { images: [{ mediaId: "g1", order: 0, media: imageMedia({ id: "g1", path: "2026/10/galeri.webp", alt: "Galeri" }) }] }),
+      gridRow("C sampah", { image: imageMedia({ deletedAt: new Date() }), images: [] }),
+      gridRow("D kosong"),
+    ]);
+    const { items } = await listPublicCategoryGrid(parse({ page: "1" }), now);
+    expect(items[0].cover).toMatchObject({ url: "/uploads/2026/10/kategori.webp", alt: "Kelas keuangan" });
+    expect(items[1].cover).toMatchObject({ url: "/uploads/2026/10/galeri.webp", alt: "Galeri" });
+    expect(items[2].cover).toBeNull();
+    expect(items[3].cover).toBeNull();
+    // Galeri: hanya foto pertama yang aktif, urut order.
+    expect(mock.category.findMany.mock.calls[0][0].select.images).toMatchObject({
+      where: { media: { deletedAt: null } },
+      orderBy: { order: "asc" },
+      take: 1,
+    });
+  });
+
+  it("24 per halaman; meta page/pageSize/total/totalPages; page di luar batas -> halaman terakhir", async () => {
+    const names = Array.from({ length: 50 }, (_, index) => `Kategori ${String(index).padStart(2, "0")}`);
+    mock.category.findMany.mockResolvedValue(names.map((name) => gridRow(name)));
+    const second = await listPublicCategoryGrid(parse({ page: "2" }), now);
+    expect(second.meta).toEqual({ page: 2, pageSize: 24, total: 50, totalPages: 3 });
+    expect(second.items).toHaveLength(24);
+    expect(second.items[0].name).toBe("Kategori 24");
+
+    mock.category.findMany.mockResolvedValue(names.map((name) => gridRow(name)));
+    const beyond = await listPublicCategoryGrid(parse({ page: "99" }), now);
+    expect(beyond.meta.page).toBe(3);
+    expect(beyond.items.map((item) => item.name)).toEqual(["Kategori 48", "Kategori 49"]);
+
+    mock.category.findMany.mockResolvedValue([]);
+    const empty = await listPublicCategoryGrid(parse({ q: "tidak-ada" }), now);
+    expect(empty).toEqual({ items: [], meta: { page: 1, pageSize: 24, total: 0, totalPages: 1 } });
+  });
+
+  it("query tak valid tidak error: page bukan angka -> 1, q kosong -> tanpa filter", () => {
+    expect(parse({ page: "abc", q: "   " })).toEqual({ page: 1, q: undefined });
+    expect(parse({ page: "-3" })).toEqual({ page: 1, q: undefined });
   });
 });

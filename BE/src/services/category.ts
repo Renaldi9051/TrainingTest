@@ -17,8 +17,9 @@ import type {
   CategoryDeleteQuery,
   CategoryListQuery,
   CategoryUpdateInput,
+  PublicCategoryGridQuery,
 } from "@/lib/validators/category";
-import { audienceSchema } from "@/lib/validators/category";
+import { audienceSchema, PUBLIC_CATEGORY_PAGE_SIZE } from "@/lib/validators/category";
 import type { ReorderInput, RestoreInput } from "@/lib/validators/common";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
 import {
@@ -573,6 +574,53 @@ export async function listPublicCategories(now = new Date()): Promise<PublicCate
     orderBy: [{ order: "asc" }, { name: "asc" }],
   });
   return rows.map(toPublicCategory);
+}
+
+// Kartu grid kategori di /pelatihan.
+export type PublicCategoryGridItem = {
+  slug: string;
+  name: string;
+  featured: boolean;
+  trainingCount: number;
+  // Category.image, lalu foto pertama galeri kategori, lalu null (media di Sampah dilewati).
+  cover: PublicImage | null;
+};
+
+// GET /api/public/categories?q=&page= (24 per halaman). Urutan: unggulan dulu, lalu nama A-Z
+// (localeCompare "id", sama dengan sidebar lama), dihitung di sini supaya tidak tergantung collation DB.
+// q mencocokkan nama (case-insensitive). page di luar batas dijepit ke halaman terakhir yang valid.
+export async function listPublicCategoryGrid(
+  query: PublicCategoryGridQuery,
+  now = new Date(),
+): Promise<{ items: PublicCategoryGridItem[]; meta: ListMeta }> {
+  const rows = await getDb().category.findMany({
+    where: {
+      ...nonEmptyPublicCategoryWhere(now),
+      ...(query.q ? { name: { contains: query.q, mode: "insensitive" as const } } : {}),
+    },
+    select: {
+      slug: true,
+      name: true,
+      featured: true,
+      image: true,
+      images: { where: { media: { deletedAt: null } }, orderBy: { order: "asc" }, take: 1, include: { media: true } },
+      _count: { select: { trainings: { where: { training: publicTrainingWhere(now) } } } },
+    },
+  });
+  const sorted = rows.sort(
+    (a, b) => Number(b.featured) - Number(a.featured) || a.name.localeCompare(b.name, "id", { sensitivity: "base" }),
+  );
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PUBLIC_CATEGORY_PAGE_SIZE));
+  const page = Math.min(query.page, totalPages);
+  const { skip, take } = pagination(page, PUBLIC_CATEGORY_PAGE_SIZE);
+  const items = sorted.slice(skip, skip + take).map((row) => ({
+    slug: row.slug,
+    name: row.name,
+    featured: row.featured,
+    trainingCount: row._count.trainings,
+    cover: toPublicImage(activeMediaDto(row.image) ?? activeMediaDto(row.images[0]?.media)),
+  }));
+  return { items, meta: listMeta(page, PUBLIC_CATEGORY_PAGE_SIZE, sorted.length) };
 }
 
 export async function getPublicCategory(slug: string, now = new Date()): Promise<PublicCategoryDetail | null> {

@@ -55,7 +55,8 @@ export function buildPublicPaletteGroups(query: string, result: PublicSearchResu
     {
       id: "catalog",
       label: "Katalog",
-      items: [{ key: "catalog:all", href: catalogSearchHref(q), title: `Lihat semua hasil untuk "${q}"`, meta: "Cari di katalog pelatihan" }],
+      // /pelatihan?q= sekarang mencari nama kategori (grid kategori, 5 Nov 2026), bukan judul pelatihan.
+      items: [{ key: "catalog:all", href: catalogSearchHref(q), title: `Cari kategori "${q}"`, meta: "Di halaman Pelatihan" }],
     },
   ];
 }

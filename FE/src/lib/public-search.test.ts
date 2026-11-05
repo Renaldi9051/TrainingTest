@@ -23,7 +23,7 @@ describe("palette search publik", () => {
     const groups = buildPublicPaletteGroups("pilot", result);
     expect(groups.map((group) => group.label)).toEqual(["Pelatihan", "Kategori", "Layanan", "Katalog"]);
     expect(groups[1].items[0]).toMatchObject({ title: "Pilot Drone", meta: "1.200 pelatihan", href: "/pelatihan/kategori/pilot-drone" });
-    expect(groups[3].items[0]).toMatchObject({ href: "/pelatihan?q=pilot", title: 'Lihat semua hasil untuk "pilot"' });
+    expect(groups[3].items[0]).toMatchObject({ href: "/pelatihan?q=pilot", title: 'Cari kategori "pilot"' });
   });
 
   it("kurang dari 2 huruf, sedang memuat, atau tanpa hasil: tidak ada grup (palette menampilkan statusnya)", () => {

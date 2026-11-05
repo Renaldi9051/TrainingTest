@@ -1,5 +1,6 @@
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { PaginationMeta } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -14,20 +15,30 @@ const itemClass =
   "inline-flex h-10 min-w-10 items-center justify-center rounded-md px-3 font-mono text-small outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2";
 
 // Paginasi berbasis link (state di URL). hrefFor membentuk URL untuk nomor halaman tertentu.
-export function Pagination({ meta, hrefFor }: { meta: PaginationMeta; hrefFor: (page: number) => string }) {
+// info (opsional): keterangan di kiri (mis. "Halaman 1 dari 7 / 1-24 dari 161"), kontrol di kanan.
+export function Pagination({
+  meta,
+  hrefFor,
+  info,
+}: {
+  meta: PaginationMeta;
+  hrefFor: (page: number) => string;
+  info?: ReactNode;
+}) {
   if (meta.totalPages <= 1) return null;
   const { page, totalPages } = meta;
 
-  return (
-    <nav aria-label="Halaman" className="flex items-center justify-between gap-4 border-t border-border pt-6">
-      {page > 1 ? (
-        <Link href={hrefFor(page - 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary-ink")}>
-          <ArrowLeftIcon className="size-4" strokeWidth={1.5} aria-hidden />
-          <span className="font-sans">Sebelumnya</span>
-        </Link>
-      ) : (
-        <span />
-      )}
+  const prev =
+    page > 1 ? (
+      <Link href={hrefFor(page - 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary-ink")}>
+        <ArrowLeftIcon className="size-4" strokeWidth={1.5} aria-hidden />
+        <span className="font-sans">Sebelumnya</span>
+      </Link>
+    ) : (
+      <span />
+    );
+  const numbers = (
+    <>
       <ol className="hidden items-center gap-1 sm:flex">
         {pageWindow(page, totalPages).map((item, index) =>
           item === "gap" ? (
@@ -51,14 +62,36 @@ export function Pagination({ meta, hrefFor }: { meta: PaginationMeta; hrefFor: (
       <p className="font-mono text-small text-fg-muted sm:hidden">
         {page} / {totalPages}
       </p>
-      {page < totalPages ? (
-        <Link href={hrefFor(page + 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary-ink")}>
-          <span className="font-sans">Berikutnya</span>
-          <ArrowRightIcon className="size-4" strokeWidth={1.5} aria-hidden />
-        </Link>
-      ) : (
-        <span />
-      )}
+    </>
+  );
+  const next =
+    page < totalPages ? (
+      <Link href={hrefFor(page + 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary-ink")}>
+        <span className="font-sans">Berikutnya</span>
+        <ArrowRightIcon className="size-4" strokeWidth={1.5} aria-hidden />
+      </Link>
+    ) : (
+      <span />
+    );
+
+  if (info) {
+    return (
+      <div className="flex flex-col gap-4 border-t border-border pt-6 md:flex-row md:items-center md:justify-between">
+        <p className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{info}</p>
+        <nav aria-label="Halaman" className="flex items-center justify-between gap-2 md:justify-end">
+          {prev}
+          {numbers}
+          {next}
+        </nav>
+      </div>
+    );
+  }
+
+  return (
+    <nav aria-label="Halaman" className="flex items-center justify-between gap-4 border-t border-border pt-6">
+      {prev}
+      {numbers}
+      {next}
     </nav>
   );
 }
