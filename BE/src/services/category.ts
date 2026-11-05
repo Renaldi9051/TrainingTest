@@ -1,8 +1,9 @@
-import type { Category, Media, Prisma } from "@/generated/prisma/client";
+import type { Media, Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { HttpError } from "@/lib/http";
 import { listMeta, pagination, type ListMeta } from "@/lib/list-query";
 import { revalidateEntity } from "@/lib/revalidate-map";
+import { foldText } from "@/lib/search";
 import {
   assertSlugAvailable,
   nextAvailableSlug,
@@ -11,11 +12,15 @@ import {
   withSlugConflict,
 } from "@/lib/slug";
 import type {
+  CategoryAudienceItem,
+  CategoryAudienceSource,
   CategoryCreateInput,
   CategoryDeleteQuery,
   CategoryListQuery,
   CategoryUpdateInput,
+  PublicCategoryGridQuery,
 } from "@/lib/validators/category";
+import { audienceSchema, PUBLIC_CATEGORY_PAGE_SIZE } from "@/lib/validators/category";
 import type { ReorderInput, RestoreInput } from "@/lib/validators/common";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
 import {
@@ -30,18 +35,54 @@ import { reorderResource } from "@/services/reorder";
 import { publicTrainingWhere } from "@/services/training-visibility";
 
 const ENTITY = "Category";
-const FIELDS = ["slug", "name", "description", "icon", "featured", "order", "imageId", "keywords"] as const;
+const FIELDS = [
+  "slug",
+  "name",
+  "description",
+  "summary",
+  "icon",
+  "featured",
+  "order",
+  "imageId",
+  "coverAlt",
+  "audience",
+  "audienceSource",
+  "keywords",
+  "imageIds",
+] as const;
+
+// Membaca kolom JSON audience dari DB dengan aman: data rusak/lama jadi array kosong.
+export function readCategoryAudience(value: unknown): CategoryAudienceItem[] {
+  const parsed = audienceSchema.safeParse(value);
+  return parsed.success ? parsed.data : [];
+}
+
+// Invariant: audienceSource hanya boleh "auto" kalau audience tidak kosong. Audience kosong selalu
+// "manual" (badge "Dirangkum dari ..." tidak boleh tampil tanpa data). Dipakai saat create/update.
+export function normalizeAudienceSource(
+  audience: CategoryAudienceItem[],
+  source: CategoryAudienceSource,
+): CategoryAudienceSource {
+  return audience.length === 0 ? "manual" : source;
+}
 
 export type CategoryDto = {
   id: string;
   slug: string;
   name: string;
   description: string | null;
+  summary: string | null;
   icon: string | null;
   order: number;
   featured: boolean;
   imageId: string | null;
   image: MediaDto | null;
+  coverAlt: string | null;
+  audience: CategoryAudienceItem[];
+  audienceSource: CategoryAudienceSource;
+  // Galeri foto kategori (maks 4), berurutan; gambar yang di Sampah tidak ikut.
+  imageIds: string[];
+  images: MediaDto[];
   keywords: string[];
   trainingCount: number;
   createdAt: Date;
@@ -55,21 +96,37 @@ const adminTrainingCount = {
   _count: { select: { trainings: { where: { training: { deletedAt: null } } } } },
 } satisfies Prisma.CategoryInclude;
 
-const adminInclude = { ...adminTrainingCount, image: true } satisfies Prisma.CategoryInclude;
+const galleryInclude = {
+  images: { orderBy: { order: "asc" }, include: { media: true } },
+} satisfies Prisma.CategoryInclude;
 
-type CategoryWithCount = Category & { _count: { trainings: number }; image: Media | null };
+const adminInclude = { ...adminTrainingCount, image: true, ...galleryInclude } satisfies Prisma.CategoryInclude;
+
+type CategoryWithCount = Prisma.CategoryGetPayload<{ include: typeof adminInclude }>;
+
+// Galeri aktif (media belum dihapus), urut sesuai order. Toleran kalau relasi images tidak dimuat.
+function activeGalleryImages(category: { images?: { media: Media }[] | null }): MediaDto[] {
+  return (category.images ?? []).flatMap((link) => activeMediaDto(link.media) ?? []);
+}
 
 function toDto(category: CategoryWithCount): CategoryDto {
+  const images = activeGalleryImages(category);
   return {
     id: category.id,
     slug: category.slug,
     name: category.name,
     description: category.description,
+    summary: category.summary,
     icon: category.icon,
     order: category.order,
     featured: category.featured,
     imageId: category.imageId,
     image: activeMediaDto(category.image),
+    coverAlt: category.coverAlt,
+    audience: readCategoryAudience(category.audience),
+    audienceSource: (category.audienceSource === "auto" ? "auto" : "manual") satisfies CategoryAudienceSource,
+    imageIds: images.map((image) => image.id),
+    images,
     keywords: category.keywords,
     trainingCount: category._count.trainings,
     createdAt: category.createdAt,
@@ -155,11 +212,30 @@ export async function getCategory(id: string): Promise<CategoryDto> {
   return toDto(await findActiveCategory(id));
 }
 
+// Setiap gambar galeri: media gambar aktif yang sudah punya alt. Error per index, mis. imageIds.2.
+function galleryRefs(imageIds: string[] | undefined) {
+  return (imageIds ?? []).map((mediaId, index) => ({
+    field: `imageIds.${index}`,
+    mediaId,
+    kind: "image" as const,
+    requireAlt: true,
+  }));
+}
+
+// Bentuk untuk audit/diff: kolom + daftar id galeri (urut).
+function auditShape(category: CategoryWithCount | null) {
+  if (!category) return null;
+  return { ...category, imageIds: activeGalleryImages(category).map((image) => image.id) };
+}
+
 export async function createCategory(input: CategoryCreateInput, userId: string): Promise<CategoryDto> {
   // Slug ditulis admin: bentrok = 409. Slug otomatis dari nama: cari sufiks yang kosong.
   const slug = input.slug ?? (await nextAvailableSlug(slugLookup, slugify(input.name) || "kategori"));
   if (input.slug) await assertSlugAvailable(slugLookup, slug);
-  await assertMediaRefs([{ field: "imageId", mediaId: input.imageId, kind: "image", requireAlt: true }]);
+  await assertMediaRefs([
+    { field: "imageId", mediaId: input.imageId, kind: "image", requireAlt: true },
+    ...galleryRefs(input.imageIds),
+  ]);
 
   const last = await getDb().category.aggregate({ where: { deletedAt: null }, _max: { order: true } });
   const order = (last._max.order ?? -1) + 1;
@@ -171,12 +247,17 @@ export async function createCategory(input: CategoryCreateInput, userId: string)
           slug,
           name: input.name,
           description: input.description,
+          summary: input.summary,
           icon: input.icon,
           featured: input.featured,
           imageId: input.imageId,
+          coverAlt: input.coverAlt,
+          audience: input.audience as Prisma.InputJsonValue,
+          audienceSource: normalizeAudienceSource(input.audience, input.audienceSource),
           keywords: input.keywords,
           order,
           updatedById: userId,
+          images: { create: input.imageIds.map((mediaId, index) => ({ mediaId, order: index })) },
         },
         include: adminInclude,
       });
@@ -187,7 +268,7 @@ export async function createCategory(input: CategoryCreateInput, userId: string)
           action: AuditAction.CREATE,
           entity: ENTITY,
           entityId: category.id,
-          diff: diffFields(null, category, FIELDS) as Prisma.InputJsonValue,
+          diff: diffFields(null, auditShape(category) ?? {}, FIELDS) as Prisma.InputJsonValue,
         },
         tx,
       );
@@ -207,19 +288,39 @@ export async function updateCategory(
   const before = await findActiveCategory(id);
   const slugChanged = input.slug !== undefined && input.slug !== before.slug;
   if (slugChanged && input.slug) await assertSlugAvailable(slugLookup, input.slug, id);
-  await assertMediaRefs([{ field: "imageId", mediaId: input.imageId, kind: "image", requireAlt: true }]);
+  await assertMediaRefs([
+    { field: "imageId", mediaId: input.imageId, kind: "image", requireAlt: true },
+    ...galleryRefs(input.imageIds),
+  ]);
 
   const data: Prisma.CategoryUncheckedUpdateInput = { updatedById: userId };
   if (input.name !== undefined) data.name = input.name;
   if (slugChanged) data.slug = input.slug;
   if (input.description !== undefined) data.description = input.description;
+  if (input.summary !== undefined) data.summary = input.summary;
   if (input.icon !== undefined) data.icon = input.icon;
   if (input.featured !== undefined) data.featured = input.featured;
   if (input.imageId !== undefined) data.imageId = input.imageId;
+  if (input.coverAlt !== undefined) data.coverAlt = input.coverAlt;
+  // Audience & source saling tergantung: kalau salah satu diubah, hitung ulang invariant
+  // (source "auto" hanya sah kalau audience tidak kosong) dari nilai efektif (input atau lama).
+  if (input.audience !== undefined || input.audienceSource !== undefined) {
+    const effectiveAudience = input.audience ?? readCategoryAudience(before.audience);
+    const effectiveSource = input.audienceSource ?? (before.audienceSource === "auto" ? "auto" : "manual");
+    if (input.audience !== undefined) data.audience = input.audience as Prisma.InputJsonValue;
+    data.audienceSource = normalizeAudienceSource(effectiveAudience, effectiveSource);
+  }
   if (input.keywords !== undefined) data.keywords = input.keywords;
 
   const updated = await withSlugConflict(() =>
     getDb().$transaction(async (tx) => {
+      // Galeri diganti utuh sesuai urutan imageIds (pola galeri pelatihan).
+      if (input.imageIds) {
+        await tx.categoryMedia.deleteMany({ where: { categoryId: id } });
+        await tx.categoryMedia.createMany({
+          data: input.imageIds.map((mediaId, index) => ({ categoryId: id, mediaId, order: index })),
+        });
+      }
       const category = await tx.category.update({ where: { id }, data, include: adminInclude });
       if (slugChanged) {
         await recordSlugRedirect(tx, {
@@ -234,7 +335,7 @@ export async function updateCategory(
           action: AuditAction.UPDATE,
           entity: ENTITY,
           entityId: id,
-          diff: diffFields(before, category, FIELDS) as Prisma.InputJsonValue,
+          diff: diffFields(auditShape(before), auditShape(category) ?? {}, FIELDS) as Prisma.InputJsonValue,
         },
         tx,
       );
@@ -388,11 +489,36 @@ export type PublicCategory = {
   slug: string;
   name: string;
   description: string | null;
+  // Ringkasan 1 kalimat (meta description landing). null kalau kosong.
+  summary: string | null;
   icon: string | null;
   featured: boolean;
-  // Gambar kategori (foto landing kategori); null kalau kosong atau media di Sampah.
+  // Cover kategori (juga fallback sampul pelatihan); null kalau kosong atau media di Sampah.
   image: PublicImage | null;
   trainingCount: number;
+};
+
+// Pelatihan ringkas untuk daftar judul di landing kategori (tanpa kartu bergambar).
+export type PublicCategoryTraining = {
+  slug: string;
+  title: string;
+  types: string[];
+};
+
+// Respons GET /api/public/categories/:slug (landing kategori v2).
+export type PublicCategoryDetail = PublicCategory & {
+  // summary, atau 160 karakter pertama description kalau summary kosong; "" kalau keduanya kosong.
+  metaDescription: string;
+  // Alt cover: coverAlt, lalu alt Media (sudah termasuk di image.alt).
+  coverAlt: string | null;
+  // description dipecah per paragraf (baris kosong = pemisah). Kosong = section Tentang disembunyikan.
+  descriptionParagraphs: string[];
+  audience: CategoryAudienceItem[];
+  audienceSource: CategoryAudienceSource;
+  // Galeri foto kategori (maks 4), media di Sampah dibuang. Kosong = section Galeri disembunyikan.
+  images: PublicImage[];
+  // Semua pelatihan tayang di kategori ini, urut A-Z, tanpa paginasi.
+  trainings: PublicCategoryTraining[];
 };
 
 export function publicCountInclude(now: Date) {
@@ -402,16 +528,38 @@ export function publicCountInclude(now: Date) {
   } satisfies Prisma.CategoryInclude;
 }
 
-export function toPublicCategory(category: CategoryWithCount): PublicCategory {
+type PublicCountRow = Prisma.CategoryGetPayload<{ include: ReturnType<typeof publicCountInclude> }>;
+
+export function toPublicCategory(category: PublicCountRow): PublicCategory {
   return {
     slug: category.slug,
     name: category.name,
     description: category.description,
+    summary: category.summary,
     icon: category.icon,
     featured: category.featured,
     image: toPublicImage(activeMediaDto(category.image)),
     trainingCount: category._count.trainings,
   };
+}
+
+// Potong teks ke maks n karakter tanpa memenggal kata (untuk fallback meta description).
+const META_DESCRIPTION_MAX = 160;
+function clampText(value: string, max: number): string {
+  const trimmed = value.replace(/\s+/g, " ").trim();
+  if (trimmed.length <= max) return trimmed;
+  const cut = trimmed.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trimEnd();
+}
+
+// Pecah teks biasa menjadi paragraf: pemisah = satu baris kosong atau lebih.
+function toParagraphs(value: string | null): string[] {
+  if (!value) return [];
+  return value
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.replace(/\s+/g, " ").trim())
+    .filter((paragraph) => paragraph.length > 0);
 }
 
 // Kategori tanpa pelatihan tayang tidak tampil di publik (daftar, filter, landing, menu); datanya
@@ -429,10 +577,100 @@ export async function listPublicCategories(now = new Date()): Promise<PublicCate
   return rows.map(toPublicCategory);
 }
 
-export async function getPublicCategory(slug: string, now = new Date()): Promise<PublicCategory | null> {
+// Kartu grid kategori di /pelatihan.
+export type PublicCategoryGridItem = {
+  slug: string;
+  name: string;
+  featured: boolean;
+  trainingCount: number;
+  // Category.image, lalu foto pertama galeri kategori, lalu null (media di Sampah dilewati).
+  cover: PublicImage | null;
+};
+
+// Huruf indeks nama kategori: huruf awal tanpa aksen ("Émail" -> "E"); selain A-Z masuk "#".
+// Sama dengan indexLetter di FE (src/lib/index-groups.ts), supaya jumlah per huruf di FE cocok.
+export function categoryIndexLetter(name: string): string {
+  const first = foldText(name).charAt(0).toUpperCase();
+  return /^[A-Z]$/.test(first) ? first : "#";
+}
+
+// GET /api/public/categories?q=&huruf=&page= (24 per halaman). Urutan: nama A-Z murni (localeCompare
+// "id", sama dengan sidebar lama), dihitung di sini supaya tidak tergantung collation DB. Unggulan tidak
+// didahulukan: /pelatihan menampilkannya terpisah (bento, urutan admin) di atas grid A-Z.
+// q mencocokkan nama (case-insensitive); huruf menyaring huruf awal nama (categoryIndexLetter).
+// page di luar batas dijepit ke halaman terakhir yang valid.
+export async function listPublicCategoryGrid(
+  query: PublicCategoryGridQuery,
+  now = new Date(),
+): Promise<{ items: PublicCategoryGridItem[]; meta: ListMeta }> {
+  const rows = await getDb().category.findMany({
+    where: {
+      ...nonEmptyPublicCategoryWhere(now),
+      ...(query.q ? { name: { contains: query.q, mode: "insensitive" as const } } : {}),
+    },
+    select: {
+      slug: true,
+      name: true,
+      featured: true,
+      image: true,
+      images: { where: { media: { deletedAt: null } }, orderBy: { order: "asc" }, take: 1, include: { media: true } },
+      _count: { select: { trainings: { where: { training: publicTrainingWhere(now) } } } },
+    },
+  });
+  const sorted = rows
+    .filter((row) => !query.huruf || categoryIndexLetter(row.name) === query.huruf)
+    .sort((a, b) => a.name.localeCompare(b.name, "id", { sensitivity: "base" }));
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PUBLIC_CATEGORY_PAGE_SIZE));
+  const page = Math.min(query.page, totalPages);
+  const { skip, take } = pagination(page, PUBLIC_CATEGORY_PAGE_SIZE);
+  const items = sorted.slice(skip, skip + take).map((row) => ({
+    slug: row.slug,
+    name: row.name,
+    featured: row.featured,
+    trainingCount: row._count.trainings,
+    cover: toPublicImage(activeMediaDto(row.image) ?? activeMediaDto(row.images[0]?.media)),
+  }));
+  return { items, meta: listMeta(page, PUBLIC_CATEGORY_PAGE_SIZE, sorted.length) };
+}
+
+export async function getPublicCategory(slug: string, now = new Date()): Promise<PublicCategoryDetail | null> {
   const category = await getDb().category.findFirst({
     where: { slug, ...nonEmptyPublicCategoryWhere(now) },
-    include: publicCountInclude(now),
+    include: {
+      ...publicCountInclude(now),
+      images: { orderBy: { order: "asc" }, include: { media: true } },
+    },
   });
-  return category ? toPublicCategory(category) : null;
+  if (!category) return null;
+
+  const base = toPublicCategory(category);
+  const paragraphs = toParagraphs(category.description);
+  const metaDescription = category.summary?.trim()
+    ? category.summary.trim()
+    : paragraphs.length > 0
+      ? clampText(paragraphs.join(" "), META_DESCRIPTION_MAX)
+      : "";
+  // Cover alt: coverAlt eksplisit, lalu alt Media (dipakai FE lewat image.alt kalau coverAlt null).
+  const images = category.images.flatMap((link) => {
+    const image = toPublicImage(activeMediaDto(link.media));
+    return image ? [image] : [];
+  });
+
+  // Pelatihan tayang di kategori ini, urut A-Z, tanpa paginasi.
+  const trainingRows = await getDb().training.findMany({
+    where: { ...publicTrainingWhere(now), categories: { some: { categoryId: category.id } } },
+    select: { slug: true, title: true, types: true },
+    orderBy: [{ title: "asc" }, { id: "asc" }],
+  });
+
+  return {
+    ...base,
+    metaDescription,
+    coverAlt: category.coverAlt ?? base.image?.alt ?? null,
+    descriptionParagraphs: paragraphs,
+    audience: readCategoryAudience(category.audience),
+    audienceSource: category.audienceSource === "auto" ? "auto" : "manual",
+    images,
+    trainings: trainingRows.map((row) => ({ slug: row.slug, title: row.title, types: row.types })),
+  };
 }

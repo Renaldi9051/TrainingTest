@@ -123,23 +123,3 @@ export function TrainingGrid({
     </RevealRows>
   );
 }
-
-export function TrainingGridSkeleton({ count = 6, narrow = false }: { count?: number; narrow?: boolean }) {
-  return (
-    <div
-      role="status"
-      aria-label="Memuat pelatihan"
-      className={cn("grid gap-x-6 gap-y-10 sm:grid-cols-2", narrow ? "xl:grid-cols-3" : "lg:grid-cols-3")}
-    >
-      {Array.from({ length: count }, (_, index) => (
-        <div key={index} className="space-y-4 border-b border-border pb-6">
-          <div className="aspect-[4/3] bg-bg-muted" />
-          <div className="h-3 w-24 bg-bg-muted" />
-          <div className="h-6 w-4/5 bg-bg-muted" />
-          <div className="h-4 w-1/3 bg-bg-muted" />
-        </div>
-      ))}
-      <span className="sr-only">Memuat pelatihan...</span>
-    </div>
-  );
-}

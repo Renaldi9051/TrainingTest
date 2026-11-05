@@ -112,7 +112,8 @@ test.describe("search publik", () => {
     const option = palette(page).getByRole("option", { name: new RegExp(`Terbuka ${token}`) });
     await expect(option).toHaveAttribute("aria-selected", "true");
     await expect(palette(page).getByRole("option", { name: /Rahasia/ })).toHaveCount(0);
-    await expect(palette(page).getByRole("option", { name: new RegExp(`Lihat semua hasil untuk "${token}"`) })).toHaveAttribute("href", `/pelatihan?q=${token}`);
+    // /pelatihan?q= kini mencari nama kategori (grid kategori).
+    await expect(palette(page).getByRole("option", { name: new RegExp(`Cari kategori "${token}"`) })).toHaveAttribute("href", `/pelatihan?q=${token}`);
     await searchInput(page).press("Enter");
     await expect(page).toHaveURL(new RegExp(`/pelatihan/${published.slug}$`));
     await expect(page.getByRole("heading", { level: 1, name: `[UJI] Terbuka ${token}` })).toBeVisible();

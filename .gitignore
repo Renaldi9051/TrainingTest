@@ -27,6 +27,10 @@ test-results/
 
 # backup database lokal (pg_dump), tidak pernah di-commit
 /backups/
+/BE/backups/
+
+# screenshot cek visual lokal (kategori v2), tidak di-commit
+/FE/screenshots-kategori-v2/
 
 # dokumen kerja lokal (tidak di-push ke GitHub)
 AGENTS.md

@@ -7,8 +7,6 @@ import type { ReactNode } from "react";
 import { HudLabel } from "@/components/decor/hud-label";
 import { Viewfinder } from "@/components/decor/viewfinder";
 import { ReadingProgress } from "@/components/motion/reading-progress";
-import { RevealImage } from "@/components/motion/reveal-parts";
-import { RevealRows } from "@/components/motion/reveal-rows";
 import { ScrollSpyToc } from "@/components/motion/scroll-spy-toc";
 import { Accordion } from "@/components/public/accordion";
 import { ContactContext } from "@/components/public/contact-context";
@@ -24,9 +22,9 @@ import { TrainingGrid } from "@/components/public/training-card";
 import { ButtonArrow, buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { getMarketing, getSettings, getTraining } from "@/lib/api/public";
+import { getCategory, getMarketing, getSettings, getTraining } from "@/lib/api/public";
 import { getTrainingPreview } from "@/lib/api/preview";
-import type { PublicImage as PublicImageData, PublicTrainingDetail } from "@/lib/api/types";
+import type { PublicTrainingDetail } from "@/lib/api/types";
 import { displayTitle, isUntitled } from "@/lib/display-title";
 import { getPublicEnv } from "@/lib/env";
 import { APP_TIME_ZONE, dateBadgeParts, formatDateRange, formatRupiah } from "@/lib/format";
@@ -144,6 +142,12 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
   const next = training.nextSchedule;
   const nextBadge = next ? dateBadgeParts(next.startDate) : null;
   const primaryCategory = training.categories[0] ?? null;
+  // Galeri kini per kategori: tautkan ke #galeri halaman kategori utama kalau kategori itu punya foto.
+  const primaryCategoryDetail = primaryCategory ? await getCategory(primaryCategory.slug) : null;
+  const categoryGalleryHref =
+    primaryCategory && primaryCategoryDetail && primaryCategoryDetail.images.length > 0
+      ? `/pelatihan/kategori/${primaryCategory.slug}#galeri`
+      : null;
   // Sesi yang masih bisa dipilih di form inquiry (DIBUKA, atau PENUH sebagai daftar tunggu).
   const sessions = training.schedules
     .filter((schedule) => schedule.status !== "COMPLETED")
@@ -167,9 +171,6 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
       ? { id: "hasil-belajar", label: "Hasil belajar", content: <OutcomeList outcomes={training.outcomes} /> }
       : null,
     training.modules.length > 0 ? { id: "materi", label: "Materi", content: <ModuleList training={training} /> } : null,
-    training.images.length > 0
-      ? { id: "galeri", label: "Galeri", content: <TrainingGallery images={training.images} /> }
-      : null,
     training.audience.length > 0 || training.prerequisites
       ? { id: "peserta", label: "Peserta", content: <AudienceList training={training} /> }
       : null,
@@ -258,6 +259,16 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
                 >
                   {title}
                 </h1>
+                {categoryGalleryHref && primaryCategory ? (
+                  <Link
+                    href={categoryGalleryHref}
+                    data-page-enter=""
+                    className="mt-4 inline-flex items-center gap-1 text-small text-secondary underline-offset-4 outline-none hover:underline focus-visible:underline focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+                  >
+                    Lihat galeri kategori {primaryCategory.name}
+                    <span aria-hidden>→</span>
+                  </Link>
+                ) : null}
               </div>
               {training.summary ? (
                 <p data-page-enter="" className="max-w-[65ch] text-body-lg text-fg-muted lg:col-span-4">
@@ -471,30 +482,6 @@ function OutcomeList({ outcomes }: { outcomes: string[] }) {
         </li>
       ))}
     </ol>
-  );
-}
-
-// Galeri foto kegiatan (terpisah dari sampul): grid 2 kolom 4:3, berwarna. Jumlah ganjil = foto
-// pertama selebar dua kolom supaya grid tidak menyisakan lubang.
-function TrainingGallery({ images }: { images: PublicImageData[] }) {
-  const wideFirst = images.length % 2 === 1;
-  return (
-    <RevealRows as="ul" kind="card" className="grid gap-4 sm:grid-cols-2">
-      {images.map((image, index) => {
-        const wide = wideFirst && index === 0;
-        return (
-          <li key={image.url} className={cn("min-w-0", wide && "sm:col-span-2")}>
-            <RevealImage className={cn("relative overflow-hidden bg-bg-muted", wide ? "aspect-4/3 sm:aspect-video" : "aspect-4/3")}>
-              <PublicImage
-                image={image}
-                sizes={wide ? "(min-width: 1280px) 816px, (min-width: 1024px) 66vw, 100vw" : "(min-width: 1280px) 400px, (min-width: 640px) 50vw, 100vw"}
-                film
-              />
-            </RevealImage>
-          </li>
-        );
-      })}
-    </RevealRows>
   );
 }
 

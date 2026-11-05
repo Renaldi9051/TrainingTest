@@ -227,6 +227,22 @@ export type SocialPlatform = "instagram" | "facebook" | "linkedin" | "youtube" |
 export type PageHeaderPage = "pelatihan" | "layanan" | "portofolio" | "jadwal" | "kontak";
 export type PageHeader = { eyebrow: string; heading: string; lead: string };
 export type ServicesProcess = { eyebrow: string; heading: string; steps: { title: string; description: string }[] };
+// Teks section /pelatihan (setting trainings.page). Field kosong = label bawaan halaman.
+export type TrainingsPage = {
+  featured: { eyebrow: string; heading: string; lead: string };
+  all: { eyebrow: string; heading: string };
+  cta: {
+    eyebrow: string;
+    heading: string;
+    lead: string;
+    primaryLabel: string;
+    primaryHref: string;
+    secondaryLabel: string;
+    secondaryHref: string;
+    outline: string;
+    decor: boolean;
+  };
+};
 
 export type SettingValues = {
   "site.identity": {
@@ -265,6 +281,7 @@ export type SettingValues = {
   };
   "page.headers": Record<PageHeaderPage, PageHeader>;
   "services.process": ServicesProcess;
+  "trainings.page": TrainingsPage;
 };
 
 export type SettingKey = keyof SettingValues;
@@ -285,6 +302,7 @@ export type PublicSettings = {
   footer: SettingValues["site.footer"];
   pageHeaders: SettingValues["page.headers"];
   servicesProcess: ServicesProcess;
+  trainingsPage: TrainingsPage;
   seo: {
     titleTemplate: string;
     defaultTitle: string;
@@ -315,16 +333,30 @@ export type PublicNav = { header: PublicNavItem[]; footer: PublicNavItem[] };
 
 // ===== Kategori =====
 
+// Target peserta kategori (Halaman Kategori v2): label peran + jumlah pelatihan opsional.
+export type CategoryAudienceItem = { label: string; trainingCount: number | null };
+export type CategoryAudienceSource = "manual" | "auto";
+
 export type Category = {
   id: string;
   slug: string;
   name: string;
   description: string | null;
+  // Ringkasan 1 kalimat (meta description landing kategori).
+  summary: string | null;
   icon: string | null;
   order: number;
   featured: boolean;
   imageId: string | null;
   image: Media | null;
+  // Alt kontekstual cover landing; kosong = pakai alt Media.
+  coverAlt: string | null;
+  // Target peserta ringkasan kategori (maks 12).
+  audience: CategoryAudienceItem[];
+  audienceSource: CategoryAudienceSource;
+  // Galeri foto kategori (maks 4), berurutan; gambar di Sampah tidak ikut.
+  imageIds: string[];
+  images: Media[];
   // Kata kunci judul untuk panel "Pelatihan yang cocok" (tidak menautkan otomatis).
   keywords: string[];
   // Admin: pelatihan aktif = belum dihapus (draft + published).
@@ -362,12 +394,50 @@ export type PublicCategory = {
   slug: string;
   name: string;
   description: string | null;
+  // Ringkasan 1 kalimat (meta description landing). null kalau kosong.
+  summary: string | null;
   icon: string | null;
   featured: boolean;
-  // Foto landing kategori; null kalau kosong.
+  // Cover kategori (juga fallback sampul pelatihan); null kalau kosong.
   image: PublicImage | null;
   // Hanya pelatihan yang tampil publik.
   trainingCount: number;
+};
+
+// GET /api/public/categories?q=&page= (grid /pelatihan, 24 per halaman, meta PaginationMeta).
+export type PublicCategoryGridItem = {
+  slug: string;
+  name: string;
+  featured: boolean;
+  trainingCount: number;
+  // Category.image, lalu foto pertama galeri kategori; null kalau keduanya kosong.
+  cover: PublicImage | null;
+};
+
+// Pelatihan ringkas untuk daftar judul di landing kategori (tanpa kartu bergambar).
+export type PublicCategoryTraining = { slug: string; title: string; types: TrainingType[] };
+
+// GET /api/public/categories/:slug (landing kategori v2).
+export type PublicCategoryDetail = PublicCategory & {
+  // summary, atau 160 karakter pertama description; "" kalau keduanya kosong.
+  metaDescription: string;
+  // Alt cover: coverAlt, lalu alt Media.
+  coverAlt: string | null;
+  // description dipecah per paragraf (baris kosong = pemisah). Kosong = section Tentang disembunyikan.
+  descriptionParagraphs: string[];
+  audience: CategoryAudienceItem[];
+  audienceSource: CategoryAudienceSource;
+  // Galeri foto kategori (maks 4). Kosong = section Galeri disembunyikan.
+  images: PublicImage[];
+  // Semua pelatihan tayang di kategori ini, urut A-Z, tanpa paginasi.
+  trainings: PublicCategoryTraining[];
+};
+
+// GET /api/admin/categories/:id/audience-suggestions (read-only, fitur "Ambil dari pelatihan").
+export type CategoryAudienceSuggestion = { label: string; trainingCount: number };
+export type CategoryAudienceSuggestions = {
+  trainingsConsidered: number;
+  suggestions: CategoryAudienceSuggestion[];
 };
 
 // ===== Rich text (JSON Tiptap, allowlist sama dengan BE/src/lib/rich-text.ts) =====
@@ -508,8 +578,6 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   // null = "Jadwal menyesuaikan".
   nextSchedule: Pick<PublicTrainingSchedule, "startDate" | "endDate" | "city" | "method"> | null;
   seo: { title: string; description: string; ogImage: PublicImage | null };
-  // Galeri foto kegiatan; kosong = blok disembunyikan.
-  images: PublicImage[];
   schedules: PublicTrainingSchedule[];
   related: PublicTrainingCard[];
   updatedAt: string;

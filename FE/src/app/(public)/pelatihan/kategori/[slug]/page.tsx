@@ -1,236 +1,261 @@
+import { UserIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
+import { GrainOverlay } from "@/components/decor/grain-overlay";
 import { HudLabel } from "@/components/decor/hud-label";
+import { OutlineText } from "@/components/decor/outline-text";
+import { RotatingBadge } from "@/components/decor/rotating-badge";
 import { Viewfinder } from "@/components/decor/viewfinder";
-import { ActiveIndicator } from "@/components/motion/active-indicator";
-import { ChipLink } from "@/components/public/chip-link";
-import { PageHero } from "@/components/public/page-hero";
+import { ScrollSpyToc } from "@/components/motion/scroll-spy-toc";
+import { CategoryGallery } from "@/components/public/category-gallery";
+import { CategoryTrainingList } from "@/components/public/category-training-list";
+import { ContactPanelTrigger, contactsWithWhatsapp } from "@/components/public/floating-contact";
+import { Breadcrumb } from "@/components/public/page-hero";
 import { PublicImage } from "@/components/public/public-image";
-import { Pagination } from "@/components/public/pagination";
-import { ScheduleTable } from "@/components/public/schedule-table";
-import { TrainingGrid } from "@/components/public/training-card";
-import { ButtonArrow, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { getCatalog, getCategories, getCategory, getRedirect, getSchedules, Tag } from "@/lib/api/public";
-import type { PublicCategory } from "@/lib/api/types";
-import { METHOD_PARAMS } from "@/lib/catalog-url";
-import { formatNumber, monthParam } from "@/lib/format";
+import { getCategory, getMarketing, getRedirect, Tag } from "@/lib/api/public";
+import { formatNumber } from "@/lib/format";
 import { followRedirect } from "@/lib/public-redirect";
+import type { PublicImage as PublicImageData } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
-// Paginasi (?hal) dan filter metode (?metode) dibaca dari query string, sehingga rute dirender
-// sesuai permintaan. Slug yang tidak ada = redirect dari tabel Redirect (slug diganti atau kategori
-// digabung admin), selain itu notFound() (HTTP 404).
+// Halaman landing kategori v2: hero + cover, tab anchor, Tentang, Daftar pelatihan (judul saja),
+// Target peserta, Galeri. Slug tidak ada = redirect (slug diganti/kategori digabung) atau 404.
+// Rute blocking (bukan prerender penuh): getRedirect/getMarketing diakses per request; data kategori
+// tetap di-cache lewat tag.
 export const instant = false;
-// 12 per halaman: pas untuk grid 3 kolom (sebelumnya 10, menyisakan satu kartu di baris terakhir).
-const LANDING_SIZE = 12;
-// Chip "kategori lain" di bawah judul.
-const OTHER_CATEGORIES = 7;
-const UPCOMING_ON_LANDING = 3;
-
-type MethodParam = (typeof METHOD_PARAMS)[number];
-const METHOD_TEXT: Record<MethodParam, string> = { online: "Online", offline: "Offline", hybrid: "Hybrid" };
-
-function parsePage(value: string | string[] | undefined): number {
-  const raw = Number.parseInt((Array.isArray(value) ? value[0] : value) ?? "1", 10);
-  return Number.isFinite(raw) && raw > 1 ? Math.min(raw, 1000) : 1;
-}
-
-function parseMethod(value: string | string[] | undefined): MethodParam | undefined {
-  const raw = Array.isArray(value) ? value[0] : value;
-  return METHOD_PARAMS.find((method) => method === raw);
-}
-
-function landingHref(slug: string, change: { metode?: MethodParam; hal?: number }): string {
-  const params = new URLSearchParams();
-  if (change.metode) params.set("metode", change.metode);
-  if (change.hal && change.hal > 1) params.set("hal", String(change.hal));
-  const query = params.toString();
-  return `/pelatihan/kategori/${slug}${query ? `?${query}` : ""}`;
-}
 
 export async function generateMetadata({ params }: PageProps<"/pelatihan/kategori/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const category = await getCategory(slug);
   if (!category) return { title: "Kategori tidak ditemukan" };
+  const description = category.metaDescription || undefined;
   return {
     title: `Pelatihan ${category.name}`,
-    description: category.description ?? undefined,
+    description,
     alternates: { canonical: `/pelatihan/kategori/${category.slug}` },
+    openGraph: category.image ? { images: [{ url: category.image.url }] } : undefined,
   };
 }
 
-export default async function CategoryPage({ params, searchParams }: PageProps<"/pelatihan/kategori/[slug]">) {
-  const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const page = parsePage(query.hal);
-  const metode = parseMethod(query.metode);
+export default async function CategoryPage({ params }: PageProps<"/pelatihan/kategori/[slug]">) {
+  const { slug } = await params;
   const category = await getCategory(slug);
   if (!category) {
     const target = await getRedirect(`/pelatihan/kategori/${slug}`, Tag.category(slug));
     if (target) followRedirect(target);
     notFound();
   }
-  // "Jadwal bulan ini" bergantung pada tanggal hari ini: dihitung per request.
-  await connection();
-  const [catalog, categories, upcoming, thisMonth] = await Promise.all([
-    getCatalog({ kategori: [category.slug], metode, hal: page, per: LANDING_SIZE }),
-    getCategories(),
-    getSchedules({ kategori: category.slug }),
-    getSchedules({ kategori: category.slug, bulan: monthParam(new Date()) }),
-  ]);
-  const listed = categories.filter((item) => item.trainingCount > 0 || item.slug === category.slug);
-  const position = listed.findIndex((item) => item.slug === category.slug);
-  const pad = (value: number) => String(value).padStart(2, "0");
-  const catalogFiltered = `/pelatihan?kategori=${category.slug}`;
-  const sessions = upcoming.items.slice(0, UPCOMING_ON_LANDING);
+  const marketing = await getMarketing();
+  const hasMarketing = contactsWithWhatsapp(marketing).length > 0;
+
+  const coverAlt = category.coverAlt ?? category.image?.alt ?? `Dokumentasi kategori ${category.name}`;
+
+  // Section yang datanya kosong disembunyikan beserta tab-nya.
+  const hasAbout = category.descriptionParagraphs.length > 0;
+  const hasAudience = category.audience.length > 0;
+  const hasGallery = category.images.length > 0;
+  const tabs = [
+    hasAbout ? { id: "tentang", label: "Tentang" } : null,
+    { id: "daftar", label: `Daftar pelatihan (${category.trainings.length})` },
+    hasAudience ? { id: "peserta", label: "Target peserta" } : null,
+    hasGallery ? { id: "galeri", label: "Galeri" } : null,
+  ].filter((tab): tab is { id: string; label: string } => tab !== null);
+
+  // JSON-LD ItemList berisi Course untuk tiap pelatihan.
+  const itemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `Pelatihan ${category.name}`,
+    numberOfItems: category.trainings.length,
+    itemListElement: category.trainings.map((training, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: { "@type": "Course", name: training.title, url: `/pelatihan/${training.slug}` },
+    })),
+  };
 
   return (
     <>
-      <PageHero
-        crumbs={[{ label: "Pelatihan", href: "/pelatihan" }, { label: category.name }]}
-        eyebrow={position >= 0 ? `Kategori ${pad(position + 1)} / ${pad(listed.length)}` : "Kategori"}
-        title={category.name}
-        outline={category.name}
-        aside={
-          <div>
-            {category.description ? (
-              <p data-page-enter="" className="max-w-[65ch] text-body-lg text-fg-muted">
-                {category.description}
-              </p>
-            ) : null}
-            <dl className={cn("flex gap-8", category.description && "mt-6")}>
-              <Stat value={formatNumber(category.trainingCount)} label="Judul / aktif" />
-              <Stat value={pad(thisMonth.meta.total)} label="Jadwal / bulan ini" />
-            </dl>
-          </div>
-        }
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }} />
 
-      {/* Gambar kategori (diisi admin): foto lebar berwarna seperti foto di detail pelatihan.
-          Kosong: tanpa blok gambar (aturan konten 6, bukan placeholder). */}
-      {category.image ? (
-        <Container className="pt-8">
-          <div data-category-image="" className="relative aspect-4/3 overflow-hidden bg-bg-muted sm:aspect-video lg:aspect-auto lg:h-130">
-            <PublicImage film image={category.image} sizes="(min-width: 1280px) 1232px, 100vw" priority />
-            <Viewfinder className="inset-4 md:inset-6" topLeft={<HudLabel tone="photo">{`Kategori / ${category.name}`}</HudLabel>} />
+      {/* Hero split: kiri teks + CTA, kanan cover. Cover kosong = judul selebar container. */}
+      <section className="relative overflow-hidden border-b border-border bg-bg-subtle pt-12 pb-12 md:pt-18 md:pb-16">
+        <OutlineText className="-right-6 bottom-[-0.12em] md:-right-10">{category.name}</OutlineText>
+        <Container className="relative z-[1]">
+          <Breadcrumb crumbs={[{ label: "Pelatihan", href: "/pelatihan" }, { label: category.name }]} />
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center lg:gap-10">
+            <div className={cn(category.image ? "lg:col-span-6" : "lg:col-span-9")}>
+              <Eyebrow className="mb-4">{`Kategori / ${formatNumber(category.trainingCount)} pelatihan`}</Eyebrow>
+              <h1 className="max-w-[16ch] text-h1 text-fg-strong">{category.name}</h1>
+              {category.summary ? (
+                <p className="mt-4 max-w-[60ch] text-body-lg text-fg-muted">{category.summary}</p>
+              ) : null}
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link href="#daftar" className={buttonVariants({ variant: "primary", size: "lg" })}>
+                  Lihat daftar pelatihan <span aria-hidden className="ml-2">→</span>
+                </Link>
+                {hasMarketing ? (
+                  <ContactPanelTrigger className={buttonVariants({ variant: "secondary", size: "lg" })}>
+                    Konsultasi
+                  </ContactPanelTrigger>
+                ) : (
+                  <Link href="/kontak" className={buttonVariants({ variant: "secondary", size: "lg" })}>
+                    Konsultasi
+                  </Link>
+                )}
+              </div>
+            </div>
+            {category.image ? (
+              <div className="lg:col-span-6">
+                <div data-category-cover="" className="relative aspect-video overflow-hidden rounded-card bg-bg-muted">
+                  <PublicImage
+                    film
+                    priority
+                    image={{ ...category.image, alt: coverAlt }}
+                    sizes="(min-width: 1024px) 600px, 100vw"
+                  />
+                  <Viewfinder className="inset-4 md:inset-6" topLeft={<HudLabel tone="photo">{`Kategori / ${category.name}`}</HudLabel>} />
+                </div>
+              </div>
+            ) : null}
           </div>
         </Container>
-      ) : null}
+      </section>
 
-      <Container className="pt-8 pb-20 md:pb-24">
-        {/* Di luar kepala halaman supaya tidak menumpuk di atas teks outline (DESIGN.md 6.2). */}
-        <OtherCategories current={category} categories={listed} />
-        <div className="mb-8 flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <p role="status" className="font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-strong">
-            {formatNumber(catalog.meta.total)} pelatihan
-          </p>
-          <div role="group" aria-label="Metode">
-            <ActiveIndicator variant="pill" className="flex flex-wrap gap-2">
-              <ChipLink href={landingHref(category.slug, {})} active={!metode}>
-                Semua
-              </ChipLink>
-              {METHOD_PARAMS.map((method) => (
-                <ChipLink key={method} href={landingHref(category.slug, { metode: method })} active={metode === method}>
-                  {METHOD_TEXT[method]}
-                </ChipLink>
-              ))}
-            </ActiveIndicator>
-          </div>
-        </div>
+      {/* Tab anchor sticky di bawah header. */}
+      <nav aria-label="Isi kategori" className="sticky top-18 z-30 border-b border-border bg-bg/90 backdrop-blur">
+        <Container>
+          <ScrollSpyToc orientation="horizontal" sections={tabs} />
+        </Container>
+      </nav>
 
-        {catalog.items.length > 0 ? (
-          <TrainingGrid trainings={catalog.items} headingLevel="h2" label="level" />
-        ) : (
-          <div className="border border-dashed border-border-strong px-6 py-16 text-center">
-            <p className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">0 hasil</p>
-            <p className="mt-3 text-h3 text-fg-strong">
-              {metode ? "Belum ada pelatihan dengan metode ini." : "Belum ada pelatihan di kategori ini."}
-            </p>
-            <Link href={metode ? landingHref(category.slug, {}) : "/pelatihan"} className={cn(buttonVariants({ variant: "secondary" }), "mt-6")}>
-              {metode ? "Tampilkan semua metode" : "Lihat katalog"}
-            </Link>
-          </div>
-        )}
-
-        <div className="mt-16">
-          <Pagination meta={catalog.meta} hrefFor={(number) => landingHref(category.slug, { metode, hal: number })} />
-        </div>
-        <div className="mt-10 flex justify-center">
-          <Link href={metode ? `${catalogFiltered}&metode=${metode}` : catalogFiltered} className={cn(buttonVariants({ variant: "ghost" }), "gap-2")}>
-            Cari dan saring di katalog
-            <ButtonArrow />
-          </Link>
-        </div>
-      </Container>
-
-      {sessions.length > 0 ? (
-        <section aria-labelledby="sesi-kategori-title" className="bg-bg-subtle py-20 md:py-24">
+      {hasAbout ? (
+        <section id="tentang" aria-labelledby="tentang-title" className="scroll-mt-32 border-b border-border py-16 md:py-20">
           <Container>
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <Eyebrow>Jadwal kategori ini</Eyebrow>
-                <h2 id="sesi-kategori-title" className="mt-3 text-h2 text-fg-strong">
-                  Sesi terdekat
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+              <div className="md:col-span-4">
+                <Eyebrow>01 / Tentang kategori</Eyebrow>
+                <h2 id="tentang-title" className="mt-3 text-h2 text-fg-strong">
+                  Tentang {category.name}
                 </h2>
               </div>
-              <Link href={`/jadwal?kategori=${category.slug}`} className={cn(buttonVariants({ variant: "ghost" }), "gap-2")}>
-                Lihat semua jadwal
-                <ButtonArrow />
-              </Link>
+              <div data-category-description="" className="space-y-5 md:col-span-7 md:col-start-6">
+                {category.descriptionParagraphs.map((paragraph, index) => (
+                  <p key={index} className="max-w-[65ch] text-body-lg text-fg-muted">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
             </div>
-            <ScheduleTable rows={sessions} caption={`Sesi terdekat ${category.name}`} showTraining bigDate />
           </Container>
         </section>
       ) : null}
+
+      <section id="daftar" aria-labelledby="daftar-title" className="scroll-mt-32 border-b border-border py-16 md:py-20">
+        <Container>
+          <Eyebrow className="mb-3">02 / Daftar pelatihan</Eyebrow>
+          <span id="daftar-title" className="sr-only">
+            Daftar pelatihan {category.name}
+          </span>
+          {category.trainings.length > 0 ? (
+            <CategoryTrainingList trainings={category.trainings} />
+          ) : (
+            <p className="text-body text-fg-muted">Belum ada pelatihan di kategori ini.</p>
+          )}
+        </Container>
+      </section>
+
+      {hasAudience ? (
+        <section id="peserta" aria-labelledby="peserta-title" className="scroll-mt-32 border-b border-border bg-bg-subtle py-16 md:py-20">
+          <Container>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+              <div className="md:col-span-4">
+                <Eyebrow>03 / Target peserta</Eyebrow>
+                <h2 id="peserta-title" className="mt-3 text-h2 text-fg-strong">
+                  Siapa yang cocok ikut
+                </h2>
+                <p className="mt-4 max-w-[40ch] text-body text-fg-muted">
+                  Rangkuman target peserta dari pelatihan di kategori ini.
+                </p>
+                {category.audienceSource === "auto" && category.audience.length > 0 ? (
+                  <p className="mt-4 inline-flex items-center gap-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
+                    <span aria-hidden className="inline-block size-1.5 rounded-full bg-accent" />
+                    Dirangkum dari {formatNumber(category.trainingCount)} pelatihan
+                  </p>
+                ) : null}
+              </div>
+              <ul className="divide-y divide-border md:col-span-7 md:col-start-6">
+                {category.audience.map((item, index) => (
+                  <li key={index} className="flex items-center gap-4 py-3.5">
+                    <UserIcon aria-hidden strokeWidth={1.5} className="size-5 shrink-0 text-secondary" />
+                    <span className="min-w-0 flex-1 text-body text-fg-strong">{item.label}</span>
+                    {item.trainingCount !== null ? (
+                      <span className="shrink-0 font-mono text-label uppercase tracking-[0.08em] text-fg-muted tabular-nums">
+                        {item.trainingCount} pelatihan
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Container>
+        </section>
+      ) : null}
+
+      {hasGallery ? (
+        <section id="galeri" aria-labelledby="galeri-title" className="scroll-mt-32 border-b border-border py-16 md:py-20">
+          <Container>
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <Eyebrow>04 / Galeri</Eyebrow>
+                <h2 id="galeri-title" className="mt-3 text-h2 text-fg-strong">
+                  Dokumentasi kegiatan
+                </h2>
+              </div>
+              <p className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
+                {category.images.length} foto / Kategori {category.name}
+              </p>
+            </div>
+            <CategoryGallery images={category.images as PublicImageData[]} categoryName={category.name} />
+          </Container>
+        </section>
+      ) : null}
+
+      {/* CTA penutup: permukaan biru (palet D). */}
+      <section aria-labelledby="kategori-cta" data-surface="secondary" className="relative overflow-hidden bg-inverse-bg py-24 text-inverse-fg md:py-28">
+        <GrainOverlay tone="inverse" />
+        <Container className="relative">
+          <Eyebrow className="text-accent-on-dark">Konsultasi / In-house</Eyebrow>
+          <h2 id="kategori-cta" className="mt-3 max-w-[18ch] text-h1">
+            Butuh pelatihan {category.name} untuk tim Anda?
+          </h2>
+          <div className="mt-8 flex flex-wrap gap-3">
+            {hasMarketing ? (
+              <ContactPanelTrigger className={buttonVariants({ variant: "inverse", size: "lg" })}>
+                Hubungi marketing <span aria-hidden className="ml-2">→</span>
+              </ContactPanelTrigger>
+            ) : (
+              <Link href="/kontak" className={buttonVariants({ variant: "inverse", size: "lg" })}>
+                Hubungi marketing <span aria-hidden className="ml-2">→</span>
+              </Link>
+            )}
+            <Link href={`/jadwal?kategori=${category.slug}`} className={buttonVariants({ variant: "inverseOutline", size: "lg" })}>
+              Lihat jadwal
+            </Link>
+          </div>
+          <RotatingBadge
+            href="/kontak"
+            text="Konsultasi • Hubungi marketing •"
+            label="Hubungi marketing"
+            tone="light"
+            className="absolute top-1/2 right-4 hidden -translate-y-1/2 md:block lg:right-6"
+          />
+        </Container>
+      </section>
     </>
-  );
-}
-
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    // dt lebih dulu di DOM (urutan dl yang benar), angka tampil di atas.
-    <div className="flex flex-col-reverse">
-      <dt className="mt-2 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">{label}</dt>
-      <dd className="font-mono text-[32px] leading-none font-medium tracking-[-0.03em] text-primary-ink">{value}</dd>
-    </div>
-  );
-}
-
-// Chip kategori lain (gulir horizontal), kategori ini aktif di depan, diakhiri "Semua kategori".
-function OtherCategories({ current, categories }: { current: PublicCategory; categories: PublicCategory[] }) {
-  const others = categories
-    .filter((item) => item.slug !== current.slug)
-    .sort((a, b) => Number(b.featured) - Number(a.featured))
-    .slice(0, OTHER_CATEGORIES);
-  if (others.length === 0) return null;
-  return (
-    <nav aria-label="Kategori lain" className="-mx-4 mb-10 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-      <ul className="flex w-max gap-2">
-        <li>
-          <Link
-            href={`/pelatihan/kategori/${current.slug}`}
-            aria-current="page"
-            className="inline-flex h-8 items-center rounded-full border border-primary bg-primary px-3 text-small whitespace-nowrap text-on-primary outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-          >
-            {current.name}
-          </Link>
-        </li>
-        {others.map((item) => (
-          <li key={item.slug}>
-            <ChipLink href={`/pelatihan/kategori/${item.slug}`} active={false} scroll>
-              {item.name}
-            </ChipLink>
-          </li>
-        ))}
-        <li>
-          <ChipLink href="/pelatihan" active={false} scroll>
-            Semua kategori <span aria-hidden className="ml-1">→</span>
-          </ChipLink>
-        </li>
-      </ul>
-    </nav>
   );
 }

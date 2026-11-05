@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { MergeIcon, Trash2Icon } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExternalLinkIcon, MergeIcon, PlusIcon, SparklesIcon, Trash2Icon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -12,19 +12,35 @@ import { z } from "zod";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { FormField } from "@/components/admin/form-field";
 import { IconPicker } from "@/components/admin/icon-picker";
+import { GalleryEditor } from "@/components/admin/media/gallery-editor";
 import { MediaPicker } from "@/components/admin/media/media-picker";
 import { SlugField } from "@/components/admin/slug-field";
+import { SortableList } from "@/components/admin/sortable-list";
 import { StickySaveBar } from "@/components/admin/sticky-save-bar";
 import { TagInput } from "@/components/admin/tag-input";
 import { Button } from "@/components/admin/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/admin/ui/dialog";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { Switch } from "@/components/admin/ui/switch";
 import { Textarea } from "@/components/admin/ui/textarea";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { useScopedId } from "@/hooks/use-scoped-id";
-import { ApiError, apiSend, errorMessage } from "@/lib/api/client";
-import type { Category, CategoryInUseDetails } from "@/lib/api/types";
+import { ApiError, apiFetch, apiSend, errorMessage } from "@/lib/api/client";
+import type {
+  Category,
+  CategoryAudienceItem,
+  CategoryAudienceSource,
+  CategoryAudienceSuggestions,
+  CategoryInUseDetails,
+} from "@/lib/api/types";
 import { applyFieldErrors } from "@/lib/form-errors";
 import { formatNumber } from "@/lib/format";
 import { CategoryMergeDialog } from "./category-merge-dialog";
@@ -40,14 +56,29 @@ export const categoryKeys = {
 // Sama dengan batas BE (validators/category.ts).
 export const KEYWORDS_MAX = 20;
 const KEYWORD_MAX_LENGTH = 60;
+const SUMMARY_MAX = 160;
+const COVER_ALT_MAX = 300;
+const AUDIENCE_MAX = 12;
+const AUDIENCE_LABEL_MAX = 120;
+const GALLERY_MAX = 4;
+
+const audienceItemSchema = z.object({
+  label: z.string().trim().min(1, { error: "Peran wajib diisi." }).max(AUDIENCE_LABEL_MAX, { error: `Peran maksimal ${AUDIENCE_LABEL_MAX} karakter.` }),
+  trainingCount: z.number().int().min(0).nullable(),
+});
 
 const schema = z.object({
   name: z.string().trim().min(1, { error: "Nama wajib diisi." }).max(100, { error: "Nama maksimal 100 karakter." }),
   slug: z.string().trim().max(120, { error: "Slug maksimal 120 karakter." }),
   description: z.string().trim().max(1000, { error: "Deskripsi maksimal 1000 karakter." }),
+  summary: z.string().trim().max(SUMMARY_MAX, { error: `Ringkasan maksimal ${SUMMARY_MAX} karakter.` }),
   icon: z.string().nullable(),
   featured: z.boolean(),
   imageId: z.string().nullable(),
+  coverAlt: z.string().trim().max(COVER_ALT_MAX, { error: `Alt maksimal ${COVER_ALT_MAX} karakter.` }),
+  audience: z.array(audienceItemSchema).max(AUDIENCE_MAX, { error: `Target peserta maksimal ${AUDIENCE_MAX} item.` }),
+  audienceSource: z.enum(["manual", "auto"]),
+  imageIds: z.array(z.string()).max(GALLERY_MAX, { error: `Galeri maksimal ${GALLERY_MAX} gambar.` }),
   keywords: z
     .array(
       z
@@ -75,9 +106,14 @@ export function CategoryForm({ category }: { category: Category | null }) {
       name: category?.name ?? "",
       slug: category?.slug ?? "",
       description: category?.description ?? "",
+      summary: category?.summary ?? "",
       icon: category?.icon ?? null,
       featured: category?.featured ?? false,
       imageId: category?.imageId ?? null,
+      coverAlt: category?.coverAlt ?? "",
+      audience: category?.audience ?? [],
+      audienceSource: category?.audienceSource ?? "manual",
+      imageIds: category?.imageIds ?? [],
       keywords: category?.keywords ?? [],
     },
     mode: "onBlur",
@@ -89,7 +125,13 @@ export function CategoryForm({ category }: { category: Category | null }) {
     mutationFn: async (values: FormValues) => {
       // Slug otomatis (belum diedit manual) tidak dikirim: BE membuat slug unik sendiri.
       const slug = autoSlug && !category ? undefined : values.slug || undefined;
-      const body = { ...values, description: values.description || null, slug };
+      const body = {
+        ...values,
+        description: values.description || null,
+        summary: values.summary || null,
+        coverAlt: values.coverAlt || null,
+        slug,
+      };
       return category
         ? (await apiSend<Category>(`/admin/categories/${category.id}`, "PATCH", body)).data
         : (await apiSend<Category>("/admin/categories", "POST", body)).data;
@@ -101,9 +143,14 @@ export function CategoryForm({ category }: { category: Category | null }) {
         name: saved.name,
         slug: saved.slug,
         description: saved.description ?? "",
+        summary: saved.summary ?? "",
         icon: saved.icon,
         featured: saved.featured,
         imageId: saved.imageId,
+        coverAlt: saved.coverAlt ?? "",
+        audience: saved.audience,
+        audienceSource: saved.audienceSource,
+        imageIds: saved.imageIds,
         keywords: saved.keywords,
       });
       setAutoSlug(false);
@@ -111,7 +158,22 @@ export function CategoryForm({ category }: { category: Category | null }) {
       if (!category) router.push(`/admin/categories/${saved.id}`);
     },
     onError: (error) => {
-      if (!applyFieldErrors(error, form.setError, ["name", "slug", "description", "icon", "featured", "imageId", "keywords"])) {
+      if (
+        !applyFieldErrors(error, form.setError, [
+          "name",
+          "slug",
+          "description",
+          "summary",
+          "icon",
+          "featured",
+          "imageId",
+          "coverAlt",
+          "audience",
+          "audienceSource",
+          "imageIds",
+          "keywords",
+        ])
+      ) {
         toast.error(errorMessage(error));
       }
     },
@@ -142,6 +204,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
 
   const errors = form.formState.errors;
   const name = useWatch({ control: form.control, name: "name" });
+  const audienceSource = useWatch({ control: form.control, name: "audienceSource" });
   const keywordError = errors.keywords?.message ?? errors.keywords?.find?.((item) => item?.message)?.message;
 
   return (
@@ -176,13 +239,59 @@ export function CategoryForm({ category }: { category: Category | null }) {
             )}
           />
           <FormField
+            id={sid("summary")}
+            label="Ringkasan"
+            description="Satu kalimat; dipakai sebagai deskripsi halaman kategori untuk mesin pencari. Kosong = diambil dari awal deskripsi."
+            error={errors.summary?.message}
+          >
+            <Input {...form.register("summary")} maxLength={SUMMARY_MAX} />
+          </FormField>
+          <FormField
             id={sid("description")}
             label="Deskripsi"
-            description="Dipakai sebagai deskripsi halaman kategori untuk mesin pencari."
+            description="Tentang kategori di halaman landing. Pisahkan paragraf dengan baris kosong."
             error={errors.description?.message}
           >
-            <Textarea rows={5} {...form.register("description")} />
+            <Textarea rows={6} {...form.register("description")} />
           </FormField>
+          <Controller
+            control={form.control}
+            name="audience"
+            render={({ field }) => (
+              <AudienceEditor
+                id={sid("audience")}
+                value={field.value}
+                onChange={(next, source) => {
+                  field.onChange(next);
+                  if (source) form.setValue("audienceSource", source, { shouldDirty: true });
+                }}
+                categoryId={category?.id ?? null}
+                source={audienceSource}
+                max={AUDIENCE_MAX}
+                labelMax={AUDIENCE_LABEL_MAX}
+                error={errors.audience?.message ?? errors.audience?.root?.message}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="imageIds"
+            render={({ field, fieldState }) => (
+              <FormField
+                id={sid("gallery")}
+                label="Galeri kategori"
+                description={`Maksimal ${GALLERY_MAX} foto dokumentasi. Setiap gambar wajib punya alt. Menggantikan galeri per pelatihan.`}
+                error={fieldState.error?.message ?? fieldState.error?.root?.message}
+              >
+                <GalleryEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  initialMedia={category?.images ?? []}
+                  max={GALLERY_MAX}
+                />
+              </FormField>
+            )}
+          />
           <Controller
             control={form.control}
             name="keywords"
@@ -243,14 +352,34 @@ export function CategoryForm({ category }: { category: Category | null }) {
             render={({ field, fieldState }) => (
               <FormField
                 id={sid("image")}
-                label="Gambar"
-                description="Wajib punya alt text. Tampil di halaman kategori dan menjadi gambar pelatihan yang belum punya sampul."
+                label="Gambar cover"
+                description="Wajib punya alt text. Cover halaman kategori dan gambar pelatihan yang belum punya sampul."
                 error={fieldState.error?.message}
               >
-                <MediaPicker value={field.value} onChange={field.onChange} initialMedia={category?.image} dialogTitle="Pilih gambar kategori" />
+                <MediaPicker value={field.value} onChange={field.onChange} initialMedia={category?.image} dialogTitle="Pilih gambar cover kategori" />
               </FormField>
             )}
           />
+          <FormField
+            id={sid("coverAlt")}
+            label="Alt cover (opsional)"
+            description="Teks alternatif khusus landing. Kosong = pakai alt dari media library."
+            error={errors.coverAlt?.message}
+          >
+            <Input {...form.register("coverAlt")} maxLength={COVER_ALT_MAX} />
+          </FormField>
+          {category ? (
+            <a
+              href={`/pelatihan/kategori/${category.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-small text-fg-strong underline underline-offset-4"
+            >
+              Pratinjau halaman kategori
+              <ExternalLinkIcon className="size-3.5" aria-hidden />
+              <span className="sr-only">(tab baru)</span>
+            </a>
+          ) : null}
           {category ? (
             <div className="space-y-3 border-t border-border pt-6">
               <p className="text-small text-fg-muted">
@@ -311,5 +440,261 @@ export function CategoryForm({ category }: { category: Category | null }) {
         <CategoryMergeDialog category={category} open={mergeOpen} onOpenChange={setMergeOpen} onMerged={() => form.reset()} />
       ) : null}
     </>
+  );
+}
+
+type AudienceRow = CategoryAudienceItem & { id: string };
+
+// Editor target peserta: tambah/edit/hapus/urutkan (dnd-kit) + "Ambil dari pelatihan" (saran dari
+// pelatihan tayang; memilih saran membuat audienceSource jadi "auto"). Edit manual tetap boleh.
+function AudienceEditor({
+  id,
+  value,
+  onChange,
+  categoryId,
+  source,
+  max,
+  labelMax,
+  error,
+}: {
+  id: string;
+  value: CategoryAudienceItem[];
+  // source diisi hanya saat perubahan harus mengubah audienceSource (mis. ambil dari pelatihan).
+  onChange: (next: CategoryAudienceItem[], source?: CategoryAudienceSource) => void;
+  categoryId: string | null;
+  source: CategoryAudienceSource;
+  max: number;
+  labelMax: number;
+  error?: string;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  // id baris stabil untuk SortableList (data audience tidak menyimpan id).
+  const rows: AudienceRow[] = value.map((item, index) => ({ ...item, id: `aud-${index}` }));
+  const full = value.length >= max;
+
+  // Mengubah daftar peran manual. Kalau jadi kosong, sumber kembali "manual" (invariant badge).
+  const update = (next: CategoryAudienceItem[]) => onChange(next, next.length === 0 ? "manual" : undefined);
+
+  return (
+    <>
+    <FormField id={id} label="Target peserta" description="Siapa yang cocok ikut. Maksimal 12 peran. Bisa diambil dari pelatihan lalu dirapikan." error={error}>
+      <div className="space-y-3">
+        {value.length === 0 ? (
+          <p className="rounded-md border border-dashed border-border-strong px-4 py-6 text-center text-small text-fg-muted">
+            Belum ada target peserta.
+          </p>
+        ) : (
+          <SortableList
+            items={rows}
+            itemLabel={(item) => item.label || "peran"}
+            onReorder={(ids) => update(ids.flatMap((rowId) => {
+              const row = rows.find((candidate) => candidate.id === rowId);
+              return row ? [{ label: row.label, trainingCount: row.trainingCount }] : [];
+            }))}
+            renderItem={(item, handle) => {
+              const index = rows.findIndex((row) => row.id === item.id);
+              return (
+                <div className="flex items-start gap-2 py-2">
+                  {handle}
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <Input
+                      aria-label={`Peran ${index + 1}`}
+                      value={item.label}
+                      maxLength={labelMax}
+                      onChange={(event) => {
+                        const next = value.map((row, i) => (i === index ? { ...row, label: event.target.value } : row));
+                        update(next);
+                      }}
+                    />
+                    <label className="flex items-center gap-2 text-small text-fg-muted">
+                      Jumlah pelatihan (opsional)
+                      <Input
+                        type="number"
+                        min={0}
+                        className="h-8 w-24"
+                        value={item.trainingCount ?? ""}
+                        onChange={(event) => {
+                          const raw = event.target.value;
+                          const count = raw === "" ? null : Math.max(0, Math.trunc(Number(raw)));
+                          const next = value.map((row, i) =>
+                            i === index ? { ...row, trainingCount: Number.isFinite(count as number) ? count : null } : row,
+                          );
+                          update(next);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Hapus peran ${index + 1}`}
+                    onClick={() => update(value.filter((_, i) => i !== index))}
+                  >
+                    <XIcon strokeWidth={1.5} aria-hidden />
+                  </Button>
+                </div>
+              );
+            }}
+          />
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={full}
+            onClick={() => update([...value, { label: "", trainingCount: null }])}
+          >
+            <PlusIcon aria-hidden />
+            Tambah peran
+          </Button>
+          {categoryId ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+              <SparklesIcon aria-hidden />
+              Ambil dari pelatihan
+            </Button>
+          ) : null}
+          <p className="text-small text-fg-muted">
+            {value.length}/{max}
+            {source === "auto" ? " · diambil dari pelatihan" : ""}
+          </p>
+        </div>
+      </div>
+    </FormField>
+      {/* Di luar FormField: Slot di FormField hanya menerima satu elemen anak. */}
+      {pickerOpen && categoryId ? (
+        <AudienceSuggestionDialog
+          categoryId={categoryId}
+          existing={value}
+          max={max}
+          onClose={() => setPickerOpen(false)}
+          onApply={(items) => {
+            setPickerOpen(false);
+            onChange(items, "auto");
+          }}
+        />
+      ) : null}
+    </>
+  );
+}
+
+// Peran generik dari seed katalog referensi: "Staf dan praktisi bidang ..." / "Supervisor dan
+// manajer terkait". Dipakai untuk memperingatkan (bukan memfilter) di dialog ambil dari pelatihan.
+function isGenericRole(label: string): boolean {
+  const normalized = label.trim().toLocaleLowerCase("id-ID");
+  return normalized.startsWith("staf dan praktisi bidang ") || normalized === "supervisor dan manajer terkait";
+}
+
+// Dialog "Ambil dari pelatihan": tampilkan saran peran + jumlah pelatihan, admin mencentang yang
+// dipakai, lalu dimasukkan ke daftar (menggantikan daftar saat ini) dan audienceSource jadi "auto".
+function AudienceSuggestionDialog({
+  categoryId,
+  existing,
+  max,
+  onClose,
+  onApply,
+}: {
+  categoryId: string;
+  existing: CategoryAudienceItem[];
+  max: number;
+  onClose: () => void;
+  onApply: (items: CategoryAudienceItem[]) => void;
+}) {
+  const [checked, setChecked] = useState<Set<string>>(() => new Set(existing.map((item) => item.label)));
+
+  const query = useQuery({
+    queryKey: ["admin", "categories", "audience-suggestions", categoryId],
+    queryFn: async () =>
+      (await apiFetch<CategoryAudienceSuggestions>(`/admin/categories/${categoryId}/audience-suggestions`)).data,
+  });
+  const suggestions = query.data?.suggestions ?? [];
+  const selectedCount = suggestions.filter((item) => checked.has(item.label)).length;
+  // Pola peran generik dari seed katalog referensi (bukan hasil edit admin).
+  const allGeneric =
+    suggestions.length > 0 && suggestions.every((item) => isGenericRole(item.label));
+
+  return (
+    <Dialog open onOpenChange={(open) => (!open ? onClose() : undefined)}>
+      <DialogContent className="max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Ambil target peserta dari pelatihan</DialogTitle>
+          <DialogDescription>
+            {query.data
+              ? `Dirangkum dari ${formatNumber(query.data.trainingsConsidered)} pelatihan tayang. Centang peran yang dipakai (maks ${max}).`
+              : "Merangkum target peserta dari pelatihan tayang di kategori ini."}
+          </DialogDescription>
+        </DialogHeader>
+
+        {allGeneric ? (
+          <p className="rounded-md border border-border bg-muted px-3 py-2 text-small text-status-warning">
+            Data target peserta pelatihan di kategori ini masih generik, sebaiknya isi manual.
+          </p>
+        ) : null}
+
+        {query.isPending ? (
+          <p className="py-6 text-center text-small text-fg-muted">Memuat saran...</p>
+        ) : query.isError ? (
+          <p className="py-6 text-center text-small text-status-error">
+            Gagal memuat saran.{" "}
+            <button type="button" className="underline underline-offset-4" onClick={() => void query.refetch()}>
+              Coba lagi
+            </button>
+          </p>
+        ) : suggestions.length === 0 ? (
+          <p className="py-6 text-center text-small text-fg-muted">Belum ada target peserta di pelatihan kategori ini.</p>
+        ) : (
+          <ul className="space-y-1">
+            {suggestions.map((item) => {
+              const isChecked = checked.has(item.label);
+              const disabled = !isChecked && selectedCount >= max;
+              return (
+                <li key={item.label}>
+                  <label className={`flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm ${disabled ? "opacity-50" : "hover:bg-muted"}`}>
+                    <span className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        disabled={disabled}
+                        onChange={(event) => {
+                          setChecked((prev) => {
+                            const next = new Set(prev);
+                            if (event.target.checked) next.add(item.label);
+                            else next.delete(item.label);
+                            return next;
+                          });
+                        }}
+                      />
+                      {item.label}
+                    </span>
+                    <span className="font-mono text-xs text-muted-foreground">{item.trainingCount} pelatihan</span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Batal
+          </Button>
+          <Button
+            type="button"
+            disabled={selectedCount === 0}
+            onClick={() =>
+              onApply(
+                suggestions
+                  .filter((item) => checked.has(item.label))
+                  .slice(0, max)
+                  .map((item) => ({ label: item.label, trainingCount: item.trainingCount })),
+              )
+            }
+          >
+            Masukkan {selectedCount > 0 ? `(${selectedCount})` : ""}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

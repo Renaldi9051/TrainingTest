@@ -38,6 +38,7 @@ const endpoints: Endpoint[] = [
   ["PATCH", `/api/admin/categories/${ZERO_ID}`],
   ["DELETE", `/api/admin/categories/${ZERO_ID}`],
   ["POST", `/api/admin/categories/${ZERO_ID}/restore`],
+  ["GET", `/api/admin/categories/${ZERO_ID}/audience-suggestions`],
   ["POST", "/api/admin/categories/reorder"],
   ["GET", "/api/admin/slugs/check?entity=training&slug=x"],
   ["GET", "/api/admin/trainings"],

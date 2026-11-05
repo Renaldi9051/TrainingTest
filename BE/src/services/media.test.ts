@@ -46,6 +46,7 @@ function noUsages() {
     mock.marketingContact,
     mock.portfolioImage,
     mock.trainingImage,
+    mock.categoryMedia,
     mock.siteSetting,
     mock.page,
     mock.article,
@@ -102,6 +103,18 @@ describe("deleteMedia", () => {
     await expect(deleteMedia(media.id, "u1")).rejects.toMatchObject({
       status: 409,
       details: { usages: [expect.objectContaining({ entity: "Training", label: "Audit Internal", field: "Galeri" })] },
+    });
+  });
+
+  it("gambar di galeri kategori dihitung sebagai pemakaian (label 'Galeri kategori')", async () => {
+    mock.media.findFirst.mockResolvedValue(media);
+    noUsages();
+    mock.categoryMedia.findMany.mockResolvedValue([{ category: { id: "c9", name: "Keuangan", deletedAt: null } }]);
+    await expect(deleteMedia(media.id, "u1")).rejects.toMatchObject({
+      status: 409,
+      details: {
+        usages: [expect.objectContaining({ entity: "Category", label: "Keuangan", field: "Galeri kategori" })],
+      },
     });
   });
 

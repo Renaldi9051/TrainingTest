@@ -10,6 +10,8 @@ import type {
   PublicArticleListMeta,
   PublicCatalogMeta,
   PublicCategory,
+  PublicCategoryDetail,
+  PublicCategoryGridItem,
   PublicHome,
   PublicMarketingContact,
   PublicNav,
@@ -95,11 +97,29 @@ export async function getCategories(): Promise<PublicCategory[]> {
   return getRequired<PublicCategory[]>("/categories");
 }
 
-export async function getCategory(slug: string): Promise<PublicCategory | null> {
+// Grid kategori /pelatihan. huruf: "" (semua), "A"-"Z", atau "#". page di luar batas dijepit BE ke
+// halaman terakhir (lihat meta.page).
+export async function getCategoryGrid(
+  q: string,
+  huruf: string,
+  page: number,
+): Promise<{ items: PublicCategoryGridItem[]; meta: PaginationMeta }> {
+  "use cache";
+  cacheLife("content");
+  cacheTag(Tag.CATEGORIES, Tag.TRAININGS, Tag.MEDIA);
+  const params = new URLSearchParams({ page: String(page) });
+  if (q) params.set("q", q);
+  else if (huruf) params.set("huruf", huruf);
+  const body = await getJson<PublicCategoryGridItem[], PaginationMeta>(`/categories?${params}`);
+  if (!body?.meta) throw new PublicApiError(404, "/categories");
+  return { items: body.data, meta: body.meta };
+}
+
+export async function getCategory(slug: string): Promise<PublicCategoryDetail | null> {
   "use cache";
   cacheLife("content");
   cacheTag(Tag.CATEGORIES, Tag.category(slug), Tag.TRAININGS, Tag.MEDIA);
-  return (await getJson<PublicCategory>(`/categories/${encodeURIComponent(slug)}`))?.data ?? null;
+  return (await getJson<PublicCategoryDetail>(`/categories/${encodeURIComponent(slug)}`))?.data ?? null;
 }
 
 export type CatalogParams = {

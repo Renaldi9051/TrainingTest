@@ -91,14 +91,68 @@ export const keywordsSchema = z
     });
   });
 
+// ===== Halaman kategori v2 (landing): summary, cover alt, target peserta, galeri =====
+
+export const CATEGORY_SUMMARY_MAX = 160;
+export const CATEGORY_COVER_ALT_MAX = 300;
+export const CATEGORY_AUDIENCE_MAX = 12;
+export const CATEGORY_AUDIENCE_LABEL_MAX = 120;
+export const CATEGORY_GALLERY_MAX = 4;
+
+export const CATEGORY_AUDIENCE_SOURCES = ["manual", "auto"] as const;
+export type CategoryAudienceSource = (typeof CATEGORY_AUDIENCE_SOURCES)[number];
+
+// Ringkasan 1 kalimat; kosong disimpan null. Dipakai meta description landing kategori.
+export const summarySchema = nullableText("Ringkasan", CATEGORY_SUMMARY_MAX);
+
+// Alt kontekstual cover; kosong disimpan null (publik jatuh ke alt Media).
+export const coverAltSchema = nullableText("Alt gambar cover", CATEGORY_COVER_ALT_MAX);
+
+export const audienceSourceSchema = z.enum(CATEGORY_AUDIENCE_SOURCES, {
+  error: "Sumber target peserta tidak dikenal.",
+});
+
+// Satu baris target peserta kategori: label peran + jumlah pelatihan opsional.
+export const categoryAudienceItemSchema = z.object({
+  label: requiredText("Peran", CATEGORY_AUDIENCE_LABEL_MAX),
+  trainingCount: z
+    .number({ error: "Jumlah pelatihan harus angka." })
+    .int({ error: "Jumlah pelatihan harus bilangan bulat." })
+    .min(0, { error: "Jumlah pelatihan tidak boleh negatif." })
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
+});
+export type CategoryAudienceItem = z.infer<typeof categoryAudienceItemSchema>;
+
+export const audienceSchema = z
+  .array(categoryAudienceItemSchema)
+  .max(CATEGORY_AUDIENCE_MAX, { error: `Target peserta maksimal ${CATEGORY_AUDIENCE_MAX} item.` });
+
+// Galeri foto kategori: urut, maks 4, tanpa dobel. Alt wajib dicek di service (requireAlt), pola
+// sama dengan galeri pelatihan/portofolio.
+export const galleryImageIdsSchema = z
+  .array(idSchema)
+  .max(CATEGORY_GALLERY_MAX, { error: `Galeri maksimal ${CATEGORY_GALLERY_MAX} gambar.` })
+  .refine((ids) => new Set(ids).size === ids.length, { error: "Gambar tidak boleh dobel." });
+
 export const categoryCreateSchema = z.object({
   name: requiredText("Nama", 100),
   slug: optionalSlugSchema,
   description: nullableText("Deskripsi", 1000).default(null),
+  // Ringkasan 1 kalimat; juga dipakai sebagai meta description landing kategori.
+  summary: summarySchema.default(null),
   icon: iconSchema.default(null),
   featured: z.boolean().default(false),
-  // Gambar kategori (media library, alt wajib): fallback sampul pelatihan tanpa cover.
+  // Gambar kategori (media library, alt wajib): cover landing + fallback sampul pelatihan tanpa cover.
   imageId: idSchema.nullable().default(null),
+  // Alt kontekstual cover di landing; kosong = pakai alt Media.
+  coverAlt: coverAltSchema.default(null),
+  // Target peserta kategori (ringkasan). Admin bisa mengisi manual atau mengambil dari pelatihan.
+  audience: audienceSchema.default([]),
+  audienceSource: audienceSourceSchema.default("manual"),
+  // Galeri foto kategori (maks 4). Media library, alt wajib (dicek service via requireAlt).
+  imageIds: galleryImageIdsSchema.default([]),
   keywords: keywordsSchema.default([]),
 });
 export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
@@ -108,9 +162,14 @@ export const categoryUpdateSchema = z
     name: requiredText("Nama", 100).optional(),
     slug: optionalSlugSchema,
     description: nullableText("Deskripsi", 1000),
+    summary: summarySchema,
     icon: iconSchema.optional(),
     featured: z.boolean().optional(),
     imageId: idSchema.nullable().optional(),
+    coverAlt: coverAltSchema,
+    audience: audienceSchema.optional(),
+    audienceSource: audienceSourceSchema.optional(),
+    imageIds: galleryImageIdsSchema.optional(),
     keywords: keywordsSchema.optional(),
   })
   .refine((value) => Object.values(value).some((field) => field !== undefined), {
@@ -134,6 +193,32 @@ export const categoryDeleteQuerySchema = z.object({
     .transform((value) => value === "true"),
 });
 export type CategoryDeleteQuery = z.infer<typeof categoryDeleteQuerySchema>;
+
+// ===== Grid kategori publik (/pelatihan) =====
+
+export const PUBLIC_CATEGORY_PAGE_SIZE = 24;
+
+// Huruf indeks A-Z grid kategori: satu huruf A-Z, atau "#" untuk nama berawalan angka/simbol.
+export const CATEGORY_INDEX_LETTER = /^[A-Z#]$/;
+
+// GET /api/public/categories?q=&huruf=&page=. Nilai tak dikenal diabaikan (URL bisa diketik
+// sembarang); page di luar batas dijepit service ke halaman terakhir yang valid.
+export const publicCategoryGridQuerySchema = z.object({
+  q: z
+    .string()
+    .transform((value) => value.replace(/\s+/g, " ").trim().slice(0, 100))
+    .optional()
+    .catch(undefined)
+    .transform((value) => value || undefined),
+  huruf: z
+    .string()
+    .transform((value) => value.trim().toUpperCase())
+    .pipe(z.string().regex(CATEGORY_INDEX_LETTER))
+    .optional()
+    .catch(undefined),
+  page: z.coerce.number().int().min(1).max(1000).default(1).catch(1),
+});
+export type PublicCategoryGridQuery = z.infer<typeof publicCategoryGridQuerySchema>;
 
 // trainingCount = jumlah pelatihan aktif (bukan di Sampah), dihitung di service.
 export const CATEGORY_SORT_FIELDS = ["order", "name", "updatedAt", "createdAt", "trainingCount"] as const;

@@ -5,7 +5,8 @@ import { createTraining, deleteTraining, loginViaApi, ORIGIN, runId, type Create
 
 // Jadwal, kontak, halaman statis redesign v0.2 (fase 6): list & kalender (sesi multi-hari di tanggal
 // mulai dengan rentang di teks), empty state dengan ajakan in-house, blok jadwal kosong disembunyikan
-// di detail pelatihan & landing kategori, kontak (jam operasional, koordinat, area marketing), halaman
+// di detail pelatihan (landing kategori v2 menautkan ke jadwal terfilter), kontak (jam operasional,
+// koordinat, area marketing), halaman
 // statis (diperbarui, tab halaman lain, daftar isi). Data uji hanya di training_e2e; pengaturan
 // dikembalikan di akhir.
 // Screenshot 360/768/1280 (opsional): SCREENS_OUT=<folder> npx playwright test e2e/schedule-contact-pages.spec.ts
@@ -146,7 +147,7 @@ test.describe("jadwal, kontak, halaman statis v0.2", () => {
     await expect(page.getByRole("table", { name: /Kalender sesi/ })).toBeVisible();
   });
 
-  test("blok jadwal kosong disembunyikan: detail pelatihan tanpa sesi, landing kategori tanpa sesi", async ({ page }) => {
+  test("blok jadwal kosong disembunyikan di detail; landing kategori v2 menautkan ke jadwal kategori", async ({ page }) => {
     await page.goto(`/pelatihan/${lonely.slug}`);
     await expect(page.getByRole("heading", { level: 1, name: lonely.title })).toBeVisible();
     // Tanpa tabel jadwal dan tanpa label "Sesi berikut"; kartu samping menulis "Jadwal menyesuaikan".
@@ -157,20 +158,11 @@ test.describe("jadwal, kontak, halaman statis v0.2", () => {
     await page.goto(`/pelatihan/${scheduled.slug}`);
     await expect(page.locator("#jadwal table")).toHaveCount(1);
 
-    // Kategori tanpa sesi sama sekali.
-    await loginViaApi(page.request);
-    const empty = await send(page.request, "POST", "/admin/categories", { name: `[UJI] Kategori kosong ${id}` });
-    const solo = await createTraining(page.request, { title: `[UJI] Solo ${id}`, categoryIds: [empty.id], status: "PUBLISHED" });
-    try {
-      await page.goto(`/pelatihan/kategori/${empty.slug}`);
-      await expect(page.getByRole("heading", { level: 1, name: `[UJI] Kategori kosong ${id}` })).toBeVisible();
-      await expect(page.getByRole("heading", { name: "Sesi terdekat" })).toHaveCount(0);
-      await page.goto(`/pelatihan/kategori/${categorySlug}`);
-      await expect(page.getByRole("heading", { name: "Sesi terdekat" })).toBeVisible();
-    } finally {
-      await deleteTraining(page.request, solo.id);
-      await page.request.delete(`/api/admin/categories/${empty.id}`, { headers: HEADERS });
-    }
+    // Landing kategori v2 tidak lagi memuat tabel sesi; CTA penutup menautkan ke /jadwal terfilter.
+    await page.goto(`/pelatihan/kategori/${categorySlug}`);
+    await expect(page.getByRole("heading", { name: "Sesi terdekat" })).toHaveCount(0);
+    const cta = page.getByRole("region", { name: /^Butuh pelatihan/ });
+    await expect(cta.getByRole("link", { name: "Lihat jadwal", exact: true })).toHaveAttribute("href", `/jadwal?kategori=${categorySlug}`);
   });
 
   test("kontak: strip info, jam operasional, koordinat + Google Maps, area marketing", async ({ page }) => {

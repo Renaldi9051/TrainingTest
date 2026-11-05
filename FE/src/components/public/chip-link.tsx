@@ -10,17 +10,23 @@ export function ChipLink({
   active,
   children,
   scroll = false,
+  label,
+  className,
 }: {
   href: string;
   active: boolean;
   children: ReactNode;
   scroll?: boolean;
+  // Nama aksesibel kalau teks chip terlalu ringkas (mis. huruf indeks "A").
+  label?: string;
+  className?: string;
 }) {
   return (
     <Link
       href={href}
       scroll={scroll}
       aria-current={active ? "true" : undefined}
+      aria-label={label}
       className={cn(
         "relative inline-flex h-8 items-center rounded-full border px-3 text-small whitespace-nowrap outline-none transition-colors duration-150 [[data-indicator-ready]_&]:duration-300",
         "focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
@@ -28,6 +34,7 @@ export function ChipLink({
         active
           ? "border-primary bg-primary text-on-primary [[data-indicator-ready]_&]:bg-transparent"
           : "border-border-strong text-fg hover:border-primary hover:text-primary-ink",
+        className,
       )}
     >
       {children}

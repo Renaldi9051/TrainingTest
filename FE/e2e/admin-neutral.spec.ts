@@ -101,7 +101,7 @@ test("admin tetap netral: token :root semua halaman admin sama dengan baseline",
   if (out) writeFileSync(out, JSON.stringify(result, null, 2));
 });
 
-// ADMIN_SCREENS_OUT=<folder>: screenshot 5 halaman admin utama untuk dibandingkan per piksel sebelum
+// ADMIN_SCREENS_OUT=<folder>: screenshot halaman admin utama (+ tab Halaman pelatihan) untuk dibandingkan per piksel sebelum
 // dan sesudah perubahan palet publik (mis. palet D). Tanpa variabel itu test dilewati.
 test("screenshot admin utama @manual", async ({ page }) => {
   const out = process.env.ADMIN_SCREENS_OUT;
@@ -130,4 +130,5 @@ test("screenshot admin utama @manual", async ({ page }) => {
   const sections = (await (await page.request.get("/api/admin/home-sections")).json()) as { data: { id: string; type: string }[] };
   const hero = sections.data.find((section) => section.type === "HERO") ?? sections.data[0];
   await shoot("editor-beranda", hero ? `/admin/home/${hero.id}` : "/admin/home");
+  await shoot("pengaturan-halaman-pelatihan", "/admin/settings#field-trainings.page.featured");
 });

@@ -38,6 +38,7 @@ export function createMockDb() {
     redirect: model(),
     trainingCategory: model(),
     trainingImage: model(),
+    categoryMedia: model(),
     inquiry: model(),
     article: model(),
     articleCategory: model(),

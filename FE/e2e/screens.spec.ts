@@ -80,17 +80,15 @@ test.describe("screenshot interaksi shell @manual", () => {
     await page.screenshot({ path: path.join(OUT, "overlay-360.png") });
   });
 
-  // Fase 4: overlay indeks kategori dari sidebar filter katalog (mobile: di dalam panel terlipat).
-  test("katalog: overlay indeks kategori A-Z", async ({ page }) => {
+  // /pelatihan = grid kategori (5 Nov 2026): halaman 1 dan hasil cari.
+  test("pelatihan: grid kategori + cari", async ({ page }) => {
     mkdirSync(OUT, { recursive: true });
     for (const width of WIDTHS) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto("/pelatihan");
-      if (width < 1024) await page.locator("summary", { hasText: "Filter" }).click();
-      await page.getByRole("button", { name: /^Tampilkan semua kategori/ }).click();
-      await expect(page.getByRole("dialog", { name: "Indeks kategori / A-Z" })).toBeVisible();
+      await page.goto("/pelatihan?q=a");
+      await expect(page.getByRole("heading", { level: 1, name: "Pelatihan untuk setiap bidang kerja" })).toBeVisible();
       await page.waitForTimeout(400);
-      await page.screenshot({ path: path.join(OUT, `katalog-az-${width}.png`) });
+      await page.screenshot({ path: path.join(OUT, `pelatihan-cari-${width}.png`) });
     }
   });
 });

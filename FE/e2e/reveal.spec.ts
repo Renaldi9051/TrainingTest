@@ -240,7 +240,8 @@ test.describe("reveal per baris: grid katalog & tabel jadwal", () => {
     }, selector);
 
   for (const { url, selector, perRow } of [
-    { url: "/pelatihan", selector: "[data-reveal-rows=card]", perRow: 3 },
+    // Grid kategori /pelatihan: auto-fill minmax(260px) = 4 kolom di 1280 px.
+    { url: "/pelatihan", selector: "[data-reveal-rows=card]", perRow: 4 },
     { url: "/jadwal", selector: "[data-reveal-rows=item]", perRow: 1 },
   ]) {
     test(`${url}: baris di bawah layar tersembunyi lalu masuk saat discroll, satu observer bersama`, async ({ page }) => {
