@@ -25,8 +25,14 @@ test("upload 1 gambar lalu muncul di grid media", async ({ page }) => {
     const tile = page.getByTestId("media-grid").getByRole("button", { name: `Lihat detail ${name}` });
     await expect(tile).toBeVisible();
     await expect(tile.getByText("Tanpa alt")).toBeVisible();
-    // Thumbnail memakai varian WebP buatan BE lewat image loader.
-    await expect(tile.locator("img")).toHaveAttribute("src", /\/uploads\/\d{4}\/\d{2}\/.+-(320|768|1600)\.webp$/);
+    // Thumbnail memakai varian WebP buatan BE lewat image loader. Atribut src berisi kandidat terlebar
+    // (deviceSizes 2400 = file utama, sejak 3f3937e), jadi yang dicek srcset dan gambar yang benar-benar
+    // dimuat browser (currentSrc).
+    const img = tile.locator("img");
+    await expect(img).toHaveAttribute("srcset", /\/uploads\/\d{4}\/\d{2}\/.+-320\.webp \d+w/);
+    await expect
+      .poll(() => img.evaluate((element: HTMLImageElement) => element.currentSrc))
+      .toMatch(/\/uploads\/\d{4}\/\d{2}\/.+-(320|768|1600)\.webp$/);
   } finally {
     // Bersihkan data test (soft delete).
     await page.request.delete(`/api/admin/media/${mediaId}`, { headers: { Origin: ORIGIN } });

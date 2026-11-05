@@ -115,8 +115,15 @@ test.describe("reveal saat scroll: anchor & Back", () => {
     const section = async (type: string, content: Record<string, unknown>) =>
       sectionIds.push((await post(request, "/admin/home-sections", { type, content })).id);
     // Pengisi supaya beranda cukup panjang untuk uji scroll (statistik, kategori & testimoni sudah tidak di beranda).
-    await section("CLIENTS", { eyebrow: "Klien", heading: `[UJI] Reveal klien ${id}`, mode: "auto", limit: 12 });
-    await section("CLIENTS", { eyebrow: "Klien", heading: `[UJI] Reveal klien kedua ${id}`, mode: "auto", limit: 12 });
+    // Visi & misi tampil dari isinya sendiri; section Klien mode auto disembunyikan kalau database e2e belum
+    // punya klien (seed minimal), sehingga dulu uji ini hanya lulus kalau spec lain sudah membuat klien.
+    for (const label of ["pertama", "kedua"]) {
+      await section("VISION_MISSION", {
+        eyebrow: `Pengisi ${label}`,
+        vision: `Pengisi ${label} supaya beranda cukup panjang untuk uji scroll.`,
+        mission: ["Misi pengisi satu.", "Misi pengisi dua.", "Misi pengisi tiga."],
+      });
+    }
     await section("LATEST_TRAININGS", { eyebrow: "Terbaru", heading: `[UJI] Reveal terbaru ${id}`, mode: "auto", limit: 6 });
     await section("VISION_MISSION", {
       eyebrow: "Visi & misi",
