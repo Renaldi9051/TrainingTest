@@ -5,6 +5,7 @@ import { GrainOverlay } from "@/components/decor/grain-overlay";
 import { PlusMarker } from "@/components/decor/plus-marker";
 import { RotatingBadge } from "@/components/decor/rotating-badge";
 import { CategoryGridSkeleton, CategoryGroups } from "@/components/public/category-card";
+import { CategoryLetterIndex } from "@/components/public/category-letter-index";
 import { CategorySearch, CategorySearchForm } from "@/components/public/category-search";
 import { JsonLd } from "@/components/public/json-ld";
 import { OpenSearchHint } from "@/components/public/open-search-hint";
@@ -16,6 +17,8 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { getCatalog, getCategories, getCategoryGrid, getSettings } from "@/lib/api/public";
 import { gridCanonical, gridHref, parseGridState } from "@/lib/category-grid-url";
 import { formatNumber } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { indexLetter } from "@/lib/index-groups";
 
 // /pelatihan = grid semua kategori (keputusan atasan 5 Nov 2026), bukan katalog kartu pelatihan.
 // Klik kartu -> /pelatihan/kategori/[slug]. Judul pelatihan dicari lewat command palette (Ctrl K).
@@ -24,8 +27,8 @@ import { formatNumber } from "@/lib/format";
 export async function generateMetadata({ searchParams }: PageProps<"/pelatihan">): Promise<Metadata> {
   const [settings, requested] = await Promise.all([getSettings(), searchParams.then(parseGridState)]);
   // Halaman di luar batas dirender sebagai halaman terakhir (BE menjepit page); canonical ikut.
-  const { meta } = await getCategoryGrid(requested.q, requested.page);
-  const state = { q: requested.q, page: meta.page };
+  const { meta } = await getCategoryGrid(requested.q, requested.huruf, requested.page);
+  const state = { ...requested, page: meta.page };
   return {
     title: state.page > 1 ? `Pelatihan, halaman ${state.page}` : "Pelatihan",
     description: settings.seo.description || undefined,
@@ -37,6 +40,12 @@ export default async function TrainingCategoriesPage({ searchParams }: PageProps
   // Data ringkas di-cache (tanpa data request), jadi kepala halaman tetap ikut prerender.
   const [categories, catalog] = await Promise.all([getCategories(), getCatalog({ per: 1 })]);
   const featuredTotal = categories.filter((category) => category.featured).length;
+  // Jumlah per huruf indeks dari daftar kategori publik (filter sama dengan grid BE).
+  const letterCounts: Record<string, number> = {};
+  for (const category of categories) {
+    const letter = indexLetter(category.name);
+    letterCounts[letter] = (letterCounts[letter] ?? 0) + 1;
+  }
   const stats = [
     { value: categories.length, label: "Kategori" },
     { value: catalog.meta.total, label: "Judul pelatihan" },
@@ -66,7 +75,7 @@ export default async function TrainingCategoriesPage({ searchParams }: PageProps
       <Container className="pt-10 pb-16 md:pt-14 md:pb-24">
         {/* q & page dibaca dari URL saat request, jadi bagian ini di-stream di dalam Suspense. */}
         <Suspense fallback={<CategoryGridSkeleton />}>
-          <CategoryResults searchParams={searchParams} featuredTotal={featuredTotal} />
+          <CategoryResults searchParams={searchParams} featuredTotal={featuredTotal} letterCounts={letterCounts} />
         </Suspense>
       </Container>
       <ClosingCta />
@@ -95,13 +104,15 @@ function HeroStats({ stats }: { stats: { value: number; label: string }[] }) {
 async function CategoryResults({
   searchParams,
   featuredTotal,
+  letterCounts,
 }: {
   searchParams: PageProps<"/pelatihan">["searchParams"];
   featuredTotal: number;
+  letterCounts: Record<string, number>;
 }) {
   const requested = parseGridState(await searchParams);
-  const { items, meta } = await getCategoryGrid(requested.q, requested.page);
-  const state = { q: requested.q, page: meta.page };
+  const { items, meta } = await getCategoryGrid(requested.q, requested.huruf, requested.page);
+  const state = { ...requested, page: meta.page };
   const from = (meta.page - 1) * meta.pageSize + 1;
   const to = from + items.length - 1;
 
@@ -122,9 +133,11 @@ async function CategoryResults({
   return (
     <>
       {items.length > 0 ? <JsonLd data={itemList} /> : null}
-      <div className="mb-10 flex flex-col gap-2 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between md:mb-12">
+      <CategoryLetterIndex counts={letterCounts} active={state.huruf} />
+      <div className="mt-4 mb-10 flex flex-col gap-2 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between md:mb-12">
         <p role="status" className="font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-strong">
           {formatNumber(meta.total)} {state.q ? "kategori cocok" : "kategori"}
+          {state.huruf ? ` / ${state.huruf === "#" ? "angka & simbol" : `huruf ${state.huruf}`}` : ""}
         </p>
         {state.q ? (
           <p className="text-small text-fg-muted">
@@ -144,13 +157,22 @@ async function CategoryResults({
       </div>
 
       {items.length > 0 ? (
-        <CategoryGroups categories={items} offset={from - 1} featuredTotal={state.q ? null : featuredTotal} />
+        <CategoryGroups categories={items} offset={from - 1} featuredTotal={state.q || state.huruf ? null : featuredTotal} />
       ) : (
         <div className="rounded-card border border-dashed border-border-strong px-6 py-16 text-center">
           <p className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">0 hasil</p>
           <p className="mt-3 text-h3 text-fg-strong">
-            {state.q ? `Kategori “${state.q}” tidak ditemukan` : "Belum ada kategori."}
+            {state.q
+              ? `Kategori “${state.q}” tidak ditemukan`
+              : state.huruf
+                ? `Belum ada kategori berawalan ${state.huruf}.`
+                : "Belum ada kategori."}
           </p>
+          {state.huruf ? (
+            <Link href="/pelatihan" className={cn(buttonVariants({ variant: "secondary" }), "mt-6")}>
+              Lihat semua kategori
+            </Link>
+          ) : null}
           {state.q ? (
             <>
               <p className="mx-auto mt-2 max-w-[65ch] text-body text-fg-muted">

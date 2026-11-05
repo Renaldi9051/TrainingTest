@@ -1,6 +1,11 @@
-// State grid kategori /pelatihan di URL: ?q=&page=. Nilai tak dikenal dibuang (URL bisa diketik sembarang).
+// State grid kategori /pelatihan di URL: ?q=&huruf=&page=. Nilai tak dikenal dibuang (URL bisa diketik
+// sembarang). q dan huruf saling menggantikan (keputusan pemilik 5 Nov 2026): memilih huruf menghapus
+// kata cari, mengetik menghapus huruf. Kalau keduanya ada di URL (diketik manual), q yang dipakai.
 
-export type CategoryGridState = { q: string; page: number };
+// huruf: "" (semua), "A"-"Z", atau "#" (nama berawalan angka/simbol), sama dengan indexLetter.
+export type CategoryGridState = { q: string; huruf: string; page: number };
+
+export const INDEX_LETTERS: readonly string[] = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"];
 
 type RawParams = Record<string, string | string[] | undefined>;
 
@@ -17,22 +22,29 @@ function toPage(value: string): number {
   return Number.isFinite(page) && page > 1 ? Math.min(page, 1000) : 1;
 }
 
-export function parseGridState(raw: RawParams): CategoryGridState {
-  return { q: first(raw.q).replace(/\s+/g, " ").slice(0, 100), page: toPage(first(raw.page)) };
+function toLetter(value: string): string {
+  const letter = value.toUpperCase();
+  return INDEX_LETTERS.includes(letter) ? letter : "";
 }
 
-// Urutan parameter tetap; halaman 1 tidak ditulis. Mengubah q selalu kembali ke halaman 1 (pemanggil).
+export function parseGridState(raw: RawParams): CategoryGridState {
+  const q = first(raw.q).replace(/\s+/g, " ").slice(0, 100);
+  return { q, huruf: q ? "" : toLetter(first(raw.huruf)), page: toPage(first(raw.page)) };
+}
+
+// Urutan parameter tetap; halaman 1 tidak ditulis. Mengubah q/huruf selalu kembali ke halaman 1 (pemanggil).
 export function gridHref(state: CategoryGridState): string {
   const params = new URLSearchParams();
   if (state.q) params.set("q", state.q);
+  else if (state.huruf) params.set("huruf", state.huruf);
   if (state.page > 1) params.set("page", String(state.page));
   const query = params.toString();
   return query ? `/pelatihan?${query}` : "/pelatihan";
 }
 
-// Canonical per halaman. Hasil pencarian tidak diindeks terpisah (canonical /pelatihan).
+// Canonical per halaman. Hasil pencarian & saringan huruf tidak diindeks terpisah (canonical /pelatihan).
 export function gridCanonical(state: CategoryGridState): string {
-  return state.q ? "/pelatihan" : gridHref({ q: "", page: state.page });
+  return state.q || state.huruf ? "/pelatihan" : gridHref({ q: "", huruf: "", page: state.page });
 }
 
 // Slug kategori pertama dari ?kategori=a,b (URL lama). null kalau kosong/tidak valid.
@@ -47,5 +59,5 @@ export function legacyCatalogTarget(params: URLSearchParams): string | null {
   if (!LEGACY_PARAMS.some((key) => params.has(key))) return null;
   const q = params.get("q")?.replace(/\s+/g, " ").trim().slice(0, 100) ?? "";
   const page = toPage(params.get("page") ?? params.get("hal") ?? "");
-  return gridHref({ q, page });
+  return gridHref({ q, huruf: "", page });
 }

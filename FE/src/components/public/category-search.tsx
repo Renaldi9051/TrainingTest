@@ -3,7 +3,7 @@
 import { SearchIcon } from "lucide-react";
 import Form from "next/form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { gridHref } from "@/lib/category-grid-url";
 
 const DEBOUNCE_MS = 300;
@@ -11,21 +11,35 @@ const DEBOUNCE_MS = 300;
 // Kotak "Cari kategori" di kepala /pelatihan. Form GET ?q= (tetap jalan tanpa JavaScript); dengan JS,
 // ketikan dikirim setelah jeda 300 ms lewat router.replace (tanpa reload penuh, halaman kembali ke 1).
 // Nilai awal dibaca dari URL sekali; setelah itu input milik pengguna (tidak ditimpa saat hasil datang).
+// Huruf indeks dan kata cari saling menggantikan: mengetik menghapus ?huruf=, dan saat pengguna memilih
+// huruf (?huruf= berubah jadi terisi) kotak ini dikosongkan.
 export function CategorySearch() {
   const router = useRouter();
-  const initial = useSearchParams().get("q") ?? "";
+  const searchParams = useSearchParams();
+  const initial = searchParams.get("q") ?? "";
+  const huruf = searchParams.get("huruf") ?? "";
   const [value, setValue] = useState(initial);
-  const sent = useRef(initial.trim());
+  const [sent, setSent] = useState(initial.trim());
+  const [lastHuruf, setLastHuruf] = useState(huruf);
+
+  // Penyesuaian state saat render (bukan efek): huruf baru dipilih -> kosongkan input & penanda kirim.
+  if (huruf !== lastHuruf) {
+    setLastHuruf(huruf);
+    if (huruf) {
+      setValue("");
+      setSent("");
+    }
+  }
 
   useEffect(() => {
     const q = value.replace(/\s+/g, " ").trim();
-    if (q === sent.current) return;
+    if (q === sent) return;
     const timer = window.setTimeout(() => {
-      sent.current = q;
-      router.replace(gridHref({ q, page: 1 }), { scroll: false });
+      setSent(q);
+      router.replace(gridHref({ q, huruf: "", page: 1 }), { scroll: false });
     }, DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
-  }, [value, router]);
+  }, [value, sent, router]);
 
   return <CategorySearchForm value={value} onChange={setValue} />;
 }
