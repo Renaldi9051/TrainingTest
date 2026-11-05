@@ -102,7 +102,7 @@ test.describe("halaman pelatihan v0.2", () => {
 
   test("/pelatihan: grid kategori (tanpa sidebar/urutan/kartu pelatihan), kartu ke halaman kategori, cari kosong", async ({ page }) => {
     await page.goto("/pelatihan");
-    await expect(page.getByRole("heading", { level: 1, name: "Pilih kategori pelatihan" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Pelatihan untuk setiap bidang kerja" })).toBeVisible();
     await expect(page.getByRole("complementary", { name: "Filter" })).toHaveCount(0);
     await expect(page.getByRole("group", { name: "Metode" })).toHaveCount(0);
     await expect(page.getByRole("list", { name: "Filter aktif" })).toHaveCount(0);
@@ -113,7 +113,7 @@ test.describe("halaman pelatihan v0.2", () => {
     const tile = page.locator(`[data-category-card="${category.slug}"]`);
     await expect(tile).toHaveAttribute("href", `/pelatihan/kategori/${category.slug}`);
     await expect(tile.getByRole("heading", { level: 3 })).toHaveText(category.name);
-    await expect(tile).toContainText(/\d+ pelatihan/i);
+    await expect(tile).toContainText(/\d+ judul pelatihan/i);
     await expect(tile.locator("a")).toHaveCount(0);
     await tile.click();
     await expect(page).toHaveURL(new RegExp(`/pelatihan/kategori/${category.slug}$`));
@@ -141,7 +141,7 @@ test.describe("halaman pelatihan v0.2", () => {
     // Slug tak dikenal: kembali ke /pelatihan.
     await page.goto(`/pelatihan?kategori=tidak-ada-kategori-${id}`);
     await expect(page).toHaveURL(/\/pelatihan$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Pilih kategori pelatihan" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Pelatihan untuk setiap bidang kerja" })).toBeVisible();
   });
 
   test("tanpa scroll horizontal di 360 px (grid kategori, halaman kategori, detail)", async ({ page }) => {
@@ -300,6 +300,73 @@ test.describe("halaman pelatihan v0.2", () => {
       for (const item of changed) {
         await request.patch(`/api/admin/trainings/${item.id}`, { headers: HEADERS, data: { coverId: item.coverId } });
       }
+    }
+  });
+});
+
+// Teks /pelatihan dari Pengaturan: kepala halaman (page.headers.pelatihan, kata aksen *kata*) dan
+// section (trainings.page). Kosong = teks bawaan. Pengaturan dikembalikan ke nilai semula.
+test.describe("teks halaman pelatihan dari pengaturan", () => {
+  test("kosong = bawaan; diisi = tampil, kata aksen outline, tombol CTA & dekorasi ikut setting", async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await loginViaApi(page.request);
+    const settings = (await (await page.request.get("/api/admin/settings")).json()) as { data: { values: Record<string, unknown> } };
+    const original = { headers: settings.data.values["page.headers"], page: settings.data.values["trainings.page"] };
+    const put = async (key: string, data: unknown) => {
+      const response = await page.request.put(`/api/admin/settings/${key}`, { headers: HEADERS, data });
+      expect(response.status(), await response.text()).toBe(200);
+    };
+    const id = runId();
+    try {
+      await page.goto("/pelatihan");
+      await expect(page.getByRole("heading", { level: 2, name: "Kategori A-Z" })).toBeVisible();
+      await expect(page.getByRole("link", { name: /Request pelatihan in-house/ })).toHaveAttribute("href", "/kontak");
+
+      // Pasangan label/tautan tidak lengkap ditolak.
+      const invalid = await page.request.put("/api/admin/settings/trainings.page", {
+        headers: HEADERS,
+        data: { cta: { primaryLabel: "Tanpa tautan" } },
+      });
+      expect(invalid.status()).toBe(422);
+
+      await put("page.headers", {
+        ...(original.headers as object),
+        pelatihan: { eyebrow: "Katalog uji", heading: `Belajar *${id}* bersama`, lead: "Pengantar uji pelatihan." },
+      });
+      await put("trainings.page", {
+        featured: { eyebrow: "", heading: "Unggulan uji", lead: "" },
+        all: { eyebrow: "", heading: `Semua uji ${id}` },
+        cta: {
+          eyebrow: "",
+          heading: "CTA uji",
+          lead: "",
+          primaryLabel: "Hubungi uji",
+          primaryHref: "/kontak#inquiry",
+          secondaryLabel: "",
+          secondaryHref: "",
+          outline: "",
+          decor: false,
+        },
+      });
+      await expect
+        .poll(async () => (await (await page.request.get("/pelatihan")).text()).includes(`Semua uji ${id}`), { timeout: 10_000 })
+        .toBe(true);
+      await page.goto("/pelatihan");
+      const h1 = page.getByRole("heading", { level: 1 });
+      await expect(h1).toHaveText(`Belajar ${id} bersama`);
+      await expect(h1.locator("span", { hasText: id })).toHaveCSS("color", "rgba(0, 0, 0, 0)");
+      await expect(page.getByText("Katalog uji")).toBeVisible();
+      await expect(page.getByText("Pengantar uji pelatihan.")).toBeVisible();
+      await expect(page.getByRole("heading", { level: 2, name: `Semua uji ${id}` })).toBeVisible();
+      const cta = page.getByRole("region", { name: "CTA uji" });
+      await expect(cta.getByRole("link", { name: /Hubungi uji/ })).toHaveAttribute("href", "/kontak#inquiry");
+      // Tombol kedua kosong = bawaan; dekorasi mati = tanpa teks outline.
+      await expect(cta.getByRole("link", { name: "Lihat jadwal" })).toHaveAttribute("href", "/jadwal");
+      await expect(cta.getByText("IN-HOUSE", { exact: true })).toHaveCount(0);
+    } finally {
+      await put("page.headers", original.headers);
+      await put("trainings.page", original.page);
     }
   });
 });

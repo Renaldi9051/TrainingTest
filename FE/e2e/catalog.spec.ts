@@ -140,7 +140,7 @@ test.describe("katalog & detail pelatihan", () => {
       meta: { total: number; totalPages: number };
     };
     await page.goto("/pelatihan");
-    await expect(page.getByRole("heading", { level: 1, name: "Pilih kategori pelatihan" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Pelatihan untuk setiap bidang kerja" })).toBeVisible();
     // Tidak ada lagi sidebar filter, urutan, chip filter aktif, atau kartu pelatihan.
     await expect(page.getByRole("complementary", { name: "Filter" })).toHaveCount(0);
     await expect(page.getByRole("navigation", { name: "Urutkan" })).toHaveCount(0);
@@ -152,13 +152,16 @@ test.describe("katalog & detail pelatihan", () => {
       api.data.map((category) => category.slug),
     );
     await expect(page.getByRole("status").filter({ hasText: /kategori$/i })).toHaveText(new RegExp(`^${api.meta.total.toLocaleString("id-ID")} kategori$`, "i"));
-    const featured = api.data.find((category) => category.featured);
-    // Unggulan tidak berbadge per kartu; kartunya masuk kelompok "Kategori unggulan".
-    if (featured) {
-      const group = page.locator('[data-category-group="unggulan"]');
-      await expect(group.getByRole("heading", { level: 2, name: "Kategori unggulan" })).toBeVisible();
-      await expect(group.locator(`[data-category-card="${featured.slug}"]`)).toBeVisible();
+    // Bento unggulan: 5 unggulan pertama menurut urutan admin (daftar penuh), terpisah dari grid A-Z.
+    const full = (await (await page.request.get("/api/public/categories")).json()) as { data: { slug: string; featured: boolean }[] };
+    const bento = full.data.filter((category) => category.featured).slice(0, 5).map((category) => category.slug);
+    if (bento.length > 0) {
+      await expect(page.getByRole("heading", { level: 2, name: "Kategori unggulan" })).toBeVisible();
+      expect(await page.locator("[data-featured-card]").evaluateAll((links) => links.map((link) => link.getAttribute("data-featured-card")))).toEqual(bento);
     }
+    // Grid A-Z murni: unggulan tidak didahulukan.
+    const names = api.data.map((category) => category.name);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, "id", { sensitivity: "base" })));
 
     // Ketik tanpa Enter: URL berubah setelah jeda (tanpa reload penuh: penanda window tetap ada).
     const target = api.data[api.data.length - 1];
@@ -183,7 +186,7 @@ test.describe("katalog & detail pelatihan", () => {
   });
 
   // Keputusan pemilik 5 Nov 2026: indeks huruf A-Z; huruf & kata cari saling menggantikan.
-  test("grid kategori: indeks huruf menyaring huruf awal, huruf kosong nonaktif, huruf & cari saling menggantikan", async ({ page }) => {
+  test("grid kategori: indeks huruf menyaring huruf awal, huruf kosong disembunyikan, huruf & cari saling menggantikan", async ({ page }) => {
     const all = (await (await page.request.get("/api/public/categories")).json()) as { data: { slug: string; name: string }[] };
     const letterOf = (name: string) => {
       const first = name.normalize("NFKD").replace(/\p{M}/gu, "").trim().charAt(0).toUpperCase();
@@ -207,9 +210,8 @@ test.describe("katalog & detail pelatihan", () => {
     const shown = await cards.evaluateAll((links) => links.map((link) => link.getAttribute("data-category-card") ?? ""));
     expect(shown.every((slug) => expected.includes(slug))).toBe(true);
 
-    // Huruf tanpa kategori: tidak bisa diklik.
+    // Huruf tanpa kategori tidak ditampilkan.
     if (empty) {
-      await expect(index.locator(`[data-letter="${empty}"]`)).toHaveAttribute("aria-disabled", "true");
       await expect(index.getByRole("link", { name: new RegExp(`^Huruf ${empty},`) })).toHaveCount(0);
     }
 
@@ -260,7 +262,8 @@ test.describe("katalog & detail pelatihan", () => {
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/pelatihan$/);
 
       await pages.getByRole("link", { name: "Berikutnya" }).click();
-      await page.waitForURL(/\/pelatihan\?page=2$/);
+      // Link paginasi melompat ke grid A-Z (#semua).
+      await page.waitForURL(/\/pelatihan\?page=2#semua$/);
       await expect(pages.getByRole("link", { name: "Halaman 2" })).toHaveAttribute("aria-current", "page");
       await expect(page).toHaveTitle(/^Pelatihan, halaman 2/);
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/pelatihan\?page=2$/);

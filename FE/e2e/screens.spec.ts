@@ -86,7 +86,7 @@ test.describe("screenshot interaksi shell @manual", () => {
     for (const width of WIDTHS) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/pelatihan?q=a");
-      await expect(page.getByRole("heading", { level: 1, name: "Pilih kategori pelatihan" })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1, name: "Pelatihan untuk setiap bidang kerja" })).toBeVisible();
       await page.waitForTimeout(400);
       await page.screenshot({ path: path.join(OUT, `pelatihan-cari-${width}.png`) });
     }

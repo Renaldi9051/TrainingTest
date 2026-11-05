@@ -274,24 +274,22 @@ test.describe("halaman kategori v2", () => {
     await expect(page.getByRole("heading", { level: 1, name: CATEGORY_NAME })).toBeVisible();
   });
 
-  test("grid /pelatihan: cari kategori, cover dari Category.image lalu foto galeri, kelompok unggulan, klik ke landing", async ({ page }) => {
+  test("grid /pelatihan: cari kategori, cover dari Category.image lalu foto galeri, klik ke landing", async ({ page }) => {
     const tile = page.locator(`[data-category-card="${category.slug}"]`);
-    const featuredTile = page.locator(`[data-category-group="unggulan"] [data-category-card="${category.slug}"]`);
     await gotoUntil(page, `/pelatihan?q=${token}`, async () => (await tile.count()) === 1);
     await expect(page.getByRole("status").filter({ hasText: /kategori cocok/i })).toHaveText(/^1 kategori cocok$/i);
     await expect(tile.getByRole("img")).toHaveAttribute("alt", COVER_ALT);
-    await expect(tile).toContainText(/2 pelatihan/i);
-    await expect(featuredTile).toHaveCount(0);
+    await expect(tile).toContainText(/2 judul pelatihan/i);
 
-    // Cover kosong -> foto pertama galeri; unggulan -> kelompok "Kategori unggulan".
+    // Cover kosong -> foto pertama galeri.
     await loginViaApi(page.request);
-    await patchCategory(page.request, { imageId: null, featured: true });
+    await patchCategory(page.request, { imageId: null });
     try {
-      await gotoUntil(page, `/pelatihan?q=${token}`, async () => (await featuredTile.count()) === 1);
+      await gotoUntil(page, `/pelatihan?q=${token}`, async () => /^\[UJI\] Dokumentasi \d$/.test((await tile.getByRole("img").getAttribute("alt")) ?? ""));
       await expect(tile.getByRole("img")).toHaveCount(1);
       await expect(tile.getByRole("img")).toHaveAttribute("alt", /^\[UJI\] Dokumentasi \d$/);
     } finally {
-      await patchCategory(page.request, { imageId: coverImage, featured: false });
+      await patchCategory(page.request, { imageId: coverImage });
     }
 
     await tile.click();
