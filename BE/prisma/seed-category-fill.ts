@@ -15,6 +15,11 @@
 //   (uji/typo/duplikat/terlalu umum, dirapikan dulu lewat admin). Judul topik dipilih manual dari Sampah:
 //   snapshot referensi di CATEGORY_FILL_TOPIC_PICKS, judul seed sendiri di CATEGORY_FILL_TRASH_PICKS (hanya
 //   dipulihkan). Tetap tidak mengarang judul; kategori yang kandidatnya kurang tetap di bawah 10.
+// - Versi 5 (5 Nov 2026): target tidak lagi daftar tetap. Versi 4 memakai CATEGORY_FILL_SLUGS, yaitu
+//   kategori yang di bawah 10 di database dev; di VPS isi kategori lain (mis. cargo, chemist, capital)
+//   juga kurang tapi tidak ikut diisi. Sekarang semua kategori aktif yang sudah berisi minimal satu
+//   pelatihan, kecuali CATEGORY_FILL_SKIP; yang sudah 10 tidak disentuh, kategori kosong (sengaja
+//   dikosongkan perapian) dibiarkan, sisanya diisi dari kandidat yang sama (judul bertanda, topik, Sampah).
 // Versi pertama: kategori berawalan A dan B yang tampil di publik.
 import type { Prisma } from "../src/generated/prisma/client";
 import { getDb } from "../src/lib/db";
@@ -26,8 +31,11 @@ import { hasReferenceTitle, plainTitle, referenceSnapshotSlugs, referenceTrainin
 import { loadTrainingPhotos } from "./seed-training-photos";
 
 export const CATEGORY_FILL_KEY = "seed.categoryFill.version";
-export const CATEGORY_FILL_VERSION = "2026-11-05-semua";
+export const CATEGORY_FILL_VERSION = "2026-11-05-semua-kategori";
 export const CATEGORY_FILL_TARGET = 10;
+// Kategori yang diisi versi 1-4 (di bawah 10 di database dev saat itu); kunci CATEGORY_FILL_TOPIC_PICKS
+// dan CATEGORY_FILL_TRASH_PICKS harus ada di sini. Sejak versi 5 target pengisian = semua kategori
+// aktif kecuali CATEGORY_FILL_SKIP (lihat planCategoryFill).
 export const CATEGORY_FILL_SLUGS = [
   "administrative",
   "akuakultur",
@@ -723,9 +731,12 @@ type Candidate = { slug: string; title: string; source: CategoryFillSource; hasP
 // Rencana tanpa menulis apa pun (dipakai seed dan pratinjau).
 export async function planCategoryFill(): Promise<CategoryFillPlan> {
   const trashPickSlugs = Object.values(CATEGORY_FILL_TRASH_PICKS).flat();
+  const skipped: string[] = Object.values(CATEGORY_FILL_SKIP).flat();
   const [categories, active, known, photos, trashRows] = await Promise.all([
+    // Semua kategori aktif yang sudah berisi (tampil di publik) kecuali yang dilewati; kategori kosong
+    // sengaja dikosongkan perapian (gabung kembar, typo) dan tidak diisi. Yang sudah 10 tidak mendapat pilihan.
     db.category.findMany({
-      where: { slug: { in: CATEGORY_FILL_SLUGS }, deletedAt: null },
+      where: { slug: { notIn: skipped }, deletedAt: null, trainings: { some: { training: { deletedAt: null } } } },
       select: { id: true, slug: true, _count: { select: { trainings: { where: { training: { deletedAt: null } } } } } },
     }),
     db.training.findMany({ where: { deletedAt: null }, select: { slug: true, title: true } }),
