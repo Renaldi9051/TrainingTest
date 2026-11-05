@@ -20,11 +20,12 @@ export const SETTING_TAB_LABELS: Record<SettingKey, string> = {
   "seo.default": "SEO default",
   "page.headers": "Kepala halaman",
   "services.process": "Alur kerja sama",
+  "trainings.page": "Teks pelatihan",
 };
 
 // Halaman daftar yang kepalanya bisa diatur (setting page.headers); label lama = fallback di FE.
 export const PAGE_HEADER_LABELS: Record<PageHeaderPage, string> = {
-  pelatihan: "Katalog pelatihan",
+  pelatihan: "Pelatihan",
   layanan: "Layanan",
   portofolio: "Portofolio",
   jadwal: "Jadwal",
@@ -65,8 +66,11 @@ export const SETTING_FIELDS: readonly SettingField[] = [
   { key: "seo.default", field: "ogImageId", label: "Gambar OG default", synonyms: ["og image", "gambar share", "seo"] },
   { key: "page.headers", field: "layanan", label: "Kepala halaman Layanan", synonyms: ["judul halaman", "header halaman", "layanan"] },
   { key: "page.headers", field: "portofolio", label: "Kepala halaman Portofolio", synonyms: ["judul halaman", "header halaman", "portofolio"] },
-  { key: "page.headers", field: "pelatihan", label: "Kepala halaman Katalog", synonyms: ["judul halaman", "header halaman", "katalog"] },
+  { key: "page.headers", field: "pelatihan", label: "Kepala halaman Pelatihan", synonyms: ["judul halaman", "header halaman", "katalog", "pelatihan"] },
   { key: "services.process", field: "steps", label: "Alur kerja sama", synonyms: ["langkah", "proses", "alur layanan"] },
+  { key: "trainings.page", field: "featured", label: "Kategori unggulan (halaman pelatihan)", synonyms: ["bento", "unggulan", "paling dicari"] },
+  { key: "trainings.page", field: "all", label: "Kategori A-Z (halaman pelatihan)", synonyms: ["semua kategori", "grid kategori"] },
+  { key: "trainings.page", field: "cta", label: "CTA penutup halaman pelatihan", synonyms: ["in-house", "tombol penutup", "cta pelatihan"] },
 ];
 
 export function settingAnchor(key: SettingKey, field: string): string {

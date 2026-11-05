@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/admin/ui/select";
 import { Skeleton } from "@/components/admin/ui/skeleton";
+import { Switch } from "@/components/admin/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/admin/ui/tabs";
 import { Textarea } from "@/components/admin/ui/textarea";
 import { FaqEditor, StringListEditor } from "@/components/admin/training-editors";
@@ -163,6 +164,9 @@ export function SettingsForm() {
       </TabsContent>
       <TabsContent value="services.process" forceMount className="data-[state=inactive]:hidden">
         <ServicesProcessSection value={values["services.process"]} {...sectionProps} />
+      </TabsContent>
+      <TabsContent value="trainings.page" forceMount className="data-[state=inactive]:hidden">
+        <TrainingsPageSection value={values["trainings.page"]} {...sectionProps} />
       </TabsContent>
     </Tabs>
   );
@@ -798,7 +802,12 @@ function PageHeadersSection({ value, onDirtyChange }: SectionProps<"page.headers
             <FormField id={`${formId}-${page}-eyebrow`} label="Eyebrow" error={errors[page]?.eyebrow?.message}>
               <Input {...form.register(`${page}.eyebrow`)} placeholder="Mis. 01 / Layanan" />
             </FormField>
-            <FormField id={`${formId}-${page}-heading`} label="Judul" error={errors[page]?.heading?.message}>
+            <FormField
+              id={`${formId}-${page}-heading`}
+              label="Judul"
+              description={page === "pelatihan" ? "Apit satu kata dengan bintang untuk gaya outline, mis. Pelatihan untuk setiap *bidang* kerja." : undefined}
+              error={errors[page]?.heading?.message}
+            >
               <Input {...form.register(`${page}.heading`)} placeholder={PAGE_HEADER_LABELS[page]} />
             </FormField>
           </div>
@@ -884,6 +893,140 @@ function ServicesProcessSection({ value, onDirtyChange }: SectionProps<"services
         <PlusIcon aria-hidden />
         Tambah langkah
       </Button>
+    </SectionForm>
+  );
+}
+
+// ===== Halaman pelatihan (/pelatihan) =====
+
+const optionalHrefText = z.string().trim().max(500).refine((href) => href === "" || hrefPattern.test(href), {
+  error: "Tautan harus diawali / (mis. /kontak) atau http(s)://.",
+});
+const trainingsPageSchema = z.object({
+  featured: z.object({ eyebrow: text("Eyebrow", 60), heading: text("Judul", 120), lead: text("Keterangan", 200) }),
+  all: z.object({ eyebrow: text("Eyebrow", 60), heading: text("Judul", 120) }),
+  cta: z
+    .object({
+      eyebrow: text("Eyebrow", 60),
+      heading: text("Judul", 120),
+      lead: text("Pengantar", 300),
+      primaryLabel: text("Label tombol utama", 40),
+      primaryHref: optionalHrefText,
+      secondaryLabel: text("Label tombol kedua", 40),
+      secondaryHref: optionalHrefText,
+      outline: text("Teks outline", 24),
+      decor: z.boolean(),
+    })
+    .refine((value) => (value.primaryLabel === "") === (value.primaryHref === ""), {
+      error: "Isi label dan tautan tombol utama sekaligus, atau kosongkan keduanya.",
+      path: ["primaryHref"],
+    })
+    .refine((value) => (value.secondaryLabel === "") === (value.secondaryHref === ""), {
+      error: "Isi label dan tautan tombol kedua sekaligus, atau kosongkan keduanya.",
+      path: ["secondaryHref"],
+    }),
+});
+
+// Placeholder = teks bawaan halaman /pelatihan (dipakai kalau field dikosongkan).
+function TrainingsPageSection({ value, onDirtyChange }: SectionProps<"trainings.page">) {
+  const { form, formId, onSubmit, saveBar } = useSettingForm("trainings.page", trainingsPageSchema, value, onDirtyChange);
+  const errors = form.formState.errors;
+  return (
+    <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
+      <p className="text-small text-fg-muted">
+        Teks section di halaman Pelatihan. Kosongkan untuk memakai teks bawaan. Judul dan pengantar paling atas diatur di tab
+        Kepala halaman. Isi bento unggulan diambil dari kategori bertanda Unggulan (5 teratas menurut urutan kategori).
+      </p>
+      <fieldset data-anchor="trainings.page.featured" className="space-y-4 border-t border-border pt-6">
+        <legend className="text-sm font-medium">Kategori unggulan</legend>
+        <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
+          <FormField id={`${formId}-featured-eyebrow`} label="Eyebrow" error={errors.featured?.eyebrow?.message}>
+            <Input {...form.register("featured.eyebrow")} placeholder="Paling dicari" />
+          </FormField>
+          <FormField id={`${formId}-featured-heading`} label="Judul" error={errors.featured?.heading?.message}>
+            <Input {...form.register("featured.heading")} placeholder="Kategori unggulan" />
+          </FormField>
+        </div>
+        <FormField id={`${formId}-featured-lead`} label="Keterangan" error={errors.featured?.lead?.message}>
+          <Input {...form.register("featured.lead")} placeholder="Bidang pilihan untuk instansi dan perusahaan." />
+        </FormField>
+      </fieldset>
+      <fieldset data-anchor="trainings.page.all" className="space-y-4 border-t border-border pt-6">
+        <legend className="text-sm font-medium">Semua kategori (A-Z)</legend>
+        <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
+          <FormField id={`${formId}-all-eyebrow`} label="Eyebrow" error={errors.all?.eyebrow?.message}>
+            <Input {...form.register("all.eyebrow")} placeholder="Semua kategori" />
+          </FormField>
+          <FormField id={`${formId}-all-heading`} label="Judul" error={errors.all?.heading?.message}>
+            <Input {...form.register("all.heading")} placeholder="Kategori A-Z" />
+          </FormField>
+        </div>
+      </fieldset>
+      <fieldset data-anchor="trainings.page.cta" className="space-y-4 border-t border-border pt-6">
+        <legend className="text-sm font-medium">CTA penutup</legend>
+        <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
+          <FormField id={`${formId}-cta-eyebrow`} label="Eyebrow" error={errors.cta?.eyebrow?.message}>
+            <Input {...form.register("cta.eyebrow")} placeholder="Pelatihan in-house" />
+          </FormField>
+          <FormField id={`${formId}-cta-heading`} label="Judul" error={errors.cta?.heading?.message}>
+            <Input {...form.register("cta.heading")} placeholder="Tidak menemukan topik yang dicari?" />
+          </FormField>
+        </div>
+        <FormField id={`${formId}-cta-lead`} label="Pengantar" error={errors.cta?.lead?.message}>
+          <Textarea
+            rows={2}
+            {...form.register("cta.lead")}
+            placeholder="Ceritakan kebutuhan tim Anda. Materi, jadwal, dan lokasi bisa disesuaikan."
+          />
+        </FormField>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField id={`${formId}-cta-primary-label`} label="Label tombol utama" error={errors.cta?.primaryLabel?.message}>
+            <Input {...form.register("cta.primaryLabel")} placeholder="Request pelatihan in-house" />
+          </FormField>
+          <FormField
+            id={`${formId}-cta-primary-href`}
+            label="Tautan tombol utama"
+            description="Path internal (/kontak) atau URL lengkap."
+            error={errors.cta?.primaryHref?.message}
+          >
+            <Input {...form.register("cta.primaryHref")} placeholder="/kontak" />
+          </FormField>
+          <FormField id={`${formId}-cta-secondary-label`} label="Label tombol kedua" error={errors.cta?.secondaryLabel?.message}>
+            <Input {...form.register("cta.secondaryLabel")} placeholder="Lihat jadwal" />
+          </FormField>
+          <FormField id={`${formId}-cta-secondary-href`} label="Tautan tombol kedua" error={errors.cta?.secondaryHref?.message}>
+            <Input {...form.register("cta.secondaryHref")} placeholder="/jadwal" />
+          </FormField>
+        </div>
+        <FormField
+          id={`${formId}-cta-outline`}
+          label="Teks outline"
+          description="Kata besar bergaris di belakang CTA. Maksimal 24 karakter."
+          error={errors.cta?.outline?.message}
+        >
+          <Input {...form.register("cta.outline")} placeholder="IN-HOUSE" />
+        </FormField>
+        <Controller
+          control={form.control}
+          name="cta.decor"
+          render={({ field }) => (
+            <div className="flex items-start gap-3">
+              <Switch
+                id={`${formId}-cta-decor`}
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                aria-describedby={`${formId}-cta-decor-help`}
+              />
+              <div>
+                <Label htmlFor={`${formId}-cta-decor`}>Elemen dekoratif</Label>
+                <p id={`${formId}-cta-decor-help`} className="mt-1 text-small text-fg-muted">
+                  Tekstur grain dan teks outline di CTA penutup. Isi tidak berubah.
+                </p>
+              </div>
+            </div>
+          )}
+        />
+      </fieldset>
     </SectionForm>
   );
 }

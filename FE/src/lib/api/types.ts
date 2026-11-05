@@ -227,6 +227,22 @@ export type SocialPlatform = "instagram" | "facebook" | "linkedin" | "youtube" |
 export type PageHeaderPage = "pelatihan" | "layanan" | "portofolio" | "jadwal" | "kontak";
 export type PageHeader = { eyebrow: string; heading: string; lead: string };
 export type ServicesProcess = { eyebrow: string; heading: string; steps: { title: string; description: string }[] };
+// Teks section /pelatihan (setting trainings.page). Field kosong = label bawaan halaman.
+export type TrainingsPage = {
+  featured: { eyebrow: string; heading: string; lead: string };
+  all: { eyebrow: string; heading: string };
+  cta: {
+    eyebrow: string;
+    heading: string;
+    lead: string;
+    primaryLabel: string;
+    primaryHref: string;
+    secondaryLabel: string;
+    secondaryHref: string;
+    outline: string;
+    decor: boolean;
+  };
+};
 
 export type SettingValues = {
   "site.identity": {
@@ -265,6 +281,7 @@ export type SettingValues = {
   };
   "page.headers": Record<PageHeaderPage, PageHeader>;
   "services.process": ServicesProcess;
+  "trainings.page": TrainingsPage;
 };
 
 export type SettingKey = keyof SettingValues;
@@ -285,6 +302,7 @@ export type PublicSettings = {
   footer: SettingValues["site.footer"];
   pageHeaders: SettingValues["page.headers"];
   servicesProcess: ServicesProcess;
+  trainingsPage: TrainingsPage;
   seo: {
     titleTemplate: string;
     defaultTitle: string;
