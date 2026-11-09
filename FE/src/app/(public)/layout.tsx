@@ -12,6 +12,8 @@ import { getPublicEnv } from "@/lib/env";
 import { FALLBACK_ICON_PATH } from "@/lib/monogram";
 // Palet D hanya untuk halaman publik: semua aturannya di-scope ke [data-site="public"] (main di bawah).
 import "./palette-d.css";
+// Skala judul untuk Poppins (lebih lebar dari Geist), juga di-scope ke [data-site="public"].
+import "./typography.css";
 
 // Font halaman publik (permintaan atasan, 9 Nov 2026): Poppins untuk semua teks, IBM Plex Mono untuk
 // label. Admin tetap Geist dari layout root. Dimuat di sini supaya file font hanya diunduh di halaman
