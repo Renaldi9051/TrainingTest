@@ -158,7 +158,7 @@ function Hero({
           ) : null}
           <h1
             data-page-enter=""
-            className="max-w-[14ch] text-h1 text-fg-strong lg:text-[80px] lg:leading-[0.98] lg:tracking-[-0.04em]"
+            className="max-w-[14ch] text-h1 text-fg-strong lg:text-[68px] lg:leading-[0.98] lg:tracking-[-0.03em]"
           >
             {heading.before}
             {heading.accent ? (
