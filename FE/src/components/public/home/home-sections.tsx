@@ -71,8 +71,10 @@ function HeroText({ section, inverse, split = false }: { section: HeroData; inve
         <h1
           id={`${section.id}-title`}
           className={cn(
-            "max-w-[16ch]",
-            split ? "text-[clamp(44px,4.6vw,72px)] leading-[0.95] font-semibold tracking-[-0.03em]" : "text-display",
+            // Fullbleed 20ch: dengan Poppins (huruf lebih lebar dari angka 0 pengukur ch) 16ch memecah
+            // headline jadi 5 baris di 1280 px.
+            split ? "max-w-[16ch]" : "max-w-[20ch]",
+            split ? "text-[clamp(40px,4.1vw,64px)] leading-[0.95] font-semibold tracking-[-0.03em]" : "text-display",
             inverse ? "text-inverse-fg" : "text-fg-strong",
           )}
         >
