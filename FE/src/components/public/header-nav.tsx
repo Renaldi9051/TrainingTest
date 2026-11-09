@@ -94,7 +94,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
 
   return (
     <>
-      <nav ref={desktopNavRef} aria-label="Menu utama" className="relative hidden lg:block">
+      <nav ref={desktopNavRef} aria-label="Menu utama" className="relative hidden xl:block">
         <IndicatorMark variant="line" ref={indicatorRef} />
         <ul className="flex items-center gap-5 2xl:gap-8">
           {items.map((item) => (
@@ -124,7 +124,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
 
       <button
         type="button"
-        className="ml-auto inline-flex size-10 items-center justify-center rounded-md text-current outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 lg:hidden"
+        className="ml-auto inline-flex size-10 items-center justify-center rounded-md text-current outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 xl:hidden"
         aria-expanded={mobileOpen}
         aria-controls={mobileId}
         aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}
@@ -136,7 +136,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
       <div
         id={mobileId}
         hidden={!mobileOpen}
-        className="fixed inset-x-0 top-18 bottom-0 z-40 overflow-y-auto bg-bg text-fg lg:hidden"
+        className="fixed inset-x-0 top-18 bottom-0 z-40 overflow-y-auto bg-bg text-fg xl:hidden"
       >
         <nav aria-label="Menu utama (mobile)" className="px-4 py-6">
           <ul className="divide-y divide-border border-y border-border">
