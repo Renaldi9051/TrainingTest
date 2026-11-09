@@ -5,10 +5,14 @@
 //
 // Aturan:
 // - Hanya kategori yang galerinya MASIH KOSONG yang diisi (idempoten: jalan ulang tidak menambah).
-// - Foto diambil dari galeri (TrainingImage) pelatihan TAYANG di kategori itu, maks 4 foto.
-// - Utamakan 1 foto per pelatihan, pelatihan terbaru (publishedAt desc) dulu; sisanya diisi foto
-//   berikutnya dari pelatihan yang sama sampai 4.
-// - Non-destruktif: TrainingImage tidak pernah diubah/dihapus; hanya menambah baris CategoryMedia.
+// - Foto diambil dari sampul + galeri (TrainingImage) pelatihan TAYANG di kategori itu, maks 4 foto.
+//   Sampul kategori itu sendiri tidak dipakai (sudah tampil di hero).
+// - Satu foto hanya untuk SATU galeri kategori (keputusan pemilik 9 Nov 2026), termasuk galeri yang
+//   sudah terisi sebelumnya. Pembagian memakai matching maksimum (scripts/category-gallery-allocate.ts).
+//   Kategori yang kekurangan foto unik dibiarkan < 4 foto (landing tampil grid sejajar) atau kosong
+//   (section galeri disembunyikan); laporan menyebut kekurangannya untuk diisi pemilik lewat admin.
+// - Utamakan 1 foto per pelatihan, pelatihan terbaru (publishedAt desc) dulu.
+// - Non-destruktif: Training/TrainingImage tidak pernah diubah/dihapus; hanya menambah baris CategoryMedia.
 // - Guard (scripts/backfill-guard.ts): tanpa flag hanya training_dev. Database lain (production)
 //   hanya dengan --production DAN env CONFIRM_DB_NAME yang sama persis dengan nama database tujuan:
 //     CONFIRM_DB_NAME=training_prod npm run db:backfill:category-gallery -- --production          # dry run
@@ -22,11 +26,12 @@ import { nonEmptyPublicCategoryWhere } from "../src/services/category";
 import { publicTrainingWhere } from "../src/services/training-visibility";
 import { CATEGORY_GALLERY_MAX } from "../src/lib/validators/category";
 import { assertBackfillTarget } from "./backfill-guard";
+import { allocateUniqueGallery, type GalleryCandidate, type GalleryCategoryInput } from "./category-gallery-allocate";
 
 const APPLY = process.argv.includes("--apply");
 const PRODUCTION = process.argv.includes("--production");
 
-type PlannedPhoto = { mediaId: string; trainingTitle: string; reused: boolean };
+type PlannedPhoto = { mediaId: string; trainingTitle: string };
 type PlannedCategory = {
   categoryId: string;
   slug: string;
@@ -34,49 +39,25 @@ type PlannedCategory = {
   photos: PlannedPhoto[];
 };
 
-// Kandidat foto per kategori: tiap pelatihan (terbaru dulu) menyumbang fotonya berurutan.
-// Dikembalikan sebagai antrean putaran: ronde 0 = foto pertama tiap pelatihan, dst.
-function candidatePhotos(
-  trainings: { title: string; images: { mediaId: string }[] }[],
-): { mediaId: string; trainingTitle: string }[] {
-  const queue: { mediaId: string; trainingTitle: string }[] = [];
-  const maxLen = Math.max(0, ...trainings.map((t) => t.images.length));
-  // Utamakan sebaran: 1 foto per pelatihan dulu (ronde 0), baru foto berikutnya (ronde 1, ...).
+type TrainingPhotos = { title: string; cover: { id: string } | null; images: { mediaId: string }[] };
+
+// Kandidat foto satu kategori, urut preferensi: tiap pelatihan (terbaru dulu) menyumbang sampulnya
+// lalu foto galerinya. Bergiliran per ronde (ronde 0 = foto pertama tiap pelatihan, dst.) supaya
+// foto tersebar ke banyak pelatihan.
+function candidatePhotos(trainings: TrainingPhotos[], excludeMediaId: string | null): GalleryCandidate[] {
+  const perTraining = trainings.map((training) => ({
+    title: training.title,
+    mediaIds: [...(training.cover ? [training.cover.id] : []), ...training.images.map((image) => image.mediaId)],
+  }));
+  const queue: GalleryCandidate[] = [];
+  const maxLen = Math.max(0, ...perTraining.map((t) => t.mediaIds.length));
   for (let round = 0; round < maxLen; round += 1) {
-    for (const training of trainings) {
-      const photo = training.images[round];
-      if (photo) queue.push({ mediaId: photo.mediaId, trainingTitle: training.title });
+    for (const training of perTraining) {
+      const mediaId = training.mediaIds[round];
+      if (mediaId && mediaId !== excludeMediaId) queue.push({ mediaId, label: training.title });
     }
   }
   return queue;
-}
-
-// Pilih maks N foto dari antrean kandidat, utamakan media yang belum dipakai kategori lain
-// (globalUsed). Foto yang sama (sudah dipakai kategori lain) hanya dipakai kalau tidak ada
-// pilihan lain untuk memenuhi slot. Tidak pernah mengulang media yang sama dalam satu kategori.
-function pickPhotos(
-  candidates: { mediaId: string; trainingTitle: string }[],
-  globalUsed: Set<string>,
-  max: number,
-): PlannedPhoto[] {
-  const picked: PlannedPhoto[] = [];
-  const localSeen = new Set<string>();
-
-  // Lewat 1: hanya media yang belum pernah dipakai kategori mana pun.
-  for (const candidate of candidates) {
-    if (picked.length >= max) break;
-    if (localSeen.has(candidate.mediaId) || globalUsed.has(candidate.mediaId)) continue;
-    localSeen.add(candidate.mediaId);
-    picked.push({ ...candidate, reused: false });
-  }
-  // Lewat 2: isi sisa slot dengan media yang sudah dipakai kategori lain (reuse), kalau perlu.
-  for (const candidate of candidates) {
-    if (picked.length >= max) break;
-    if (localSeen.has(candidate.mediaId)) continue;
-    localSeen.add(candidate.mediaId);
-    picked.push({ ...candidate, reused: true });
-  }
-  return picked;
 }
 
 async function plan(now: Date): Promise<PlannedCategory[]> {
@@ -85,22 +66,21 @@ async function plan(now: Date): Promise<PlannedCategory[]> {
   // publik) dan galerinya masih kosong. Idempoten: kategori yang sudah punya galeri dilewati.
   const categories = await db.category.findMany({
     where: { ...nonEmptyPublicCategoryWhere(now), images: { none: {} } },
-    select: { id: true, slug: true, name: true },
+    select: { id: true, slug: true, name: true, imageId: true },
     orderBy: [{ order: "asc" }, { name: "asc" }],
   });
 
-  // Media yang sudah dialokasikan ke kategori lain dalam rencana ini, untuk utamakan foto unik.
-  const globalUsed = new Set<string>();
-  const result: PlannedCategory[] = [];
+  // Foto yang sudah ada di galeri kategori lain tidak boleh dipakai lagi.
+  const existing = await db.categoryMedia.findMany({ select: { mediaId: true } });
+  const taken = new Set(existing.map((row) => row.mediaId));
+
+  const inputs: GalleryCategoryInput[] = [];
   for (const category of categories) {
     const trainings = await db.training.findMany({
-      where: {
-        ...publicTrainingWhere(now),
-        categories: { some: { categoryId: category.id } },
-        images: { some: { media: { deletedAt: null } } },
-      },
+      where: { ...publicTrainingWhere(now), categories: { some: { categoryId: category.id } } },
       select: {
         title: true,
+        cover: { where: { deletedAt: null }, select: { id: true } },
         images: {
           where: { media: { deletedAt: null } },
           orderBy: { order: "asc" },
@@ -109,12 +89,17 @@ async function plan(now: Date): Promise<PlannedCategory[]> {
       },
       orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
     });
-    const photos = pickPhotos(candidatePhotos(trainings), globalUsed, CATEGORY_GALLERY_MAX);
-    if (photos.length === 0) continue;
-    for (const photo of photos) globalUsed.add(photo.mediaId);
-    result.push({ categoryId: category.id, slug: category.slug, name: category.name, photos });
+    // Sampul kategori itu sendiri tidak masuk galerinya (sudah tampil di hero halaman yang sama).
+    inputs.push({ id: category.id, candidates: candidatePhotos(trainings, category.imageId) });
   }
-  return result;
+
+  const allocation = allocateUniqueGallery(inputs, CATEGORY_GALLERY_MAX, taken);
+  return categories.map((category) => ({
+    categoryId: category.id,
+    slug: category.slug,
+    name: category.name,
+    photos: (allocation.get(category.id) ?? []).map((photo) => ({ mediaId: photo.mediaId, trainingTitle: photo.label })),
+  }));
 }
 
 async function apply(
@@ -154,34 +139,45 @@ async function main() {
   console.info(
     `${APPLY ? "Menjalankan" : "Rencana (dry run, belum ada yang diubah)"} backfill galeri kategori di ${name}:\n`,
   );
-  const plans = await plan(new Date());
-
-  if (plans.length === 0) {
-    console.info("Tidak ada kategori kosong yang bisa diisi dari galeri pelatihan.");
+  const allPlans = await plan(new Date());
+  if (allPlans.length === 0) {
+    console.info("Tidak ada kategori tampil yang galerinya masih kosong.");
     return;
   }
+  const plans = allPlans.filter((item) => item.photos.length > 0);
+  const empty = allPlans.filter((item) => item.photos.length === 0);
 
   for (const item of plans) {
-    const short = item.photos.length < CATEGORY_GALLERY_MAX ? ` (kurang dari ${CATEGORY_GALLERY_MAX})` : "";
+    const short = item.photos.length < CATEGORY_GALLERY_MAX ? ` (kurang ${CATEGORY_GALLERY_MAX - item.photos.length})` : "";
     console.info(`  [isi] ${item.name} (${item.slug}): ${item.photos.length} foto${short}`);
     for (const [index, photo] of item.photos.entries()) {
-      const tag = photo.reused ? " [dipakai ulang]" : "";
-      console.info(`        ${String(index + 1).padStart(2, "0")}. media ${photo.mediaId}${tag}  <- ${photo.trainingTitle}`);
+      console.info(`        ${String(index + 1).padStart(2, "0")}. media ${photo.mediaId}  <- ${photo.trainingTitle}`);
+    }
+  }
+
+  // Daftar belanja foto: kategori yang belum dapat 4 foto unik, kekurangan terbanyak dulu.
+  const shortfall = allPlans
+    .filter((item) => item.photos.length < CATEGORY_GALLERY_MAX)
+    .map((item) => ({ item, missing: CATEGORY_GALLERY_MAX - item.photos.length }))
+    .sort((x, y) => y.missing - x.missing || x.item.slug.localeCompare(y.item.slug));
+  if (shortfall.length > 0) {
+    console.info("\nKategori yang kekurangan foto unik (tambahkan lewat admin):");
+    for (const { item, missing } of shortfall) {
+      const note = item.photos.length === 0 ? " [galeri tetap kosong, section disembunyikan]" : "";
+      console.info(`  ${item.slug}: kurang ${missing}${note}`);
     }
   }
 
   const totalPhotos = plans.reduce((sum, p) => sum + p.photos.length, 0);
-  const shortCategories = plans.filter((p) => p.photos.length < CATEGORY_GALLERY_MAX).length;
-  // Media yang muncul di lebih dari satu galeri kategori.
-  const mediaCount = new Map<string, number>();
-  for (const item of plans) for (const photo of item.photos) mediaCount.set(photo.mediaId, (mediaCount.get(photo.mediaId) ?? 0) + 1);
-  const reusedMedia = [...mediaCount.values()].filter((count) => count > 1).length;
+  const missingSlots = shortfall.reduce((sum, s) => sum + s.missing, 0);
+  const full = plans.filter((p) => p.photos.length === CATEGORY_GALLERY_MAX).length;
 
   console.info("\nRingkasan:");
-  console.info(`  Kategori yang diisi      : ${plans.length}`);
-  console.info(`  Total foto dipasang      : ${totalPhotos}`);
-  console.info(`  Kategori < ${CATEGORY_GALLERY_MAX} foto        : ${shortCategories}`);
-  console.info(`  Media dipakai > 1 galeri : ${reusedMedia}`);
+  console.info(`  Kategori galeri kosong      : ${allPlans.length}`);
+  console.info(`  Kategori yang diisi         : ${plans.length} (${full} penuh ${CATEGORY_GALLERY_MAX} foto)`);
+  console.info(`  Total foto dipasang (unik)  : ${totalPhotos}`);
+  console.info(`  Kategori tetap kosong       : ${empty.length}`);
+  console.info(`  Kekurangan slot             : ${missingSlots}`);
 
   if (!APPLY) {
     console.info("\nJalankan dengan --apply untuk menerapkan (pastikan sudah backup pg_dump).");
