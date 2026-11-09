@@ -12,7 +12,8 @@ const IN = "translateY(105%)";
 // Tanpa tombol pause (pemilik, 29 Okt 2026). Ditahan saat tidak terlihat (tab tidak aktif atau hero
 // di luar layar), lalu lanjut dari kata yang sedang tampil. Semua kata dirender di satu sel grid (lebar = kata terpanjang, tanpa geser layout);
 // tanpa JS hanya kata pertama terlihat. Slot aria-hidden: pembaca layar membaca kata pertama (sr-only)
-// sekali, tidak diumumkan ulang tiap berganti. Reduced motion: diam di kata pertama.
+// sekali, tidak diumumkan ulang tiap berganti. Reduced motion: diam di kata pertama. Ruang bawah
+// 0,14em (sama dengan reveal-mask) supaya ekor huruf g/p/y tidak terpotong overflow slot.
 export function RotatingWord({
   words,
   className,
@@ -81,7 +82,7 @@ export function RotatingWord({
   return (
     <>
       <span className="sr-only">{words[0]}</span>
-      <span ref={slotRef} aria-hidden data-rotating-word="" className={`inline-grid overflow-hidden align-top ${className ?? ""}`}>
+      <span ref={slotRef} aria-hidden data-rotating-word="" className={`inline-grid overflow-hidden pb-[0.14em] -mb-[0.14em] align-top ${className ?? ""}`}>
         {words.map((word, index) => (
           <span
             key={`${index}-${word}`}
