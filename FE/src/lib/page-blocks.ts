@@ -13,6 +13,7 @@ export const MISSION_ITEMS_MAX = 10;
 export const SERVICES_LIMIT_MAX = 12;
 export const SERVICES_LIMIT_DEFAULT = 4;
 export const PAYMENT_ACCOUNTS_MAX = 6;
+export const GALLERY_IMAGES_MAX = 48;
 
 export const PAGE_BLOCK_TYPES = [
   "RICH_TEXT",
@@ -21,6 +22,7 @@ export const PAGE_BLOCK_TYPES = [
   "LIST",
   "SERVICES",
   "IMAGE",
+  "GALLERY",
   "DOWNLOAD",
   "PAYMENT_ACCOUNTS",
 ] as const satisfies readonly PageBlockType[];
@@ -32,6 +34,7 @@ export const PAGE_BLOCK_LABELS: Record<PageBlockType, string> = {
   LIST: "Daftar",
   SERVICES: "Layanan",
   IMAGE: "Gambar",
+  GALLERY: "Galeri foto",
   DOWNLOAD: "Unduhan",
   PAYMENT_ACCOUNTS: "Rekening pembayaran",
 };
@@ -43,6 +46,7 @@ export const PAGE_BLOCK_DESCRIPTIONS: Record<PageBlockType, string> = {
   LIST: "Daftar poin atau chip, mis. target peserta.",
   SERVICES: "Layanan dari modul Layanan (otomatis atau pilih manual).",
   IMAGE: "Satu gambar dengan keterangan.",
+  GALLERY: "Banyak foto dalam grid, klik untuk memperbesar (lightbox).",
   DOWNLOAD: "Tombol unduh PDF, mis. company profile.",
   PAYMENT_ACCOUNTS: "Daftar rekening tujuan transfer dengan tombol salin nomor, mis. halaman pembayaran.",
 };
@@ -64,6 +68,8 @@ export function createBlock(type: PageBlockType, id: string = crypto.randomUUID(
       return { id, type, ...heading, intro: "", mode: "auto", limit: SERVICES_LIMIT_DEFAULT, ids: [] };
     case "IMAGE":
       return { id, type, image: null, caption: "" };
+    case "GALLERY":
+      return { id, type, ...heading, intro: "", images: [] };
     case "DOWNLOAD":
       return { id, type, ...heading, description: "", label: "Unduh company profile", file: null };
     case "PAYMENT_ACCOUNTS":
@@ -138,6 +144,8 @@ export function blockSummary(block: PageBlock): string {
       return block.heading || (block.mode === "auto" ? `Otomatis, ${block.limit} layanan` : `${block.ids.length} layanan dipilih`);
     case "IMAGE":
       return block.caption || (block.image ? "Gambar dipilih" : "Belum ada gambar");
+    case "GALLERY":
+      return block.heading || (block.images.length > 0 ? `${block.images.length} foto` : "Belum ada foto");
     case "DOWNLOAD":
       return block.heading || block.label;
     case "PAYMENT_ACCOUNTS":
@@ -227,6 +235,16 @@ export const pageBlockFormSchema = z.discriminatedUnion("type", [
     type: z.literal("IMAGE"),
     image: mediaRef.nullable().refine((value) => value !== null, { error: "Pilih gambar." }),
     caption: optionalText("Keterangan", 200),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("GALLERY"),
+    ...headingShape,
+    intro: optionalText("Pengantar", 300),
+    images: z
+      .array(mediaRef)
+      .min(1, { error: "Pilih minimal satu foto." })
+      .max(GALLERY_IMAGES_MAX, { error: `Galeri maksimal ${GALLERY_IMAGES_MAX} foto.` }),
   }),
   z.object({
     id: z.string(),

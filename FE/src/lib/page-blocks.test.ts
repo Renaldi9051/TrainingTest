@@ -112,11 +112,12 @@ describe("pemetaan error ke blok", () => {
       { ...createBlock("DOWNLOAD", "b"), label: "" },
       createBlock("IMAGE", "c"),
       { ...createBlock("SERVICES", "d"), mode: "manual" },
+      createBlock("GALLERY", "e"),
     ]);
     expect(result.success).toBe(false);
     const keys = result.error?.issues.map((issue) => ["blocks", ...issue.path].join(".")) ?? [];
-    expect(keys).toEqual(expect.arrayContaining(["blocks.1.label", "blocks.2.image", "blocks.3.ids"]));
-    expect(blockIndexesFromFieldKeys(keys)).toEqual([1, 2, 3]);
+    expect(keys).toEqual(expect.arrayContaining(["blocks.1.label", "blocks.2.image", "blocks.3.ids", "blocks.4.images"]));
+    expect(blockIndexesFromFieldKeys(keys)).toEqual([1, 2, 3, 4]);
   });
 });
 
@@ -124,6 +125,8 @@ describe("blockSummary", () => {
   it("ringkasan kepala kartu", () => {
     expect(blockSummary(createBlock("SERVICES", "s"))).toBe("Otomatis, 4 layanan");
     expect(blockSummary(createBlock("IMAGE", "i"))).toBe("Belum ada gambar");
+    expect(blockSummary(createBlock("GALLERY", "g"))).toBe("Belum ada foto");
+    expect(blockSummary({ ...createBlock("GALLERY", "g"), images: [{ mediaId: "m1" }, { mediaId: "m2" }] } as PageBlock)).toBe("2 foto");
     expect(
       blockSummary({
         ...createBlock("RICH_TEXT", "r"),
