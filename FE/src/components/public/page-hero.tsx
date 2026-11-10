@@ -80,7 +80,7 @@ export function PageHero({
       )}
     >
       {dots ? <DotPattern decor={decor} /> : null}
-      <OutlineText decor={decor} className="-right-6 bottom-[-0.12em] md:-right-10">
+      <OutlineText decor={decor} className="right-4 bottom-[0.16em] sm:right-6">
         {outline}
       </OutlineText>
       <Container className="relative z-[1]">

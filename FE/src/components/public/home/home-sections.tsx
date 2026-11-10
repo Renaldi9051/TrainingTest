@@ -193,7 +193,7 @@ function CtaSection({ section }: { section: Extract<PublicHomeSection, { type: "
         section.decor ? (
           <>
             <GrainOverlay tone="inverse" />
-            <OutlineText tone="inverse" parallax className="-bottom-[0.12em] -left-6 md:-left-10">
+            <OutlineText tone="inverse" parallax className="bottom-[0.16em] left-4 md:left-24">
               {outlineLabel(section.eyebrow)}
             </OutlineText>
           </>

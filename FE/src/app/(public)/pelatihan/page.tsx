@@ -347,7 +347,7 @@ function ClosingCta({ cta }: { cta: TrainingsPage["cta"] }) {
           className="relative isolate grid grid-cols-1 gap-8 overflow-hidden rounded-card bg-inverse-bg px-6 py-10 text-inverse-fg md:px-14 md:py-16 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-end"
         >
           {cta.decor ? <GrainOverlay tone="inverse" /> : null}
-          <OutlineText decor={cta.decor} tone="inverse" className="-top-6 -right-6 md:-top-10">
+          <OutlineText decor={cta.decor} tone="inverse" className="top-3 right-4 md:top-4 md:right-6">
             {cta.outline || DEFAULT_CTA.outline}
           </OutlineText>
           <div className="relative">
