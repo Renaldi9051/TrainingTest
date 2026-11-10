@@ -459,14 +459,20 @@ async function toPublicPage(row: Page): Promise<PublicPage> {
   };
 }
 
-// Daftar halaman statis untuk generateStaticParams /[slug]. Halaman PROFILE tidak ikut (punya
-// route sendiri /profil).
-export async function listPublicPages(): Promise<{ slug: string; title: string }[]> {
-  return getDb().page.findMany({
+// Daftar halaman statis untuk generateStaticParams /[slug] dan tab "halaman lain". Halaman PROFILE
+// tidak ikut (punya route sendiri /profil). gallery: halaman berisi blok Galeri foto, tampil dengan
+// tata letak galeri dan tidak ikut tab halaman informasi (keputusan pemilik 10 Nov 2026).
+export async function listPublicPages(): Promise<{ slug: string; title: string; gallery: boolean }[]> {
+  const rows = await getDb().page.findMany({
     where: { ...publicPageWhere, kind: "STANDARD" },
-    select: { slug: true, title: true },
+    select: { slug: true, title: true, blocks: true },
     orderBy: [{ title: "asc" }],
   });
+  return rows.map(({ slug, title, blocks }) => ({
+    slug,
+    title,
+    gallery: parseStoredBlocks(blocks).some((block) => block.type === "GALLERY"),
+  }));
 }
 
 export async function getPublicPage(slug: string): Promise<PublicPage | null> {

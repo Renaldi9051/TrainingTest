@@ -196,13 +196,24 @@ describe("updatePage: halaman biasa", () => {
 
 describe("publik", () => {
   it("daftar halaman untuk generateStaticParams: hanya STANDARD yang tayang", async () => {
-    mock.page.findMany.mockResolvedValue([{ slug: "privasi", title: "Privasi" }]);
+    mock.page.findMany.mockResolvedValue([{ slug: "privasi", title: "Privasi", blocks: [] }]);
     await listPublicPages();
     expect(mock.page.findMany.mock.calls[0][0].where).toEqual({
       deletedAt: null,
       status: "PUBLISHED",
       kind: "STANDARD",
     });
+  });
+
+  it("daftar halaman: halaman berisi blok Galeri foto ditandai gallery", async () => {
+    mock.page.findMany.mockResolvedValue([
+      { slug: "galeri", title: "Galeri", blocks: [{ id: block(1), type: "GALLERY", images: [{ mediaId: IMG }] }] },
+      { slug: "privasi", title: "Privasi", blocks: [{ id: block(2), type: "LIST", items: ["a"] }] },
+    ]);
+    expect(await listPublicPages()).toEqual([
+      { slug: "galeri", title: "Galeri", gallery: true },
+      { slug: "privasi", title: "Privasi", gallery: false },
+    ]);
   });
 
   it("detail: filter tayang + belum dihapus; tanpa field internal", async () => {
