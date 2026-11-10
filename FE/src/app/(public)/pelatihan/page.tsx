@@ -21,6 +21,7 @@ import { parseAccentHeading } from "@/lib/accent-heading";
 import { gridCanonical, gridHref, parseGridState } from "@/lib/category-grid-url";
 import { formatNumber } from "@/lib/format";
 import { indexLetter } from "@/lib/index-groups";
+import { withPageHeaderDefaults, withTrainingsPageDefaults } from "@/lib/page-text-defaults";
 import { cn } from "@/lib/utils";
 
 // /pelatihan = grid semua kategori (keputusan atasan 5 Nov 2026), bukan katalog kartu pelatihan.
@@ -33,20 +34,6 @@ import { cn } from "@/lib/utils";
 const GRID_ANCHOR = "semua";
 // Contoh kategori di bawah kotak cari: unggulan berikutnya setelah bento.
 const EXAMPLE_CHIPS = 4;
-// Teks bawaan; dipakai per field kalau setting (page.headers.pelatihan, trainings.page) kosong.
-const DEFAULT_HEADING = "Pelatihan untuk setiap *bidang* kerja";
-const DEFAULT_LEAD = "Public dan in-house. Pilih kategori untuk melihat daftar judul, target peserta, dan galeri kegiatannya.";
-const DEFAULT_CTA = {
-  eyebrow: "Pelatihan in-house",
-  heading: "Tidak menemukan topik yang dicari?",
-  lead: "Ceritakan kebutuhan tim Anda. Materi, jadwal, dan lokasi bisa disesuaikan.",
-  primaryLabel: "Request pelatihan in-house",
-  primaryHref: "/kontak",
-  secondaryLabel: "Lihat jadwal",
-  secondaryHref: "/jadwal",
-  outline: "IN-HOUSE",
-};
-
 export async function generateMetadata({ searchParams }: PageProps<"/pelatihan">): Promise<Metadata> {
   const [settings, requested] = await Promise.all([getSettings(), searchParams.then(parseGridState)]);
   // Halaman di luar batas dirender sebagai halaman terakhir (BE menjepit page); canonical ikut.
@@ -62,7 +49,8 @@ export async function generateMetadata({ searchParams }: PageProps<"/pelatihan">
 export default async function TrainingCategoriesPage({ searchParams }: PageProps<"/pelatihan">) {
   // Data ringkas di-cache (tanpa data request), jadi kepala halaman & bento ikut prerender.
   const [categories, catalog, settings] = await Promise.all([getCategories(), getCatalog({ per: 1 }), getSettings()]);
-  const texts = settings.trainingsPage;
+  // Field setting yang kosong = teks bawaan (lib/page-text-defaults, sama dengan isi awal form admin).
+  const texts = withTrainingsPageDefaults(settings.trainingsPage);
   // getCategories() urut order admin lalu nama: 5 unggulan pertama ke bento, 4 berikutnya jadi contoh.
   const featured = categories.filter((category) => category.featured);
   const bento = featured.slice(0, BENTO_SIZE);
@@ -77,7 +65,7 @@ export default async function TrainingCategoriesPage({ searchParams }: PageProps
   return (
     <>
       <Hero
-        header={settings.pageHeaders.pelatihan}
+        header={withPageHeaderDefaults("pelatihan", settings.pageHeaders.pelatihan)}
         categoryTotal={categories.length}
         trainingTotal={catalog.meta.total}
         examples={examples}
@@ -89,9 +77,9 @@ export default async function TrainingCategoriesPage({ searchParams }: PageProps
             <SectionHead
               id="kategori-unggulan"
               index="01"
-              eyebrow={texts.featured.eyebrow || "Paling dicari"}
-              title={texts.featured.heading || "Kategori unggulan"}
-              aside={texts.featured.lead || "Bidang pilihan untuk instansi dan perusahaan."}
+              eyebrow={texts.featured.eyebrow}
+              title={texts.featured.heading}
+              aside={texts.featured.lead}
             />
             <CategoryBento categories={bento} />
           </Container>
@@ -103,8 +91,8 @@ export default async function TrainingCategoriesPage({ searchParams }: PageProps
           <SectionHead
             id="kategori-semua"
             index={bento.length > 0 ? "02" : "01"}
-            eyebrow={texts.all.eyebrow || "Semua kategori"}
-            title={texts.all.heading || "Kategori A-Z"}
+            eyebrow={texts.all.eyebrow}
+            title={texts.all.heading}
           />
           {/* q, huruf & page dibaca dari URL saat request, jadi bagian ini di-stream di dalam Suspense. */}
           <Suspense
@@ -145,7 +133,7 @@ function Hero({
     categoryTotal > 0 ? `${formatNumber(categoryTotal)} kategori` : null,
     trainingTotal > 0 ? `${formatNumber(trainingTotal)} judul` : null,
   ].filter(Boolean);
-  const heading = parseAccentHeading(header.heading || DEFAULT_HEADING);
+  const heading = parseAccentHeading(header.heading);
   return (
     <section className="border-b border-border bg-bg-subtle py-10 md:py-14">
       <Container className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-end lg:gap-14">
@@ -172,7 +160,7 @@ function Hero({
                 <b className="font-semibold text-fg-strong">{totals.join(", ")} pelatihan.</b>{" "}
               </>
             ) : null}
-            {header.lead || DEFAULT_LEAD}
+            {header.lead}
           </p>
         </div>
         <div className="lg:col-span-5">
@@ -333,12 +321,8 @@ async function CategoryResults({
 // setting decor), teks --on-secondary, tombol mustard + tombol garis terang. Teks & tombol dari setting
 // trainings.page.cta; field kosong (atau pasangan label/tautan kosong) = bawaan.
 function ClosingCta({ cta }: { cta: TrainingsPage["cta"] }) {
-  const primary = cta.primaryLabel
-    ? { label: cta.primaryLabel, href: cta.primaryHref }
-    : { label: DEFAULT_CTA.primaryLabel, href: DEFAULT_CTA.primaryHref };
-  const secondary = cta.secondaryLabel
-    ? { label: cta.secondaryLabel, href: cta.secondaryHref }
-    : { label: DEFAULT_CTA.secondaryLabel, href: DEFAULT_CTA.secondaryHref };
+  const primary = { label: cta.primaryLabel, href: cta.primaryHref };
+  const secondary = { label: cta.secondaryLabel, href: cta.secondaryHref };
   return (
     <section aria-labelledby="pelatihan-cta" className="py-24 md:py-28">
       <Container>
@@ -348,14 +332,14 @@ function ClosingCta({ cta }: { cta: TrainingsPage["cta"] }) {
         >
           {cta.decor ? <GrainOverlay tone="inverse" /> : null}
           <OutlineText decor={cta.decor} tone="inverse" className="top-3 right-4 md:top-4 md:right-6">
-            {cta.outline || DEFAULT_CTA.outline}
+            {cta.outline}
           </OutlineText>
           <div className="relative">
-            <Eyebrow className="text-accent-on-dark">{cta.eyebrow || DEFAULT_CTA.eyebrow}</Eyebrow>
+            <Eyebrow className="text-accent-on-dark">{cta.eyebrow}</Eyebrow>
             <h2 id="pelatihan-cta" className="mt-3 max-w-[18ch] text-h2 lg:text-[52px] lg:leading-[1.04]">
-              {cta.heading || DEFAULT_CTA.heading}
+              {cta.heading}
             </h2>
-            <p className="mt-4 max-w-[44ch] text-body-lg text-on-secondary">{cta.lead || DEFAULT_CTA.lead}</p>
+            <p className="mt-4 max-w-[44ch] text-body-lg text-on-secondary">{cta.lead}</p>
           </div>
           <div className="relative flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-end">
             <Link href={primary.href} className={cn(buttonVariants({ variant: "inverse", size: "lg" }), "max-sm:w-full")}>

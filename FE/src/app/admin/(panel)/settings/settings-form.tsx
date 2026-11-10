@@ -39,6 +39,7 @@ import { apiFetch, apiSend, errorMessage } from "@/lib/api/client";
 import type { AdminSettings, PageHeaderPage, SettingKey, SettingValues, SocialPlatform } from "@/lib/api/types";
 import { FOCUS_ANCHOR_EVENT, focusAnchor } from "@/lib/anchor-focus";
 import { applyFieldErrors } from "@/lib/form-errors";
+import { withPageHeadersDefaults, withTrainingsPageDefaults } from "@/lib/page-text-defaults";
 import { PAGE_HEADER_LABELS, parseSettingHash, settingAnchor, SETTING_TAB_LABELS } from "@/lib/settings-fields";
 import { FACILITIES_MAX, FACILITY_MAX, FAQ_A_MAX, FAQ_Q_MAX } from "@/lib/training-content";
 
@@ -790,19 +791,21 @@ const PAGE_HEADER_ANCHORS: Record<PageHeaderPage, string> = {
 };
 
 function PageHeadersSection({ value, onDirtyChange }: SectionProps<"page.headers">) {
-  const { form, formId, onSubmit, saveBar } = useSettingForm("page.headers", pageHeadersSchema, value, onDirtyChange);
+  // Kolom berisi teks yang sedang tampil di situs (tersimpan, atau bawaan kalau kosong).
+  const { form, formId, onSubmit, saveBar } = useSettingForm("page.headers", pageHeadersSchema, value, onDirtyChange, withPageHeadersDefaults);
   const errors = form.formState.errors;
   return (
     <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
       <p className="text-small text-fg-muted">
-        Eyebrow, judul, dan pengantar di kepala halaman daftar. Kosongkan untuk memakai teks bawaan halaman.
+        Eyebrow, judul, dan pengantar di kepala halaman daftar. Isi kolom = teks yang tampil sekarang; ubah lalu simpan.
+        Kolom yang dikosongkan kembali ke teks bawaan.
       </p>
       {(Object.keys(PAGE_HEADER_LABELS) as PageHeaderPage[]).map((page) => (
         <fieldset key={page} data-anchor={PAGE_HEADER_ANCHORS[page]} className="space-y-4 border-t border-border pt-6">
           <legend className="text-sm font-medium">{PAGE_HEADER_LABELS[page]}</legend>
           <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
             <FormField id={`${formId}-${page}-eyebrow`} label="Eyebrow" error={errors[page]?.eyebrow?.message}>
-              <Input {...form.register(`${page}.eyebrow`)} placeholder="Mis. 01 / Layanan" />
+              <Input {...form.register(`${page}.eyebrow`)} placeholder="Tidak tampil" />
             </FormField>
             <FormField
               id={`${formId}-${page}-heading`}
@@ -810,11 +813,16 @@ function PageHeadersSection({ value, onDirtyChange }: SectionProps<"page.headers
               description={page === "pelatihan" ? "Apit satu kata dengan bintang untuk gaya outline, mis. Pelatihan untuk setiap *bidang* kerja." : undefined}
               error={errors[page]?.heading?.message}
             >
-              <Input {...form.register(`${page}.heading`)} placeholder={PAGE_HEADER_LABELS[page]} />
+              <Input {...form.register(`${page}.heading`)} />
             </FormField>
           </div>
-          <FormField id={`${formId}-${page}-lead`} label="Pengantar" error={errors[page]?.lead?.message}>
-            <Textarea rows={2} {...form.register(`${page}.lead`)} />
+          <FormField
+            id={`${formId}-${page}-lead`}
+            label="Pengantar"
+            description={page === "kontak" ? "Kosong = memakai tagline situs (tab Identitas)." : undefined}
+            error={errors[page]?.lead?.message}
+          >
+            <Textarea rows={2} {...form.register(`${page}.lead`)} placeholder="Tidak tampil" />
           </FormField>
         </fieldset>
       ))}
@@ -929,38 +937,44 @@ const trainingsPageSchema = z.object({
     }),
 });
 
-// Placeholder = teks bawaan halaman /pelatihan (dipakai kalau field dikosongkan).
+// Kolom berisi teks yang sedang tampil di /pelatihan (tersimpan, atau bawaan kalau kosong).
 function TrainingsPageSection({ value, onDirtyChange }: SectionProps<"trainings.page">) {
-  const { form, formId, onSubmit, saveBar } = useSettingForm("trainings.page", trainingsPageSchema, value, onDirtyChange);
+  const { form, formId, onSubmit, saveBar } = useSettingForm(
+    "trainings.page",
+    trainingsPageSchema,
+    value,
+    onDirtyChange,
+    withTrainingsPageDefaults,
+  );
   const errors = form.formState.errors;
   return (
     <SectionForm id={formId} onSubmit={onSubmit} saveBar={saveBar}>
       <p className="text-small text-fg-muted">
-        Teks section di halaman Pelatihan. Kosongkan untuk memakai teks bawaan. Judul dan pengantar paling atas diatur di tab
+        Teks section di halaman Pelatihan. Isi kolom = teks yang tampil sekarang; kolom yang dikosongkan kembali ke teks bawaan. Judul dan pengantar paling atas diatur di tab
         Kepala halaman. Isi bento unggulan diambil dari kategori bertanda Unggulan (5 teratas menurut urutan kategori).
       </p>
       <fieldset data-anchor="trainings.page.featured" className="space-y-4 border-t border-border pt-6">
         <legend className="text-sm font-medium">Kategori unggulan</legend>
         <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
           <FormField id={`${formId}-featured-eyebrow`} label="Eyebrow" error={errors.featured?.eyebrow?.message}>
-            <Input {...form.register("featured.eyebrow")} placeholder="Paling dicari" />
+            <Input {...form.register("featured.eyebrow")} />
           </FormField>
           <FormField id={`${formId}-featured-heading`} label="Judul" error={errors.featured?.heading?.message}>
-            <Input {...form.register("featured.heading")} placeholder="Kategori unggulan" />
+            <Input {...form.register("featured.heading")} />
           </FormField>
         </div>
         <FormField id={`${formId}-featured-lead`} label="Keterangan" error={errors.featured?.lead?.message}>
-          <Input {...form.register("featured.lead")} placeholder="Bidang pilihan untuk instansi dan perusahaan." />
+          <Input {...form.register("featured.lead")} />
         </FormField>
       </fieldset>
       <fieldset data-anchor="trainings.page.all" className="space-y-4 border-t border-border pt-6">
         <legend className="text-sm font-medium">Semua kategori (A-Z)</legend>
         <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
           <FormField id={`${formId}-all-eyebrow`} label="Eyebrow" error={errors.all?.eyebrow?.message}>
-            <Input {...form.register("all.eyebrow")} placeholder="Semua kategori" />
+            <Input {...form.register("all.eyebrow")} />
           </FormField>
           <FormField id={`${formId}-all-heading`} label="Judul" error={errors.all?.heading?.message}>
-            <Input {...form.register("all.heading")} placeholder="Kategori A-Z" />
+            <Input {...form.register("all.heading")} />
           </FormField>
         </div>
       </fieldset>
@@ -968,22 +982,21 @@ function TrainingsPageSection({ value, onDirtyChange }: SectionProps<"trainings.
         <legend className="text-sm font-medium">CTA penutup</legend>
         <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
           <FormField id={`${formId}-cta-eyebrow`} label="Eyebrow" error={errors.cta?.eyebrow?.message}>
-            <Input {...form.register("cta.eyebrow")} placeholder="Pelatihan in-house" />
+            <Input {...form.register("cta.eyebrow")} />
           </FormField>
           <FormField id={`${formId}-cta-heading`} label="Judul" error={errors.cta?.heading?.message}>
-            <Input {...form.register("cta.heading")} placeholder="Tidak menemukan topik yang dicari?" />
+            <Input {...form.register("cta.heading")} />
           </FormField>
         </div>
         <FormField id={`${formId}-cta-lead`} label="Pengantar" error={errors.cta?.lead?.message}>
           <Textarea
             rows={2}
             {...form.register("cta.lead")}
-            placeholder="Ceritakan kebutuhan tim Anda. Materi, jadwal, dan lokasi bisa disesuaikan."
           />
         </FormField>
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField id={`${formId}-cta-primary-label`} label="Label tombol utama" error={errors.cta?.primaryLabel?.message}>
-            <Input {...form.register("cta.primaryLabel")} placeholder="Request pelatihan in-house" />
+            <Input {...form.register("cta.primaryLabel")} />
           </FormField>
           <FormField
             id={`${formId}-cta-primary-href`}
@@ -994,7 +1007,7 @@ function TrainingsPageSection({ value, onDirtyChange }: SectionProps<"trainings.
             <Input {...form.register("cta.primaryHref")} placeholder="/kontak" />
           </FormField>
           <FormField id={`${formId}-cta-secondary-label`} label="Label tombol kedua" error={errors.cta?.secondaryLabel?.message}>
-            <Input {...form.register("cta.secondaryLabel")} placeholder="Lihat jadwal" />
+            <Input {...form.register("cta.secondaryLabel")} />
           </FormField>
           <FormField id={`${formId}-cta-secondary-href`} label="Tautan tombol kedua" error={errors.cta?.secondaryHref?.message}>
             <Input {...form.register("cta.secondaryHref")} placeholder="/jadwal" />
@@ -1006,7 +1019,7 @@ function TrainingsPageSection({ value, onDirtyChange }: SectionProps<"trainings.
           description="Kata besar bergaris di belakang CTA. Maksimal 24 karakter."
           error={errors.cta?.outline?.message}
         >
-          <Input {...form.register("cta.outline")} placeholder="IN-HOUSE" />
+          <Input {...form.register("cta.outline")} />
         </FormField>
         <Controller
           control={form.control}

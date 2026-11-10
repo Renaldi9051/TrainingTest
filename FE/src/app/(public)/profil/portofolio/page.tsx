@@ -24,6 +24,7 @@ import {
   type CardSpan,
 } from "@/lib/portfolio-plan";
 import { cn } from "@/lib/utils";
+import { PAGE_HEADER_DEFAULTS } from "@/lib/page-text-defaults";
 
 export const metadata: Metadata = {
   title: "Portofolio",
@@ -38,7 +39,6 @@ const SPAN_CLASS: Record<CardSpan, string> = {
 };
 
 // Label UI bawaan; diganti isi Pengaturan > Kepala halaman kalau diisi.
-const DEFAULT_TITLE = "Portofolio";
 
 export default async function PortfolioPage({ searchParams }: PageProps<"/profil/portofolio">) {
   const settings = await getSettings();
@@ -47,9 +47,9 @@ export default async function PortfolioPage({ searchParams }: PageProps<"/profil
   return (
     <>
       <PageHero
-        crumbs={[{ label: "Profil", href: "/profil" }, { label: header.heading || DEFAULT_TITLE }]}
+        crumbs={[{ label: "Profil", href: "/profil" }, { label: header.heading || PAGE_HEADER_DEFAULTS.portofolio.heading }]}
         eyebrow={header.eyebrow || undefined}
-        title={header.heading || DEFAULT_TITLE}
+        title={header.heading || PAGE_HEADER_DEFAULTS.portofolio.heading}
         lead={header.lead || null}
         outline="Portofolio"
       />
