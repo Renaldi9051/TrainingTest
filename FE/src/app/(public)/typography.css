@@ -30,3 +30,9 @@
 :root:has([data-site="public"]) .text-mega {
   font-weight: 600;
 }
+
+/* Teks miring memakai keluarga Poppins italic (dimuat terpisah tanpa preload di layout publik).
+   Tanpa ini browser memiringkan Poppins tegak secara palsu. */
+:root:has([data-site="public"]) :is(em, i, .italic) {
+  font-family: var(--font-poppins-italic);
+}

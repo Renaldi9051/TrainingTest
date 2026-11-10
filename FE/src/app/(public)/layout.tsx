@@ -17,11 +17,20 @@ import "./typography.css";
 
 // Font halaman publik (permintaan atasan, 9 Nov 2026): Poppins untuk semua teks, IBM Plex Mono untuk
 // label. Admin tetap Geist dari layout root. Dimuat di sini supaya file font hanya diunduh di halaman
-// publik. Italic hanya dipakai kata aksen hero (medium).
+// publik. Hanya gaya normal yang di-preload (3 file, dipakai teks di layar pertama).
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+});
+
+// Italic terpisah tanpa preload: file baru diunduh kalau ada teks miring (kata aksen hero, <em> di
+// konten CMS). Keluarga hasil next/font berbeda nama, jadi dipasang ke elemen miring lewat
+// typography.css (--font-poppins-italic).
+const poppinsItalic = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["italic"],
+  preload: false,
 });
 
 // Tanpa preload (sama seperti Geist Mono): label & angka saja, bukan elemen LCP.
@@ -34,7 +43,7 @@ const plexMono = IBM_Plex_Mono({
 // Utilitas font-sans/font-mono dan body memakai --font-geist-sans/--font-geist-mono (theme.css,
 // @theme inline). Di halaman publik keduanya ditimpa di :root (specificity di atas kelas variabel
 // next/font di <html>), jadi portal dan popover publik ikut. Admin tidak punya [data-site="public"].
-const publicFontVars = `:root:has([data-site="public"]){--font-geist-sans:${poppins.style.fontFamily};--font-geist-mono:${plexMono.style.fontFamily};}`;
+const publicFontVars = `:root:has([data-site="public"]){--font-geist-sans:${poppins.style.fontFamily};--font-geist-mono:${plexMono.style.fontFamily};--font-poppins-italic:${poppinsItalic.style.fontFamily};}`;
 
 // Metadata dasar seluruh halaman publik dari pengaturan SEO default (bisa diubah admin).
 export async function generateMetadata(): Promise<Metadata> {
