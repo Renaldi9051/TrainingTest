@@ -16,8 +16,7 @@
   --fg-strong-hover: #262626;
   --inverse-bg: #0a0a0a;
   --inverse-fg: #fafafa;
-  /* v0.2 (DESIGN.md 2 & 6): garis grid latar, garis/grid di section terbalik, overlay foto hero. */
-  --grid-line: #f0f0f0;
+  /* v0.2 (DESIGN.md 2 & 6): garis di section terbalik, overlay foto hero. */
   --inverse-line: #262626;
   --overlay: rgb(10 10 10 / 0.45);
 
@@ -91,7 +90,6 @@
   --color-fg-strong-hover: var(--fg-strong-hover);
   --color-inverse-bg: var(--inverse-bg);
   --color-inverse-fg: var(--inverse-fg);
-  --color-grid-line: var(--grid-line);
   --color-inverse-line: var(--inverse-line);
   --color-overlay: var(--overlay);
   --color-white: var(--bg);
