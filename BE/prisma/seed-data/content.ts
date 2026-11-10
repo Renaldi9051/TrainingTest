@@ -228,6 +228,8 @@ export const headerNav: SeedNavItem[] = [
     href: "/layanan",
     children: services.map((service) => ({ label: service.title, href: `/layanan/${service.slug}` })),
   },
+  // Menu "Galeri" disisipkan setelah Artikel oleh seedGalleryPage (hanya kalau halamannya dibuat).
+  { label: "Artikel", href: "/artikel" },
   { label: "Pelatihan", href: "/pelatihan" },
   { label: "Jadwal Training", href: "/jadwal" },
 ];

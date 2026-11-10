@@ -27,6 +27,7 @@ import { seedThemeGallery } from "./seed-theme-gallery";
 import { seedTrainingPhotos } from "./seed-training-photos";
 import { seedPaymentPage } from "./seed-payment-page";
 import { seedArticles } from "./seed-articles";
+import { seedGalleryPage } from "./seed-gallery-page";
 import { buildProfileBlocks, buildSettings } from "./seed-data/build";
 import { writeCatalog } from "./seed-data/catalog-writer";
 import { profilePage } from "./seed-data/content";
@@ -131,8 +132,10 @@ async function main() {
     await db.siteSetting.upsert({ where: { key: setting.key }, update: {}, create: setting });
   }
 
-  // Menu contoh hanya kalau belum ada menu sama sekali (termasuk yang di Sampah).
-  if ((await db.navItem.count()) === 0) {
+  // Menu contoh hanya kalau belum ada menu sama sekali (termasuk yang di Sampah). freshDatabase juga
+  // menentukan halaman Galeri: tayang + menu di database baru, draft tanpa menu di database berisi.
+  const freshDatabase = (await db.navItem.count()) === 0;
+  if (freshDatabase) {
     await createSeedNav(db);
   }
 
@@ -186,6 +189,8 @@ async function main() {
   const homeImageResult = MINIMAL ? null : await seedHomeImages();
   // Teks hero beranda sesuai katalog korporat (sekali per versi; teks yang diubah admin tetap).
   const homeCopyResult = MINIMAL ? null : await seedHomeCopy();
+  // Halaman /galeri dari foto kegiatan yang sudah terpasang (setelah semua seed foto).
+  const galleryPageResult = MINIMAL ? null : await seedGalleryPage(PUBLISHED_AT, freshDatabase);
   // Seed bulk mencetak ringkasannya sendiri.
   if (BULK) await seedBulk();
 
@@ -244,6 +249,12 @@ async function main() {
           .join(", ")}.`
       : "Mode minimal: konten contoh Fase 3 dilewati.",
   );
+  if (galleryPageResult) {
+    console.info(
+      `Halaman galeri: ${{ published: "dibuat (tayang)", draft: "dibuat sebagai draft (tayangkan lewat admin)", exists: "sudah ada", "no-photos": "dilewati (belum ada foto kegiatan ber-alt)" }[galleryPageResult.page]}, ` +
+        `menu Galeri ${{ created: "dibuat", exists: "sudah ada", skipped: "tidak ditambah" }[galleryPageResult.menu]}.`,
+    );
+  }
   if (articleResult) {
     console.info(
       `Artikel contoh: ${articleResult.created} dibuat, ${articleResult.skipped} dilewati (slug sudah pernah ada).`,
