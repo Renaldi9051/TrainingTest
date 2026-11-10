@@ -30,6 +30,7 @@ export const PAGE_HEADER_LABELS: Record<PageHeaderPage, string> = {
   portofolio: "Portofolio",
   jadwal: "Jadwal",
   kontak: "Kontak",
+  artikel: "Artikel",
 };
 
 export const SETTING_FIELDS: readonly SettingField[] = [
@@ -67,6 +68,7 @@ export const SETTING_FIELDS: readonly SettingField[] = [
   { key: "page.headers", field: "layanan", label: "Kepala halaman Layanan", synonyms: ["judul halaman", "header halaman", "layanan"] },
   { key: "page.headers", field: "portofolio", label: "Kepala halaman Portofolio", synonyms: ["judul halaman", "header halaman", "portofolio"] },
   { key: "page.headers", field: "pelatihan", label: "Kepala halaman Pelatihan", synonyms: ["judul halaman", "header halaman", "katalog", "pelatihan"] },
+  { key: "page.headers", field: "artikel", label: "Kepala halaman Artikel", synonyms: ["judul halaman", "header halaman", "berita", "artikel"] },
   { key: "services.process", field: "steps", label: "Alur kerja sama", synonyms: ["langkah", "proses", "alur layanan"] },
   { key: "trainings.page", field: "featured", label: "Kategori unggulan (halaman pelatihan)", synonyms: ["bento", "unggulan", "paling dicari"] },
   { key: "trainings.page", field: "all", label: "Kategori A-Z (halaman pelatihan)", synonyms: ["semua kategori", "grid kategori"] },

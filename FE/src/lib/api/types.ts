@@ -224,7 +224,7 @@ export type SlugCheckResult = {
 export type SocialPlatform = "instagram" | "facebook" | "linkedin" | "youtube" | "tiktok" | "x" | "other";
 
 // Kepala halaman daftar (BE/src/lib/validators/settings.ts). Kosong per field = label lama.
-export type PageHeaderPage = "pelatihan" | "layanan" | "portofolio" | "jadwal" | "kontak";
+export type PageHeaderPage = "pelatihan" | "layanan" | "portofolio" | "jadwal" | "kontak" | "artikel";
 export type PageHeader = { eyebrow: string; heading: string; lead: string };
 export type ServicesProcess = { eyebrow: string; heading: string; steps: { title: string; description: string }[] };
 // Teks section /pelatihan (setting trainings.page). Field kosong = label bawaan halaman.

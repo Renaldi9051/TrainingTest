@@ -85,7 +85,7 @@ const optionalHref = z
   .pipe(z.union([z.literal(""), hrefSchema]));
 
 // Kepala halaman daftar (eyebrow, h1, lead). Kosong = label lama di FE (aturan konten 5).
-export const PAGE_HEADER_PAGES = ["pelatihan", "layanan", "portofolio", "jadwal", "kontak"] as const;
+export const PAGE_HEADER_PAGES = ["pelatihan", "layanan", "portofolio", "jadwal", "kontak", "artikel"] as const;
 export type PageHeaderPage = (typeof PAGE_HEADER_PAGES)[number];
 const pageHeaderSchema = z.object({
   eyebrow: plainText("Eyebrow", 60),
