@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Mono, Poppins } from "next/font/google";
 import { GridLines } from "@/components/decor/grid-lines";
 import { PageEnter } from "@/components/motion/page-enter";
 import { ParallaxEffects } from "@/components/motion/parallax-effects";
@@ -11,6 +12,38 @@ import { getPublicEnv } from "@/lib/env";
 import { FALLBACK_ICON_PATH } from "@/lib/monogram";
 // Palet D hanya untuk halaman publik: semua aturannya di-scope ke [data-site="public"] (main di bawah).
 import "./palette-d.css";
+// Skala judul untuk Poppins (lebih lebar dari Geist), juga di-scope ke [data-site="public"].
+import "./typography.css";
+
+// Font halaman publik (permintaan atasan, 9 Nov 2026): Poppins untuk semua teks, IBM Plex Mono untuk
+// label. Admin tetap Geist dari layout root. Dimuat di sini supaya file font hanya diunduh di halaman
+// publik. Hanya gaya normal yang di-preload (3 file, dipakai teks di layar pertama).
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+// Italic terpisah tanpa preload: file baru diunduh kalau ada teks miring (kata aksen hero, <em> di
+// konten CMS). Keluarga hasil next/font berbeda nama, jadi dipasang ke elemen miring lewat
+// typography.css (--font-poppins-italic).
+const poppinsItalic = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["italic"],
+  preload: false,
+});
+
+// Tanpa preload (sama seperti Geist Mono): label & angka saja, bukan elemen LCP.
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  preload: false,
+});
+
+// Utilitas font-sans/font-mono dan body memakai --font-geist-sans/--font-geist-mono (theme.css,
+// @theme inline). Di halaman publik keduanya ditimpa di :root (specificity di atas kelas variabel
+// next/font di <html>), jadi portal dan popover publik ikut. Admin tidak punya [data-site="public"].
+const publicFontVars = `:root:has([data-site="public"]){--font-geist-sans:${poppins.style.fontFamily};--font-geist-mono:${plexMono.style.fontFamily};--font-poppins-italic:${poppinsItalic.style.fontFamily};}`;
 
 // Metadata dasar seluruh halaman publik dari pengaturan SEO default (bisa diubah admin).
 export async function generateMetadata(): Promise<Metadata> {
@@ -34,6 +67,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function PublicLayout({ children }: LayoutProps<"/">) {
   return (
     <>
+      {/* Isi dari next/font (nama keluarga hasil build), bukan input pengguna. */}
+      <style dangerouslySetInnerHTML={{ __html: publicFontVars }} />
       <a
         href="#konten"
         className="sr-only z-50 rounded-md bg-primary px-4 py-2 text-small text-on-primary focus:not-sr-only focus:fixed focus:top-3 focus:left-3"

@@ -1,0 +1,38 @@
+/* Skala judul halaman publik untuk Poppins (permintaan atasan, 9 Nov 2026). Poppins sekitar 12% lebih
+   lebar dari Geist, jadi ukuran --type-* (theme.css) diturunkan supaya headline hero tetap 3 baris di
+   1280 px dan judul kartu tidak bertambah baris. Hanya halaman publik (penanda [data-site="public"]);
+   admin tetap memakai skala Geist di theme.css. Plain CSS, di-import oleh (public)/layout.tsx. */
+:root:has([data-site="public"]) {
+  --type-mega: 84px;
+  --type-display: 42px;
+  --type-h1: 32px;
+  --type-h2: 26px;
+  --type-h3: 19px;
+}
+
+@media (width >= 48rem) {
+  :root:has([data-site="public"]) {
+    --type-mega: 176px;
+    --type-display: 72px;
+    --type-h1: 48px;
+    --type-h2: 36px;
+    --type-h3: 22px;
+  }
+}
+
+/* Tracking -0,04em (token Geist) membuat huruf Poppins saling menempel di ukuran besar. */
+:root:has([data-site="public"]) :is(.text-mega, .text-display, .text-h1) {
+  letter-spacing: -0.03em;
+}
+
+/* Poppins hanya dimuat 400-600; teks outline raksasa (700 di token) memakai 600 supaya tidak ditebalkan
+   palsu oleh browser. */
+:root:has([data-site="public"]) .text-mega {
+  font-weight: 600;
+}
+
+/* Teks miring memakai keluarga Poppins italic (dimuat terpisah tanpa preload di layout publik).
+   Tanpa ini browser memiringkan Poppins tegak secara palsu. */
+:root:has([data-site="public"]) :is(em, i, .italic) {
+  font-family: var(--font-poppins-italic);
+}

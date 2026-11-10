@@ -12,7 +12,10 @@ const IN = "translateY(105%)";
 // Tanpa tombol pause (pemilik, 29 Okt 2026). Ditahan saat tidak terlihat (tab tidak aktif atau hero
 // di luar layar), lalu lanjut dari kata yang sedang tampil. Semua kata dirender di satu sel grid (lebar = kata terpanjang, tanpa geser layout);
 // tanpa JS hanya kata pertama terlihat. Slot aria-hidden: pembaca layar membaca kata pertama (sr-only)
-// sekali, tidak diumumkan ulang tiap berganti. Reduced motion: diam di kata pertama.
+// sekali, tidak diumumkan ulang tiap berganti. Reduced motion: diam di kata pertama. Ruang bawah
+// 0,14em (sama dengan reveal-mask) supaya ekor huruf g/p/y tidak terpotong overflow slot.
+// Kata yang tidak tampil disembunyikan (visibility), bukan hanya digeser ±105%: ekor huruf Poppins
+// (terutama italic) menjulur melewati tinggi baris, jadi tanpa ini sisa kata lain terlihat di tepi slot.
 export function RotatingWord({
   words,
   className,
@@ -45,9 +48,15 @@ export function RotatingWord({
       current.current = to;
       out.style.transform = OUT;
       into.style.transform = "translateY(0)";
+      into.style.visibility = "visible";
       const options = { duration: ROTATE_SWAP_MS / 1000, ease: [...EASE] as [number, number, number, number] };
       // Pergantian sebelumnya sudah lama selesai (300 ms dari jeda >= 1,5 s): cukup simpan yang terbaru.
-      animations.splice(0, animations.length, animate(out, { transform: ["translateY(0)", OUT] }, options), animate(into, { transform: [IN, "translateY(0)"] }, options));
+      const leaving = animate(out, { transform: ["translateY(0)", OUT] }, options);
+      animations.splice(0, animations.length, leaving, animate(into, { transform: [IN, "translateY(0)"] }, options));
+      // Setelah keluar, sembunyikan; kecuali kata itu sudah dipilih lagi (2 kata, interval sangat pendek).
+      void leaving.finished.then(() => {
+        if (current.current !== from) out.style.visibility = "hidden";
+      });
     };
     // Jadwal ulang dari nol setiap kondisi berubah: setelah terlihat lagi, kata tampil penuh satu interval dulu.
     const schedule = () => {
@@ -73,6 +82,9 @@ export function RotatingWord({
       window.clearTimeout(timer);
       // Animasi yang terputus: cancel (bukan stop, lihat 4.1d). Nilai akhir sudah dipasang inline.
       animations.forEach((animation) => animation.cancel());
+      elements.forEach((element, index) => {
+        if (element && index !== current.current) element.style.visibility = "hidden";
+      });
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
     };
@@ -81,7 +93,7 @@ export function RotatingWord({
   return (
     <>
       <span className="sr-only">{words[0]}</span>
-      <span ref={slotRef} aria-hidden data-rotating-word="" className={`inline-grid overflow-hidden align-top ${className ?? ""}`}>
+      <span ref={slotRef} aria-hidden data-rotating-word="" className={`inline-grid overflow-hidden pb-[0.14em] -mb-[0.14em] align-top ${className ?? ""}`}>
         {words.map((word, index) => (
           <span
             key={`${index}-${word}`}
@@ -89,7 +101,7 @@ export function RotatingWord({
               refs.current[index] = node;
             }}
             className="col-start-1 row-start-1 whitespace-nowrap"
-            style={index === 0 ? undefined : { transform: IN }}
+            style={index === 0 ? undefined : { transform: IN, visibility: "hidden" }}
           >
             {word}
           </span>

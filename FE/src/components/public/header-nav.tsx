@@ -56,7 +56,7 @@ function NavLink({
 // dari kiri saat hover; menu aktif bergaris penuh + medium. Di menu desktop, setelah JS siap, garis
 // menu aktif digantikan indikator yang bergeser antar menu (useActiveIndicator).
 const linkClass =
-  "relative inline-flex items-center rounded-sm py-1.5 text-small text-current outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-transparent aria-[current=page]:font-medium after:absolute after:inset-x-0 after:-bottom-px after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100 aria-[current=page]:after:scale-x-100 [[data-indicator-ready]_&]:aria-[current=page]:after:scale-x-0";
+  "relative inline-flex items-center whitespace-nowrap rounded-sm py-1.5 text-small text-current outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-transparent aria-[current=page]:font-medium after:absolute after:inset-x-0 after:-bottom-px after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100 aria-[current=page]:after:scale-x-100 [[data-indicator-ready]_&]:aria-[current=page]:after:scale-x-0";
 
 const toggleClass =
   "inline-flex size-6 items-center justify-center rounded-sm text-current opacity-70 outline-none transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-current";
@@ -94,9 +94,9 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
 
   return (
     <>
-      <nav ref={desktopNavRef} aria-label="Menu utama" className="relative hidden lg:block">
+      <nav ref={desktopNavRef} aria-label="Menu utama" className="relative hidden xl:block">
         <IndicatorMark variant="line" ref={indicatorRef} />
-        <ul className="flex items-center gap-7 xl:gap-8">
+        <ul className="flex items-center gap-5 2xl:gap-8">
           {items.map((item) => (
             <li key={`${item.label}-${item.href}`} className="flex items-center">
               {item.children.length > DROPDOWN_MAX_ITEMS ? (
@@ -124,7 +124,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
 
       <button
         type="button"
-        className="ml-auto inline-flex size-10 items-center justify-center rounded-md text-current outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 lg:hidden"
+        className="ml-auto inline-flex size-10 items-center justify-center rounded-md text-current outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 xl:hidden"
         aria-expanded={mobileOpen}
         aria-controls={mobileId}
         aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}
@@ -136,7 +136,7 @@ export function HeaderNav({ items, cta }: HeaderNavProps) {
       <div
         id={mobileId}
         hidden={!mobileOpen}
-        className="fixed inset-x-0 top-18 bottom-0 z-40 overflow-y-auto bg-bg text-fg lg:hidden"
+        className="fixed inset-x-0 top-18 bottom-0 z-40 overflow-y-auto bg-bg text-fg xl:hidden"
       >
         <nav aria-label="Menu utama (mobile)" className="px-4 py-6">
           <ul className="divide-y divide-border border-y border-border">

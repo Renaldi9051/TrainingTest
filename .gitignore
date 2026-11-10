@@ -39,6 +39,8 @@ DESIGN.md
 PRD.md
 aturanGit.md
 BACKLOG.md
+# prompt kerja Kiro/Claude (di root atau di FE/, BE/)
+PROMPT-KIRO-*.md
 # blueprint prototipe (memuat ringkasan PRD/DESIGN/AGENTS)
 docs/blueprint.html
 

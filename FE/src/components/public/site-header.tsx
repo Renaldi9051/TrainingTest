@@ -21,7 +21,8 @@ function HeaderBrand({ logo, name, className }: { logo: PublicImage | null; name
   );
 }
 
-// Header putih sticky 72 px (DESIGN.md 4 & mockup). Di atas foto hero beranda (elemen
+// Header putih sticky 72 px (DESIGN.md 4 & mockup). Menu desktop mulai 1280 px (xl): dengan Poppins,
+// menu + cari + CTA tidak muat satu baris di 1024 px, jadi 1024-1279 px memakai menu layar penuh. Di atas foto hero beranda (elemen
 // [data-header-over]) header transparan berteks terang dan ikut tergulir (public.css .site-header).
 // "Cari" membuka command palette (Ctrl/Cmd+K); tanpa JS tetap link ke katalog.
 export async function SiteHeader() {
@@ -32,7 +33,7 @@ export async function SiteHeader() {
 
   return (
     <header className="site-header sticky top-0 z-40 border-b border-border bg-bg/95 text-fg">
-      <Container className="flex h-18 items-center gap-8">
+      <Container className="flex h-18 items-center gap-6 2xl:gap-8">
         <Link
           href="/"
           className="flex min-w-0 shrink items-center rounded-sm text-current outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2"
@@ -43,7 +44,7 @@ export async function SiteHeader() {
           <HeaderBrand logo={identity.logoDark} name={identity.name} className="site-brand-dark hidden" />
         </Link>
         <HeaderNav items={nav.header} cta={cta} />
-        <div className="ml-auto hidden shrink-0 items-center gap-3 lg:flex">
+        <div className="ml-auto hidden shrink-0 items-center gap-3 xl:flex">
           <SearchTrigger className="inline-flex h-10 items-center gap-2.5 rounded-md border border-(--header-line) px-3 text-small text-current outline-none transition-colors duration-150 ease-standard hover:border-[var(--header-line-hover,var(--header-line))] hover:bg-(--header-hover) focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2" />
           {cta ? (
             <Link href={cta.href} className={cn(buttonVariants({ variant: "primary", size: "md" }), "site-header-cta")}>

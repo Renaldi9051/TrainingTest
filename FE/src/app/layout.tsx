@@ -3,9 +3,12 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { FALLBACK_ICON_PATH } from "@/lib/monogram";
 import "./public.css";
 
+// Tanpa preload: halaman publik memakai Poppins (layout publik), jadi preload Geist di sana hanya
+// membuang bandwidth. Admin tetap Geist; fallback metrik (adjustFontFallback) menjaga CLS saat tertukar.
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  preload: false,
 });
 
 // Tanpa preload: font mono hanya untuk label & angka, bukan elemen LCP (h1). Preload-nya berebut
