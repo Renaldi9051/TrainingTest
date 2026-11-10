@@ -3,6 +3,7 @@ import { createElement } from "react";
 import { Reveal } from "@/components/motion/reveal";
 import { LineDraw, RevealImage } from "@/components/motion/reveal-parts";
 import { PaymentAccounts } from "@/components/public/payment-accounts";
+import { PhotoGallery } from "@/components/public/photo-gallery";
 import { PublicImage } from "@/components/public/public-image";
 import { PublicSection } from "@/components/public/public-section";
 import { RichTextHtml } from "@/components/public/rich-text-html";
@@ -23,6 +24,7 @@ const FALLBACK_HEADINGS: Record<PublicPageBlock["type"], string> = {
   LIST: "Daftar",
   SERVICES: "Layanan",
   IMAGE: "Gambar",
+  GALLERY: "Galeri foto",
   DOWNLOAD: "Unduhan",
   PAYMENT_ACCOUNTS: "Rekening pembayaran",
 };
@@ -110,6 +112,19 @@ function Block({ block, anchor }: { block: PublicPageBlock; anchor: string }) {
           </Reveal>
           {block.caption ? <figcaption className="text-small text-fg-muted">{block.caption}</figcaption> : null}
         </figure>
+      );
+    case "GALLERY":
+      return (
+        <PublicSection
+          bare
+          id={anchor}
+          eyebrow={block.eyebrow}
+          heading={block.heading}
+          fallbackHeading={FALLBACK_HEADINGS.GALLERY}
+          intro={block.intro}
+        >
+          <PhotoGallery images={block.images} label={block.heading || FALLBACK_HEADINGS.GALLERY} dense />
+        </PublicSection>
       );
     case "DOWNLOAD":
       return (

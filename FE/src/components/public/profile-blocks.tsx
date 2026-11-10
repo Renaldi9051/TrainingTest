@@ -13,6 +13,7 @@ import { RollText } from "@/components/motion/roll-text";
 import { PaymentAccounts } from "@/components/public/payment-accounts";
 import { PublicImage } from "@/components/public/public-image";
 import { PublicSection } from "@/components/public/public-section";
+import { PhotoGallery } from "@/components/public/photo-gallery";
 import { RichTextHtml } from "@/components/public/rich-text-html";
 import { SectionHeading } from "@/components/public/section-heading";
 import { ServiceRows } from "@/components/public/service-rows";
@@ -40,6 +41,7 @@ const FALLBACK_HEADINGS: Record<Block["type"], string> = {
   LIST: "Daftar",
   SERVICES: "Layanan",
   IMAGE: "Gambar",
+  GALLERY: "Galeri foto",
   DOWNLOAD: "Unduhan",
   PAYMENT_ACCOUNTS: "Rekening pembayaran",
 };
@@ -91,6 +93,18 @@ function ProfileBlock({ block, categoryHrefs }: { block: Block; categoryHrefs: M
       return <ListPair lists={[block]} categoryHrefs={categoryHrefs} />;
     case "IMAGE":
       return <PhotoBlock block={block} />;
+    case "GALLERY":
+      return (
+        <PublicSection
+          eyebrow={block.eyebrow}
+          heading={block.heading}
+          fallbackHeading={FALLBACK_HEADINGS.GALLERY}
+          intro={block.intro}
+          className="border-t border-border"
+        >
+          <PhotoGallery images={block.images} label={block.heading || FALLBACK_HEADINGS.GALLERY} dense />
+        </PublicSection>
+      );
     case "DOWNLOAD":
       return <DownloadSection block={block} />;
     case "PAYMENT_ACCOUNTS":
