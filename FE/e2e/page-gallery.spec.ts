@@ -4,8 +4,8 @@ import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { loginViaApi, ORIGIN, runId } from "./helpers";
 
-// Blok halaman "Galeri foto" (GALLERY): editor menolak galeri tanpa foto, publik menampilkan grid
-// tombol foto, lightbox bisa dipakai penuh dengan keyboard (panah ganti foto, Esc tutup, fokus kembali
+// Blok halaman "Galeri foto" (GALLERY): editor menolak galeri tanpa foto, halaman galeri berdiri
+// sendiri (tanpa tab halaman lain), publik menampilkan grid tombol foto, lightbox bisa dipakai penuh dengan keyboard (panah ganti foto, Esc tutup, fokus kembali
 // ke foto asal). Halaman uji berawalan [UJI] dan dipindah ke Sampah di akhir.
 // Screenshot 360/768/1280 ke SCREENS_OUT (opsional): SCREENS_OUT=<folder> npx playwright test e2e/page-gallery.spec.ts
 
@@ -71,6 +71,9 @@ test.describe("blok galeri foto", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`/${slug}`);
     await expect(page.getByRole("heading", { name: HEADING })).toBeVisible();
+    // Halaman galeri berdiri sendiri: tanpa tab halaman lain dan kotak pertanyaan.
+    await expect(page.getByRole("navigation", { name: "Halaman lain" })).toHaveCount(0);
+    await expect(page.getByText("Ada pertanyaan tentang halaman ini?")).toHaveCount(0);
     const buttons = page.getByRole("button", { name: /^Buka foto \d+ dari \d+$/ });
     await expect(buttons).toHaveCount(photoCount);
 

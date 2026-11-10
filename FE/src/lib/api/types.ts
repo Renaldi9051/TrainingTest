@@ -887,7 +887,8 @@ export type PublicPage = {
   updatedAt: string;
 };
 
-export type PublicPageRef = { slug: string; title: string };
+// gallery: halaman berisi blok Galeri foto (tata letak galeri, tidak ikut tab halaman informasi).
+export type PublicPageRef = { slug: string; title: string; gallery: boolean };
 
 // ===== Beranda (section) =====
 

@@ -66,9 +66,18 @@ export default async function StaticPage({ params }: PageProps<"/[slug]">) {
   }
   const { page, preview } = loaded;
   const refs = await getPageRefs();
-  // Tab ke halaman statis lain (mockup "Halaman legal"): hanya kalau ada minimal 2 halaman.
-  const tabs = refs.some((ref) => ref.slug === page.slug) ? refs : [...refs, { slug: page.slug, title: page.title }];
-  const toc = tocEntries(page.blocks);
+  // Halaman berisi blok Galeri foto = halaman galeri (keputusan pemilik 10 Nov 2026): berdiri sendiri,
+  // tanpa tab halaman lain, tanggal, daftar isi, dan kotak pertanyaan; konten selebar container.
+  const gallery = page.blocks.some((block) => block.type === "GALLERY");
+  // Tab ke halaman statis lain (mockup "Halaman legal"): hanya kalau ada minimal 2 halaman. Halaman
+  // galeri tidak ikut. ?? false: BE versi lama belum mengirim penanda gallery.
+  const infoRefs = refs.filter((ref) => !(ref.gallery ?? false));
+  const tabs = gallery
+    ? []
+    : infoRefs.some((ref) => ref.slug === page.slug)
+      ? infoRefs
+      : [...infoRefs, { slug: page.slug, title: page.title }];
+  const toc = gallery ? [] : tocEntries(page.blocks);
   return (
     <>
       {preview ? <PreviewBanner path={`/${page.slug}`} /> : null}
@@ -77,9 +86,11 @@ export default async function StaticPage({ params }: PageProps<"/[slug]">) {
         crumbs={[{ label: page.title }]}
         title={page.title}
         aside={
-          <p className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted md:text-right">
-            Diperbarui / {updatedLabel(page.updatedAt)}
-          </p>
+          gallery ? undefined : (
+            <p className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted md:text-right">
+              Diperbarui / {updatedLabel(page.updatedAt)}
+            </p>
+          )
         }
       >
         {tabs.length >= 2 ? (
@@ -111,14 +122,21 @@ export default async function StaticPage({ params }: PageProps<"/[slug]">) {
             </nav>
           </aside>
         ) : null}
-        <article className={cn("min-w-0", toc.length > 0 ? "lg:col-span-8 lg:col-start-5" : "lg:col-span-8 lg:col-start-3")}>
+        <article
+          className={cn(
+            "min-w-0",
+            gallery ? "lg:col-span-12" : toc.length > 0 ? "lg:col-span-8 lg:col-start-5" : "lg:col-span-8 lg:col-start-3",
+          )}
+        >
           <PageBlocks blocks={page.blocks} />
-          <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border border-border p-6">
-            <p className="text-body text-fg-strong">Ada pertanyaan tentang halaman ini?</p>
-            <Link href="/kontak" className={buttonVariants({ variant: "secondary" })}>
-              Hubungi kami
-            </Link>
-          </div>
+          {gallery ? null : (
+            <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border border-border p-6">
+              <p className="text-body text-fg-strong">Ada pertanyaan tentang halaman ini?</p>
+              <Link href="/kontak" className={buttonVariants({ variant: "secondary" })}>
+                Hubungi kami
+              </Link>
+            </div>
+          )}
         </article>
       </Container>
     </>
