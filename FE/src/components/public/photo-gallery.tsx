@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 // Galeri foto dengan lightbox: grid 4:3 (1 kolom mobile, 2 tablet, 3 desktop). mosaic: tepat 4 foto
 // tampil mozaik (foto 1 besar 2x2, 2 & 3 kecil, 4 lebar), dipakai galeri kategori. Tiap foto tombol
 // yang membuka lightbox (dialog modal native: Esc tutup, panah kiri/kanan ganti foto, fokus kembali
-// ke tombol asal). Dipakai galeri kategori dan blok halaman "Galeri foto". dense: 2 kolom di mobile
-// (halaman galeri bisa berisi puluhan foto).
+// ke tombol asal). Dipakai galeri kategori dan blok halaman "Galeri foto". dense: 2 kolom di mobile,
+// 4 kolom mulai 1280 px (halaman galeri bisa berisi puluhan foto).
 export function PhotoGallery({
   images,
   label,
@@ -68,7 +68,7 @@ export function PhotoGallery({
 
   return (
     <>
-      <ul className={cn("grid gap-4", mosaic ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3", dense && "grid-cols-2 gap-3 sm:gap-4")}>
+      <ul className={cn("grid gap-4", mosaic ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3", dense && "grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4")}>
         {images.map((image, i) => (
           <li key={image.url} className={cn("min-w-0", cellClass(i))}>
             <button
@@ -81,7 +81,7 @@ export function PhotoGallery({
               <PublicImage
                 image={image}
                 film
-                sizes={dense ? "(min-width: 1024px) 400px, 50vw" : "(min-width: 1024px) 600px, (min-width: 640px) 50vw, 100vw"}
+                sizes={dense ? "(min-width: 1280px) 300px, (min-width: 1024px) 400px, 50vw" : "(min-width: 1024px) 600px, (min-width: 640px) 50vw, 100vw"}
                 className="transition-transform duration-300 ease-standard group-hover/gal:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/gal:scale-100"
               />
             </button>
