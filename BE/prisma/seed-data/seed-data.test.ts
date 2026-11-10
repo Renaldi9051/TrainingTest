@@ -94,6 +94,7 @@ describe("data contoh", () => {
       ["Beranda", "/"],
       ["Profil", "/profil"],
       ["Layanan", "/layanan"],
+      ["Artikel", "/artikel"],
       ["Pelatihan", "/pelatihan"],
       ["Jadwal Training", "/jadwal"],
     ]);
