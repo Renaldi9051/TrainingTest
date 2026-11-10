@@ -777,6 +777,7 @@ const pageHeadersSchema = z.object({
   portofolio: pageHeaderSchema,
   jadwal: pageHeaderSchema,
   kontak: pageHeaderSchema,
+  artikel: pageHeaderSchema,
 });
 // Anchor literal per halaman (search global admin).
 const PAGE_HEADER_ANCHORS: Record<PageHeaderPage, string> = {
@@ -785,6 +786,7 @@ const PAGE_HEADER_ANCHORS: Record<PageHeaderPage, string> = {
   portofolio: "page.headers.portofolio",
   jadwal: "page.headers.jadwal",
   kontak: "page.headers.kontak",
+  artikel: "page.headers.artikel",
 };
 
 function PageHeadersSection({ value, onDirtyChange }: SectionProps<"page.headers">) {
