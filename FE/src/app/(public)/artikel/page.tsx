@@ -23,13 +23,22 @@ export async function generateMetadata({ searchParams }: PageProps<"/artikel">):
   };
 }
 
-export default function ArticlesPage({ searchParams }: PageProps<"/artikel">) {
+// Teks bawaan kepala halaman; dipakai per field kalau setting page.headers.artikel kosong.
+const DEFAULT_HEADER = {
+  heading: "Berita & artikel",
+  lead: "Kabar terbaru, regulasi, dan wawasan seputar pelatihan dan teknologi.",
+};
+
+export default async function ArticlesPage({ searchParams }: PageProps<"/artikel">) {
+  const settings = await getSettings();
+  const header = settings.pageHeaders.artikel;
   return (
     <>
       <PageHero
         crumbs={[{ label: "Artikel" }]}
-        title="Berita & artikel"
-        lead="Kabar terbaru, regulasi, dan wawasan seputar pelatihan dan teknologi."
+        eyebrow={header.eyebrow || undefined}
+        title={header.heading || DEFAULT_HEADER.heading}
+        lead={header.lead || DEFAULT_HEADER.lead}
       />
       <Container className="pt-12 pb-24 md:pb-32">
         {/* Filter & halaman dibaca dari URL saat request, jadi bagian ini di-stream di dalam Suspense. */}
