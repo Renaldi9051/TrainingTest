@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { FormField } from "@/components/admin/form-field";
 import { ListEditor } from "@/components/admin/list-editor";
+import { GalleryEditor } from "@/components/admin/media/gallery-editor";
 import { MediaPicker } from "@/components/admin/media/media-picker";
 import { OptionMultiPicker } from "@/components/admin/option-multi-picker";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
@@ -25,6 +26,7 @@ import { CATEGORY_ICON_NAMES, CATEGORY_ICONS } from "@/lib/category-icons";
 import {
   emptyPaymentAccount,
   FEATURES_MAX,
+  GALLERY_IMAGES_MAX,
   LIST_ITEMS_MAX,
   MISSION_ITEMS_MAX,
   PAYMENT_ACCOUNTS_MAX,
@@ -39,6 +41,17 @@ export type BlockErrors = Record<string, unknown> | undefined;
 function message(errors: BlockErrors, field: string): string | undefined {
   const entry = errors?.[field];
   return entry && typeof entry === "object" && "message" in entry ? String((entry as { message: unknown }).message) : undefined;
+}
+
+// Error per item array (mis. images.N dari BE atau validasi form), untuk GalleryEditor.
+function itemMessages(errors: BlockErrors, field: string): (string | undefined)[] {
+  const entry = errors?.[field];
+  if (!Array.isArray(entry)) return [];
+  return entry.map((item: unknown) => {
+    if (!item || typeof item !== "object") return undefined;
+    if ("message" in item) return String((item as { message: unknown }).message);
+    return message(item as BlockErrors, "mediaId");
+  });
 }
 
 type FieldsProps<T extends PageBlock> = {
@@ -261,6 +274,31 @@ export function BlockFields({ block, onChange, errors, media }: FieldsProps<Page
           </FormField>
           <FormField id={sid("caption")} label="Keterangan" error={message(errors, "caption")}>
             <Input value={block.caption} onChange={(event) => onChange({ ...block, caption: event.target.value })} />
+          </FormField>
+        </>
+      );
+      break;
+    case "GALLERY":
+      fields = (
+        <>
+          <HeadingFields block={block} onChange={onChange} errors={errors} sid={sid} />
+          <FormField id={sid("intro")} label="Pengantar" error={message(errors, "intro")}>
+            <Textarea rows={2} value={block.intro} onChange={(event) => onChange({ ...block, intro: event.target.value })} />
+          </FormField>
+          <FormField
+            id={sid("images")}
+            label="Foto"
+            required
+            description={`Maksimal ${GALLERY_IMAGES_MAX} foto. Setiap foto wajib punya alt text. Geser untuk mengatur urutan.`}
+            error={message(errors, "images")}
+          >
+            <GalleryEditor
+              value={block.images.map((image) => image.mediaId)}
+              onChange={(ids) => onChange({ ...block, images: ids.map((mediaId) => ({ mediaId })) })}
+              initialMedia={block.images.flatMap((image) => media[image.mediaId] ?? [])}
+              itemErrors={itemMessages(errors, "images")}
+              max={GALLERY_IMAGES_MAX}
+            />
           </FormField>
         </>
       );

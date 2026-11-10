@@ -23,6 +23,7 @@ export const PAGE_BLOCK_TYPES = [
   "LIST",
   "SERVICES",
   "IMAGE",
+  "GALLERY",
   "DOWNLOAD",
   "PAYMENT_ACCOUNTS",
 ] as const;
@@ -35,6 +36,7 @@ export const PAGE_BLOCK_LABELS: Record<PageBlockType, string> = {
   LIST: "Daftar",
   SERVICES: "Layanan",
   IMAGE: "Gambar",
+  GALLERY: "Galeri foto",
   DOWNLOAD: "Unduhan",
   PAYMENT_ACCOUNTS: "Rekening pembayaran",
 };
@@ -44,6 +46,7 @@ export const FEATURES_MAX = 12;
 export const LIST_ITEMS_MAX = 30;
 export const LIST_STYLES = ["bullet", "chips"] as const;
 export const PAYMENT_ACCOUNTS_MAX = 6;
+export const GALLERY_IMAGES_MAX = 48;
 
 const blockId = z.uuid({ error: "ID blok tidak valid." });
 
@@ -105,6 +108,21 @@ const imageBlock = z.object({
   caption: plainText("Keterangan", 200),
 });
 
+// Galeri foto (grid + lightbox di publik). Foto dari media library, alt wajib seperti blok Gambar.
+const galleryBlock = z.object({
+  id: blockId,
+  type: z.literal("GALLERY"),
+  ...headingFields,
+  intro: plainText("Pengantar", INTRO_MAX),
+  images: z
+    .array(mediaRefObjectSchema)
+    .min(1, { error: "Pilih minimal satu foto." })
+    .max(GALLERY_IMAGES_MAX, { error: `Galeri maksimal ${GALLERY_IMAGES_MAX} foto.` })
+    .refine((images) => new Set(images.map((image) => image.mediaId)).size === images.length, {
+      error: "Foto yang sama tidak boleh dipilih dua kali.",
+    }),
+});
+
 // File boleh kosong (mis. belum diunggah); blok tanpa file aktif tidak tampil di publik.
 const downloadBlock = z.object({
   id: blockId,
@@ -149,7 +167,17 @@ const paymentAccountsBlock = z.object({
 
 export const pageBlockSchema = z.discriminatedUnion(
   "type",
-  [richTextBlock, visionMissionBlock, featuresBlock, listBlock, servicesBlock, imageBlock, downloadBlock, paymentAccountsBlock],
+  [
+    richTextBlock,
+    visionMissionBlock,
+    featuresBlock,
+    listBlock,
+    servicesBlock,
+    imageBlock,
+    galleryBlock,
+    downloadBlock,
+    paymentAccountsBlock,
+  ],
   { error: "Tipe blok tidak dikenal." },
 );
 export type PageBlock = z.infer<typeof pageBlockSchema>;
@@ -178,6 +206,13 @@ export function pageBlockMediaRefs(blocks: PageBlock[]): TypedMediaRef[] {
     switch (block.type) {
       case "IMAGE":
         return [{ path: `${index}.image`, mediaId: block.image.mediaId, kind: "image", requireAlt: true }];
+      case "GALLERY":
+        return block.images.map((image, imageIndex) => ({
+          path: `${index}.images.${imageIndex}`,
+          mediaId: image.mediaId,
+          kind: "image",
+          requireAlt: true,
+        }));
       case "DOWNLOAD":
         return block.file
           ? [{ path: `${index}.file`, mediaId: block.file.mediaId, kind: "pdf", requireAlt: false }]

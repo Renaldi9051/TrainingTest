@@ -816,6 +816,7 @@ export type PageBlock =
   | ({ id: string; type: "LIST"; style: "bullet" | "chips"; items: string[] } & BlockHeading)
   | ({ id: string; type: "SERVICES"; intro: string; mode: SelectionMode; limit: number; ids: string[] } & BlockHeading)
   | { id: string; type: "IMAGE"; image: MediaRef | null; caption: string }
+  | ({ id: string; type: "GALLERY"; intro: string; images: MediaRef[] } & BlockHeading)
   | ({ id: string; type: "DOWNLOAD"; description: string; label: string; file: MediaRef | null } & BlockHeading)
   | ({
       id: string;
@@ -861,6 +862,7 @@ export type PublicPageBlock =
   | ({ id: string; type: "LIST"; style: "bullet" | "chips"; items: string[] } & BlockHeading)
   | ({ id: string; type: "SERVICES"; intro: string; items: PublicServiceCard[] } & BlockHeading)
   | { id: string; type: "IMAGE"; image: PublicImage; caption: string }
+  | ({ id: string; type: "GALLERY"; intro: string; images: PublicImage[] } & BlockHeading)
   | ({
       id: string;
       type: "DOWNLOAD";

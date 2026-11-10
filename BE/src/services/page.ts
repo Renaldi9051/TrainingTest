@@ -310,6 +310,7 @@ export type PublicPageBlock =
   | ({ id: string; type: "LIST"; style: "bullet" | "chips"; items: string[] } & HeadingFields)
   | ({ id: string; type: "SERVICES"; intro: string; items: PublicServiceCard[] } & HeadingFields)
   | { id: string; type: "IMAGE"; image: PublicImage; caption: string }
+  | ({ id: string; type: "GALLERY"; intro: string; images: PublicImage[] } & HeadingFields)
   | ({
       id: string;
       type: "DOWNLOAD";
@@ -394,6 +395,17 @@ export async function resolvePageBlocks(stored: unknown): Promise<PublicPageBloc
         const image = media.get(block.image.mediaId);
         const publicImage = image?.mime.startsWith("image/") ? toPublicImage(image) : null;
         return publicImage ? [{ id: block.id, type: block.type, image: publicImage, caption: block.caption }] : [];
+      }
+      case "GALLERY": {
+        // Foto yang dihapus atau bukan gambar dilewati; galeri tanpa foto aktif tidak tampil.
+        const images = block.images.flatMap(({ mediaId }) => {
+          const image = media.get(mediaId);
+          const publicImage = image?.mime.startsWith("image/") ? toPublicImage(image) : null;
+          return publicImage ? [publicImage] : [];
+        });
+        return images.length > 0
+          ? [{ id: block.id, type: block.type, eyebrow: block.eyebrow, heading: block.heading, intro: block.intro, images }]
+          : [];
       }
       case "DOWNLOAD": {
         const file = block.file ? media.get(block.file.mediaId) : undefined;
