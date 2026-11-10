@@ -184,7 +184,7 @@ function FeaturesSection({ block }: { block: Extract<Block, { type: "FEATURES" }
   const id = useId();
   return (
     <section aria-labelledby={id} className="relative overflow-hidden border-t border-border py-20 md:py-32">
-      <OutlineText parallax className="top-10 -left-6 md:top-16">
+      <OutlineText parallax className="top-10 left-4 md:top-16 md:left-24">
         {outlineLabel(block.eyebrow)}
       </OutlineText>
       <Container className="relative space-y-10 md:space-y-12">

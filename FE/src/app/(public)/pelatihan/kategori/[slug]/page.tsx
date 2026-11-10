@@ -84,7 +84,7 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
 
       {/* Hero split: kiri teks + CTA, kanan cover. Cover kosong = judul selebar container. */}
       <section className="relative overflow-hidden border-b border-border bg-bg-subtle pt-12 pb-12 md:pt-18 md:pb-16">
-        <OutlineText className="-right-6 bottom-[-0.12em] md:-right-10">{category.name}</OutlineText>
+        <OutlineText className="right-4 bottom-[0.16em] sm:right-6">{category.name}</OutlineText>
         <Container className="relative z-[1]">
           <Breadcrumb crumbs={[{ label: "Pelatihan", href: "/pelatihan" }, { label: category.name }]} />
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center lg:gap-10">

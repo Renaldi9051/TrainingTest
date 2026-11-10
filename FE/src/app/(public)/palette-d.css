@@ -9,7 +9,6 @@
   --bg: #fff8ec;
   --bg-subtle: #f5ead6;
   --bg-muted: #eddfc6;
-  --grid-line: #efe3cf;
   --border: #e6d8c0;
   --border-strong: #d3c2a5;
   --fg-subtle: #a39684;
@@ -66,7 +65,6 @@
   --outline-stroke: #ebd3b5;
   --outline-stroke-dark: #4a3f37;
   --dot: #e6cfa8;
-  --grid-opacity: 0.45;
 
   /* Grading "film" foto publik (PublicImage film) dan lapisan hangat di atas foto hero. */
   --photo-filter: saturate(0.92) contrast(1.05) sepia(0.1);

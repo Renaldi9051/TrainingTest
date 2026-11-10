@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Poppins } from "next/font/google";
-import { GridLines } from "@/components/decor/grid-lines";
 import { PageEnter } from "@/components/motion/page-enter";
 import { ParallaxEffects } from "@/components/motion/parallax-effects";
 import { PointerEffects } from "@/components/motion/pointer-effects";
@@ -76,11 +75,9 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
         Lewati ke konten
       </a>
       <SiteHeader />
-      {/* isolate: garis grid (z negatif) di belakang semua isi main, tapi di atas latar halaman;
-          section berlatar menutupinya seperti di mockup. */}
+      {/* isolate: elemen dekor ber-z negatif tetap di belakang isi main, tapi di atas latar halaman. */}
       {/* data-site: penanda scope palet D (palette-d.css); admin tidak punya penanda ini. */}
       <main id="konten" data-site="public" className="relative isolate flex-1">
-        <GridLines className="-z-10" />
         {children}
       </main>
       <SiteFooter />
