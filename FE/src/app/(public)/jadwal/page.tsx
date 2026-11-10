@@ -5,6 +5,7 @@ import { ScheduleTableSkeleton } from "@/components/public/schedule-table";
 import { Container } from "@/components/ui/container";
 import { getSettings } from "@/lib/api/public";
 import { ScheduleList, ScheduleStats } from "./schedule-list";
+import { PAGE_HEADER_DEFAULTS } from "@/lib/page-text-defaults";
 
 export const metadata: Metadata = {
   title: "Jadwal pelatihan",
@@ -12,7 +13,6 @@ export const metadata: Metadata = {
 };
 
 // Label UI bawaan; diganti isi Pengaturan > Kepala halaman kalau diisi.
-const DEFAULT_TITLE = "Jadwal pelatihan";
 
 // Jadwal (mockup jadwal.html): filter bulan, kota, kategori; tampilan list atau kalender bulanan.
 export default async function SchedulePage({ searchParams }: PageProps<"/jadwal">) {
@@ -23,7 +23,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/jadwal"
       <PageHero
         crumbs={[{ label: "Jadwal" }]}
         eyebrow={header.eyebrow || undefined}
-        title={header.heading || DEFAULT_TITLE}
+        title={header.heading || PAGE_HEADER_DEFAULTS.jadwal.heading}
         lead={header.lead || null}
         outline="Jadwal"
         aside={

@@ -10,6 +10,7 @@ import { Container } from "@/components/ui/container";
 import { getServices, getSettings } from "@/lib/api/public";
 import type { ServicesProcess } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
+import { PAGE_HEADER_DEFAULTS } from "@/lib/page-text-defaults";
 
 export const metadata: Metadata = {
   title: "Layanan",
@@ -17,7 +18,6 @@ export const metadata: Metadata = {
 };
 
 // Label UI bawaan; diganti isi Pengaturan > Kepala halaman kalau diisi.
-const DEFAULT_TITLE = "Layanan";
 
 export default async function ServicesPage() {
   const [services, settings] = await Promise.all([getServices(), getSettings()]);
@@ -25,9 +25,9 @@ export default async function ServicesPage() {
   return (
     <>
       <PageHero
-        crumbs={[{ label: header.heading || DEFAULT_TITLE }]}
+        crumbs={[{ label: header.heading || PAGE_HEADER_DEFAULTS.layanan.heading }]}
         eyebrow={header.eyebrow || undefined}
-        title={header.heading || DEFAULT_TITLE}
+        title={header.heading || PAGE_HEADER_DEFAULTS.layanan.heading}
         lead={header.lead || null}
         outline="Layanan"
       />

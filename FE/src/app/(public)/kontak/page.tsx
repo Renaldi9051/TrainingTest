@@ -12,6 +12,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { getMarketing, getSettings } from "@/lib/api/public";
 import { privacyPolicyHref } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
+import { PAGE_HEADER_DEFAULTS } from "@/lib/page-text-defaults";
 
 export const metadata: Metadata = {
   title: "Hubungi kami",
@@ -19,7 +20,6 @@ export const metadata: Metadata = {
 };
 
 // Label UI bawaan; diganti isi Pengaturan > Kepala halaman kalau diisi.
-const DEFAULT_TITLE = "Hubungi kami";
 const linkClass = "underline-offset-4 outline-none hover:underline focus-visible:underline";
 
 // Kontak (PRD 5.9, mockup kontak.html): strip info kantor, peta, tim marketing, form inquiry. Semua isi
@@ -78,7 +78,7 @@ export default async function ContactPage() {
       <PageHero
         crumbs={[{ label: header.heading || "Kontak" }]}
         eyebrow={header.eyebrow || undefined}
-        title={header.heading || DEFAULT_TITLE}
+        title={header.heading || PAGE_HEADER_DEFAULTS.kontak.heading}
         lead={header.lead || identity.tagline || null}
         outline="Kontak"
       />
