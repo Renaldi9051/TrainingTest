@@ -147,7 +147,13 @@ describe("page.headers", () => {
   it("belum ada di DB: semua halaman kosong (FE memakai label lama)", () => {
     const value = parseStoredSetting("page.headers", undefined);
     expect(value.layanan).toEqual({ eyebrow: "", heading: "", lead: "" });
-    expect(Object.keys(value).sort()).toEqual(["jadwal", "kontak", "layanan", "pelatihan", "portofolio"]);
+    expect(Object.keys(value).sort()).toEqual(["artikel", "jadwal", "kontak", "layanan", "pelatihan", "portofolio"]);
+  });
+
+  it("nilai lama di DB tanpa artikel: artikel diisi kosong, isi lain tetap", () => {
+    const value = parseStoredSetting("page.headers", { jadwal: { eyebrow: "", heading: "Jadwal kelas", lead: "" } });
+    expect(value.jadwal.heading).toBe("Jadwal kelas");
+    expect(value.artikel).toEqual({ eyebrow: "", heading: "", lead: "" });
   });
 
   it("isi sebagian dirapikan; batas panjang per field", () => {
