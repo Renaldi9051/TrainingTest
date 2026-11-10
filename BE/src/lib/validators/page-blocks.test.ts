@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { collectMediaRefs } from "@/lib/media-refs";
 import {
+  GALLERY_IMAGES_MAX,
   PAGE_BLOCK_TYPES,
   PAGE_BLOCKS_MAX,
   pageBlockMediaRefs,
@@ -13,6 +14,7 @@ import {
 const id = (n: number) => `0199b4d0-0000-7000-8000-${String(n).padStart(12, "0")}`;
 const MEDIA_IMAGE = "0199b4d0-0000-7000-8000-0000000000aa";
 const MEDIA_PDF = "0199b4d0-0000-7000-8000-0000000000bb";
+const MEDIA_IMAGE_2 = "0199b4d0-0000-7000-8000-0000000000dd";
 const SERVICE_ID = "0199b4d0-0000-7000-8000-0000000000cc";
 
 const doc = (text: string) => ({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text }] }] });
@@ -25,6 +27,7 @@ const FULL: Record<PageBlockType, Record<string, unknown>> = {
   LIST: { heading: "Target peserta", style: "chips", items: ["Manajer", "Supervisor"] },
   SERVICES: { heading: "Layanan", mode: "manual", ids: [SERVICE_ID] },
   IMAGE: { image: { mediaId: MEDIA_IMAGE }, caption: "Kegiatan" },
+  GALLERY: { eyebrow: "Galeri", heading: "Dokumentasi", intro: "Kegiatan terbaru.", images: [{ mediaId: MEDIA_IMAGE }, { mediaId: MEDIA_IMAGE_2 }] },
   DOWNLOAD: { heading: "Company profile", label: "Unduh PDF", file: { mediaId: MEDIA_PDF } },
   PAYMENT_ACCOUNTS: {
     heading: "Rekening pembayaran",
@@ -94,6 +97,21 @@ describe("pageBlockSchema", () => {
     ["SERVICES manual tanpa pilihan", { id: id(1), type: "SERVICES", mode: "manual" }, ["ids"]],
     ["IMAGE tanpa gambar", { id: id(1), type: "IMAGE" }, ["image"]],
     ["IMAGE gambar null", { id: id(1), type: "IMAGE", image: null }, ["image"]],
+    ["GALLERY tanpa foto", { id: id(1), type: "GALLERY", images: [] }, ["images"]],
+    [
+      "GALLERY foto dobel",
+      { id: id(1), type: "GALLERY", images: [{ mediaId: MEDIA_IMAGE }, { mediaId: MEDIA_IMAGE }] },
+      ["images"],
+    ],
+    [
+      "GALLERY lebih dari batas",
+      {
+        id: id(1),
+        type: "GALLERY",
+        images: Array.from({ length: GALLERY_IMAGES_MAX + 1 }, (_, index) => ({ mediaId: id(100 + index) })),
+      },
+      ["images"],
+    ],
     ["DOWNLOAD tanpa label", { id: id(1), type: "DOWNLOAD", file: null }, ["label"]],
     ["VISION_MISSION tanpa visi", { id: id(1), type: "VISION_MISSION", mission: ["a"] }, ["vision"]],
     ["PAYMENT_ACCOUNTS tanpa rekening", { id: id(1), type: "PAYMENT_ACCOUNTS", accounts: [] }, ["accounts"]],
@@ -187,6 +205,17 @@ describe("pageBlockMediaRefs", () => {
     const blocks = pageBlocksSchema.parse(fullBlocks());
     const typed = pageBlockMediaRefs(blocks).map(({ path, mediaId }) => ({ path, mediaId }));
     expect(typed).toEqual(collectMediaRefs(blocks));
+  });
+
+  it("GALLERY = tiap foto gambar wajib alt", () => {
+    const blocks = pageBlocksSchema.parse([
+      { id: id(1), type: "LIST", items: ["a"] },
+      { id: id(2), type: "GALLERY", images: [{ mediaId: MEDIA_IMAGE }, { mediaId: MEDIA_IMAGE_2 }] },
+    ]);
+    expect(pageBlockMediaRefs(blocks)).toEqual([
+      { path: "1.images.0", mediaId: MEDIA_IMAGE, kind: "image", requireAlt: true },
+      { path: "1.images.1", mediaId: MEDIA_IMAGE_2, kind: "image", requireAlt: true },
+    ]);
   });
 
   it("IMAGE = gambar wajib alt, DOWNLOAD = PDF, DOWNLOAD tanpa file dilewati", () => {

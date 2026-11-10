@@ -251,4 +251,24 @@ describe("resolvePageBlocks", () => {
       status: "PUBLISHED",
     });
   });
+
+  it("galeri: hanya foto aktif bergambar, galeri tanpa foto aktif tidak tampil", async () => {
+    // findMany hanya mengembalikan media aktif; MISSING (dihapus) tidak ada, PDF bukan gambar.
+    const MISSING = "0199b4d0-0000-7000-8000-0000000000ff";
+    mock.media.findMany.mockResolvedValue([mediaRow(IMG), mediaRow(PDF, { mime: "application/pdf" })]);
+
+    const result = await resolvePageBlocks([
+      {
+        id: block(1),
+        type: "GALLERY",
+        heading: "Dokumentasi",
+        images: [{ mediaId: MISSING }, { mediaId: IMG }, { mediaId: PDF }],
+      },
+      { id: block(2), type: "GALLERY", images: [{ mediaId: MISSING }] },
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ type: "GALLERY", heading: "Dokumentasi", intro: "" });
+    expect(result[0]?.type === "GALLERY" ? result[0].images.map((image) => image.alt) : []).toHaveLength(1);
+  });
 });
