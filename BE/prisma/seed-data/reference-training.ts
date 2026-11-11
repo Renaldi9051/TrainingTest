@@ -4,7 +4,7 @@ import { requiredText } from "../../src/lib/validators/common";
 import snapshot from "./reference-catalog.json";
 import { paragraphs } from "./rich-text";
 
-type ReferencePost = (typeof snapshot.posts)[number];
+export type ReferencePost = (typeof snapshot.posts)[number];
 
 const entities: Record<string, string> = { amp: "&", quot: '"', apos: "'", nbsp: " ", lt: "<", gt: ">", hellip: "…", ndash: "–", mdash: "—", rsquo: "’", lsquo: "‘" };
 export function plainTitle(value: string): string {
@@ -94,11 +94,11 @@ function referenceDate(value: string): Date {
   return Number.isNaN(parsed.getTime()) ? new Date("2026-10-01T00:00:00.000Z") : parsed;
 }
 
-export function referenceTraining(post: ReferencePost) {
+// categoryName: nama kategori untuk naskah (default: kategori sumber pertama di snapshot).
+export function referenceTraining(post: ReferencePost, categoryName = plainTitle(categoryBySlug.get(categorySlugs(post)[0])?.name ?? "profesional")) {
   const title = plainTitle(post.title).slice(0, 200);
   const topic = topicFromTitle(title);
   const categories = categorySlugs(post);
-  const categoryName = plainTitle(categoryBySlug.get(categories[0])?.name ?? "profesional");
   const common = {
     slug: post.slug,
     title,
