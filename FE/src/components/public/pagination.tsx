@@ -14,26 +14,56 @@ export function pageWindow(page: number, totalPages: number): (number | "gap")[]
 const itemClass =
   "inline-flex h-10 min-w-10 items-center justify-center rounded-md px-3 font-mono text-small outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2";
 
-// Paginasi berbasis link (state di URL). hrefFor membentuk URL untuk nomor halaman tertentu.
+// Target halaman: link (state di URL, hrefFor) atau tombol (state di klien, onPage; komponen pemanggil
+// harus Client Component).
+type PageTarget = { hrefFor: (page: number) => string; onPage?: never } | { onPage: (page: number) => void; hrefFor?: never };
+
+function PageControl({
+  target,
+  page,
+  className,
+  children,
+  ...aria
+}: {
+  target: PageTarget;
+  page: number;
+  className: string;
+  children: ReactNode;
+  "aria-current"?: "page";
+  "aria-label"?: string;
+}) {
+  if (target.hrefFor) {
+    return (
+      <Link href={target.hrefFor(page)} className={className} {...aria}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={() => target.onPage(page)} className={className} {...aria}>
+      {children}
+    </button>
+  );
+}
+
 // info (opsional): keterangan di kiri (mis. "Halaman 1 dari 7 / 1-24 dari 161"), kontrol di kanan.
 export function Pagination({
   meta,
-  hrefFor,
   info,
+  ...target
 }: {
-  meta: PaginationMeta;
-  hrefFor: (page: number) => string;
+  meta: Pick<PaginationMeta, "page" | "totalPages">;
   info?: ReactNode;
-}) {
+} & PageTarget) {
   if (meta.totalPages <= 1) return null;
   const { page, totalPages } = meta;
 
   const prev =
     page > 1 ? (
-      <Link href={hrefFor(page - 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary-ink")}>
+      <PageControl target={target} page={page - 1} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary-ink")}>
         <ArrowLeftIcon className="size-4" strokeWidth={1.5} aria-hidden />
         <span className="font-sans">Sebelumnya</span>
-      </Link>
+      </PageControl>
     ) : (
       <span />
     );
@@ -47,14 +77,15 @@ export function Pagination({
             </li>
           ) : (
             <li key={item}>
-              <Link
-                href={hrefFor(item)}
+              <PageControl
+                target={target}
+                page={item}
                 aria-current={item === page ? "page" : undefined}
                 aria-label={`Halaman ${item}`}
                 className={cn(itemClass, item === page ? "bg-primary text-on-primary" : "hover:bg-bg-subtle hover:text-primary-ink")}
               >
                 {item}
-              </Link>
+              </PageControl>
             </li>
           ),
         )}
@@ -66,10 +97,10 @@ export function Pagination({
   );
   const next =
     page < totalPages ? (
-      <Link href={hrefFor(page + 1)} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary-ink")}>
+      <PageControl target={target} page={page + 1} className={cn(itemClass, "gap-2 border border-border-strong hover:border-primary hover:text-primary-ink")}>
         <span className="font-sans">Berikutnya</span>
         <ArrowRightIcon className="size-4" strokeWidth={1.5} aria-hidden />
-      </Link>
+      </PageControl>
     ) : (
       <span />
     );
