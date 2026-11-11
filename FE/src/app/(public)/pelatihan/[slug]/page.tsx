@@ -22,7 +22,7 @@ import { TrainingGrid } from "@/components/public/training-card";
 import { ButtonArrow, buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { getCategory, getMarketing, getSettings, getTraining } from "@/lib/api/public";
+import { getMarketing, getSettings, getTraining } from "@/lib/api/public";
 import { getTrainingPreview } from "@/lib/api/preview";
 import type { PublicTrainingDetail } from "@/lib/api/types";
 import { displayTitle, isUntitled } from "@/lib/display-title";
@@ -142,12 +142,6 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
   const next = training.nextSchedule;
   const nextBadge = next ? dateBadgeParts(next.startDate) : null;
   const primaryCategory = training.categories[0] ?? null;
-  // Galeri kini per kategori: tautkan ke #galeri halaman kategori utama kalau kategori itu punya foto.
-  const primaryCategoryDetail = primaryCategory ? await getCategory(primaryCategory.slug) : null;
-  const categoryGalleryHref =
-    primaryCategory && primaryCategoryDetail && primaryCategoryDetail.images.length > 0
-      ? `/pelatihan/kategori/${primaryCategory.slug}#galeri`
-      : null;
   // Sesi yang masih bisa dipilih di form inquiry (DIBUKA, atau PENUH sebagai daftar tunggu).
   const sessions = training.schedules
     .filter((schedule) => schedule.status !== "COMPLETED")
@@ -259,16 +253,6 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
                 >
                   {title}
                 </h1>
-                {categoryGalleryHref && primaryCategory ? (
-                  <Link
-                    href={categoryGalleryHref}
-                    data-page-enter=""
-                    className="mt-4 inline-flex items-center gap-1 text-small text-secondary underline-offset-4 outline-none hover:underline focus-visible:underline focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-                  >
-                    Lihat galeri kategori {primaryCategory.name}
-                    <span aria-hidden>→</span>
-                  </Link>
-                ) : null}
               </div>
               {training.summary ? (
                 <p data-page-enter="" className="max-w-[65ch] text-body-lg text-fg-muted lg:col-span-4">

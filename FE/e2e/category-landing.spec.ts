@@ -5,9 +5,10 @@ import { expect, test, type APIRequestContext, type Browser, type Page } from "@
 import { createTraining, deleteTraining, loginViaApi, ORIGIN, photoLikeJpeg, runId, type CreatedTraining } from "./helpers";
 
 // Halaman kategori v2 (permintaan atasan 4 Nov 2026): cover (Category.imageId, juga fallback sampul
-// pelatihan), Tentang, daftar judul + cari judul, target peserta + badge "Dirangkum dari", galeri
-// 4 foto + lightbox keyboard, section kosong disembunyikan beserta tab-nya, command palette ke
-// landing, tautan "Lihat galeri kategori" dari detail pelatihan, proteksi media galeri kategori.
+// pelatihan), Tentang, daftar judul + cari judul, target peserta + badge "Dirangkum dari", section
+// kosong disembunyikan beserta tab-nya, command palette ke landing, proteksi media galeri kategori.
+// Galeri tidak tampil di landing maupun detail pelatihan (permintaan pemilik 11 Nov 2026); foto galeri
+// tetap dipakai sebagai fallback cover kategori.
 // Data uji hanya di training_e2e: kategori dibuat per run lalu dihapus di akhir.
 // Screenshot (opsional): SCREENS_OUT=<folder> npx playwright test e2e/category-landing.spec.ts
 
@@ -157,14 +158,14 @@ test.describe("halaman kategori v2", () => {
   });
 
   test("landing terisi: cover ber-Viewfinder, Tentang per paragraf, meta description dari ringkasan", async ({ page }) => {
-    await gotoUntil(page, landing(), async () => (await page.locator("#galeri").count()) === 1);
+    await gotoUntil(page, landing(), async () => (await page.locator("#tentang").count()) === 1);
     const cover = page.locator("[data-category-cover]");
     await expect(cover.getByRole("img", { name: COVER_ALT })).toBeVisible();
     await expect(cover).toContainText(new RegExp(`Kategori / ${escapeRegExp(CATEGORY_NAME)}`, "i"));
     const about = page.locator("#tentang [data-category-description] p");
     await expect(about).toHaveText(["Paragraf pertama tentang kategori uji.", "Paragraf kedua tentang kategori uji."]);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", "Ringkasan kategori uji untuk mesin pencari.");
-    await expect(tabs(page).getByRole("link")).toHaveText(["Tentang", "Daftar pelatihan (2)", "Galeri"]);
+    await expect(tabs(page).getByRole("link")).toHaveText(["Tentang", "Daftar pelatihan (2)"]);
   });
 
   test("daftar pelatihan: urut A-Z, tipe tampil, cari judul di klien, klik judul ke detail", async ({ page }) => {
@@ -224,40 +225,12 @@ test.describe("halaman kategori v2", () => {
     await patchCategory(request, { audience: body.data.suggestions, audienceSource: "auto" });
   });
 
-  test("galeri: mozaik 4 foto, lightbox keyboard (buka, panah, Esc, fokus kembali)", async ({ page }) => {
+  test("galeri kategori terisi tetap tidak tampil di landing (section & tab)", async ({ page }) => {
     await page.goto(landing());
-    const gallery = page.locator("#galeri");
-    // Judul section hanya untuk pembaca layar (eyebrow & judul visual dihapus, permintaan pemilik 11 Nov 2026).
-    await expect(gallery.getByRole("heading", { level: 2, name: `Galeri ${CATEGORY_NAME}` })).toBeAttached();
-    await expect(gallery.getByText("Dokumentasi kegiatan")).toHaveCount(0);
-    const openers = gallery.getByRole("button", { name: /^Buka foto \d+ dari 4$/ });
-    await expect(openers).toHaveCount(4);
-
-    const first = gallery.getByRole("button", { name: "Buka foto 1 dari 4" });
-    await first.focus();
-    await page.keyboard.press("Enter");
-    const lightbox = page.getByRole("dialog", { name: `Galeri ${CATEGORY_NAME}` });
-    await expect(lightbox).toBeVisible();
-    await expect(lightbox).toContainText("Foto 1 / 4");
-    await expect(lightbox.getByRole("img", { name: "[UJI] Dokumentasi 1" })).toBeVisible();
-    await page.keyboard.press("ArrowRight");
-    await expect(lightbox).toContainText("Foto 2 / 4");
-    await expect(lightbox.getByRole("img", { name: "[UJI] Dokumentasi 2" })).toBeVisible();
-    await page.keyboard.press("ArrowLeft");
-    await page.keyboard.press("ArrowLeft");
-    // Berputar dari foto pertama ke foto terakhir.
-    await expect(lightbox).toContainText("Foto 4 / 4");
-    await page.keyboard.press("Escape");
-    await expect(lightbox).toBeHidden();
-    await expect(first).toBeFocused();
-
-    // Tombol "Foto berikutnya" dan "Tutup" juga bisa dipakai.
-    await gallery.getByRole("button", { name: "Buka foto 3 dari 4" }).click();
-    await lightbox.getByRole("button", { name: "Foto berikutnya" }).click();
-    await expect(lightbox).toContainText("Foto 4 / 4");
-    await lightbox.getByRole("button", { name: "Tutup" }).click();
-    await expect(lightbox).toBeHidden();
-    await expect(gallery.getByRole("button", { name: "Buka foto 3 dari 4" })).toBeFocused();
+    await expect(page.getByRole("heading", { level: 1, name: CATEGORY_NAME })).toBeVisible();
+    await expect(page.locator("#galeri")).toHaveCount(0);
+    await expect(tabs(page).getByRole("link", { name: "Galeri" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^Buka foto \d+ dari \d+$/ })).toHaveCount(0);
   });
 
   test("command palette: hasil kategori membuka halaman landing", async ({ page }) => {
@@ -299,24 +272,11 @@ test.describe("halaman kategori v2", () => {
     await expect(page.getByRole("heading", { level: 1, name: CATEGORY_NAME })).toBeVisible();
   });
 
-  test("detail pelatihan: tanpa galeri sendiri; tautan 'Lihat galeri kategori' ke #galeri", async ({ page }) => {
-    await gotoUntil(page, `/pelatihan/${withoutCover.slug}`, async () =>
-      (await page.getByRole("link", { name: new RegExp(`Lihat galeri kategori ${escapeRegExp(CATEGORY_NAME)}`) }).count()) === 1,
-    );
+  test("detail pelatihan: tanpa galeri dan tanpa tautan galeri kategori", async ({ page }) => {
+    await page.goto(`/pelatihan/${withoutCover.slug}`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.locator("#galeri")).toHaveCount(0);
-    const link = page.getByRole("link", { name: new RegExp(`Lihat galeri kategori ${escapeRegExp(CATEGORY_NAME)}`) });
-    await expect(link).toHaveAttribute("href", `${landing()}#galeri`);
-    await link.click();
-    await expect(page).toHaveURL(new RegExp(`${escapeRegExp(landing())}#galeri$`));
-    await expect(page.locator("#galeri")).toBeVisible();
-
-    // Galeri dikosongkan: tautan hilang dari detail.
-    await loginViaApi(page.request);
-    await patchCategory(page.request, { imageIds: [] });
-    await gotoUntil(page, `/pelatihan/${withoutCover.slug}`, async () =>
-      (await page.getByRole("link", { name: /Lihat galeri kategori/ }).count()) === 0,
-    );
-    await patchCategory(page.request, { imageIds: galleryImages.slice(0, 4) });
+    await expect(page.getByRole("link", { name: /Lihat galeri kategori/ })).toHaveCount(0);
   });
 
   test("API publik & kartu katalog: sampul sendiri = training, sampul kosong = cover kategori", async ({ page, request }) => {

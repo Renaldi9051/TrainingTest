@@ -8,7 +8,7 @@ export const PAGE_HEADER_DEFAULTS: Record<PageHeaderPage, PageHeader> = {
   pelatihan: {
     eyebrow: "",
     heading: "Pelatihan untuk setiap *bidang* kerja",
-    lead: "Public dan in-house. Pilih kategori untuk melihat daftar judul, target peserta, dan galeri kegiatannya.",
+    lead: "Public dan in-house. Pilih kategori untuk melihat daftar judul dan target pesertanya.",
   },
   layanan: { eyebrow: "", heading: "Layanan", lead: "" },
   portofolio: { eyebrow: "", heading: "Portofolio", lead: "" },

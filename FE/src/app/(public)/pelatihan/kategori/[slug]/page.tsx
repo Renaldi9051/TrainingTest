@@ -8,7 +8,6 @@ import { OutlineText } from "@/components/decor/outline-text";
 import { RotatingBadge } from "@/components/decor/rotating-badge";
 import { Viewfinder } from "@/components/decor/viewfinder";
 import { ScrollSpyToc } from "@/components/motion/scroll-spy-toc";
-import { CategoryGallery } from "@/components/public/category-gallery";
 import { CategoryTrainingList } from "@/components/public/category-training-list";
 import { ContactPanelTrigger, contactsWithWhatsapp } from "@/components/public/floating-contact";
 import { Breadcrumb } from "@/components/public/page-hero";
@@ -19,11 +18,10 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { getCategory, getMarketing, getRedirect, Tag } from "@/lib/api/public";
 import { formatNumber } from "@/lib/format";
 import { followRedirect } from "@/lib/public-redirect";
-import type { PublicImage as PublicImageData } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 // Halaman landing kategori v2: hero + cover, tab anchor, Tentang, Daftar pelatihan (judul saja),
-// Target peserta, Galeri. Slug tidak ada = redirect (slug diganti/kategori digabung) atau 404.
+// Target peserta (galeri dihapus, permintaan pemilik 11 Nov 2026). Slug tidak ada = redirect (slug diganti/kategori digabung) atau 404.
 // Rute blocking (bukan prerender penuh): getRedirect/getMarketing diakses per request; data kategori
 // tetap di-cache lewat tag.
 export const instant = false;
@@ -57,12 +55,10 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
   // Section yang datanya kosong disembunyikan beserta tab-nya.
   const hasAbout = category.descriptionParagraphs.length > 0;
   const hasAudience = category.audience.length > 0;
-  const hasGallery = category.images.length > 0;
   const tabs = [
     hasAbout ? { id: "tentang", label: "Tentang" } : null,
     { id: "daftar", label: `Daftar pelatihan (${category.trainings.length})` },
     hasAudience ? { id: "peserta", label: "Target peserta" } : null,
-    hasGallery ? { id: "galeri", label: "Galeri" } : null,
   ].filter((tab): tab is { id: string; label: string } => tab !== null);
 
   // JSON-LD ItemList berisi Course untuk tiap pelatihan.
@@ -202,17 +198,6 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
                 ))}
               </ul>
             </div>
-          </Container>
-        </section>
-      ) : null}
-
-      {hasGallery ? (
-        <section id="galeri" aria-labelledby="galeri-title" className="scroll-mt-32 border-b border-border py-16 md:py-20">
-          <Container>
-            <h2 id="galeri-title" className="sr-only">
-              Galeri {category.name}
-            </h2>
-            <CategoryGallery images={category.images as PublicImageData[]} categoryName={category.name} />
           </Container>
         </section>
       ) : null}
