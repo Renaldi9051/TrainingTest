@@ -129,7 +129,7 @@ export function pickRestCategory(title: string, current: readonly RestCategory[]
   return matches[0].category;
 }
 
-const visibleCategories = (categories: RestCategory[]) =>
+export const visibleCategories = (categories: RestCategory[]) =>
   categories.filter((category) => category.activeTrainings > 0 && !skipSlugs.has(category.slug));
 
 // Rencana murni (tanpa database). Kategori tujuan hanya yang tampil (activeTrainings > 0) dan tidak di
@@ -267,7 +267,7 @@ export function moveSummary(moves: RestMove[], categories: RestCategory[]): Rest
 
 const db = getDb();
 
-async function loadRestCategories(): Promise<RestCategory[]> {
+export async function loadRestCategories(): Promise<RestCategory[]> {
   const [candidates, counts] = await Promise.all([
     loadCategoryCandidates(),
     db.category.findMany({
@@ -344,7 +344,7 @@ export async function loadCatalogRestPlan(): Promise<RestPlan> {
 async function moveTraining(move: RestMove, ownerId: string) {
   await db.$transaction(async (tx) => {
     await tx.trainingCategory.deleteMany({ where: { trainingId: move.trainingId } });
-    await tx.trainingCategory.create({ data: { trainingId: move.trainingId, categoryId: move.to.id } });
+    await tx.trainingCategory.create({ data: { trainingId: move.trainingId, categoryId: move.to.id, isPrimary: true } });
     await writeAudit(
       {
         userId: ownerId,

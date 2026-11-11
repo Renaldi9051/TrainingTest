@@ -846,7 +846,7 @@ export async function createReferenceTraining(input: {
         publishedAt: item.publishedAt,
         publishRevalidatedAt: item.publishedAt,
         updatedById: ownerId,
-        categories: { create: { categoryId } },
+        categories: { create: { categoryId, isPrimary: true } },
       },
       select: { id: true },
     });
@@ -872,7 +872,7 @@ export async function restoreIntoCategory(input: { trainingId: string; categoryI
   await db.$transaction(async (tx) => {
     const before = await tx.trainingCategory.findMany({ where: { trainingId }, select: { categoryId: true } });
     await tx.trainingCategory.deleteMany({ where: { trainingId } });
-    await tx.trainingCategory.create({ data: { trainingId, categoryId } });
+    await tx.trainingCategory.create({ data: { trainingId, categoryId, isPrimary: true } });
     await writeAudit(
       {
         userId: ownerId,
