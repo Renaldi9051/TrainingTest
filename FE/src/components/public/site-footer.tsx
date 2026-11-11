@@ -1,6 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
-import { BrandMark } from "@/components/decor/brand-mark";
 import { Container } from "@/components/ui/container";
 import { getNav, getSettings, Tag } from "@/lib/api/public";
 import type { PublicNavItem, SocialPlatform } from "@/lib/api/types";
@@ -62,7 +61,6 @@ export async function SiteFooter() {
       <Container className="grid gap-12 pt-20 pb-14 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
         <div className="space-y-4 lg:col-span-4">
           <p className="flex items-center gap-2.5 text-[18px] font-semibold tracking-[-0.02em]">
-            {identity.logoDark ? null : <BrandMark />}
             <SiteLogo logo={identity.logoDark} name={identity.name} />
           </p>
           {footer.description ? (

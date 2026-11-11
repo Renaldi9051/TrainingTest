@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { BrandMark } from "@/components/decor/brand-mark";
 import { buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { getNav, getSettings } from "@/lib/api/public";
@@ -9,13 +8,12 @@ import { HeaderNav } from "./header-nav";
 import { SearchTrigger } from "./search-trigger";
 import { SiteLogo } from "./site-logo";
 
-// Logo dari pengaturan; selama belum diisi: tanda viewfinder + nama situs (warna ikut header).
+// Logo dari pengaturan (atau tanda viewfinder selama belum diisi) + nama situs (warna ikut header).
 // Nama selalu satu baris: sedikit lebih kecil di mobile, ellipsis kalau tetap tidak muat (nama
 // lengkap tetap dari aria-label link dan title).
 function HeaderBrand({ logo, name, className }: { logo: PublicImage | null; name: string; className: string }) {
   return (
     <span className={cn("min-w-0 items-center gap-2.5", className)}>
-      {logo ? null : <BrandMark />}
       <SiteLogo logo={logo} name={name} nameClassName="min-w-0 truncate text-[15px] sm:text-body" />
     </span>
   );

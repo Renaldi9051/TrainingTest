@@ -8,7 +8,7 @@ const CORNERS = [
 ];
 
 // Tanda viewfinder kecil (4 sudut + titik) di samping nama situs, hanya selama logo belum diisi di
-// pengaturan (bukan pengganti logo). Warna mengikuti teks (currentColor).
+// pengaturan (lihat SiteLogo). Warna mengikuti teks (currentColor).
 export function BrandMark({ className }: { className?: string }) {
   return (
     <span aria-hidden className={cn("relative inline-block size-[22px] shrink-0", className)}>
