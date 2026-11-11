@@ -16,7 +16,7 @@ import { trainingKeys } from "../trainings/training-keys";
 import { categoryKeys } from "./category-form";
 
 // Pelatihan yang judulnya memuat kata kunci kategori tapi ada di kategori lain. Admin mencentang lalu
-// memindahkannya ke kategori ini (satu pelatihan satu kategori, kategori lamanya dilepas).
+// memindahkannya ke kategori ini (jadi kategori utama; kategori utama lama dilepas, kategori lain tetap).
 export function KeywordMatchesPanel({ category }: { category: Category }) {
   const headingId = useId();
   const queryClient = useQueryClient();
@@ -64,7 +64,7 @@ export function KeywordMatchesPanel({ category }: { category: Category }) {
         </h2>
         <p className="max-w-[65ch] text-small text-fg-muted">
           {hasKeywords
-            ? `Judulnya memuat ${category.keywords.map((keyword) => `"${keyword}"`).join(", ")} tapi masih di kategori lain. Centang lalu pindahkan ke kategori ini; kategori lamanya dilepas karena setiap pelatihan hanya punya satu kategori.`
+            ? `Judulnya memuat ${category.keywords.map((keyword) => `"${keyword}"`).join(", ")} tapi masih di kategori lain. Centang lalu pindahkan ke kategori ini; kategori ini jadi kategori utamanya dan kategori utama lamanya dilepas.`
             : "Tambahkan kata kunci di atas lalu simpan untuk melihat pelatihan yang judulnya cocok."}
         </p>
       </div>
