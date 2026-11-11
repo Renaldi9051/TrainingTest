@@ -21,6 +21,7 @@ import {
   createCategory,
   deleteCategory,
   getPublicCategory,
+  listPublicCategoryTrainings,
   listCategories,
   listPublicCategories,
   listPublicCategoryGrid,
@@ -485,12 +486,13 @@ describe("getPublicCategory (landing v2)", () => {
       { slug: "a", title: "Aaa", types: ["PUBLIC"] },
       { slug: "b", title: "Bbb", types: ["IN_HOUSE"] },
     ]);
-    // Hanya pelatihan tayang, difilter di query.
+    // Hanya pelatihan tayang, difilter di query; hanya halaman pertama (20 judul).
     expect(mock.training.findMany.mock.calls[0][0].where).toMatchObject({
       deletedAt: null,
       status: "PUBLISHED",
       publishedAt: { lte: now },
     });
+    expect(mock.training.findMany.mock.calls[0][0].take).toBe(20);
   });
 
   it("metaDescription jatuh ke 160 karakter pertama description kalau summary kosong", async () => {
@@ -523,6 +525,35 @@ describe("getPublicCategory (landing v2)", () => {
   });
 });
 
+
+describe("listPublicCategoryTrainings (daftar judul per halaman)", () => {
+  const now = new Date("2026-10-10T00:00:00Z");
+
+  it("null kalau kategori tidak ada / tanpa pelatihan tayang", async () => {
+    mock.category.findFirst.mockResolvedValue(null);
+    expect(await listPublicCategoryTrainings("tidak-ada", { hal: 1, q: undefined }, now)).toBeNull();
+    expect(mock.training.findMany).not.toHaveBeenCalled();
+  });
+
+  it("halaman ke-n: skip/take 20, meta halaman; cari judul tanpa beda huruf besar/kecil", async () => {
+    mock.category.findFirst.mockResolvedValue({ id: "cat-1" });
+    mock.training.count.mockResolvedValue(45);
+    mock.training.findMany.mockResolvedValue([{ slug: "c", title: "Ccc", types: ["PUBLIC"], id: "x" }]);
+    const list = await listPublicCategoryTrainings("keuangan", { hal: 3, q: "audit" }, now);
+    expect(list).toEqual({
+      items: [{ slug: "c", title: "Ccc", types: ["PUBLIC"] }],
+      meta: { page: 3, pageSize: 20, total: 45, totalPages: 3, q: "audit" },
+    });
+    const args = mock.training.findMany.mock.calls[0][0];
+    expect(args).toMatchObject({ skip: 40, take: 20, orderBy: [{ title: "asc" }, { id: "asc" }] });
+    expect(args.where).toMatchObject({
+      status: "PUBLISHED",
+      categories: { some: { categoryId: "cat-1" } },
+      title: { contains: "audit", mode: "insensitive" },
+    });
+    expect(mock.training.count.mock.calls[0][0].where).toEqual(args.where);
+  });
+});
 
 describe("audienceSource invariant (badge 'Dirangkum dari')", () => {
   it("normalizeAudienceSource: audience kosong selalu manual; auto hanya kalau ada isinya", () => {

@@ -236,3 +236,18 @@ export const categoryListQuerySchema = listQuerySchema({
   },
 });
 export type CategoryListQuery = z.infer<typeof categoryListQuerySchema>;
+
+// Daftar judul pelatihan di landing kategori: 20 per halaman, cari judul di server
+// (GET /api/public/categories/:slug/trainings?hal=&q=). Nilai tidak valid diabaikan, bukan error.
+export const CATEGORY_TRAININGS_PAGE_SIZE = 20;
+export const publicCategoryTrainingsQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(100)
+    .optional()
+    .catch(undefined)
+    .transform((value) => value || undefined),
+  hal: z.coerce.number().int().min(1).max(1000).default(1).catch(1),
+});
+export type PublicCategoryTrainingsQuery = z.infer<typeof publicCategoryTrainingsQuerySchema>;
