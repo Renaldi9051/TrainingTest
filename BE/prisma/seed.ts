@@ -14,6 +14,8 @@ import { REFERENCE_SEED_KEY, REFERENCE_SEED_VERSION, seedReferenceCatalog } from
 import { seedBulk } from "./seed-bulk";
 import { seedCategoryCleanup } from "./seed-category-cleanup";
 import { seedCategoryFill } from "./seed-category-fill";
+import { describeCatalogRest, seedCatalogRest } from "./seed-catalog-rest";
+import { describeCatalogTags, ensurePrimaryCategories, seedCatalogTags } from "./seed-catalog-tags";
 import { seedCategorySchedules } from "./seed-category-schedules";
 import { seedScheduleLocations } from "./seed-schedule-locations";
 import { seedHomeCopy } from "./seed-home-copy";
@@ -156,6 +158,12 @@ async function main() {
   const single = USE_REFERENCE ? await seedSingleCategory() : null;
   // Isi kategori sampai 10 dari judul referensi: dipulihkan dari Sampah atau dibuat baru (sekali per versi).
   const fill = USE_REFERENCE ? await seedCategoryFill() : null;
+  // Sisa judul referensi (pemilik, 11 Nov 2026), setelah isi kategori: pelatihan aktif tidak disentuh.
+  const rest = USE_REFERENCE ? await seedCatalogRest() : null;
+  // Kategori utama untuk tautan yang ditulis seed lama tanpa penanda (database baru), sebelum tag.
+  const primaryFixed = await ensurePrimaryCategories();
+  // Kategori tambahan dari situs referensi (pemilik, 11 Nov 2026): hanya menambah tautan (sekali per versi).
+  const tags = USE_REFERENCE ? await seedCatalogTags() : null;
   // 5 jadwal per kategori A-B untuk pelatihan berbeda (sekali per versi), setelah kategori terisi.
   const schedules = USE_REFERENCE && !MINIMAL ? await seedCategorySchedules() : null;
   // Lokasi jadwal offline/hybrid dipindah ke area Jogja (sekali per versi), setelah jadwal kategori dibuat.
@@ -206,6 +214,7 @@ async function main() {
         : "") +
       `admin ${adminResult === "created" ? "dibuat" : "sudah ada"}.`,
   );
+  if (primaryFixed > 0) console.info(`Kategori utama ditetapkan untuk ${primaryFixed} pelatihan.`);
   if (USE_REFERENCE) {
     console.info(reference
       ? `Katalog referensi: ${reference.categoriesCreated} kategori, ${reference.trainingsCreated} pelatihan, ${reference.linksCreated} tautan, ${reference.menuCreated} submenu baru; dirapikan ${reference.trainingsHidden} pelatihan ke Sampah dan ${reference.linksRemoved} tautan kategori dilepas.`
@@ -227,6 +236,8 @@ async function main() {
       : `Isi kategori: ${fill.restored} pelatihan dipulihkan dari Sampah, ${fill.created} dibuat dari judul referensi (` +
           fill.summary.map((item) => `${item.slug} ${item.before}->${item.after}`).join(", ") + ")" +
           (fill.failed.length > 0 ? `; gagal: ${fill.failed.join("; ")}.` : "."));
+    console.info(describeCatalogRest(rest));
+    console.info(describeCatalogTags(tags));
     if (schedules !== null) {
       console.info(schedules === "dilewati"
         ? "Jadwal kategori A-B: dilewati (versi ini sudah dijalankan)."

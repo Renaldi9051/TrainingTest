@@ -39,7 +39,7 @@ export async function mergeCategory(
   const db = getDb();
   const links = await db.trainingCategory.findMany({
     where: { categoryId: sourceId },
-    select: { trainingId: true, training: { select: { slug: true, deletedAt: true } } },
+    select: { trainingId: true, isPrimary: true, training: { select: { slug: true, deletedAt: true } } },
   });
   const activeTrainings = links.filter((link) => link.training.deletedAt === null);
   const keywords = mergeKeywords(target.keywords, source.keywords);
@@ -48,9 +48,17 @@ export async function mergeCategory(
   const navChanged = await db.$transaction(async (tx) => {
     if (links.length > 0) {
       await tx.trainingCategory.createMany({
-        data: links.map((link) => ({ trainingId: link.trainingId, categoryId: target.id })),
+        data: links.map((link) => ({ trainingId: link.trainingId, categoryId: target.id, isPrimary: link.isPrimary })),
         skipDuplicates: true,
       });
+      // Sumber = kategori utama dan tujuan sudah tertaut sebagai kategori tambahan: tujuan jadi utama.
+      const primaryIds = links.filter((link) => link.isPrimary).map((link) => link.trainingId);
+      if (primaryIds.length > 0) {
+        await tx.trainingCategory.updateMany({
+          where: { categoryId: target.id, trainingId: { in: primaryIds } },
+          data: { isPrimary: true },
+        });
+      }
       await tx.trainingCategory.deleteMany({ where: { categoryId: sourceId } });
     }
     if (activeTrainings.length > 0) {

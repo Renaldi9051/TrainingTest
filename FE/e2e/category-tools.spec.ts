@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext } from "@playwright/test";
-import { createTraining, loginViaApi, ORIGIN, runId, type CreatedTraining } from "./helpers";
+import { createTraining, deleteTraining, loginViaApi, ORIGIN, runId, type CreatedTraining } from "./helpers";
 
-// Alat merapikan kategori di admin (satu pelatihan satu kategori): kata kunci + "Pelatihan yang
+// Alat merapikan kategori di admin (kategori utama + kategori lain): kata kunci + "Pelatihan yang
 // cocok" (pemindahan manual), gabungkan kategori kembar, dan hapus kategori (yang masih dipakai
 // diarahkan ke Gabungkan). Data uji hanya di database training_e2e (direset tiap run).
 
@@ -47,14 +47,22 @@ test.describe("alat kategori", () => {
     await context.close();
   });
 
-  test("API menolak lebih dari satu kategori per pelatihan", async ({ request }) => {
+  test("API: kategori pertama = utama, kategori lain ikut tersimpan; kategori ganda ditolak", async ({ request }) => {
     await loginViaApi(request);
-    const response = await request.post("/api/admin/trainings", {
+    const twice = await request.post("/api/admin/trainings", {
       headers: HEADERS,
-      data: { title: `[UJI] Dua kategori ${id}`, categoryIds: [base.id, target.id] },
+      data: { title: `[UJI] Kategori ganda ${id}`, categoryIds: [base.id, base.id] },
     });
-    expect(response.status()).toBe(422);
-    expect(await response.text()).toContain("hanya boleh punya satu kategori");
+    expect(twice.status()).toBe(422);
+    expect(await twice.text()).toContain("tidak boleh dipilih dua kali");
+
+    const created = await createTraining(request, { title: `[UJI] Dua kategori ${id}`, categoryIds: [target.id, base.id] });
+    try {
+      const detail = await (await request.get(`/api/admin/trainings/${created.id}`)).json();
+      expect(detail.data.categories.map((category: Ref) => category.id)).toEqual([target.id, base.id]);
+    } finally {
+      await deleteTraining(request, created.id);
+    }
   });
 
   test("kata kunci: daftar pelatihan yang cocok (kata utuh) lalu dipindah ke kategori ini", async ({ page }) => {

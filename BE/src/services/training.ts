@@ -42,6 +42,7 @@ import { withSelected, type OptionItem } from "@/services/options";
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
 import { trainingIssueWhere } from "@/services/dashboard";
 import { isPubliclyVisible } from "@/services/training-visibility";
+import { categoryLinks, orderedCategories, setPrimaryCategory } from "@/services/training-categories";
 
 const ENTITY = "Training";
 
@@ -145,11 +146,8 @@ export function parseSeo(value: unknown): TrainingSeo {
 }
 
 function activeCategories(row: TrainingRow): TrainingCategoryRef[] {
-  return row.categories
-    .map((link) => link.category)
-    .filter((category) => category.deletedAt === null)
-    .sort((a, b) => a.order - b.order)
-    .map(({ id, slug, name }) => ({ id, slug, name }));
+  // Kategori utama dulu (= categoryIds[0] di form admin).
+  return orderedCategories(row.categories).map(({ id, slug, name }) => ({ id, slug, name }));
 }
 
 function toListItem(row: TrainingRow, now: Date): TrainingListItem {
@@ -379,7 +377,7 @@ export async function createTraining(
           ...publish,
           seo: seoJson(input.seo),
           updatedById: userId,
-          categories: { create: input.categoryIds.map((categoryId) => ({ categoryId })) },
+          categories: { create: categoryLinks(input.categoryIds) },
           images: { create: input.imageIds.map((mediaId, index) => ({ mediaId, order: index })) },
         },
         include: adminInclude,
@@ -462,7 +460,7 @@ export async function updateTraining(
       if (input.categoryIds) {
         await tx.trainingCategory.deleteMany({ where: { trainingId: id } });
         await tx.trainingCategory.createMany({
-          data: input.categoryIds.map((categoryId) => ({ trainingId: id, categoryId })),
+          data: categoryLinks(input.categoryIds).map((link) => ({ trainingId: id, ...link })),
         });
       }
       // Galeri diganti utuh sesuai urutan imageIds.
@@ -579,7 +577,7 @@ export async function duplicateTraining(id: string, userId: string): Promise<Tra
           seo: json(source.seo),
           updatedById: userId,
           categories: {
-            create: activeCategories(source).map((category) => ({ categoryId: category.id })),
+            create: categoryLinks(activeCategories(source).map((category) => category.id)),
           },
           images: {
             create: activeImages(source).map((image, index) => ({ mediaId: image.id, order: index })),
@@ -662,10 +660,8 @@ export async function bulkTrainings(
         await tx.training.updateMany({ where: { id: { in: ids } }, data: { deletedAt: now, updatedById: userId } });
         break;
       case "set-category":
-        await tx.trainingCategory.deleteMany({ where: { trainingId: { in: ids } } });
-        await tx.trainingCategory.createMany({
-          data: ids.map((trainingId) => ({ trainingId, categoryId: input.categoryId })),
-        });
+        // Ganti kategori utama; kategori tambahan tetap.
+        await setPrimaryCategory(tx, ids, input.categoryId);
         await tx.training.updateMany({ where: { id: { in: ids } }, data: { updatedById: userId } });
         break;
     }

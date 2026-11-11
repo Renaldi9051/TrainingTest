@@ -19,6 +19,7 @@ import {
 } from "@/lib/validators/training-content";
 import { getTrainingDefaults } from "@/services/settings";
 import { parseSeo } from "@/services/training";
+import { byPrimaryThenOrder, orderedCategories } from "@/services/training-categories";
 import { publicTrainingWhere } from "@/services/training-visibility";
 
 // ===== DTO =====
@@ -92,31 +93,31 @@ export type PublicTrainingDetail = PublicTrainingCard & {
 export const cardInclude = {
   cover: true,
   categories: {
-    include: { category: { select: { slug: true, name: true, order: true, deletedAt: true, image: true } } },
+    include: { category: { select: { id: true, slug: true, name: true, order: true, deletedAt: true, image: true } } },
   },
 } satisfies Prisma.TrainingInclude;
 
 export type CardRow = Prisma.TrainingGetPayload<{ include: typeof cardInclude }>;
 
-// Urutan fallback gambar: sampul pelatihan -> gambar kategori aktif pertama (urutan kategori admin,
-// sama dengan label kategori di kartu) yang medianya belum dihapus -> null (blok tanpa sampul).
+// Urutan fallback gambar: sampul pelatihan -> gambar kategori aktif pertama (kategori utama dulu, lalu
+// urutan admin; sama dengan label kategori di kartu) yang medianya belum dihapus -> null (blok tanpa sampul).
 // Alt mengikuti media yang dipakai.
 export function resolveCover(
   cover: Media | null,
-  categories: { order: number; deletedAt: Date | null; image: Media | null }[],
+  categories: { order: number; deletedAt: Date | null; image: Media | null; isPrimary?: boolean }[],
 ): { cover: PublicImage | null; coverSource: CoverSource } {
   const own = activeMediaDto(cover);
   if (own) return { cover: toPublicImage(own), coverSource: "training" };
   const fallback = [...categories]
     .filter((category) => category.deletedAt === null)
-    .sort((a, b) => a.order - b.order)
+    .sort(byPrimaryThenOrder)
     .map((category) => activeMediaDto(category.image))
     .find((image) => image !== null);
   return fallback ? { cover: toPublicImage(fallback), coverSource: "category" } : { cover: null, coverSource: null };
 }
 
 export function toCard(row: CardRow): PublicTrainingCard {
-  const categories = row.categories.map((link) => link.category);
+  const categories = orderedCategories(row.categories);
   return {
     slug: row.slug,
     title: row.title,
@@ -126,10 +127,7 @@ export function toCard(row: CardRow): PublicTrainingCard {
     types: row.types,
     level: row.level,
     ...resolveCover(row.cover, categories),
-    categories: categories
-      .filter((category) => category.deletedAt === null)
-      .sort((a, b) => a.order - b.order)
-      .map(({ slug, name }) => ({ slug, name })),
+    categories: categories.map(({ slug, name }) => ({ slug, name })),
     // publicTrainingWhere menjamin publishedAt terisi.
     publishedAt: row.publishedAt ?? row.createdAt,
   };
@@ -232,16 +230,15 @@ export async function listPublicTrainings(query: PublicTrainingQuery, now = new 
 const SCHEDULES_ON_DETAIL = 12;
 const RELATED_COUNT = 4;
 
+// Pelatihan terkait = sekategori utama (kategori tambahan bisa sangat luas, mis. Management).
 async function relatedTrainings(row: CardRow, now: Date): Promise<PublicTrainingCard[]> {
-  const categoryIds = row.categories
-    .filter((link) => link.category.deletedAt === null)
-    .map((link) => link.categoryId);
-  if (categoryIds.length === 0) return [];
+  const primary = orderedCategories(row.categories)[0];
+  if (!primary) return [];
   const related = await getDb().training.findMany({
     where: {
       ...publicTrainingWhere(now),
       id: { not: row.id },
-      categories: { some: { categoryId: { in: categoryIds } } },
+      categories: { some: { categoryId: primary.id } },
     },
     include: cardInclude,
     orderBy: [{ publishedAt: "desc" }, { id: "asc" }],

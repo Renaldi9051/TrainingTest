@@ -2,6 +2,7 @@ import { draftMode } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { adminServerFetch } from "@/lib/api/server";
+import { localRedirect } from "@/lib/local-redirect";
 import type { ApiSuccess } from "@/lib/api/types";
 import { ADMIN_LOGIN } from "@/lib/session";
 
@@ -39,9 +40,8 @@ function isUnauthorized(response: Response): boolean {
 }
 
 function loginRedirect(request: NextRequest): NextResponse {
-  const login = new URL(ADMIN_LOGIN, request.url);
-  login.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-  return NextResponse.redirect(login);
+  const next = new URLSearchParams({ next: `${request.nextUrl.pathname}${request.nextUrl.search}` });
+  return localRedirect(`${ADMIN_LOGIN}?${next}`);
 }
 
 // Pratinjau konten sebelum tayang (draft mode Next). Hanya untuk sesi admin yang valid:
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     if (isUnauthorized(response)) return loginRedirect(request);
     if (!response.ok) return new NextResponse("Pratinjau beranda tidak dapat dimuat.", { status: 502 });
     (await draftMode()).enable();
-    return NextResponse.redirect(new URL("/", request.url));
+    return localRedirect("/");
   }
 
   const target = TARGETS[parsed.data.type];
@@ -66,5 +66,5 @@ export async function GET(request: NextRequest) {
 
   const { data } = (await response.json()) as ApiSuccess<PreviewData>;
   (await draftMode()).enable();
-  return NextResponse.redirect(new URL(target.path(data), request.url));
+  return localRedirect(target.path(data));
 }

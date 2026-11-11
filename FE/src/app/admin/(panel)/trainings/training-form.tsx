@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDaysIcon, CopyIcon, EyeIcon, SearchIcon, Trash2Icon } from "lucide-react";
+import { CalendarDaysIcon, CopyIcon, EyeIcon, SearchIcon, Trash2Icon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState, type ReactNode } from "react";
@@ -63,6 +63,9 @@ import {
 import { LEVEL_LABELS, METHOD_LABELS, TYPE_LABELS } from "@/lib/labels";
 import { categoryKeys } from "../categories/category-form";
 import { trainingKeys } from "./training-keys";
+
+// Sama dengan MAX_TRAINING_CATEGORIES di validator BE.
+const TRAINING_CATEGORIES_MAX = 20;
 import { previewHref } from "./trainings-list";
 
 const NO_METHOD = "none";
@@ -141,11 +144,11 @@ const schema = z
     showPrice: z.boolean(),
     coverId: z.string().nullable(),
     imageIds: z.array(z.string()).max(IMAGES_MAX, { error: `Galeri maksimal ${IMAGES_MAX} gambar.` }),
-    // Satu pelatihan satu kategori (sama dengan validator BE).
+    // Elemen pertama = kategori utama (sama dengan validator BE).
     categoryIds: z
       .array(z.string())
-      .min(1, { error: "Pilih kategori." })
-      .max(1, { error: "Pelatihan hanya boleh punya satu kategori." }),
+      .min(1, { error: "Pilih kategori utama." })
+      .max(TRAINING_CATEGORIES_MAX, { error: `Maksimal ${TRAINING_CATEGORIES_MAX} kategori.` }),
     status: z.enum(["DRAFT", "PUBLISHED"]),
     publishedAt: z.string(),
     seo: z.object({
@@ -651,7 +654,7 @@ export function TrainingForm({ training }: { training: Training | null }) {
             control={form.control}
             name="categoryIds"
             render={({ field }) => (
-              <CategoryRadioList value={field.value} onChange={field.onChange} error={errors.categoryIds?.message} />
+              <CategoryPicker value={field.value} onChange={field.onChange} error={errors.categoryIds?.message} />
             )}
           />
 
@@ -884,9 +887,9 @@ function PublishPanel({
   );
 }
 
-// Pilihan satu kategori. Nilai tetap array (bentuk API); data lama dengan beberapa kategori diganti
-// satu pilihan saat admin memilih.
-function CategoryRadioList({
+// Kategori utama (label kartu, elemen pertama nilai) + kategori lain (pelatihan ikut tampil di sana).
+// Sama dengan validator BE: minimal 1, maksimal TRAINING_CATEGORIES_MAX.
+function CategoryPicker({
   value,
   onChange,
   error,
@@ -906,16 +909,54 @@ function CategoryRadioList({
     const items = query.data ?? [];
     return term ? items.filter((item) => item.name.toLowerCase().includes(term)) : items;
   }, [filter, query.data]);
-  const selectedName = query.data?.find((item) => item.id === value[0])?.name;
+  const nameOf = (id: string) => query.data?.find((item) => item.id === id)?.name ?? "Kategori";
+  const selected = new Set(value);
+  const full = value.length >= TRAINING_CATEGORIES_MAX;
+
+  // Kategori pertama yang dicentang otomatis jadi utama; melepas kategori utama menaikkan berikutnya.
+  const toggle = (id: string, checked: boolean) =>
+    onChange(checked ? (selected.has(id) ? value : [...value, id]) : value.filter((item) => item !== id));
+  const makePrimary = (id: string) => onChange([id, ...value.filter((item) => item !== id)]);
 
   return (
     <fieldset className="space-y-3 border-t border-border pt-6" aria-describedby={error ? `${filterId}-error` : undefined}>
-      <legend className="font-mono text-label uppercase text-fg-muted">
-        Kategori <span className="normal-case">({selectedName ?? "belum dipilih"})</span>
-      </legend>
-      {value.length > 1 ? (
-        <p className="text-small text-fg-muted">Pelatihan ini masih punya {value.length} kategori. Pilih satu.</p>
-      ) : null}
+      <legend className="font-mono text-label uppercase text-fg-muted">Kategori</legend>
+      <p className="text-small text-fg-muted">
+        Kategori utama tampil sebagai label di kartu pelatihan. Pelatihan juga tampil di kategori lain yang dicentang.
+      </p>
+
+      {value.length === 0 ? (
+        <p className="text-small text-fg-muted">Belum ada kategori dipilih.</p>
+      ) : (
+        <div role="radiogroup" aria-label="Kategori utama" className="space-y-1">
+          {value.map((id, index) => (
+            <div key={id} className="flex items-center gap-2 rounded-sm px-1 py-1 text-sm">
+              <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name={`${filterId}-primary`}
+                  value={id}
+                  checked={index === 0}
+                  onChange={() => makePrimary(id)}
+                  className="accent-[var(--fg-strong)]"
+                />
+                <span className="truncate">{nameOf(id)}</span>
+                {index === 0 ? <span className="font-mono text-label uppercase text-fg-muted">Utama</span> : null}
+              </label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Lepas kategori ${nameOf(id)}`}
+                onClick={() => toggle(id, false)}
+              >
+                <XIcon className="size-4" strokeWidth={1.5} aria-hidden />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="relative">
         <label htmlFor={filterId} className="sr-only">
           Cari kategori
@@ -934,6 +975,9 @@ function CategoryRadioList({
           onChange={(event) => setFilter(event.target.value)}
         />
       </div>
+      {full ? (
+        <p className="text-small text-fg-muted">Maksimal {TRAINING_CATEGORIES_MAX} kategori.</p>
+      ) : null}
       {query.isPending ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }, (_, index) => (
@@ -953,16 +997,16 @@ function CategoryRadioList({
           )}
         </p>
       ) : (
-        <ul className="max-h-64 space-y-1 overflow-y-auto pr-1">
+        <ul className="max-h-64 space-y-1 overflow-y-auto pr-1" aria-label="Pilih kategori">
           {visible.map((category) => (
             <li key={category.id}>
-              <label className="flex cursor-pointer items-center gap-2 rounded-sm px-1 py-1 text-sm hover:bg-bg-subtle">
+              <label className="flex cursor-pointer items-center gap-2 rounded-sm px-1 py-1 text-sm hover:bg-bg-subtle has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
                 <input
-                  type="radio"
-                  name={`${filterId}-category`}
+                  type="checkbox"
                   value={category.id}
-                  checked={value.length === 1 && value[0] === category.id}
-                  onChange={() => onChange([category.id])}
+                  checked={selected.has(category.id)}
+                  disabled={full && !selected.has(category.id)}
+                  onChange={(event) => toggle(category.id, event.target.checked)}
                   className="accent-[var(--fg-strong)]"
                 />
                 {category.name}

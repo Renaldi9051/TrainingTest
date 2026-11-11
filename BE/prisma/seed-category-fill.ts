@@ -22,7 +22,7 @@ import { revalidateEntity, withRevalidateBatch } from "../src/lib/revalidate-map
 import { AuditAction, writeAudit } from "../src/services/audit";
 import { restoreTraining } from "../src/services/training";
 import snapshot from "./seed-data/reference-catalog.json";
-import { hasReferenceTitle, plainTitle, referenceSnapshotSlugs, referenceTraining } from "./seed-data/reference-training";
+import { hasReferenceTitle, plainTitle, type ReferencePost, referenceSnapshotSlugs, referenceTraining } from "./seed-data/reference-training";
 import { loadTrainingPhotos } from "./seed-training-photos";
 
 export const CATEGORY_FILL_KEY = "seed.categoryFill.version";
@@ -812,12 +812,23 @@ export async function planCategoryFill(): Promise<CategoryFillPlan> {
 
 // Pelatihan baru dari judul snapshot: naskah dan field sama dengan seed referensi. updatedById diisi
 // (seperti baris yang dipulihkan) supaya perapian katalog referensi berikutnya tidak memindahkannya ke Sampah.
-async function createFromSnapshot(pick: CategoryFillPick, postIndex: number, ownerId: string) {
-  const item = referenceTraining({ ...snapshot.posts[postIndex], slug: pick.slug });
+// Dipakai juga oleh seed sisa katalog (seed-catalog-rest.ts); source dicatat di diff audit.
+export async function createReferenceTraining(input: {
+  post: ReferencePost;
+  slug: string;
+  categoryId: string;
+  categoryName?: string;
+  ownerId: string;
+  source: string;
+}) {
+  const { slug, categoryId, ownerId, source } = input;
+  const item = input.categoryName
+    ? referenceTraining({ ...input.post, slug }, input.categoryName)
+    : referenceTraining({ ...input.post, slug });
   await db.$transaction(async (tx) => {
     const training = await tx.training.create({
       data: {
-        slug: pick.slug,
+        slug,
         title: item.title,
         summary: item.summary,
         description: item.description as Prisma.InputJsonValue,
@@ -835,7 +846,7 @@ async function createFromSnapshot(pick: CategoryFillPick, postIndex: number, own
         publishedAt: item.publishedAt,
         publishRevalidatedAt: item.publishedAt,
         updatedById: ownerId,
-        categories: { create: { categoryId: pick.categoryId } },
+        categories: { create: { categoryId, isPrimary: true } },
       },
       select: { id: true },
     });
@@ -845,12 +856,34 @@ async function createFromSnapshot(pick: CategoryFillPick, postIndex: number, own
         action: AuditAction.CREATE,
         entity: "Training",
         entityId: training.id,
-        diff: { categoryIds: { from: [], to: [pick.categoryId] }, source: "category-fill" },
+        diff: { categoryIds: { from: [], to: [categoryId] }, source },
       },
       tx,
     );
   });
-  await revalidateEntity({ entity: "Training", slugs: [pick.slug] });
+  await revalidateEntity({ entity: "Training", slugs: [slug] });
+}
+
+// Pulihkan baris Sampah lewat service admin (cek slug, lepas redirect yang memakai path ini, audit
+// RESTORE, revalidate), lalu tautkan ke SATU kategori.
+export async function restoreIntoCategory(input: { trainingId: string; categoryId: string; ownerId: string; source: string }) {
+  const { trainingId, categoryId, ownerId, source } = input;
+  await restoreTraining(trainingId, {}, ownerId);
+  await db.$transaction(async (tx) => {
+    const before = await tx.trainingCategory.findMany({ where: { trainingId }, select: { categoryId: true } });
+    await tx.trainingCategory.deleteMany({ where: { trainingId } });
+    await tx.trainingCategory.create({ data: { trainingId, categoryId, isPrimary: true } });
+    await writeAudit(
+      {
+        userId: ownerId,
+        action: AuditAction.UPDATE,
+        entity: "Training",
+        entityId: trainingId,
+        diff: { categoryIds: { from: before.map((link) => link.categoryId), to: [categoryId] }, source },
+      },
+      tx,
+    );
+  });
 }
 
 export type CategoryFillResult = { restored: number; created: number; summary: CategoryFillPlan["summary"]; failed: string[] };
@@ -868,31 +901,17 @@ export async function seedCategoryFill(): Promise<CategoryFillResult | "dilewati
     for (const pick of plan.picks) {
       try {
         if (pick.source.kind === "create") {
-          await createFromSnapshot(pick, pick.source.postIndex, owner.id);
+          await createReferenceTraining({
+            post: snapshot.posts[pick.source.postIndex],
+            slug: pick.slug,
+            categoryId: pick.categoryId,
+            ownerId: owner.id,
+            source: "category-fill",
+          });
           created += 1;
           continue;
         }
-        const trainingId = pick.source.trainingId;
-        // Service admin: cek slug, lepas redirect yang memakai path ini, audit RESTORE, revalidate.
-        await restoreTraining(trainingId, {}, owner.id);
-        await db.$transaction(async (tx) => {
-          const before = await tx.trainingCategory.findMany({ where: { trainingId }, select: { categoryId: true } });
-          await tx.trainingCategory.deleteMany({ where: { trainingId } });
-          await tx.trainingCategory.create({ data: { trainingId, categoryId: pick.categoryId } });
-          await writeAudit(
-            {
-              userId: owner.id,
-              action: AuditAction.UPDATE,
-              entity: "Training",
-              entityId: trainingId,
-              diff: {
-                categoryIds: { from: before.map((link) => link.categoryId), to: [pick.categoryId] },
-                source: "category-fill",
-              },
-            },
-            tx,
-          );
-        });
+        await restoreIntoCategory({ trainingId: pick.source.trainingId, categoryId: pick.categoryId, ownerId: owner.id, source: "category-fill" });
         restored += 1;
       } catch (error) {
         failed.push(`${pick.slug} (${error instanceof Error ? error.message : String(error)})`);

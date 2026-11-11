@@ -40,12 +40,13 @@ describe("trainingCreateSchema", () => {
     expect(trainingCreateSchema.safeParse({ ...base, certificate: "ya" }).success).toBe(false);
   });
 
-  it("tepat 1 kategori dan judul wajib", () => {
+  it("minimal 1 kategori (pertama = utama), boleh lebih, tanpa duplikat; judul wajib", () => {
     expect(trainingCreateSchema.safeParse({ ...base, categoryIds: [] }).success).toBe(false);
     const two = trainingCreateSchema.safeParse({ ...base, categoryIds: [CATEGORY, "0199b4d0-0000-7000-8000-0000000000c2"] });
-    expect(two.success).toBe(false);
-    expect(two.error?.issues[0]?.message).toBe("Pelatihan hanya boleh punya satu kategori.");
-    expect(trainingUpdateSchema.safeParse({ categoryIds: [CATEGORY, CATEGORY] }).success).toBe(false);
+    expect(two.success).toBe(true);
+    const twice = trainingUpdateSchema.safeParse({ categoryIds: [CATEGORY, CATEGORY] });
+    expect(twice.success).toBe(false);
+    expect(twice.error?.issues[0]?.message).toBe("Kategori tidak boleh dipilih dua kali.");
     expect(trainingCreateSchema.safeParse({ ...base, title: " " }).success).toBe(false);
   });
 

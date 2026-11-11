@@ -84,8 +84,8 @@ describe("mergeCategory", () => {
   it("memindah tautan, sumber ke Sampah, redirect 301, audit dua kategori, revalidate", async () => {
     mockCategories(source({ featured: true, keywords: ["manufaktur"] }), target({ keywords: ["Manufacture"] }));
     mock.trainingCategory.findMany.mockResolvedValue([
-      { trainingId: "t1", training: { slug: "a", deletedAt: null } },
-      { trainingId: "t2", training: { slug: "b", deletedAt: new Date() } },
+      { trainingId: "t1", isPrimary: true, training: { slug: "a", deletedAt: null } },
+      { trainingId: "t2", isPrimary: false, training: { slug: "b", deletedAt: new Date() } },
     ]);
     const result = await mergeCategory(SOURCE, { targetId: TARGET }, "u1");
 
@@ -93,10 +93,15 @@ describe("mergeCategory", () => {
     expect(result.target.id).toBe(TARGET);
     expect(mock.trainingCategory.createMany).toHaveBeenCalledWith({
       data: [
-        { trainingId: "t1", categoryId: TARGET },
-        { trainingId: "t2", categoryId: TARGET },
+        { trainingId: "t1", categoryId: TARGET, isPrimary: true },
+        { trainingId: "t2", categoryId: TARGET, isPrimary: false },
       ],
       skipDuplicates: true,
+    });
+    // Kategori utama ikut pindah walau tujuan sudah tertaut sebagai kategori tambahan.
+    expect(mock.trainingCategory.updateMany).toHaveBeenCalledWith({
+      where: { categoryId: TARGET, trainingId: { in: ["t1"] } },
+      data: { isPrimary: true },
     });
     expect(mock.trainingCategory.deleteMany).toHaveBeenCalledWith({ where: { categoryId: SOURCE } });
     // Hanya pelatihan aktif yang ditandai diubah admin.

@@ -429,7 +429,7 @@ export function TrainingsList() {
         title={`Pindah kategori ${count} pelatihan?`}
         description={
           targetName
-            ? `${count} pelatihan terpilih dipindah ke "${targetName}" (kategori lamanya dilepas).`
+            ? `Kategori utama ${count} pelatihan terpilih diganti "${targetName}" (kategori utama lamanya dilepas, kategori lain tetap).`
             : `Pilih kategori tujuan untuk ${count} pelatihan terpilih.`
         }
         confirmLabel="Pindahkan"

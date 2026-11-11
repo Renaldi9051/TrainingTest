@@ -52,7 +52,7 @@ function row(extra: Record<string, unknown> = {}) {
     updatedAt: now,
     deletedAt: null,
     updatedById: null,
-    categories: [{ categoryId: CATEGORY, category: { id: CATEGORY, slug: "sdm", name: "SDM", order: 0, deletedAt: null } }],
+    categories: [{ categoryId: CATEGORY, isPrimary: true, category: { id: CATEGORY, slug: "sdm", name: "SDM", order: 0, deletedAt: null } }],
     images: [],
     _count: { schedules: 0 },
     ...extra,
@@ -94,7 +94,7 @@ describe("createTraining", () => {
       status: "DRAFT",
       publishedAt: null,
       publishRevalidatedAt: null,
-      categories: { create: [{ categoryId: CATEGORY }] },
+      categories: { create: [{ categoryId: CATEGORY, isPrimary: true }] },
     });
     expect(revalidate).not.toHaveBeenCalled();
   });
@@ -205,7 +205,9 @@ describe("updateTraining", () => {
     mock.training.findFirst.mockResolvedValueOnce(row());
     await updateTraining(ID, { categoryIds: [CATEGORY] }, "u1", now);
     expect(mock.trainingCategory.deleteMany).toHaveBeenCalledWith({ where: { trainingId: ID } });
-    expect(mock.trainingCategory.createMany).toHaveBeenCalledWith({ data: [{ trainingId: ID, categoryId: CATEGORY }] });
+    expect(mock.trainingCategory.createMany).toHaveBeenCalledWith({
+      data: [{ trainingId: ID, categoryId: CATEGORY, isPrimary: true }],
+    });
   });
 });
 
@@ -343,13 +345,22 @@ describe("bulkTrainings", () => {
     expect(mock.$transaction).not.toHaveBeenCalled();
   });
 
-  it("ganti kategori: semua kategori lama diganti satu kategori", async () => {
+  it("ganti kategori: kategori utama diganti, kategori tambahan tetap", async () => {
     await bulkTrainings({ action: "set-category", ids: ["a", "b"], categoryId: CATEGORY }, "u1", now);
-    expect(mock.trainingCategory.deleteMany).toHaveBeenCalledWith({ where: { trainingId: { in: ["a", "b"] } } });
-    expect(mock.trainingCategory.createMany.mock.calls[0][0].data).toEqual([
-      { trainingId: "a", categoryId: CATEGORY },
-      { trainingId: "b", categoryId: CATEGORY },
-    ]);
+    expect(mock.trainingCategory.deleteMany).toHaveBeenCalledWith({
+      where: { trainingId: { in: ["a", "b"] }, isPrimary: true, categoryId: { not: CATEGORY } },
+    });
+    expect(mock.trainingCategory.updateMany).toHaveBeenCalledWith({
+      where: { trainingId: { in: ["a", "b"] }, categoryId: CATEGORY },
+      data: { isPrimary: true },
+    });
+    expect(mock.trainingCategory.createMany.mock.calls[0][0]).toEqual({
+      data: [
+        { trainingId: "a", categoryId: CATEGORY, isPrimary: true },
+        { trainingId: "b", categoryId: CATEGORY, isPrimary: true },
+      ],
+      skipDuplicates: true,
+    });
     expect(mock.auditLog.create.mock.calls[0][0].data).toMatchObject({ action: "BULK" });
   });
 

@@ -14,6 +14,7 @@ import {
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
 import { scheduleDisplayStatus, type PublicScheduleStatus } from "@/services/schedule-status";
 import { publicTrainingWhere } from "@/services/training-visibility";
+import { orderedCategories } from "@/services/training-categories";
 
 const ENTITY = "Schedule";
 const FIELDS = ["trainingId", "startDate", "endDate", "city", "venue", "method", "price", "status"] as const;
@@ -254,7 +255,7 @@ export const publicScheduleInclude = {
       title: true,
       showPrice: true,
       categories: {
-        select: { category: { select: { slug: true, name: true, order: true, deletedAt: true } } },
+        select: { isPrimary: true, category: { select: { slug: true, name: true, order: true, deletedAt: true } } },
       },
     },
   },
@@ -269,10 +270,7 @@ export function toPublicSchedule(row: PublicScheduleRow, today: Date): PublicSch
     training: {
       slug: row.training.slug,
       title: row.training.title,
-      categories: row.training.categories
-        .map((link) => link.category)
-        .filter((category) => category.deletedAt === null)
-        .sort((a, b) => a.order - b.order)
+      categories: orderedCategories(row.training.categories)
         .map(({ slug, name }) => ({ slug, name })),
     },
     startDate: toDateString(row.startDate),

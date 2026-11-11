@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryCreateSchema, categoryUpdateSchema } from "@/lib/validators/category";
+import { categoryCreateSchema, categoryUpdateSchema, publicCategoryTrainingsQuerySchema } from "@/lib/validators/category";
 
 const base = { name: "Keuangan" };
 
@@ -66,5 +66,14 @@ describe("categoryUpdateSchema", () => {
 
   it("menolak payload kosong", () => {
     expect(categoryUpdateSchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("publicCategoryTrainingsQuerySchema", () => {
+  it("default halaman 1 tanpa q; nilai tidak valid diabaikan", () => {
+    expect(publicCategoryTrainingsQuerySchema.parse({})).toEqual({ hal: 1, q: undefined });
+    expect(publicCategoryTrainingsQuerySchema.parse({ hal: "3", q: "  audit " })).toEqual({ hal: 3, q: "audit" });
+    expect(publicCategoryTrainingsQuerySchema.parse({ hal: "-1", q: "x".repeat(101) })).toEqual({ hal: 1, q: undefined });
+    expect(publicCategoryTrainingsQuerySchema.parse({ hal: "abc", q: " " })).toEqual({ hal: 1, q: undefined });
   });
 });

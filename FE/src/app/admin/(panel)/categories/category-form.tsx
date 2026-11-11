@@ -179,8 +179,8 @@ export function CategoryForm({ category }: { category: Category | null }) {
     },
   });
 
-  // Kategori yang masih dipakai tidak bisa dihapus (satu pelatihan satu kategori): dialog hapus
-  // mengarahkan ke Gabungkan atau aksi massal pindah kategori.
+  // Kategori yang masih dipakai tidak bisa dihapus: dialog hapus mengarahkan ke Gabungkan atau aksi
+  // massal pindah kategori.
   const remove = useMutation({
     mutationFn: async () => apiSend(`/admin/categories/${category?.id}`, "DELETE"),
     onSuccess: async () => {
@@ -414,7 +414,7 @@ export function CategoryForm({ category }: { category: Category | null }) {
         title={inUse ? `Kategori "${category?.name ?? ""}" masih dipakai` : `Hapus kategori "${category?.name ?? ""}"?`}
         description={
           inUse
-            ? `Kategori ini berisi ${formatNumber(category?.trainingCount ?? 0)} pelatihan, dan setiap pelatihan hanya punya satu kategori. Gabungkan ke kategori lain (pelatihannya ikut pindah), atau pindahkan pelatihannya lewat aksi massal "Pindah kategori" di daftar pelatihan.`
+            ? `Kategori ini berisi ${formatNumber(category?.trainingCount ?? 0)} pelatihan. Gabungkan ke kategori lain (pelatihannya ikut pindah), atau pindahkan pelatihannya lewat aksi massal "Pindah kategori" di daftar pelatihan.`
             : "Kategori dipindahkan ke Sampah dan hilang dari situs. Item menu ke kategori ini ikut dihapus. Bisa dipulihkan dalam 30 hari."
         }
         confirmLabel={inUse ? "Gabungkan ke kategori lain" : "Hapus"}

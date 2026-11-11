@@ -20,7 +20,12 @@ import type {
   CategoryUpdateInput,
   PublicCategoryGridQuery,
 } from "@/lib/validators/category";
-import { audienceSchema, PUBLIC_CATEGORY_PAGE_SIZE } from "@/lib/validators/category";
+import {
+  audienceSchema,
+  CATEGORY_TRAININGS_PAGE_SIZE,
+  PUBLIC_CATEGORY_PAGE_SIZE,
+  type PublicCategoryTrainingsQuery,
+} from "@/lib/validators/category";
 import type { ReorderInput, RestoreInput } from "@/lib/validators/common";
 import { AuditAction, diffFields, writeAudit } from "@/services/audit";
 import {
@@ -33,6 +38,7 @@ import {
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
 import { reorderResource } from "@/services/reorder";
 import { publicTrainingWhere } from "@/services/training-visibility";
+import { repairPrimaryCategories } from "@/services/training-categories";
 
 const ENTITY = "Category";
 const FIELDS = [
@@ -378,7 +384,11 @@ export async function deleteCategory(id: string, userId: string, { detach = fals
   }
   const now = new Date();
   const navChanged = await getDb().$transaction(async (tx) => {
-    if (linked.length > 0) await tx.trainingCategory.deleteMany({ where: { categoryId: id } });
+    if (linked.length > 0) {
+      await tx.trainingCategory.deleteMany({ where: { categoryId: id } });
+      // Pelatihan yang kategori utamanya kategori ini: kategori aktif berikutnya jadi utama.
+      await repairPrimaryCategories(tx, linked.map((training) => training.id));
+    }
     await tx.category.update({ where: { id }, data: { deletedAt: now, updatedById: userId } });
     const navItems = await removeCategoryNavItems(tx, category.slug, userId, now);
     await writeAudit(
@@ -517,9 +527,26 @@ export type PublicCategoryDetail = PublicCategory & {
   audienceSource: CategoryAudienceSource;
   // Galeri foto kategori (maks 4), media di Sampah dibuang. Kosong = section Galeri disembunyikan.
   images: PublicImage[];
-  // Semua pelatihan tayang di kategori ini, urut A-Z, tanpa paginasi.
+  // Halaman pertama pelatihan tayang (A-Z, CATEGORY_TRAININGS_PAGE_SIZE judul); total = trainingCount.
+  // Halaman berikutnya & cari judul: listPublicCategoryTrainings.
   trainings: PublicCategoryTraining[];
 };
+
+export type PublicCategoryTrainingList = {
+  items: PublicCategoryTraining[];
+  meta: ListMeta & { q: string | null };
+};
+
+const categoryTrainingSelect = { slug: true, title: true, types: true } satisfies Prisma.TrainingSelect;
+const categoryTrainingOrder = [{ title: "asc" }, { id: "asc" }] satisfies Prisma.TrainingOrderByWithRelationInput[];
+
+function categoryTrainingWhere(categoryId: string, now: Date, q?: string): Prisma.TrainingWhereInput {
+  return {
+    ...publicTrainingWhere(now),
+    categories: { some: { categoryId } },
+    ...(q ? { title: { contains: q, mode: "insensitive" } } : {}),
+  };
+}
 
 export function publicCountInclude(now: Date) {
   return {
@@ -540,6 +567,36 @@ export function toPublicCategory(category: PublicCountRow): PublicCategory {
     featured: category.featured,
     image: toPublicImage(activeMediaDto(category.image)),
     trainingCount: category._count.trainings,
+  };
+}
+
+// Daftar judul pelatihan tayang di landing kategori, per halaman + cari judul (tanpa membedakan huruf
+// besar/kecil). null kalau kategori tidak ada / tanpa pelatihan tayang (sama dengan getPublicCategory).
+export async function listPublicCategoryTrainings(
+  slug: string,
+  query: PublicCategoryTrainingsQuery,
+  now = new Date(),
+): Promise<PublicCategoryTrainingList | null> {
+  const category = await getDb().category.findFirst({
+    where: { slug, ...nonEmptyPublicCategoryWhere(now) },
+    select: { id: true },
+  });
+  if (!category) return null;
+  const where = categoryTrainingWhere(category.id, now, query.q);
+  const take = CATEGORY_TRAININGS_PAGE_SIZE;
+  const [total, rows] = await Promise.all([
+    getDb().training.count({ where }),
+    getDb().training.findMany({
+      where,
+      select: categoryTrainingSelect,
+      orderBy: categoryTrainingOrder,
+      skip: (query.hal - 1) * take,
+      take,
+    }),
+  ]);
+  return {
+    items: rows.map((row) => ({ slug: row.slug, title: row.title, types: row.types })),
+    meta: { ...listMeta(query.hal, take, total), q: query.q ?? null },
   };
 }
 
@@ -656,11 +713,12 @@ export async function getPublicCategory(slug: string, now = new Date()): Promise
     return image ? [image] : [];
   });
 
-  // Pelatihan tayang di kategori ini, urut A-Z, tanpa paginasi.
+  // Halaman pertama saja: kategori besar (ribuan judul) tidak dikirim utuh ke halaman.
   const trainingRows = await getDb().training.findMany({
-    where: { ...publicTrainingWhere(now), categories: { some: { categoryId: category.id } } },
-    select: { slug: true, title: true, types: true },
-    orderBy: [{ title: "asc" }, { id: "asc" }],
+    where: categoryTrainingWhere(category.id, now),
+    select: categoryTrainingSelect,
+    orderBy: categoryTrainingOrder,
+    take: CATEGORY_TRAININGS_PAGE_SIZE,
   });
 
   return {
