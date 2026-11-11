@@ -417,6 +417,9 @@ export type PublicCategoryGridItem = {
 // Pelatihan ringkas untuk daftar judul di landing kategori (tanpa kartu bergambar).
 export type PublicCategoryTraining = { slug: string; title: string; types: TrainingType[] };
 
+// GET /api/public/categories/:slug/trainings?hal=&q= (daftar judul landing kategori, 20 per halaman).
+export type PublicCategoryTrainingsMeta = PaginationMeta & { q: string | null };
+
 // GET /api/public/categories/:slug (landing kategori v2).
 export type PublicCategoryDetail = PublicCategory & {
   // summary, atau 160 karakter pertama description; "" kalau keduanya kosong.
@@ -430,6 +433,7 @@ export type PublicCategoryDetail = PublicCategory & {
   // Galeri foto kategori (maks 4). Kosong = section Galeri disembunyikan.
   images: PublicImage[];
   // Semua pelatihan tayang di kategori ini, urut A-Z, tanpa paginasi.
+  // Halaman pertama saja (20 judul A-Z); total = trainingCount. Halaman lain lewat endpoint .../trainings.
   trainings: PublicCategoryTraining[];
 };
 

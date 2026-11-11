@@ -57,16 +57,16 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
   const hasAudience = category.audience.length > 0;
   const tabs = [
     hasAbout ? { id: "tentang", label: "Tentang" } : null,
-    { id: "daftar", label: `Daftar pelatihan (${category.trainings.length})` },
+    { id: "daftar", label: `Daftar pelatihan (${category.trainingCount})` },
     hasAudience ? { id: "peserta", label: "Target peserta" } : null,
   ].filter((tab): tab is { id: string; label: string } => tab !== null);
 
-  // JSON-LD ItemList berisi Course untuk tiap pelatihan.
+  // JSON-LD ItemList: jumlah total + Course untuk halaman pertama daftar (yang ada di HTML).
   const itemList = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: `Pelatihan ${category.name}`,
-    numberOfItems: category.trainings.length,
+    numberOfItems: category.trainingCount,
     itemListElement: category.trainings.map((training, index) => ({
       "@type": "ListItem",
       position: index + 1,
@@ -158,7 +158,7 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
             Daftar pelatihan {category.name}
           </span>
           {category.trainings.length > 0 ? (
-            <CategoryTrainingList trainings={category.trainings} />
+            <CategoryTrainingList slug={category.slug} initial={category.trainings} total={category.trainingCount} />
           ) : (
             <p className="text-body text-fg-muted">Belum ada pelatihan di kategori ini.</p>
           )}
