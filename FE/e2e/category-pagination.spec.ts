@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { createTraining, deleteTraining, loginViaApi, ORIGIN, runId, type CreatedTraining } from "./helpers";
 
-// Paginasi daftar pelatihan di landing kategori (pemilik, 11 Nov 2026): 20 judul per halaman di klien,
-// hanya di section "Daftar pelatihan"; cari judul mencari di semua judul dan kembali ke halaman 1.
+// Paginasi daftar pelatihan di landing kategori (pemilik, 11 Nov 2026): 20 judul per halaman, hanya di
+// section "Daftar pelatihan". HTML halaman hanya memuat halaman pertama; halaman lain dan cari judul
+// diambil dari BE (cari di semua judul, tanpa beda huruf besar/kecil, kembali ke halaman 1).
 // Data uji hanya di training_e2e: kategori + 23 pelatihan dibuat per run lalu dihapus di akhir.
 
 const HEADERS = { Origin: ORIGIN };
@@ -59,6 +60,11 @@ test.describe("paginasi daftar pelatihan kategori", () => {
       })
       .toBe(true);
 
+    // HTML (termasuk payload RSC) hanya berisi 20 judul pertama, bukan seluruh daftar.
+    const html = await (await page.request.get(url)).text();
+    expect(html).toContain(`judul 20`);
+    expect(html).not.toContain(`judul 21`);
+
     const pager = page.locator("#daftar").getByRole("navigation", { name: "Halaman" });
     await expect(list.getByRole("link")).toHaveCount(20);
     await expect(list.getByRole("link").first()).toContainText(`judul 01`);
@@ -84,6 +90,13 @@ test.describe("paginasi daftar pelatihan kategori", () => {
     await expect(list.getByRole("link")).toHaveCount(9);
     await expect(list.getByRole("link").first()).toContainText(`judul 01`);
     await expect(page.locator("#daftar").getByRole("navigation", { name: "Halaman" })).toHaveCount(0);
+
+    await page.getByLabel("Cari judul pelatihan").fill(`JUDUL 2`);
+    await expect(list.getByRole("link")).toHaveCount(TOTAL - 19);
+    await expect(list.getByRole("link").first()).toContainText(`judul 20`);
+
+    await page.getByLabel("Cari judul pelatihan").fill("tidak-ada-judul-seperti-ini");
+    await expect(page.locator("#daftar")).toContainText("Tidak ada judul yang cocok.");
 
     await page.getByLabel("Cari judul pelatihan").fill("");
     await expect(list.getByRole("link")).toHaveCount(20);
