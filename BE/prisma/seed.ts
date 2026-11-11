@@ -14,6 +14,7 @@ import { REFERENCE_SEED_KEY, REFERENCE_SEED_VERSION, seedReferenceCatalog } from
 import { seedBulk } from "./seed-bulk";
 import { seedCategoryCleanup } from "./seed-category-cleanup";
 import { seedCategoryFill } from "./seed-category-fill";
+import { describeCatalogRest, seedCatalogRest } from "./seed-catalog-rest";
 import { seedCategorySchedules } from "./seed-category-schedules";
 import { seedScheduleLocations } from "./seed-schedule-locations";
 import { seedHomeCopy } from "./seed-home-copy";
@@ -156,6 +157,8 @@ async function main() {
   const single = USE_REFERENCE ? await seedSingleCategory() : null;
   // Isi kategori sampai 10 dari judul referensi: dipulihkan dari Sampah atau dibuat baru (sekali per versi).
   const fill = USE_REFERENCE ? await seedCategoryFill() : null;
+  // Sisa judul referensi (pemilik, 11 Nov 2026), setelah isi kategori: pelatihan aktif tidak disentuh.
+  const rest = USE_REFERENCE ? await seedCatalogRest() : null;
   // 5 jadwal per kategori A-B untuk pelatihan berbeda (sekali per versi), setelah kategori terisi.
   const schedules = USE_REFERENCE && !MINIMAL ? await seedCategorySchedules() : null;
   // Lokasi jadwal offline/hybrid dipindah ke area Jogja (sekali per versi), setelah jadwal kategori dibuat.
@@ -227,6 +230,7 @@ async function main() {
       : `Isi kategori: ${fill.restored} pelatihan dipulihkan dari Sampah, ${fill.created} dibuat dari judul referensi (` +
           fill.summary.map((item) => `${item.slug} ${item.before}->${item.after}`).join(", ") + ")" +
           (fill.failed.length > 0 ? `; gagal: ${fill.failed.join("; ")}.` : "."));
+    console.info(describeCatalogRest(rest));
     if (schedules !== null) {
       console.info(schedules === "dilewati"
         ? "Jadwal kategori A-B: dilewati (versi ini sudah dijalankan)."

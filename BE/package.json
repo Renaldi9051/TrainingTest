@@ -20,6 +20,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:seed:reference": "dotenv -e ../.env -- tsx scripts/import-reference-catalog.ts",
+    "db:seed:catalog-rest": "dotenv -e ../.env -- tsx scripts/catalog-rest.ts",
     "db:reference:fetch": "node scripts/fetch-reference-catalog.mjs",
     "db:remove:evaluation": "dotenv -e ../.env -- tsx scripts/remove-evaluation.ts",
     "db:reset-admin-password": "dotenv -e ../.env -- tsx scripts/reset-admin-password.ts",
