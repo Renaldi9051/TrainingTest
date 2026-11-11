@@ -61,7 +61,7 @@ export async function SiteFooter() {
       <Container className="grid gap-12 pt-20 pb-14 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
         <div className="space-y-4 lg:col-span-4">
           <p className="flex items-center gap-2.5 text-[18px] font-semibold tracking-[-0.02em]">
-            <SiteLogo logo={identity.logoDark} name={identity.name} />
+            <SiteLogo logo={identity.logoDark ?? identity.logoLight} name={identity.name} />
           </p>
           {footer.description ? (
             <p className="max-w-[40ch] text-small text-inverse-muted">{footer.description}</p>

@@ -39,7 +39,8 @@ export async function SiteHeader() {
           title={identity.name}
         >
           <HeaderBrand logo={identity.logoLight} name={identity.name} className="site-brand-light flex" />
-          <HeaderBrand logo={identity.logoDark} name={identity.name} className="site-brand-dark hidden" />
+          {/* Logo gelap kosong: pakai logo terang (admin cukup mengisi satu logo). */}
+          <HeaderBrand logo={identity.logoDark ?? identity.logoLight} name={identity.name} className="site-brand-dark hidden" />
         </Link>
         <HeaderNav items={nav.header} cta={cta} />
         <div className="ml-auto hidden shrink-0 items-center gap-3 xl:flex">

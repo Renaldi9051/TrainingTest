@@ -307,7 +307,7 @@ function IdentitySection({ value, media, onDirtyChange }: SectionProps<"site.ide
       </FormField>
       <div className="grid gap-6 sm:grid-cols-2">
         {picker("logoLightId", "Logo terang", "3/1", "Tampil di samping nama situs di latar terang (header). Disarankan ikon/logo tanpa tulisan nama.")}
-        {picker("logoDarkId", "Logo gelap", "3/1", "Tampil di samping nama situs di latar gelap (footer, header di atas foto hero).")}
+        {picker("logoDarkId", "Logo gelap", "3/1", "Tampil di latar gelap (footer, header di atas foto hero). Kosong = memakai logo terang.")}
       </div>
       <div className="max-w-48">{picker("faviconId", "Favicon", "1/1", "Persegi, minimal 64 px. PNG atau SVG.")}</div>
     </SectionForm>
