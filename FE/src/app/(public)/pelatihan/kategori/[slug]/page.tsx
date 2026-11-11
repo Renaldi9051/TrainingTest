@@ -209,17 +209,12 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
       {hasGallery ? (
         <section id="galeri" aria-labelledby="galeri-title" className="scroll-mt-32 border-b border-border py-16 md:py-20">
           <Container>
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <Eyebrow>04 / Galeri</Eyebrow>
-                <h2 id="galeri-title" className="mt-3 text-h2 text-fg-strong">
-                  Dokumentasi kegiatan
-                </h2>
-              </div>
-              <p className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
-                {category.images.length} foto / Kategori {category.name}
-              </p>
-            </div>
+            <h2 id="galeri-title" className="sr-only">
+              Galeri {category.name}
+            </h2>
+            <p className="mb-8 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
+              {category.images.length} foto / Kategori {category.name}
+            </p>
             <CategoryGallery images={category.images as PublicImageData[]} categoryName={category.name} />
           </Container>
         </section>

@@ -227,7 +227,9 @@ test.describe("halaman kategori v2", () => {
   test("galeri: mozaik 4 foto, lightbox keyboard (buka, panah, Esc, fokus kembali)", async ({ page }) => {
     await page.goto(landing());
     const gallery = page.locator("#galeri");
-    await expect(gallery.getByRole("heading", { level: 2, name: "Dokumentasi kegiatan" })).toBeVisible();
+    // Judul section hanya untuk pembaca layar (eyebrow & judul visual dihapus, permintaan pemilik 11 Nov 2026).
+    await expect(gallery.getByRole("heading", { level: 2, name: `Galeri ${CATEGORY_NAME}` })).toBeAttached();
+    await expect(gallery.getByText("Dokumentasi kegiatan")).toHaveCount(0);
     const openers = gallery.getByRole("button", { name: /^Buka foto \d+ dari 4$/ });
     await expect(openers).toHaveCount(4);
 
