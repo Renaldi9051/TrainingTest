@@ -408,6 +408,9 @@ model TrainingCategory {
   training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
   categoryId String   @db.Uuid
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  // Kategori utama: label kartu, sampul cadangan, breadcrumb. Satu per pelatihan (dijaga service);
+  // pelatihan juga tampil di kategori lain yang tertaut (seperti situs referensi).
+  isPrimary  Boolean  @default(false)
 
   @@id([trainingId, categoryId])
   @@index([categoryId])
