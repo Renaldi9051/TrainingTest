@@ -108,7 +108,7 @@ describe("linkKeywordMatches", () => {
     expect(keywordLinkSchema.parse({ trainingIds: [T1] })).toEqual({ trainingIds: [T1] });
   });
 
-  it("memindah pelatihan ke kategori ini (kategori lama dilepas), menandai diubah admin, audit + revalidate", async () => {
+  it("memindah pelatihan ke kategori ini (jadi kategori utama, utama lama dilepas), menandai diubah admin, audit + revalidate", async () => {
     mock.category.findFirst.mockResolvedValue(category());
     mock.training.findMany.mockResolvedValue([
       { id: T1, slug: "a", categories: [{ category: { id: "c-geo", slug: "geology" } }] },
@@ -116,13 +116,18 @@ describe("linkKeywordMatches", () => {
     ]);
     await expect(linkKeywordMatches(ID, { trainingIds: [T1, T2] }, "u1")).resolves.toEqual({ linked: 2 });
     expect(mock.training.findMany.mock.calls[0][0].where).toEqual({ id: { in: [T1, T2] }, deletedAt: null });
+    expect(mock.training.findMany.mock.calls[0][0].select.categories.where).toEqual({ isPrimary: true });
     expect(mock.trainingCategory.deleteMany).toHaveBeenCalledWith({
-      where: { trainingId: { in: [T1, T2] }, categoryId: { not: ID } },
+      where: { trainingId: { in: [T1, T2] }, isPrimary: true, categoryId: { not: ID } },
+    });
+    expect(mock.trainingCategory.updateMany).toHaveBeenCalledWith({
+      where: { trainingId: { in: [T1, T2] }, categoryId: ID },
+      data: { isPrimary: true },
     });
     expect(mock.trainingCategory.createMany).toHaveBeenCalledWith({
       data: [
-        { trainingId: T1, categoryId: ID },
-        { trainingId: T2, categoryId: ID },
+        { trainingId: T1, categoryId: ID, isPrimary: true },
+        { trainingId: T2, categoryId: ID, isPrimary: true },
       ],
       skipDuplicates: true,
     });

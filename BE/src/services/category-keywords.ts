@@ -7,6 +7,7 @@ import type { KeywordLinkInput } from "@/lib/validators/category";
 import { AuditAction, writeAudit } from "@/services/audit";
 import { findActiveCategory } from "@/services/category";
 import { publicState, type TrainingPublicState } from "@/services/training";
+import { setPrimaryCategory } from "@/services/training-categories";
 
 // "Pelatihan yang cocok": pelatihan (belum dihapus, draft maupun tayang) yang judulnya memuat salah
 // satu kata kunci kategori sebagai kata/frasa utuh tapi belum ada di kategori itu. Admin memilih
@@ -92,8 +93,8 @@ export async function listKeywordMatches(categoryId: string, now = new Date()): 
   return { keywords: category.keywords, items, total: unlinked.length, linkedCount: rows.length - unlinked.length };
 }
 
-// Pindahkan pelatihan terpilih ke kategori ini. Satu pelatihan satu kategori, jadi kategori lamanya
-// dilepas. Pelatihan ditandai diubah admin (updatedById), sama seperti aksi massal pelatihan, supaya
+// Pindahkan pelatihan terpilih ke kategori ini: kategori ini jadi kategori utamanya dan kategori utama
+// lama dilepas; kategori tambahan tetap. Pelatihan ditandai diubah admin (updatedById), sama seperti aksi massal pelatihan, supaya
 // seed katalog referensi berikutnya tidak mengembalikan kategorinya ke data sumber.
 export async function linkKeywordMatches(
   categoryId: string,
@@ -104,7 +105,11 @@ export async function linkKeywordMatches(
   const db = getDb();
   const trainings = await db.training.findMany({
     where: { id: { in: input.trainingIds }, deletedAt: null },
-    select: { id: true, slug: true, categories: { select: { category: { select: { id: true, slug: true } } } } },
+    select: {
+      id: true,
+      slug: true,
+      categories: { where: { isPrimary: true }, select: { category: { select: { id: true, slug: true } } } },
+    },
   });
   if (trainings.length !== input.trainingIds.length) {
     throw new HttpError(422, "VALIDATION_ERROR", "Sebagian pelatihan tidak ditemukan atau sudah dihapus.", {
@@ -112,15 +117,12 @@ export async function linkKeywordMatches(
     });
   }
   const ids = trainings.map((training) => training.id);
+  // Kategori utama lama yang dilepas.
   const previous = trainings.flatMap((training) =>
     training.categories.map((link) => link.category).filter((item) => item.id !== categoryId),
   );
   await db.$transaction(async (tx) => {
-    await tx.trainingCategory.deleteMany({ where: { trainingId: { in: ids }, categoryId: { not: categoryId } } });
-    await tx.trainingCategory.createMany({
-      data: ids.map((trainingId) => ({ trainingId, categoryId })),
-      skipDuplicates: true,
-    });
+    await setPrimaryCategory(tx, ids, categoryId);
     await tx.training.updateMany({ where: { id: { in: ids } }, data: { updatedById: userId } });
     await writeAudit(
       {

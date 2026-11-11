@@ -33,6 +33,7 @@ import {
 import { publicPath, recordSlugRedirect, releaseRedirectPath } from "@/services/redirect";
 import { reorderResource } from "@/services/reorder";
 import { publicTrainingWhere } from "@/services/training-visibility";
+import { repairPrimaryCategories } from "@/services/training-categories";
 
 const ENTITY = "Category";
 const FIELDS = [
@@ -378,7 +379,11 @@ export async function deleteCategory(id: string, userId: string, { detach = fals
   }
   const now = new Date();
   const navChanged = await getDb().$transaction(async (tx) => {
-    if (linked.length > 0) await tx.trainingCategory.deleteMany({ where: { categoryId: id } });
+    if (linked.length > 0) {
+      await tx.trainingCategory.deleteMany({ where: { categoryId: id } });
+      // Pelatihan yang kategori utamanya kategori ini: kategori aktif berikutnya jadi utama.
+      await repairPrimaryCategories(tx, linked.map((training) => training.id));
+    }
     await tx.category.update({ where: { id }, data: { deletedAt: now, updatedById: userId } });
     const navItems = await removeCategoryNavItems(tx, category.slug, userId, now);
     await writeAudit(

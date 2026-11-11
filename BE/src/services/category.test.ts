@@ -262,7 +262,17 @@ describe("deleteCategory", () => {
       { id: "t1", slug: "a", title: "A", categories: [{ categoryId: "lain" }] },
       { id: "t2", slug: "b", title: "B", categories: [{ categoryId: "lain" }, { categoryId: "lain-2" }] },
     ]);
+    // Sisa tautan sesudah dilepas: t1 kehilangan kategori utama, t2 masih punya.
+    mock.trainingCategory.findMany.mockResolvedValue([
+      { trainingId: "t1", categoryId: "lain", isPrimary: false, category: { order: 3, slug: "lain", deletedAt: null } },
+      { trainingId: "t2", categoryId: "lain", isPrimary: true, category: { order: 3, slug: "lain", deletedAt: null } },
+    ]);
     await deleteCategory(ID, "u1", { detach: true });
+    expect(mock.trainingCategory.update).toHaveBeenCalledTimes(1);
+    expect(mock.trainingCategory.update).toHaveBeenCalledWith({
+      where: { trainingId_categoryId: { trainingId: "t1", categoryId: "lain" } },
+      data: { isPrimary: true },
+    });
     expect(mock.training.findMany.mock.calls[0][0].select.categories.where).toMatchObject({
       categoryId: { not: ID },
       category: { deletedAt: null },
