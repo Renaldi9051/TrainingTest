@@ -6,8 +6,8 @@
 //   uraian memakai naskah seed sendiri (referenceTraining), isi artikel situs lain tidak disalin.
 // - Baris di Sampah yang belum pernah diubah admin dipulihkan; judul yang belum ada dibuat baru. Baris
 //   yang dihapus/diubah admin dibiarkan.
-// - Judul kembar (sama setelah awalan Training/Pelatihan dan tanda baca diabaikan, lihat normalizeTitle)
-//   dengan pelatihan aktif atau judul lain di daftar ini dilewati.
+// - Judul kembar (lihat titleKey: tanda baca, "&"/"and"/"dan", kata sambung, kata Training/Pelatihan, dan
+//   urutan kata diabaikan) dengan pelatihan aktif atau judul lain di daftar ini dilewati.
 // - SATU kategori per pelatihan (pickRestCategory: dari judul dulu), hanya kategori yang sudah tampil di publik
 //   (punya pelatihan aktif) dan tidak ada di CATEGORY_FILL_SKIP. Judul tanpa kategori yang cocok dilewati.
 // - Versi 2 ("judul"): pelatihan yang ditambahkan versi 1 (kategori dari tag sumber) dipindah ke kategori
@@ -53,6 +53,21 @@ export type RestPlan = {
 };
 
 const skipSlugs = new Set<string>(Object.values(CATEGORY_FILL_SKIP).flat());
+
+// Kata yang tidak membedakan judul: penghubung (situs referensi menulis "&", "AND", dan "DAN" untuk judul
+// yang sama), kata sambung pendek, dan kata Training/Pelatihan di posisi mana pun.
+const TITLE_KEY_IGNORED = new Set(["and", "dan", "the", "of", "for", "di", "in", "to", "a", "an", "training", "trainning", "pelatihan"]);
+
+// Kunci judul kembar: kata-kata judul (tanpa tanda baca dan kata di atas) diurutkan, jadi "Fire Prevention
+// & Protection System" = "FIRE PREVENTION AND PROTECTION SYSTEM" dan "Management Retail" = "Retail
+// Management". Angka tetap dihitung ("Supply Chain Management 4.0" berbeda). "" = judul kosong.
+export function titleKey(title: string): string {
+  return normalizeTitle(title)
+    .split(" ")
+    .filter((word) => word && !TITLE_KEY_IGNORED.has(word))
+    .sort()
+    .join(" ");
+}
 const mergedInto = new Map(CLEANUP_MERGES.map((merge) => [merge.from, merge.to]));
 
 // Slug aplikasi maks 120 karakter (sama seperti withUniqueSlugs di reference-training).
@@ -143,7 +158,7 @@ export function planCatalogRest(input: {
   const visible = visibleCategories(input.categories);
   const visibleBySlug = new Map(visible.map((category) => [category.slug, category]));
   const rowBySlug = new Map(input.dbRows.map((row) => [row.slug, row]));
-  const usedTitles = new Set(input.activeTitles.map(normalizeTitle));
+  const usedTitles = new Set(input.activeTitles.map(titleKey));
   const skipped = { duplicate: 0, noCategory: 0, protectedRows: 0, untitled: 0 };
 
   const candidates = input.sources.flatMap((source) => {
@@ -168,7 +183,7 @@ export function planCatalogRest(input: {
 
   const picks: RestPick[] = [];
   for (const candidate of candidates) {
-    const key = normalizeTitle(candidate.title);
+    const key = titleKey(candidate.title);
     if (!key || usedTitles.has(key)) {
       skipped.duplicate += 1;
       continue;

@@ -7,6 +7,7 @@ import {
   type RestCategory,
   type RestDbRow,
   type RestSource,
+  titleKey,
   untouchedSinceSeed,
 } from "./seed-catalog-rest";
 
@@ -109,6 +110,39 @@ describe("sisa katalog referensi", () => {
     expect(new Set(slugs).size).toBe(slugs.length);
     expect(slugs.every((slug) => slug.length > 0 && slug.length <= 120)).toBe(true);
     expect(sources.some((item) => item.categorySlugs.includes("teknik-elektrikal"))).toBe(false);
+  });
+});
+
+describe("kunci judul kembar", () => {
+  it("& / AND / DAN, kata sambung, Training/Pelatihan, dan urutan kata diabaikan", () => {
+    expect(titleKey("Training Fire Prevention & Protection System")).toBe(titleKey("TRAINING FIRE PREVENTION AND PROTECTION SYSTEM"));
+    expect(titleKey("TRAINING PURCHASING DAN MATERIAL REQUIREMENT PLANNING (MRP)")).toBe(
+      titleKey("TRAINING PURCHASING AND MATERIAL REQUIREMENT PLANNING (MRP)"),
+    );
+    expect(titleKey("TRAINING MANAGEMENT RETAIL")).toBe(titleKey("TRAINING RETAIL MANAGEMENT"));
+    expect(titleKey("AUDIT COMPUTER FORENSIC TRAINING")).toBe(titleKey("TRAINING AUDIT COMPUTER FORENSIC"));
+    expect(titleKey("Pelatihan Shipping Management di Indonesia")).toBe(titleKey("TRAINING SHIPPING MANAGEMENT INDONESIA"));
+  });
+
+  it("angka dan kata lain tetap membedakan", () => {
+    expect(titleKey("TRAINING SUPPLY CHAIN MANAGEMENT")).not.toBe(titleKey("TRAINING SUPPLY CHAIN MANAGEMENT 4.0"));
+    expect(titleKey("TRAINING MANAJEMEN RISIKO")).not.toBe(titleKey("TRAINING MANAJEMEN RISIKO PROYEK"));
+    expect(titleKey("<b> </b>")).toBe("");
+  });
+
+  it("rencana melewati judul yang hanya beda penulisan dengan pelatihan aktif atau sesama sumber", () => {
+    const plan = planCatalogRest({
+      sources: [
+        source("t-fire", "TRAINING FIRE PREVENTION & PROTECTION SYSTEM", ["audit"]),
+        source("t-retail-1", "TRAINING MANAGEMENT RETAIL", ["audit"], "2026-02-01T00:00:00"),
+        source("t-retail-2", "PELATIHAN RETAIL AND MANAGEMENT", ["audit"]),
+      ],
+      categories: [category("audit", 10)],
+      activeTitles: ["Pelatihan Fire Prevention and Protection System"],
+      dbRows: [],
+    });
+    expect(plan.picks.map((pick) => pick.slug)).toEqual(["t-retail-1"]);
+    expect(plan.skipped.duplicate).toBe(2);
   });
 });
 

@@ -9,8 +9,14 @@
 import { getDb } from "../src/lib/db";
 import { revalidateEntity, withRevalidateBatch } from "../src/lib/revalidate-map";
 import { AuditAction, writeAudit } from "../src/services/audit";
-import { loadRestCategories, loadRestSources, type RestCategory, type RestSource, visibleCategories } from "./seed-catalog-rest";
-import { normalizeTitle } from "./seed-category-fill";
+import {
+  loadRestCategories,
+  loadRestSources,
+  type RestCategory,
+  type RestSource,
+  titleKey,
+  visibleCategories,
+} from "./seed-catalog-rest";
 import { plainTitle } from "./seed-data/reference-training";
 
 export const CATALOG_TAGS_KEY = "seed.catalogTags.version";
@@ -26,7 +32,7 @@ export type TagPlan = {
   summary: { slug: string; before: number; after: number }[];
 };
 
-// Rencana murni (tanpa database). Sumber dicocokkan lewat slug, lalu judul yang dinormalkan.
+// Rencana murni (tanpa database). Sumber dicocokkan lewat slug, lalu kunci judul (titleKey).
 export function planCatalogTags(input: {
   sources: RestSource[];
   categories: RestCategory[];
@@ -37,7 +43,7 @@ export function planCatalogTags(input: {
   const bySlug = new Map(input.sources.map((source) => [source.slug, source]));
   const byTitle = new Map<string, Set<string>>();
   for (const source of input.sources) {
-    const key = normalizeTitle(plainTitle(source.post.title));
+    const key = titleKey(plainTitle(source.post.title));
     if (!key) continue;
     const set = byTitle.get(key) ?? new Set<string>();
     for (const slug of source.categorySlugs) set.add(slug);
@@ -48,7 +54,7 @@ export function planCatalogTags(input: {
   const skipped = { noSource: 0, adminChanged: 0 };
   const added = new Map<string, number>();
   for (const training of input.trainings) {
-    const sourceSlugs = bySlug.get(training.slug)?.categorySlugs ?? [...(byTitle.get(normalizeTitle(training.title)) ?? [])];
+    const sourceSlugs = bySlug.get(training.slug)?.categorySlugs ?? [...(byTitle.get(titleKey(training.title)) ?? [])];
     if (sourceSlugs.length === 0) {
       skipped.noSource += 1;
       continue;
