@@ -29,7 +29,9 @@ test.describe("katalog & detail pelatihan", () => {
     await page.getByRole("textbox", { name: "Judul", exact: true }).fill(title);
     await page.getByRole("textbox", { name: "Ringkasan", exact: true }).fill(`Ringkasan pelatihan uji ${id}.`);
     await page.getByPlaceholder("Cari kategori").fill(category.name);
-    await page.getByRole("radio", { name: category.name, exact: true }).click();
+    // Kategori pertama yang dicentang otomatis jadi kategori utama.
+    await page.getByRole("list", { name: "Pilih kategori" }).getByRole("checkbox", { name: category.name, exact: true }).check();
+    await expect(page.getByRole("radiogroup", { name: "Kategori utama" }).getByRole("radio", { name: category.name })).toBeChecked();
     // Status Tayang wajib 4 hasil belajar.
     for (let index = 1; index <= 4; index += 1) {
       await page.getByRole("button", { name: "Tambah hasil belajar" }).click();
@@ -232,7 +234,7 @@ test.describe("katalog & detail pelatihan", () => {
     const readMeta = async () =>
       ((await (await page.request.get("/api/public/categories?page=1")).json()) as { meta: { total: number; totalPages: number } }).meta;
     // Database e2e bisa < 25 kategori publik: tambah kategori uji sementara, masing-masing dengan satu
-    // pelatihan tayang (satu pelatihan hanya boleh satu kategori).
+    // pelatihan tayang.
     const extraCategoryIds: string[] = [];
     const extraTrainings: CreatedTraining[] = [];
     const initial = await readMeta();
