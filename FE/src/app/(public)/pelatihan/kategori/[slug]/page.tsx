@@ -212,9 +212,6 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
             <h2 id="galeri-title" className="sr-only">
               Galeri {category.name}
             </h2>
-            <p className="mb-8 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">
-              {category.images.length} foto / Kategori {category.name}
-            </p>
             <CategoryGallery images={category.images as PublicImageData[]} categoryName={category.name} />
           </Container>
         </section>
