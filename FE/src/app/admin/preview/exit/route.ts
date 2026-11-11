@@ -1,5 +1,6 @@
 import { draftMode } from "next/headers";
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
+import { localRedirect } from "@/lib/local-redirect";
 
 // Keluar dari mode pratinjau, kembali ke halaman yang sama (hanya path internal).
 export async function POST(request: NextRequest) {
@@ -7,5 +8,5 @@ export async function POST(request: NextRequest) {
   const form = await request.formData().catch(() => null);
   const back = form?.get("path");
   const path = typeof back === "string" && back.startsWith("/") && !back.startsWith("//") ? back : "/";
-  return NextResponse.redirect(new URL(path, request.url), 303);
+  return localRedirect(path, 303);
 }
