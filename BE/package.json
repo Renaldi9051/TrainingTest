@@ -22,6 +22,7 @@
     "db:seed:reference": "dotenv -e ../.env -- tsx scripts/import-reference-catalog.ts",
     "db:seed:catalog-rest": "dotenv -e ../.env -- tsx scripts/catalog-rest.ts",
     "db:seed:catalog-tags": "dotenv -e ../.env -- tsx scripts/catalog-tags.ts",
+    "db:catalog-dedupe": "dotenv -e ../.env -- tsx scripts/catalog-dedupe.ts",
     "db:reference:fetch": "node scripts/fetch-reference-catalog.mjs",
     "db:remove:evaluation": "dotenv -e ../.env -- tsx scripts/remove-evaluation.ts",
     "db:reset-admin-password": "dotenv -e ../.env -- tsx scripts/reset-admin-password.ts",
