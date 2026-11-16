@@ -6,7 +6,12 @@
    (main layout publik). Admin tidak pernah punya penanda itu, jadi tokennya tetap netral walau
    stylesheet ini masih termuat setelah navigasi klien publik -> admin. Token dideklarasikan di :root
    supaya portal, ::backdrop, dan popover publik ikut. Plain CSS (tanpa Tailwind): utilitas memakai
-   token ini lewat @theme di theme.css (dengan fallback ke token netral untuk admin). */
+   token ini lewat @theme di theme.css (dengan fallback ke token netral untuk admin).
+   Pemakaian ketujuh warna (pemilik: "usahakan pakai semua"):
+   #192A42 navy  latar halaman            #05B4D9 cyan   tombol utama, menu/tab aktif, label, fokus
+   #058DBD cyan  hover tombol & garis, dekor   #0A6A9D biru  pita CTA penutup
+   #EBA224 emas  CTA di foto & gelap, eyebrow footer   #552D11 cokelat  footer, simbol pita marquee
+   #120B06 hitam cokelat  teks di atas cyan & emas, garis footer, scrim foto hero */
 :root:has([data-site="public"]) {
   color-scheme: dark;
   /* Latar navy; section selang & kepala halaman lebih gelap, hover/skeleton/kartu tanpa sampul lebih terang. */
@@ -20,11 +25,11 @@
   --fg-muted: #a9b8c8;
   --fg: #e6edf4;
   --fg-strong: #f4efe6;
-  /* Footer hitam cokelat #120B06 (lebih gelap dari halaman), garis cokelat #552D11. */
-  --inverse-bg: #120b06;
+  /* Footer cokelat #552D11 dengan garis hitam cokelat #120B06; teks krem 10,4:1, sekunder 7,6:1, emas 5,5:1. */
+  --inverse-bg: #552d11;
   --inverse-fg: #f4efe6;
-  --inverse-muted: #bfb3a3;
-  --inverse-line: #3b200d;
+  --inverse-muted: #dccdb8;
+  --inverse-line: #120b06;
   /* Scrim hero fullbleed (DESIGN.md 8.1). --overlay-side: dari kiri di belakang blok teks (md+);
      --overlay-mobile: vertikal di layar < 768 px (teks selebar layar). Keduanya per slide dengan
      opacity --overlay-strength (overlayStrength slide, default 0,8). --overlay-head: atas, untuk header
@@ -37,15 +42,16 @@
   /* Cyan #05B4D9: tombol utama, chip/paginasi aktif, kotak tanggal (teks gelap di atasnya 7,4:1).
      Teks cyan kecil --primary-ink (5,7:1 di --bg-muted). */
   --primary: #05b4d9;
-  --primary-hover: #3cc3e2;
-  --on-primary: #0b1626;
+  /* Hover cyan lebih tua #058DBD (teks hitam cokelat 5,2:1). */
+  --primary-hover: #058dbd;
+  --on-primary: #120b06;
   --primary-ink: #3cc3e2;
   /* Emas #EBA224: CTA di hero & section gelap, kata berganti hero, dekor (6,7:1 di navy). */
   --accent: #eba224;
   --on-accent: #120b06;
   --accent-on-dark: #eba224;
-  /* Simbol ✦ di pita marquee (dekoratif). */
-  --accent-on-primary: var(--accent);
+  /* Simbol ✦ di pita marquee cyan: cokelat #552D11 (dekoratif, 4,8:1). */
+  --accent-on-primary: #552d11;
   /* Cyan: garis menu & tab aktif, label kategori kartu, ring fokus (latar CTA penutup biru #0A6A9D di
      [data-surface="secondary"]). Bentrok nama dengan token shadcn admin (--secondary = latar abu), jadi
      components/ui tidak boleh memakai utilitas secondary polos (palette-guard.test.ts). */
@@ -57,17 +63,18 @@
   --cta: var(--accent);
   --cta-hover: #f0b54a;
   --on-cta: var(--on-accent);
-  /* Hover tombol sekunder, chip, dan paginasi: garis --primary, teks --primary-ink. */
-  --line-hover: var(--primary);
+  /* Hover tombol sekunder, chip, kartu, dan paginasi: garis cyan tua #058DBD, teks --primary-ink. */
+  --line-hover: #058dbd;
   --ink-hover: var(--primary-ink);
   /* Link teks cyan. */
   --link: var(--primary-ink);
-  /* Ring fokus cyan di halaman, footer, dan foto (7,9:1 di footer). */
+  /* Ring fokus cyan di halaman, footer (4,8:1 di cokelat), dan foto. */
   --focus: var(--secondary);
   --focus-dark: #05b4d9;
 
-  /* Elemen dekoratif (DESIGN.md 6). --decor-mark: sudut Viewfinder & PlusMarker cyan. */
-  --decor-mark: #05b4d9;
+  /* Elemen dekoratif (DESIGN.md 6). --decor-mark: sudut Viewfinder & PlusMarker cyan tua #058DBD di
+     halaman, cyan terang #05B4D9 di atas foto/latar gelap ([data-surface="dark"] di bawah). */
+  --decor-mark: #058dbd;
   /* Kotak latar logo klien: banyak logo instansi bertulisan gelap, tidak terbaca langsung di navy. */
   --logo-tile: #f4efe6;
   --outline-stroke: #24395a;
