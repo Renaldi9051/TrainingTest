@@ -1,24 +1,26 @@
-/* Palet E "Biru Kota & Emas" (revisi pemilik, 16 Nov 2026; menggantikan palet D), hanya untuk halaman
-   publik. Tujuh warna acuan: #05B4D9 #058DBD (cyan), #0A6A9D (biru), #192A42 (navy), #120B06 (hitam
-   cokelat), #552D11 (cokelat), #EBA224 (emas); latar terang & teks adalah turunan navy supaya kontras
-   tetap AA. Di-import oleh (public)/layout.tsx, dan setiap aturan di-scope ke halaman yang punya penanda
-   [data-site="public"] (main layout publik). Admin tidak pernah punya penanda itu, jadi tokennya tetap
-   netral walau stylesheet ini masih termuat setelah navigasi klien publik -> admin. Token dideklarasikan
-   di :root supaya portal, ::backdrop, dan popover publik ikut. Plain CSS (tanpa Tailwind): utilitas
-   memakai token ini lewat @theme di theme.css (dengan fallback ke token netral untuk admin). */
+/* Palet E "Biru Kota & Emas", tema gelap (revisi pemilik, 16 Nov 2026; menggantikan palet D), hanya
+   untuk halaman publik. Tujuh warna acuan: #05B4D9 #058DBD (cyan), #0A6A9D (biru), #192A42 (navy),
+   #120B06 (hitam cokelat), #552D11 (cokelat), #EBA224 (emas). Latar halaman navy #192A42 dengan teks
+   terang (pemilik: "latarnya jangan putih"); semua pasangan teks AA. Di-import oleh
+   (public)/layout.tsx, dan setiap aturan di-scope ke halaman yang punya penanda [data-site="public"]
+   (main layout publik). Admin tidak pernah punya penanda itu, jadi tokennya tetap netral walau
+   stylesheet ini masih termuat setelah navigasi klien publik -> admin. Token dideklarasikan di :root
+   supaya portal, ::backdrop, dan popover publik ikut. Plain CSS (tanpa Tailwind): utilitas memakai
+   token ini lewat @theme di theme.css (dengan fallback ke token netral untuk admin). */
 :root:has([data-site="public"]) {
-  /* Latar terang kebiruan (turunan navy), bukan putih murni. */
-  --bg: #f6f9fb;
-  --bg-subtle: #e9f1f6;
-  --bg-muted: #dae6ee;
-  --border: #d2dfe8;
-  --border-strong: #afc3d1;
-  --fg-subtle: #8796a6;
-  /* Teks sekunder 6,3:1 di --bg, 5,2:1 di --bg-muted. */
-  --fg-muted: #4f5e6f;
-  --fg: #22303f;
-  --fg-strong: #192a42;
-  /* Footer hitam cokelat #120B06, garis cokelat #552D11. */
+  color-scheme: dark;
+  /* Latar navy; section selang & kepala halaman lebih gelap, hover/skeleton/kartu tanpa sampul lebih terang. */
+  --bg: #192a42;
+  --bg-subtle: #132136;
+  --bg-muted: #22385a;
+  --border: #2a4163;
+  --border-strong: #3e5a80;
+  --fg-subtle: #7c8da2;
+  /* Teks sekunder 7,2:1 di --bg, 5,8:1 di --bg-muted. */
+  --fg-muted: #a9b8c8;
+  --fg: #e6edf4;
+  --fg-strong: #f4efe6;
+  /* Footer hitam cokelat #120B06 (lebih gelap dari halaman), garis cokelat #552D11. */
   --inverse-bg: #120b06;
   --inverse-fg: #f4efe6;
   --inverse-muted: #bfb3a3;
@@ -32,23 +34,24 @@
   --overlay-head: linear-gradient(180deg, rgb(18 11 6 / 0.45) 0%, transparent 18%);
   --overlay-bottom: rgb(18 11 6 / 0.62);
 
-  /* Biru #0A6A9D: aksi di latar terang (putih di atasnya 5,9:1). Teks biru kecil --primary-ink. */
-  --primary: #0a6a9d;
-  --primary-hover: #085680;
-  --on-primary: #ffffff;
-  --primary-ink: #0a6a9d;
-  /* Emas #EBA224: CTA di hero & section gelap, dekor. Bukan warna teks di latar terang. */
+  /* Cyan #05B4D9: tombol utama, chip/paginasi aktif, kotak tanggal (teks gelap di atasnya 7,4:1).
+     Teks cyan kecil --primary-ink (5,7:1 di --bg-muted). */
+  --primary: #05b4d9;
+  --primary-hover: #3cc3e2;
+  --on-primary: #0b1626;
+  --primary-ink: #3cc3e2;
+  /* Emas #EBA224: CTA di hero & section gelap, kata berganti hero, dekor (6,7:1 di navy). */
   --accent: #eba224;
   --on-accent: #120b06;
   --accent-on-dark: #eba224;
   /* Simbol ✦ di pita marquee (dekoratif). */
   --accent-on-primary: var(--accent);
-  /* Navy #192A42: menu & tab aktif, label kategori kartu, ring fokus, latar CTA penutup. Bentrok nama
-     dengan token shadcn admin (--secondary = latar abu), jadi components/ui tidak boleh memakai
-     utilitas secondary polos (palette-guard.test.ts). */
-  --secondary: #192a42;
+  /* Cyan: garis menu & tab aktif, label kategori kartu, ring fokus (latar CTA penutup biru #0A6A9D di
+     [data-surface="secondary"]). Bentrok nama dengan token shadcn admin (--secondary = latar abu), jadi
+     components/ui tidak boleh memakai utilitas secondary polos (palette-guard.test.ts). */
+  --secondary: #05b4d9;
   --on-secondary: #ffffff;
-  --ok: #2f7d4f;
+  --ok: #4cc07a;
 
   /* Tombol CTA di hero & section gelap: emas dengan teks gelap (9:1). */
   --cta: var(--accent);
@@ -57,18 +60,19 @@
   /* Hover tombol sekunder, chip, dan paginasi: garis --primary, teks --primary-ink. */
   --line-hover: var(--primary);
   --ink-hover: var(--primary-ink);
-  /* Link teks: biru (teks badan sudah navy, link navy tidak menonjol). */
+  /* Link teks cyan. */
   --link: var(--primary-ink);
-  /* Ring fokus: navy di latar terang, cyan #05B4D9 di latar gelap/foto (7,9:1 di footer). */
+  /* Ring fokus cyan di halaman, footer, dan foto (7,9:1 di footer). */
   --focus: var(--secondary);
   --focus-dark: #05b4d9;
 
-  /* Elemen dekoratif (DESIGN.md 6). --decor-mark: sudut Viewfinder & PlusMarker; cyan #058DBD di
-     latar terang, cyan terang #05B4D9 di atas foto/latar gelap ([data-surface] di bawah). */
-  --decor-mark: #058dbd;
-  --outline-stroke: #d6e3ec;
-  --outline-stroke-dark: #2c3e58;
-  --dot: #c9d9e5;
+  /* Elemen dekoratif (DESIGN.md 6). --decor-mark: sudut Viewfinder & PlusMarker cyan. */
+  --decor-mark: #05b4d9;
+  /* Kotak latar logo klien: banyak logo instansi bertulisan gelap, tidak terbaca langsung di navy. */
+  --logo-tile: #f4efe6;
+  --outline-stroke: #24395a;
+  --outline-stroke-dark: #2c4466;
+  --dot: #2c4466;
 
   /* Grading foto publik (PublicImage film): bersih, sedikit lebih kontras; lapisan biru tipis di hero. */
   --photo-filter: saturate(1.04) contrast(1.05);
@@ -86,15 +90,19 @@
   --decor-mark: #05b4d9;
 }
 
-/* Permukaan navy (CTA penutup beranda & layanan): komponen tetap memakai kelas section terbalik
-   (bg-inverse-bg, text-inverse-*, ring-focus-dark, ring-offset-inverse-bg), tokennya dipetakan ulang di
-   sini. Emas di atas navy 6,7:1 dan cyan 5,9:1, jadi eyebrow tetap emas dan ring fokus cyan; teks
-   sekunder putih. */
+/* Permukaan biru (CTA penutup beranda & layanan): pita biru #0A6A9D supaya menonjol dari halaman navy.
+   Komponen tetap memakai kelas section terbalik (bg-inverse-bg, text-inverse-*, ring-focus-dark,
+   ring-offset-inverse-bg), tokennya dipetakan ulang di sini. Teks putih 5,9:1; emas & cyan di atas biru
+   kurang dari 4,5:1, jadi eyebrow, cincin badge, dan ring fokus putih; emas hanya latar tombol CTA. */
 :root:has([data-site="public"]) [data-surface="secondary"] {
-  --inverse-bg: var(--secondary);
+  --inverse-bg: #0a6a9d;
+  --inverse-fg: #ffffff;
   --inverse-muted: var(--on-secondary);
-  --inverse-line: #2c3e58;
-  --decor-mark: #05b4d9;
+  --inverse-line: #2f86b5;
+  --accent-on-dark: var(--on-secondary);
+  --focus-dark: var(--on-secondary);
+  --decor-mark: var(--accent);
+  --outline-stroke-dark: #2f86b5;
 }
 
 /* Header publik: hover tombol Cari bergaris --primary; di atas foto hero garis terang lebih tegas. */
@@ -105,7 +113,7 @@
   --header-line-hover: color-mix(in srgb, var(--inverse-fg) 70%, transparent);
   --decor-mark: #05b4d9;
 }
-/* Garis menu aktif di atas foto hero: navy tidak terbaca di foto gelap, pakai emas. */
+/* Garis menu aktif di atas foto hero: emas (cyan di halaman biasa). */
 :root:has([data-site="public"]):has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header [data-active-indicator="line"] {
   background: var(--accent-on-dark);
 }
