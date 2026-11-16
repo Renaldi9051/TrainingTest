@@ -220,7 +220,7 @@ export default async function ServicePage({ params }: PageProps<"/layanan/[slug]
         </section>
       ) : null}
 
-      {/* CTA penutup: permukaan biru (palet D, data-surface="secondary" di palette-d.css). */}
+      {/* CTA penutup: permukaan biru (navy, data-surface="secondary" di palette-e.css). */}
       <section aria-labelledby="layanan-cta" data-surface="secondary" className="relative overflow-hidden bg-inverse-bg py-24 text-inverse-fg md:py-32">
         <GrainOverlay tone="inverse" />
         <Container className="relative">

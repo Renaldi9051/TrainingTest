@@ -97,7 +97,7 @@
   --color-transparent: transparent;
   --color-current: currentColor;
 
-  /* Palet D (v0.4): nilainya hanya dideklarasikan di (public)/palette-d.css (scope halaman publik).
+  /* Palet publik (E, 16 Nov 2026): nilainya hanya dideklarasikan di (public)/palette-e.css (scope halaman publik).
      Fallback = token netral lama, jadi komponen bersama (components/ui) yang juga dirender di admin
      menghasilkan nilai yang sama persis dengan sebelumnya. Utilitas --accent dan --secondary polos
      bentrok dengan token shadcn admin (latar hover / latar abu), jadi bg/text/border-accent dan

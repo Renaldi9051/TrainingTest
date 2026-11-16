@@ -82,8 +82,8 @@ export function useActiveIndicator(
   }, [containerRef]);
 }
 
-// Palet D: pill (chip/filter aktif) --primary, garis (menu, tab, urutan) --secondary (biru tua; di header
-// di atas foto hero mustard, palette-d.css).
+// Palet publik: pill (chip/filter aktif) --primary, garis (menu, tab, urutan) --secondary (navy; di
+// header di atas foto hero emas, palette-e.css).
 const INDICATOR_CLASS = {
   pill: "rounded-full bg-primary",
   line: "bg-secondary",

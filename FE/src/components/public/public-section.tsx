@@ -10,8 +10,8 @@ type PublicSectionProps = {
   // (h1 halaman -> h2 section -> h3 item) untuk pembaca layar.
   fallbackHeading: string;
   intro?: string;
-  // Section terbalik: CTA penutup. Palet D: permukaan biru (data-surface="secondary" memetakan ulang token
-  // inverse di palette-d.css). Maksimal dua section terbalik per halaman: CTA penutup + footer (DESIGN 2).
+  // Section terbalik: CTA penutup. Permukaan navy (data-surface="secondary" memetakan ulang token
+  // inverse di palette-e.css). Maksimal dua section terbalik per halaman: CTA penutup + footer (DESIGN 2).
   inverse?: boolean;
   className?: string;
   // Elemen dekoratif di belakang isi (DESIGN.md 6): dirender sebelum isi, isi di atasnya.

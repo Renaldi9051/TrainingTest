@@ -10,7 +10,7 @@ import { getSettings } from "@/lib/api/public";
 import { getPublicEnv } from "@/lib/env";
 import { FALLBACK_ICON_PATH } from "@/lib/monogram";
 // Palet D hanya untuk halaman publik: semua aturannya di-scope ke [data-site="public"] (main di bawah).
-import "./palette-d.css";
+import "./palette-e.css";
 // Skala judul untuk Poppins (lebih lebar dari Geist), juga di-scope ke [data-site="public"].
 import "./typography.css";
 
@@ -76,7 +76,7 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
       </a>
       <SiteHeader />
       {/* isolate: elemen dekor ber-z negatif tetap di belakang isi main, tapi di atas latar halaman. */}
-      {/* data-site: penanda scope palet D (palette-d.css); admin tidak punya penanda ini. */}
+      {/* data-site: penanda scope palet publik (palette-e.css); admin tidak punya penanda ini. */}
       <main id="konten" data-site="public" className="relative isolate flex-1">
         {children}
       </main>
