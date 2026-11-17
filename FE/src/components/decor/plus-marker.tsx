@@ -11,7 +11,7 @@ export function PlusMarker({ decor = true, className }: { decor?: boolean; class
         "pointer-events-none absolute size-3",
         "before:absolute before:top-0 before:left-[5.5px] before:h-3 before:w-px before:bg-current",
         "after:absolute after:top-[5.5px] after:left-0 after:h-px after:w-3 after:bg-current",
-        // Palet D: token peran --decor-mark (--primary di latar terang, mustard di permukaan gelap).
+        // Palet E: token peran --decor-mark (amber di latar terang maupun gelap).
         "text-decor-mark",
         className,
       )}

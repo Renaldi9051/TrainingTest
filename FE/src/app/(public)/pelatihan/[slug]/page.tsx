@@ -336,7 +336,7 @@ export default async function TrainingPage({ params }: PageProps<"/pelatihan/[sl
             aria-label="Ringkasan pendaftaran"
             className="hidden lg:sticky lg:top-36 lg:col-span-4 lg:col-start-9 lg:mt-14 lg:block"
           >
-            {/* Palet D: kartu harga radius 12 px dengan garis atas 4 px --accent. */}
+            {/* Palet E: kartu harga radius 12 px dengan garis atas 4 px --accent (amber). */}
             <div className="rounded-card border border-t-4 border-border border-t-accent bg-bg p-6 xl:p-8">
               <dl>
                 <dt className="font-mono text-label uppercase tracking-[0.08em] text-fg-muted">Investasi</dt>

@@ -10,11 +10,11 @@ import { PublicImage } from "./public-image";
 
 export const CARD_IMAGE_SIZES = "(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw";
 
-// Kartu pelatihan DESIGN 8.4 (palet D v0.4): kotak radius 12 px ber-border, gambar 4:3 -> label mono
-// --secondary -> judul h3 -> meta, teks berjarak 18 px dari tepi. Gambar memakai grading film
+// Kartu pelatihan DESIGN 8.4 (palet E): kotak radius 12 px ber-border, gambar 4:3 -> label mono
+// --primary-ink -> judul h3 -> meta, teks berjarak 18 px dari tepi. Gambar memakai grading film
 // (--photo-filter) yang lepas saat hover/fokus (transisi filter 300 ms, pengecualian DESIGN 9.3 v0.4;
 // menggantikan gambar hitam putih keputusan 28 Okt 2026).
-// Hover: border --primary + kartu naik 3 px, gambar zoom 1.03, sudut Viewfinder 12 px masuk, judul bergaris bawah,
+// Border --line-hover (biru laut); hover: border --primary + kartu naik 3 px, gambar zoom 1.03, sudut Viewfinder 12 px masuk, judul bergaris bawah,
 // label "Lihat →" mengikuti kursor (PointerEffects, hanya desktop). Di grid: gambar wipe dari bawah
 // + zoom 1,15 -> 1 bersama kartunya.
 // Gambar: sampul pelatihan, atau gambar kategori kalau sampul kosong (coverSource dari BE).
@@ -45,7 +45,8 @@ export function TrainingCard({
       data-cursor-label=""
       data-cover-source={training.coverSource ?? "none"}
       className={cn(
-        "group relative flex h-full flex-col rounded-card border border-border bg-bg pb-[18px]",
+        // Palet E (pratinjau atasan): border biru laut sejak awal, hover/fokus biru tua + naik 3 px.
+        "group relative flex h-full flex-col rounded-card border border-line-hover bg-bg pb-[18px]",
         // Border 150 ms (DESIGN 9.3, pengecualian v0.3), naik 3 px 300 ms.
         "transition-[border-color,translate] ease-standard [transition-duration:150ms,300ms]",
         "hover:border-primary focus-within:border-primary motion-safe:hover:-translate-y-[3px]",
@@ -78,7 +79,7 @@ export function TrainingCard({
         )}
       </RevealImage>
       {labelText ? (
-        <p className="mt-5 px-[18px] font-mono text-label uppercase tracking-[0.08em] text-secondary">{labelText}</p>
+        <p className="mt-5 px-[18px] font-mono text-label uppercase tracking-[0.08em] text-primary-ink">{labelText}</p>
       ) : null}
       <Heading className={cn("mt-2 px-[18px] text-h3", isUntitled(training.title) ? "text-fg-muted" : "text-fg-strong")}>
         {/* Seluruh kartu bisa diklik lewat pseudo-element, tapi tetap satu link untuk pembaca layar. */}

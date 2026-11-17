@@ -11,8 +11,8 @@ const CORNERS = [
 // Bingkai viewfinder (DESIGN.md 6.1): 4 sudut siku (24 px, kartu 12 px), crosshair opsional di
 // tengah, label mono opsional di sudut atas. Dipasang di dalam kotak gambar `relative`; `className`
 // mengatur jarak ke tepi (default inset 16 px).
-// - tone "photo": di atas foto lebar (menandai dirinya permukaan gelap, jadi --decor-mark = mustard);
-//   "mark": ikut --decor-mark latar sekitarnya (--primary di latar terang); "plain": putih di foto kartu.
+// - tone "photo": di atas foto lebar (menandai dirinya permukaan gelap); "mark": di latar terang. Keduanya
+//   --decor-mark (amber, palet E); "plain": putih di foto kartu.
 // - hover: kartu (induk `group`) — tersembunyi, sudut bergerak dari luar ke posisinya saat hover.
 export function Viewfinder({
   decor = true,
@@ -36,7 +36,7 @@ export function Viewfinder({
   className?: string;
 }) {
   if (!decor) return null;
-  // Palet D: warna sudut dari token peran --decor-mark (DESIGN.md 6, v0.4), kecuali putih di foto kartu.
+  // Warna sudut dari token peran --decor-mark (DESIGN.md 6), kecuali putih di foto kartu.
   const color = tone === "plain" ? "border-inverse-fg/90" : "border-decor-mark";
   return (
     <div

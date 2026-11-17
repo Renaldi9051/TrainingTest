@@ -127,6 +127,8 @@ test("screenshot admin utama @manual", async ({ page }) => {
   await shoot("pelatihan-daftar", "/admin/trainings");
   const training = (await (await page.request.get("/api/admin/trainings?pageSize=1")).json()) as { data: { id: string }[] };
   await shoot("pelatihan-form", training.data[0] ? `/admin/trainings/${training.data[0].id}` : "/admin/trainings/new");
+  const category = (await (await page.request.get("/api/admin/categories?pageSize=1")).json()) as { data: { id: string }[] };
+  await shoot("kategori-form", category.data[0] ? `/admin/categories/${category.data[0].id}` : "/admin/categories/new");
   const sections = (await (await page.request.get("/api/admin/home-sections")).json()) as { data: { id: string; type: string }[] };
   const hero = sections.data.find((section) => section.type === "HERO") ?? sections.data[0];
   await shoot("editor-beranda", hero ? `/admin/home/${hero.id}` : "/admin/home");

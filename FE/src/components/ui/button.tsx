@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { RollText } from "@/components/motion/roll-text";
 import { cn } from "@/lib/utils";
 
-// Tombol publik DESIGN.md 8.2 (palet D v0.4: primer --primary, CTA di hero/section gelap --accent
+// Tombol publik DESIGN.md 8.2 (palet E: primer --primary biru tua, CTA di hero/section gelap --accent amber
 // dengan teks gelap, garis ghost --link). Juga dirender di admin (/admin/dev/ui, pencarian admin): kelas warnanya punya
 // fallback netral di theme.css, jadi tampilan admin tidak berubah.
 // Tombol publik DESIGN.md 7. Tombol CTA besar: tambahkan {...MAGNETIC} di elemennya dan `roll` di

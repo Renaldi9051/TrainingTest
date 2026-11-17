@@ -32,7 +32,7 @@ function EventLink({ schedule }: { schedule: PublicSchedule }) {
       href={`/pelatihan/${schedule.training.slug}`}
       className={cn(
         "block rounded-sm px-2 py-1.5 text-[12px] leading-[1.3] outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1",
-        // Palet D: sesi dibuka --primary; penuh/selesai bergaris.
+        // Palet E: sesi dibuka --primary; penuh/selesai bergaris.
         open ? "bg-primary text-on-primary hover:bg-primary-hover" : "border border-border-strong text-fg-muted hover:text-fg-strong",
       )}
     >

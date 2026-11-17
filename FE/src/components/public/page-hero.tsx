@@ -39,7 +39,7 @@ export function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
   );
 }
 
-// Kepala halaman dalam (mockup .phero; palet D: latar --bg-subtle): breadcrumb mono, satu h1, lead di kolom kanan (desktop),
+// Kepala halaman dalam (mockup .phero; palet E: latar --bg-subtle): breadcrumb mono, satu h1, lead di kolom kanan (desktop),
 // teks outline raksasa opsional di belakang, garis bawah. Langsung terbaca tanpa reveal (layar
 // pertama); stagger masuk hanya setelah navigasi klien (PageEnter, elemen data-page-enter).
 // crumbs: induk setelah Beranda + halaman ini (label terakhir biasanya = judul).

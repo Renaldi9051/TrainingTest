@@ -150,7 +150,7 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
   const stage = (
     // Latar gelap selama foto dimuat (teks terang tetap terbaca). Bukan "section terbalik" (DESIGN.md 2:
     // hero bergambar tidak dihitung), jadi tidak memakai kelas bg-inverse-bg.
-    // data-surface: tanda dekoratif (sudut Viewfinder) mustard di atas foto (palet D, --decor-mark).
+    // data-surface: penanda permukaan gelap di atas foto (sudut Viewfinder amber lewat --decor-mark).
     <div data-surface="dark" className="absolute inset-0 overflow-hidden bg-fg-strong" aria-live={playing ? "off" : "polite"}>
       {slides.map((slide, index) => {
         // Sebelum event load hanya slide pertama yang dipasang (LCP); sisanya menyusul.
@@ -179,14 +179,14 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
           </div>
         );
       })}
-      {/* Lapisan hangat tipis di atas foto (palet D: --photo-tint, multiply), kedua layout. Tidak dipakai
+      {/* Lapisan biru tipis di atas foto (palet E: --photo-tint, multiply), kedua layout. Tidak dipakai
           untuk foto grayscale supaya tetap hitam putih. */}
       {photoStyle === "grayscale" ? null : (
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-(--photo-tint) mix-blend-multiply" />
       )}
       {full ? (
         <>
-          {/* Lapisan gelap agar teks terang terbaca (palet D; gradien gelap transparan hanya untuk overlay
+          {/* Lapisan gelap agar teks terang terbaca (palet E navy/hitam kopi; gradien gelap transparan hanya untuk overlay
               foto hero, DESIGN.md 5): --overlay-head di atas untuk header transparan, dan dasar
               transparan -> --overlay-bottom di bawah 35%. Lapisan 1 (scrim terarah) ada di tiap slide. */}
           <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-(image:--overlay-head)" />
@@ -231,13 +231,15 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
                 tabIndex={index === active ? 0 : -1}
                 className="group/segment flex h-6 flex-1 items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-current"
               >
-                <span className={cn("relative block h-[3px] w-full overflow-hidden rounded-full", full ? "bg-inverse-fg/30" : "bg-border-strong")}>
+                {/* Jalur segmen: navy (--outline-stroke-dark) di atas foto, seperti pratinjau palet E. */}
+                <span className={cn("relative block h-[3px] w-full overflow-hidden rounded-full", full ? "bg-(--outline-stroke-dark,var(--inverse-line))" : "bg-border-strong")}>
                   <span
                     ref={(element) => {
                       fillRefs.current[index] = element;
                     }}
                     data-segment-fill=""
-                    className="absolute inset-0 origin-left bg-accent"
+                    // Segmen yang sudah lewat cyan (--highlight), segmen aktif amber (palet E).
+                    className={cn("absolute inset-0 origin-left", index < active ? "bg-highlight" : "bg-accent")}
                     style={{ transform: `scaleX(${index < active ? 1 : 0})` }}
                   />
                 </span>
@@ -274,7 +276,7 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
         className={cn("hero-stage relative isolate flex flex-col", tone)}
       >
         {stage}
-        {/* Letterbox (palet D, DESIGN.md 6): garis --inverse-bg 8 px di atas & bawah hero fullbleed. Bukan
+        {/* Letterbox (DESIGN.md 6): garis --inverse-bg 8 px di atas & bawah hero fullbleed. Bukan
             section terbalik, jadi tidak memakai kelas bg-inverse-bg (sama seperti latar stage). */}
         {decor ? (
           <>

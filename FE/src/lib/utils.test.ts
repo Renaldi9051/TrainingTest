@@ -20,12 +20,16 @@ describe("cn", () => {
     expect(cn("text-h2", "text-display")).toBe("text-display");
   });
 
-  it("palet D: warna peran baru tetap warna, rounded-card satu grup dengan radius lain", () => {
+  it("palet E: warna peran tetap warna, rounded-card satu grup dengan radius lain", () => {
     expect(cn("bg-fg-strong", "bg-primary")).toBe("bg-primary");
     expect(cn("text-small text-on-primary")).toBe("text-small text-on-primary");
     expect(cn("text-fg-muted", "text-primary-ink")).toBe("text-primary-ink");
     expect(cn("text-small text-secondary")).toBe("text-small text-secondary");
-    expect(cn("bg-secondary text-on-secondary")).toBe("bg-secondary text-on-secondary");
+    // Palet E: --on-secondary dihapus (biru laut bukan latar teks); token baru cokelat & cyan.
+    expect(cn("bg-accent text-on-accent")).toBe("bg-accent text-on-accent");
+    expect(cn("text-primary-ink", "text-accent-ink")).toBe("text-accent-ink");
+    expect(cn("text-small text-highlight-on-dark")).toBe("text-small text-highlight-on-dark");
+    expect(cn("bg-accent", "bg-highlight")).toBe("bg-highlight");
     expect(cn("border-primary", "border-decor-mark")).toBe("border-decor-mark");
     expect(cn("ring-fg-strong", "ring-focus")).toBe("ring-focus");
     expect(cn("rounded-md", "rounded-card")).toBe("rounded-card");
