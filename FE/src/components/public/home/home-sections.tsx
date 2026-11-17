@@ -63,8 +63,9 @@ function HeroText({ section, inverse, split = false }: { section: HeroData; inve
   return (
     <div className="space-y-8 md:space-y-10">
       <div className="space-y-5 md:space-y-6">
+        {/* Palet E (pratinjau atasan): eyebrow hero di atas foto cyan, kata berganti tetap amber. */}
         {section.eyebrow ? (
-          <Eyebrow data-page-enter="" className={inverse ? "text-accent-on-dark" : undefined}>
+          <Eyebrow data-page-enter="" className={inverse ? "text-highlight-on-dark" : undefined}>
             {section.eyebrow}
           </Eyebrow>
         ) : null}

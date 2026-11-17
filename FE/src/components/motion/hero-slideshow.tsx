@@ -231,7 +231,8 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
                 tabIndex={index === active ? 0 : -1}
                 className="group/segment flex h-6 flex-1 items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-current"
               >
-                <span className={cn("relative block h-[3px] w-full overflow-hidden rounded-full", full ? "bg-inverse-fg/30" : "bg-border-strong")}>
+                {/* Jalur segmen: navy (--outline-stroke-dark) di atas foto, seperti pratinjau palet E. */}
+                <span className={cn("relative block h-[3px] w-full overflow-hidden rounded-full", full ? "bg-(--outline-stroke-dark,var(--inverse-line))" : "bg-border-strong")}>
                   <span
                     ref={(element) => {
                       fillRefs.current[index] = element;
