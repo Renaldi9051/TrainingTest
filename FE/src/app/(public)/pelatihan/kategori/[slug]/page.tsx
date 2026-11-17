@@ -202,11 +202,11 @@ export default async function CategoryPage({ params }: PageProps<"/pelatihan/kat
         </section>
       ) : null}
 
-      {/* CTA penutup: permukaan biru (palet D). */}
-      <section aria-labelledby="kategori-cta" data-surface="secondary" className="relative overflow-hidden bg-inverse-bg py-24 text-inverse-fg md:py-28">
+      {/* CTA penutup: permukaan navy (palet E). */}
+      <section aria-labelledby="kategori-cta" data-surface="cta" className="relative overflow-hidden bg-inverse-bg py-24 text-inverse-fg md:py-28">
         <GrainOverlay tone="inverse" />
         <Container className="relative">
-          <Eyebrow className="text-accent-on-dark">Konsultasi / In-house</Eyebrow>
+          <Eyebrow className="text-highlight-on-dark">Konsultasi / In-house</Eyebrow>
           <h2 id="kategori-cta" className="mt-3 max-w-[18ch] text-h1">
             Butuh pelatihan {category.name} untuk tim Anda?
           </h2>

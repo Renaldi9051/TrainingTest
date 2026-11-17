@@ -9,7 +9,7 @@ import { SiteHeader } from "@/components/public/site-header";
 import { getSettings } from "@/lib/api/public";
 import { getPublicEnv } from "@/lib/env";
 import { FALLBACK_ICON_PATH } from "@/lib/monogram";
-// Palet D hanya untuk halaman publik: semua aturannya di-scope ke [data-site="public"] (main di bawah).
+// Palet E hanya untuk halaman publik: semua aturannya di-scope ke [data-site="public"] (main di bawah).
 import "./palette-e.css";
 // Skala judul untuk Poppins (lebih lebar dari Geist), juga di-scope ke [data-site="public"].
 import "./typography.css";

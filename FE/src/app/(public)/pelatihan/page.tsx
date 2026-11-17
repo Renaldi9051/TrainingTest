@@ -316,9 +316,9 @@ async function CategoryResults({
   );
 }
 
-// CTA penutup (DESIGN.md 8.9, palet D; bentuk kotak berbingkai dari mockup): permukaan biru
-// (data-surface="secondary") + GrainOverlay + OutlineText (maks 2 elemen grafis, bisa dimatikan lewat
-// setting decor), teks --on-secondary, tombol mustard + tombol garis terang. Teks & tombol dari setting
+// CTA penutup (DESIGN.md 8.9, palet E; bentuk kotak berbingkai dari mockup): permukaan navy
+// (data-surface="cta") + GrainOverlay + OutlineText (maks 2 elemen grafis, bisa dimatikan lewat
+// setting decor), eyebrow cyan, intro --inverse-muted, tombol amber + tombol garis terang. Teks & tombol dari setting
 // trainings.page.cta; field kosong (atau pasangan label/tautan kosong) = bawaan.
 function ClosingCta({ cta }: { cta: TrainingsPage["cta"] }) {
   const primary = { label: cta.primaryLabel, href: cta.primaryHref };
@@ -327,7 +327,7 @@ function ClosingCta({ cta }: { cta: TrainingsPage["cta"] }) {
     <section aria-labelledby="pelatihan-cta" className="py-24 md:py-28">
       <Container>
         <div
-          data-surface="secondary"
+          data-surface="cta"
           className="relative isolate grid grid-cols-1 gap-8 overflow-hidden rounded-card bg-inverse-bg px-6 py-10 text-inverse-fg md:px-14 md:py-16 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-end"
         >
           {cta.decor ? <GrainOverlay tone="inverse" /> : null}
@@ -335,11 +335,11 @@ function ClosingCta({ cta }: { cta: TrainingsPage["cta"] }) {
             {cta.outline}
           </OutlineText>
           <div className="relative">
-            <Eyebrow className="text-accent-on-dark">{cta.eyebrow}</Eyebrow>
+            <Eyebrow className="text-highlight-on-dark">{cta.eyebrow}</Eyebrow>
             <h2 id="pelatihan-cta" className="mt-3 max-w-[18ch] text-h2 lg:text-[52px] lg:leading-[1.04]">
               {cta.heading}
             </h2>
-            <p className="mt-4 max-w-[44ch] text-body-lg text-on-secondary">{cta.lead}</p>
+            <p className="mt-4 max-w-[44ch] text-body-lg text-inverse-muted">{cta.lead}</p>
           </div>
           <div className="relative flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-end">
             <Link href={primary.href} className={cn(buttonVariants({ variant: "inverse", size: "lg" }), "max-sm:w-full")}>
