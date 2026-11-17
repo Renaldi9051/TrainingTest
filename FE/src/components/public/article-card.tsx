@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { CARD_IMAGE_SIZES } from "./training-card";
 import { PublicImage } from "./public-image";
 
-// Kartu artikel: pola sama dengan kartu pelatihan (DESIGN 8.4, palet D) supaya satu bahasa visual:
+// Kartu artikel: pola sama dengan kartu pelatihan (DESIGN 8.4, palet E) supaya satu bahasa visual:
 // radius 12 px ber-border, sampul 4:3 dengan grading film yang lepas saat hover/fokus, label kategori
 // mono --secondary + tanggal, judul h3, ringkasan maks 3 baris. Seluruh kartu satu link.
 // Tanpa sampul: blok --bg-muted dengan sudut Viewfinder (elemen UI, bukan foto pengganti).
@@ -26,7 +26,7 @@ export function ArticleCard({
       className={cn(
         "group relative flex h-full flex-col rounded-card border border-border bg-bg pb-[18px]",
         "transition-[border-color,translate] ease-standard [transition-duration:150ms,300ms]",
-        "hover:border-primary focus-within:border-primary motion-safe:hover:-translate-y-[3px]",
+        "hover:border-line-hover focus-within:border-line-hover motion-safe:hover:-translate-y-[3px]",
       )}
     >
       <RevealImage className="relative aspect-[4/3] overflow-hidden rounded-t-[calc(var(--card-radius,var(--radius))-1px)] bg-bg-muted">
@@ -45,7 +45,7 @@ export function ArticleCard({
         )}
       </RevealImage>
       <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 px-[18px] font-mono text-label uppercase tracking-[0.08em]">
-        {article.category ? <span className="text-secondary">{article.category.name}</span> : null}
+        {article.category ? <span className="text-primary-ink">{article.category.name}</span> : null}
         <time dateTime={article.publishedAt} className="text-fg-muted">
           {formatDate(article.publishedAt)}
         </time>

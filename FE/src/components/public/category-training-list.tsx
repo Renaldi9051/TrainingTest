@@ -109,7 +109,7 @@ export function CategoryTrainingList({
             placeholder="Cari judul..."
             autoComplete="off"
             maxLength={100}
-            className="h-11 w-full rounded-md border border-border-strong bg-bg-subtle px-3 text-body text-fg-strong outline-none placeholder:text-fg-subtle focus-visible:border-secondary focus-visible:ring-2 focus-visible:ring-focus"
+            className="h-11 w-full rounded-md border border-border-strong bg-bg-subtle px-3 text-body text-fg-strong outline-none placeholder:text-fg-subtle focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-focus"
           />
         </div>
       </div>
@@ -134,7 +134,7 @@ export function CategoryTrainingList({
                   href={`/pelatihan/${training.slug}`}
                   className="group flex items-center gap-4 border-b border-border px-1 py-4 outline-none transition-colors duration-150 ease-standard hover:bg-bg-subtle focus-visible:bg-bg-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset md:px-2"
                 >
-                  <span className="w-10 shrink-0 font-mono text-label font-medium text-primary-ink tabular-nums">
+                  <span className="w-10 shrink-0 font-mono text-label font-medium text-accent-ink tabular-nums">
                     {String(offset + index + 1).padStart(2, "0")}
                   </span>
                   <span
@@ -150,7 +150,7 @@ export function CategoryTrainingList({
                       {training.types.map((type) => TYPE_LABELS[type]).join(" / ")}
                     </span>
                   ) : null}
-                  <span aria-hidden className="shrink-0 text-secondary transition-transform duration-150 ease-standard group-hover:translate-x-1">
+                  <span aria-hidden className="shrink-0 text-primary-ink transition-transform duration-150 ease-standard group-hover:translate-x-1">
                     →
                   </span>
                 </Link>

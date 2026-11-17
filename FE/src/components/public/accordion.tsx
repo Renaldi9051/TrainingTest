@@ -51,7 +51,7 @@ export function Accordion({
           <li key={item.id}>
             <details className="group" onToggle={syncCount}>
               <summary className="flex cursor-pointer list-none items-start gap-4 py-5 outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
-                {/* Palet D: judul item terbuka & ikon --primary-ink. */}
+                {/* Palet E: judul item terbuka & ikon --primary-ink. */}
                 <span className="min-w-0 flex-1 text-body font-medium text-fg-strong group-open:text-primary-ink">{item.title}</span>
                 {item.meta ? (
                   <span className="shrink-0 pt-0.5 font-mono text-label uppercase tracking-[0.08em] text-fg-muted">

@@ -20,7 +20,7 @@ export function categoryInitial(name: string): string {
   return (name.match(/[\p{L}\p{N}]/u)?.[0] ?? "#").toLocaleUpperCase("id-ID");
 }
 
-// Kartu kategori grid A-Z /pelatihan (mockup redesign 5 Nov 2026, palet D): tanpa kotak; foto 3:2
+// Kartu kategori grid A-Z /pelatihan (mockup redesign 5 Nov 2026): tanpa kotak; foto 3:2
 // radius 12 dengan grading film, di bawahnya nama 18 px + "[N] judul pelatihan" --fg-muted dan panah
 // --secondary. Mobile (< 640 px): baris daftar (thumbnail 96 px 4:3 kiri, garis pemisah), supaya
 // 24 kartu tidak jadi halaman sangat panjang.

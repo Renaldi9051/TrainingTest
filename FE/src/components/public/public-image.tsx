@@ -9,7 +9,7 @@ type PublicImageProps = {
   className?: string;
   // Grayscale hanya untuk logo klien dan opsi photoStyle "grayscale" di hero (DESIGN 2).
   grayscale?: boolean;
-  // Palet D (DESIGN 2, v0.4): grading "film" (--photo-filter) untuk foto publik (hero, kartu, layanan,
+  // Palet E (DESIGN 2): grading (--photo-filter) untuk foto publik (hero, kartu, layanan,
   // portofolio, visi misi, detail, landing kategori). Bukan untuk logo. Diabaikan kalau grayscale.
   film?: boolean;
   // Gambar utama di layar pertama (LCP): dimuat langsung dengan prioritas tinggi.

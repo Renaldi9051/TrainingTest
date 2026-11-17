@@ -10,8 +10,8 @@ const GRAIN_SVG =
 
 const GRAIN_STYLE = { backgroundImage: `url("data:image/svg+xml,${GRAIN_SVG}")` };
 
-// Tekstur grain (DESIGN.md 6.1): opacity 4% di latar terang, 6% di section hitam, 7% (overlay
-// blend) di atas foto hero. Induk harus relative.
+// Tekstur grain (DESIGN.md 6.1): opacity 4% di latar terang, 6% di section gelap dan di atas foto
+// hero (overlay blend, palet E). Induk harus relative.
 export function GrainOverlay({
   decor = true,
   tone = "light",
@@ -30,7 +30,7 @@ export function GrainOverlay({
         "pointer-events-none absolute inset-0",
         tone === "light" && "opacity-[0.04]",
         tone === "inverse" && "opacity-[0.06]",
-        tone === "photo" && "opacity-[0.07] mix-blend-overlay",
+        tone === "photo" && "opacity-[0.06] mix-blend-overlay",
         className,
       )}
     />

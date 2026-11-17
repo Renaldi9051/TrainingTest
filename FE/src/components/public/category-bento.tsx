@@ -24,8 +24,8 @@ const LAYOUT = {
 
 // Bento kategori unggulan di atas grid A-Z /pelatihan (mockup redesign 5 Nov 2026). Ubin foto penuh
 // (grading film) dengan gradasi gelap ke bawah (--overlay-bottom, sama dengan hero) supaya teks terang
-// terbaca; nomor urut mono di kiri atas, "[N] JUDUL" + nama di kiri bawah, tombol panah mustard di
-// kanan bawah. Ubin menandai dirinya permukaan gelap (data-surface), jadi sudut Viewfinder mustard.
+// terbaca; nomor urut mono di kiri atas, "[N] JUDUL" + nama di kiri bawah, tombol panah amber di
+// kanan bawah. Ubin menandai dirinya permukaan gelap (data-surface), jadi sudut Viewfinder amber.
 // Hover/fokus: foto zoom 1.03, sudut masuk, panah bergeser. Ubin pertama = gambar LCP.
 export function CategoryBento({ categories }: { categories: PublicCategory[] }) {
   if (categories.length === 0) return null;

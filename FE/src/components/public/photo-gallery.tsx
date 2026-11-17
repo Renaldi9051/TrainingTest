@@ -103,7 +103,7 @@ export function PhotoGallery({
             <button
               type="button"
               onClick={() => dialogRef.current?.close()}
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-inverse-line px-4 text-small text-inverse-fg outline-none transition-colors duration-150 hover:bg-inverse-line/50 focus-visible:ring-2 focus-visible:ring-accent-on-dark"
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-inverse-line px-4 text-small text-inverse-fg outline-none transition-colors duration-150 hover:bg-inverse-line/50 focus-visible:ring-2 focus-visible:ring-focus-dark"
             >
               Tutup
               <XIcon aria-hidden strokeWidth={1.5} className="size-4" />
@@ -130,7 +130,7 @@ export function PhotoGallery({
                   type="button"
                   aria-label="Foto sebelumnya"
                   onClick={() => go(-1)}
-                  className="absolute top-1/2 left-2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-inverse-line text-inverse-fg outline-none transition-colors duration-150 hover:bg-inverse-line/50 focus-visible:ring-2 focus-visible:ring-accent-on-dark md:left-4"
+                  className="absolute top-1/2 left-2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-inverse-line text-inverse-fg outline-none transition-colors duration-150 hover:bg-inverse-line/50 focus-visible:ring-2 focus-visible:ring-focus-dark md:left-4"
                 >
                   <ChevronLeftIcon aria-hidden strokeWidth={1.5} />
                 </button>
@@ -138,7 +138,7 @@ export function PhotoGallery({
                   type="button"
                   aria-label="Foto berikutnya"
                   onClick={() => go(1)}
-                  className="absolute top-1/2 right-2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-inverse-line text-inverse-fg outline-none transition-colors duration-150 hover:bg-inverse-line/50 focus-visible:ring-2 focus-visible:ring-accent-on-dark md:right-4"
+                  className="absolute top-1/2 right-2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-inverse-line text-inverse-fg outline-none transition-colors duration-150 hover:bg-inverse-line/50 focus-visible:ring-2 focus-visible:ring-focus-dark md:right-4"
                 >
                   <ChevronRightIcon aria-hidden strokeWidth={1.5} />
                 </button>

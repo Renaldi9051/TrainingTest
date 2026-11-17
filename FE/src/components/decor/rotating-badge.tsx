@@ -7,9 +7,9 @@ import { badgeRingChars } from "./badge-ring";
 // tengah, berputar 360 derajat per 20 s; hover: putaran melambat & panah bergeser. Berupa link CTA
 // (bisa difokus), teks melingkarnya dekoratif; nama aksesibelnya dari `label`. Mobile 50%
 // (origin sudut, default kanan bawah). Reduced motion: diam (motion-safe).
-// - tone "light": di atas foto/section gelap (cincin --accent-on-dark, inti mustard). Di permukaan biru
-//   (CTA penutup) cincin & ring fokus otomatis --on-secondary lewat data-surface="secondary".
-// - tone "dark": di atas latar terang (inti --primary).
+// - tone "light": di atas foto/section gelap, termasuk CTA penutup navy (cincin --accent-on-dark, inti
+//   amber, ring fokus cyan).
+// - tone "dark": di atas latar terang (cincin --fg-strong, inti amber, ring fokus biru tua).
 export function RotatingBadge({
   href,
   text,
@@ -34,8 +34,8 @@ export function RotatingBadge({
       className={cn(
         "group/badge absolute block size-[120px] origin-bottom-right rounded-full outline-none max-md:scale-50",
         "focus-visible:ring-2 focus-visible:ring-offset-2",
-        // Palet D: di atas foto/section gelap teks cincin --accent-on-dark & inti --accent; di latar
-        // terang inti --primary.
+        // Palet E: inti selalu amber (tanda dekoratif, keputusan pemilik 17 Nov 2026); teks cincin
+        // --accent-on-dark di atas foto/section gelap, --fg-strong di latar terang.
         tone === "light"
           ? "text-accent-on-dark focus-visible:ring-focus-dark focus-visible:ring-offset-inverse-bg"
           : "text-fg-strong focus-visible:ring-focus",
@@ -60,7 +60,7 @@ export function RotatingBadge({
         className={cn(
           "absolute inset-[34px] flex items-center justify-center rounded-full",
           "transition-transform duration-300 ease-standard motion-safe:group-hover/badge:translate-x-[3px] motion-safe:group-hover/badge:-translate-y-[3px]",
-          tone === "light" ? "bg-accent text-on-accent" : "bg-primary text-on-primary",
+          "bg-accent text-on-accent",
         )}
       >
         <ArrowUpRightIcon className="size-5" strokeWidth={1.5} />

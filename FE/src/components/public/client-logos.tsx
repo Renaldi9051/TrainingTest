@@ -4,8 +4,8 @@ import { MARQUEE_AUTO_SPEED } from "@/components/motion/marquee-plan";
 import { VelocityMarquee } from "@/components/motion/velocity-marquee";
 import { PublicImage } from "./public-image";
 
-// Wadah logo persegi 112 px (size-28), gambar 88 px di dalam padding 12 px.
-const LOGO_SIZES = "88px";
+// Wadah logo persegi 112 px (size-28).
+const LOGO_SIZES = "112px";
 
 const NAME = "text-center font-mono text-label uppercase tracking-[0.08em] text-balance";
 
@@ -26,19 +26,15 @@ export function ClientLogos({ clients }: { clients: PublicClient[] }) {
         {clients.map((client, index) => {
           const content = client.logo ? (
             <>
-              {/* Kotak latar logo dari --logo-tile (tema gelap: krem, supaya logo bertulisan gelap tetap
-                  terbaca); tanpa token: transparan. */}
-              <span className="block size-28 rounded-card bg-[var(--logo-tile,transparent)] p-3">
-                <span className="relative block size-full">
-                  {/* Alt kosong: nama instansi sudah tertulis di bawah logo. Tanpa blok placeholder --bg-muted:
-                      di sisa ruang object-contain blok itu tampak sebagai kotak di belakang logo. */}
-                  <PublicImage
-                    image={{ ...client.logo, alt: "" }}
-                    sizes={LOGO_SIZES}
-                    fit="contain"
-                    className="bg-transparent"
-                  />
-                </span>
+              <span className="relative block size-28">
+                {/* Alt kosong: nama instansi sudah tertulis di bawah logo. Tanpa blok placeholder --bg-muted:
+                    di sisa ruang object-contain blok itu tampak sebagai kotak di belakang logo. */}
+                <PublicImage
+                  image={{ ...client.logo, alt: "" }}
+                  sizes={LOGO_SIZES}
+                  fit="contain"
+                  className="bg-transparent"
+                />
               </span>
               <span className={`${NAME} text-fg-muted`}>{client.name}</span>
             </>

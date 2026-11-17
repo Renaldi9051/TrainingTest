@@ -17,10 +17,10 @@ const SOCIAL_LABELS: Record<SocialPlatform, string> = {
 
 // Tautan footer: garis bawah memanjang dari kiri saat hover/fokus (DESIGN.md 9.2 Link).
 const footerLink =
-  "relative self-start rounded-sm text-small text-inverse-fg/80 outline-none transition-colors duration-150 hover:text-accent-on-dark focus-visible:text-accent-on-dark focus-visible:ring-2 focus-visible:ring-focus-dark focus-visible:ring-offset-2 focus-visible:ring-offset-inverse-bg after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100";
+  "relative self-start rounded-sm text-small text-inverse-fg/80 outline-none transition-colors duration-150 hover:text-highlight-on-dark focus-visible:text-highlight-on-dark focus-visible:ring-2 focus-visible:ring-focus-dark focus-visible:ring-offset-2 focus-visible:ring-offset-inverse-bg after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100";
 
 function FooterHeading({ children }: { children: string }) {
-  return <h2 className="mb-1.5 font-mono text-label font-medium uppercase tracking-[0.08em] text-accent-on-dark">{children}</h2>;
+  return <h2 className="mb-1.5 font-mono text-label font-medium uppercase tracking-[0.08em] text-highlight-on-dark">{children}</h2>;
 }
 
 function NavColumn({ label, items }: { label: string; items: PublicNavItem[] }) {
