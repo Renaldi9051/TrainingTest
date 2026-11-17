@@ -196,7 +196,6 @@ export function HeroSlideshow({ slides, intervalMs, layout, photoStyle, showView
       <GrainOverlay decor={decor} tone="photo" className="z-[3]" />
       <Viewfinder
         decor={decor && showViewfinder}
-        crosshair
         className={cn("z-[4]", full ? "top-[104px] right-4 bottom-[112px] left-4 md:right-8 md:left-8" : "inset-5")}
         topLeft={<HudLabel tone="photo">{current?.hudLabel}</HudLabel>}
       />

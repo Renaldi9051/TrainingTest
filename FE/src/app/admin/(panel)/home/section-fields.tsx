@@ -563,7 +563,7 @@ export function SectionFields({ type, media }: { type: HomeSectionType; media: R
                 ["grayscale", "Hitam putih", "Hanya tampilan; file asli tidak diubah."],
               ]}
             />
-            <SwitchField name="content.showViewfinder" label="Tampilkan bingkai viewfinder" description="Sudut bingkai, crosshair, dan label HUD di atas foto." />
+            <SwitchField name="content.showViewfinder" label="Tampilkan bingkai viewfinder" description="Sudut bingkai dan label HUD di atas foto." />
             <HeroBadgeFields />
           </Fieldset>
         </div>
