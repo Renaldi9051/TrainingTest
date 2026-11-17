@@ -39,7 +39,7 @@
      dengan opacity --overlay-strength (overlayStrength slide, default 0,8). --overlay-head (peran
      --overlay-top): atas, untuk header transparan. --overlay-bottom: dasar area teks & indikator. */
   --overlay-side: linear-gradient(90deg, rgb(18 11 6 / 0.94) 0%, rgb(25 42 66 / 0.9) 70%, rgb(25 42 66 / 0.35) 90%, rgb(25 42 66 / 0) 100%);
-  --overlay-mobile: linear-gradient(180deg, rgb(25 42 66 / 0.5) 0%, rgb(25 42 66 / 0.9) 28%, rgb(18 11 6 / 0.94) 100%);
+  --overlay-mobile: linear-gradient(180deg, rgb(25 42 66 / 0.65) 0%, rgb(25 42 66 / 0.95) 24%, rgb(18 11 6 / 0.95) 100%);
   --overlay-head: linear-gradient(180deg, rgb(18 11 6 / 0.45) 0%, transparent 18%);
   --overlay-bottom: rgb(25 42 66 / 0.68);
 
@@ -64,8 +64,10 @@
   --highlight: #05b4d9;
   --on-highlight: #120b06;
   --highlight-on-dark: #05b4d9;
-  /* Latar CTA penutup (permukaan data-surface="cta" di bawah). */
+  /* Latar CTA penutup (permukaan data-surface="cta" di bawah) dan latar hero fullbleed. */
   --cta-bg: #192a42;
+  /* Foto hero fullbleed sebagai tekstur di atas navy (aturan .hero-stage di bawah). */
+  --hero-photo-opacity: 0.35;
   /* Ring fokus: biru tua di latar terang (5,6:1), cyan di hero, CTA, footer, lightbox. */
   --focus-ring: #0a6a9d;
   --focus-ring-dark: #05b4d9;
@@ -103,6 +105,17 @@
   --card-radius: 12px;
 
   accent-color: var(--primary);
+}
+
+/* Hero fullbleed (pratinjau atasan: hero navy polos). Foto tetap dari admin, tapi tampil sebagai tekstur
+   pudar di atas latar navy (luminosity: rona navy, terang-gelap dari foto), lalu scrim di atasnya.
+   Hanya CSS; layout split tidak terpengaruh. */
+:root:has([data-site="public"]) .hero-stage[data-header-over] .hero-slide {
+  background: var(--cta-bg);
+}
+:root:has([data-site="public"]) .hero-stage[data-header-over] .hero-slide img {
+  opacity: var(--hero-photo-opacity);
+  mix-blend-mode: luminosity;
 }
 
 /* Permukaan CTA penutup (beranda, /pelatihan, kategori, layanan): latar navy. Komponen tetap memakai

@@ -89,7 +89,7 @@ function HeroText({ section, inverse, split = false }: { section: HeroData; inve
           />
         </h1>
         {section.subheadline ? (
-          <p data-page-enter="" className={cn("max-w-[52ch] text-body-lg", inverse ? "text-inverse-fg/90" : "text-fg-muted")}>
+          <p data-page-enter="" className={cn("max-w-[52ch] text-body-lg", inverse ? "text-inverse-muted" : "text-fg-muted")}>
             {section.subheadline}
           </p>
         ) : null}
