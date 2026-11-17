@@ -1,91 +1,102 @@
-/* Palet E "Biru Kota & Emas", tema gelap (revisi pemilik, 16 Nov 2026; menggantikan palet D), hanya
-   untuk halaman publik. Tujuh warna acuan dipakai berimbang (pemilik: "masih dominan biru, usahakan
-   semua warna ada"): latar hitam cokelat, section selang navy, aksi emas, garis & dekor cyan, pita
-   biru, footer cokelat. Semua pasangan teks AA. Di-import oleh (public)/layout.tsx, dan setiap aturan
-   di-scope ke halaman yang punya penanda [data-site="public"] (main layout publik). Admin tidak pernah
-   punya penanda itu, jadi tokennya tetap netral walau stylesheet ini masih termuat setelah navigasi
-   klien publik -> admin. Token dideklarasikan di :root supaya portal, ::backdrop, dan popover publik
-   ikut. Plain CSS (tanpa Tailwind): utilitas memakai token ini lewat @theme di theme.css (dengan
-   fallback ke token netral untuk admin).
-   #120B06 hitam cokelat  latar halaman, teks di atas emas
-   #192A42 navy           section selang-seling, kepala halaman, input
-   #EBA224 emas           tombol utama & CTA, chip/tanggal aktif, angka & eyebrow kecil
-   #05B4D9 cyan           garis menu/tab aktif, label kategori, link, ring fokus
-   #058DBD cyan tua       garis hover, tanda dekor (sudut viewfinder, plus)
-   #0A6A9D biru           pita CTA penutup
-   #552D11 cokelat        footer, simbol pita marquee */
+/* Palet E "Malam Hujan" (dipilih atasan 17 Nov 2026, menggantikan palet D), hanya untuk halaman publik:
+   foto jalan basah malam hari. Latar putih kebiruan, teks navy, aksi biru tua, sorotan amber seperti
+   lampu jalan dan cyan di section gelap. Acuan: PROMPT-KIRO-PALET-E.md (lokal), DESIGN.md bagian 2.
+   Di-import oleh (public)/layout.tsx, dan setiap aturan di-scope ke halaman yang punya penanda
+   [data-site="public"] (main layout publik). Admin tidak pernah punya penanda itu, jadi tokennya tetap
+   netral walau stylesheet ini masih termuat setelah navigasi klien publik -> admin. Token dideklarasikan
+   di :root supaya portal, ::backdrop, dan popover publik ikut. Plain CSS (tanpa Tailwind): utilitas
+   memakai token ini lewat @theme di theme.css (dengan fallback ke token netral untuk admin).
+   Tujuh warna acuan:
+   #05B4D9 cyan       --highlight: sorotan & ring fokus di section gelap, segmen progres hero yang lewat
+   #058DBD biru laut  --secondary: UI non-teks (border hover kartu, ikon dekoratif), bukan teks
+   #0A6A9D biru tua   --primary: tombol, chip/tab/menu aktif, link, ring fokus di latar terang
+   #192A42 navy       --fg teks utama, --cta-bg latar CTA penutup
+   #120B06 hitam kopi --fg-strong judul, --inverse-bg footer, teks di atas amber/cyan
+   #552D11 cokelat    --accent-ink: eyebrow, IndexNumber, nomor daftar judul
+   #EBA224 amber      --accent: CTA di hero & section gelap, tanda dekoratif, badge, progres
+   Kontras (WCAG 2.1) tercatat di samping tiap token. Amber & cyan bukan warna teks di latar terang;
+   teks putih tidak di atas amber/cyan; biru tua tidak di latar navy; amber tidak di atas biru tua. */
 :root:has([data-site="public"]) {
-  color-scheme: dark;
-  --bg: #120b06;
-  --bg-subtle: #192a42;
-  /* Hover baris, skeleton, kartu tanpa sampul: cokelat sangat gelap (turunan #552D11). */
-  --bg-muted: #2a1c12;
-  --border: #33261c;
-  --border-strong: #5a4330;
-  /* Placeholder saja (5,2:1 di latar, 3,8:1 di navy). */
-  --fg-subtle: #8f8173;
-  /* Teks sekunder 9,5:1 di latar, 7,0:1 di navy. */
-  --fg-muted: #bfb3a3;
-  --fg: #ece5da;
-  --fg-strong: #f4efe6;
-  /* Footer cokelat #552D11 dengan garis hitam cokelat; teks krem 10,4:1, sekunder 7,6:1, emas 5,5:1. */
-  --inverse-bg: #552d11;
-  --inverse-fg: #f4efe6;
-  --inverse-muted: #dccdb8;
-  --inverse-line: #120b06;
-  /* Scrim hero fullbleed (DESIGN.md 8.1). --overlay-side: dari kiri di belakang blok teks (md+);
-     --overlay-mobile: vertikal di layar < 768 px (teks selebar layar). Keduanya per slide dengan
-     opacity --overlay-strength (overlayStrength slide, default 0,8). --overlay-head: atas, untuk header
-     transparan. --overlay-bottom: dasar area teks & indikator. Navy ke hitam cokelat. */
-  --overlay-side: linear-gradient(90deg, rgb(18 20 28 / 0.8) 0%, rgb(25 42 66 / 0.55) 40%, rgb(25 42 66 / 0) 75%);
-  --overlay-mobile: linear-gradient(180deg, rgb(25 42 66 / 0.35), rgb(18 11 6 / 0.82));
+  --bg: #f5f9fc;
+  --bg-subtle: #e9f2f8;
+  --bg-muted: #dce9f2;
+  --border: #d3e2ec;
+  --border-strong: #a9c3d6;
+  /* Placeholder saja, bukan teks baca (2,7:1). */
+  --fg-subtle: #8a9aad;
+  /* Teks sekunder: 6,1:1 di --bg, 5,7:1 di --bg-subtle, 5,2:1 di --bg-muted. */
+  --fg-muted: #4f6074;
+  /* Teks utama navy 13,7:1; judul hitam kopi 18,4:1. */
+  --fg: #192a42;
+  --fg-strong: #120b06;
+  /* Footer hitam kopi: teks 17,6:1, sekunder 8,8:1. */
+  --inverse-bg: #120b06;
+  --inverse-fg: #eef4f9;
+  --inverse-muted: #9fb0c3;
+  --inverse-line: #2a2119;
+  /* Scrim hero fullbleed (DESIGN.md 8.1), navy ke hitam kopi. --overlay-side: dari kiri di belakang blok
+     teks (md+); --overlay-mobile: vertikal di layar < 768 px (teks selebar layar). Keduanya per slide
+     dengan opacity --overlay-strength (overlayStrength slide, default 0,8). --overlay-head (peran
+     --overlay-top): atas, untuk header transparan. --overlay-bottom: dasar area teks & indikator. */
+  --overlay-side: linear-gradient(90deg, rgb(18 11 6 / 0.94) 0%, rgb(25 42 66 / 0.9) 70%, rgb(25 42 66 / 0.35) 90%, rgb(25 42 66 / 0) 100%);
+  --overlay-mobile: linear-gradient(180deg, rgb(25 42 66 / 0.5) 0%, rgb(25 42 66 / 0.9) 28%, rgb(18 11 6 / 0.94) 100%);
   --overlay-head: linear-gradient(180deg, rgb(18 11 6 / 0.45) 0%, transparent 18%);
-  --overlay-bottom: rgb(18 11 6 / 0.62);
+  --overlay-bottom: rgb(25 42 66 / 0.68);
 
-  /* Emas: tombol utama, chip/paginasi aktif, kotak tanggal, tombol kontak (teks hitam cokelat 9:1).
-     Teks emas kecil --primary-ink (9:1 di latar, 6,7:1 di navy). */
-  --primary: #eba224;
-  --primary-hover: #f0b54a;
-  --on-primary: #120b06;
-  --primary-ink: #eba224;
-  /* Emas juga untuk CTA di foto hero & section gelap. */
+  /* Biru tua: aksi di latar terang. Putih di atasnya 5,9:1 (hover 7,5:1). Teks biru kecil (angka
+     statistik, harga, tag kategori, panah) memakai --primary-ink: 5,6:1 di --bg, 4,8:1 di --bg-muted. */
+  --primary: #0a6a9d;
+  --primary-hover: #085a86;
+  --on-primary: #ffffff;
+  --primary-ink: #0a6a9d;
+  /* Biru laut: hanya UI non-teks (3,6:1 di --bg). Bentrok nama dengan token shadcn admin (--secondary =
+     latar abu), jadi components/ui tidak boleh memakai utilitas secondary polos (palette-guard.test.ts). */
+  --secondary: #058dbd;
+  /* Amber: CTA di hero & section gelap, tanda dekoratif. Teks di atasnya hitam kopi 9,0:1. Sebagai teks
+     hanya di latar gelap: 6,7:1 di navy, 9,0:1 di footer. */
   --accent: #eba224;
   --on-accent: #120b06;
   --accent-on-dark: #eba224;
-  /* Simbol ✦ di pita marquee emas: cokelat #552D11 (dekoratif, 5,5:1). */
-  --accent-on-primary: #552d11;
-  /* Cyan: garis menu & tab aktif, label kategori kartu, ring fokus (7,9:1 di latar, 5,9:1 di navy).
-     Bentrok nama dengan token shadcn admin (--secondary = latar abu), jadi components/ui tidak boleh
-     memakai utilitas secondary polos (palette-guard.test.ts). */
-  --secondary: #05b4d9;
-  --on-secondary: #ffffff;
-  --ok: #4cc07a;
+  /* Cokelat: teks aksen kecil (eyebrow, IndexNumber), 11,2:1 di --bg, 10,5:1 di --bg-subtle. */
+  --accent-ink: #552d11;
+  /* Cyan: sorotan di latar gelap. Teks di atasnya hitam kopi 7,9:1. Teks cyan (eyebrow & hover link
+     footer/CTA) 5,9:1 di navy, 7,9:1 di footer. */
+  --highlight: #05b4d9;
+  --on-highlight: #120b06;
+  --highlight-on-dark: #05b4d9;
+  /* Latar CTA penutup (permukaan data-surface="cta" di bawah). */
+  --cta-bg: #192a42;
+  /* Ring fokus: biru tua di latar terang (5,6:1), cyan di hero, CTA, footer, lightbox. */
+  --focus-ring: #0a6a9d;
+  --focus-ring-dark: #05b4d9;
+  /* Titik status DIBUKA (4,8:1). */
+  --ok: #2e7d4f;
 
-  /* Tombol CTA di hero & section gelap: emas dengan teks gelap (9:1). */
+  /* Alias peran dari palet D: komponen memakai nama ini, nilainya menunjuk ke token palet E di atas. */
+  /* Alias: tombol CTA di hero & section gelap = amber dengan teks hitam kopi; hover amber terang (10:1). */
   --cta: var(--accent);
   --cta-hover: #f0b54a;
   --on-cta: var(--on-accent);
-  /* Hover tombol sekunder, chip, kartu, dan paginasi: garis cyan tua #058DBD, teks --primary-ink. */
-  --line-hover: #058dbd;
+  /* Alias: hover tombol sekunder = garis biru laut (non-teks), teks --primary-ink. */
+  --line-hover: var(--secondary);
   --ink-hover: var(--primary-ink);
-  /* Link teks cyan. */
-  --link: var(--secondary);
-  /* Ring fokus cyan di halaman, footer (4,8:1 di cokelat), dan foto. */
-  --focus: var(--secondary);
-  --focus-dark: #05b4d9;
+  /* Alias: link teks (rich text, garis tombol ghost) = biru tua. */
+  --link: var(--primary);
+  /* Alias: ring fokus. */
+  --focus: var(--focus-ring);
+  --focus-dark: var(--focus-ring-dark);
+  /* Alias: sudut Viewfinder, PlusMarker, titik BrandMark = amber di latar terang maupun gelap
+     (keputusan pemilik 17 Nov 2026). Amber tidak pernah diletakkan di atas latar --primary. */
+  --decor-mark: var(--accent);
 
-  /* Elemen dekoratif (DESIGN.md 6). --decor-mark: sudut Viewfinder & PlusMarker cyan tua #058DBD di
-     halaman, cyan terang #05B4D9 di atas foto/latar gelap ([data-surface="dark"] di bawah). */
-  --decor-mark: #058dbd;
-  /* Kotak latar logo klien: banyak logo instansi bertulisan gelap, tidak terbaca langsung di latar gelap. */
-  --logo-tile: #f4efe6;
-  --outline-stroke: #2a1f17;
-  --outline-stroke-dark: #6b3a18;
-  --dot: #33261c;
+  /* Elemen dekoratif (DESIGN.md 6). */
+  --outline-stroke: #cfe0ec;
+  --outline-stroke-dark: #2b3e5c;
+  --dot: #bfd6e6;
 
-  /* Grading foto publik (PublicImage film): bersih, sedikit lebih kontras; lapisan emas tipis di hero. */
-  --photo-filter: saturate(1.04) contrast(1.05);
-  --photo-tint: rgb(235 162 36 / 0.08);
+  /* Grading foto publik (PublicImage film), tanpa sepia; lapisan biru tipis di atas foto hero. */
+  --photo-filter: saturate(1.05) contrast(1.05);
+  --photo-tint: rgb(5 141 189 / 0.08);
 
   /* Radius DESIGN.md 5: tombol & input 8 px, kartu & kotak statistik 12 px. */
   --radius: 8px;
@@ -94,24 +105,12 @@
   accent-color: var(--primary);
 }
 
-/* Permukaan gelap (foto hero, foto lebar dengan Viewfinder, footer): tanda dekoratif cyan terang. */
-:root:has([data-site="public"]) [data-surface="dark"] {
-  --decor-mark: #05b4d9;
-}
-
-/* Permukaan biru (CTA penutup beranda & layanan): pita biru #0A6A9D supaya menonjol dari halaman gelap.
-   Komponen tetap memakai kelas section terbalik (bg-inverse-bg, text-inverse-*, ring-focus-dark,
-   ring-offset-inverse-bg), tokennya dipetakan ulang di sini. Teks putih 5,9:1; emas & cyan di atas biru
-   kurang dari 4,5:1, jadi eyebrow, cincin badge, dan ring fokus putih; emas hanya latar tombol CTA. */
-:root:has([data-site="public"]) [data-surface="secondary"] {
-  --inverse-bg: #0a6a9d;
-  --inverse-fg: #ffffff;
-  --inverse-muted: var(--on-secondary);
-  --inverse-line: #2f86b5;
-  --accent-on-dark: var(--on-secondary);
-  --focus-dark: var(--on-secondary);
-  --decor-mark: var(--accent);
-  --outline-stroke-dark: #2f86b5;
+/* Permukaan CTA penutup (beranda, /pelatihan, kategori, layanan): latar navy. Komponen tetap memakai
+   kelas section terbalik (bg-inverse-bg, text-inverse-*, ring-focus-dark, ring-offset-inverse-bg),
+   tokennya dipetakan ulang di sini. Teks 13,1:1, sekunder 6,5:1, amber 6,7:1, cyan 5,9:1. */
+:root:has([data-site="public"]) [data-surface="cta"] {
+  --inverse-bg: var(--cta-bg);
+  --inverse-line: var(--outline-stroke-dark);
 }
 
 /* Header publik: hover tombol Cari bergaris --primary; di atas foto hero garis terang lebih tegas. */
@@ -120,9 +119,8 @@
 }
 :root:has([data-site="public"]):has([data-header-over]):not(:has([data-preview-banner])) .site-header {
   --header-line-hover: color-mix(in srgb, var(--inverse-fg) 70%, transparent);
-  --decor-mark: #05b4d9;
 }
-/* Garis menu aktif di atas foto hero: emas (cyan di halaman biasa). */
+/* Garis menu aktif di atas foto hero: biru tua tidak terbaca di foto gelap, pakai amber. */
 :root:has([data-site="public"]):has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header [data-active-indicator="line"] {
   background: var(--accent-on-dark);
 }

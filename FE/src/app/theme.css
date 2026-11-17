@@ -97,20 +97,23 @@
   --color-transparent: transparent;
   --color-current: currentColor;
 
-  /* Palet publik (E, 16 Nov 2026): nilainya hanya dideklarasikan di (public)/palette-e.css (scope halaman publik).
-     Fallback = token netral lama, jadi komponen bersama (components/ui) yang juga dirender di admin
+  /* Palet publik E "Malam Hujan" (17 Nov 2026): nilainya hanya dideklarasikan di (public)/palette-e.css
+     (scope halaman publik). Fallback = token netral lama, jadi komponen bersama (components/ui) yang juga dirender di admin
      menghasilkan nilai yang sama persis dengan sebelumnya. Utilitas --accent dan --secondary polos
      bentrok dengan token shadcn admin (latar hover / latar abu), jadi bg/text/border-accent dan
      -secondary hanya untuk komponen publik (dijaga test components/ui/palette-guard.test.ts). */
   --color-primary-hover: var(--primary-hover, var(--fg-strong-hover));
   --color-on-primary: var(--on-primary, var(--inverse-fg));
   --color-primary-ink: var(--primary-ink, var(--fg-muted));
-  --color-on-secondary: var(--on-secondary, var(--inverse-fg));
   --color-on-accent: var(--on-accent, var(--fg-strong));
   --color-link: var(--link, var(--fg-strong));
   --color-decor-mark: var(--decor-mark, var(--fg-strong));
   --color-accent-on-dark: var(--accent-on-dark, var(--inverse-fg));
-  --color-accent-on-primary: var(--accent-on-primary, var(--inverse-fg));
+  /* Eyebrow & IndexNumber: cokelat di publik, --fg-muted di admin (sama dengan fallback primary-ink). */
+  --color-accent-ink: var(--accent-ink, var(--fg-muted));
+  /* Cyan: sorotan dekoratif dan teks (eyebrow, hover link) di footer & CTA penutup. */
+  --color-highlight: var(--highlight, var(--inverse-fg));
+  --color-highlight-on-dark: var(--highlight-on-dark, var(--inverse-fg));
   --color-inverse-muted: var(--inverse-muted, var(--inverse-fg));
   --color-ok: var(--ok, var(--fg-strong));
   --color-cta: var(--cta, var(--inverse-fg));
@@ -284,7 +287,7 @@
     color: var(--fg-muted);
   }
   .rich-text a {
-    /* Palet D: link --link (biru tua) di halaman publik; editor admin tetap --fg-strong (fallback). */
+    /* Link --link (biru tua palet E) di halaman publik; editor admin tetap --fg-strong (fallback). */
     color: var(--link, var(--fg-strong));
     text-decoration: underline;
     text-decoration-thickness: 1px;
