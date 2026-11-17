@@ -16,12 +16,19 @@ const HEADERS = { Origin: ORIGIN };
 const TARGET = 4.5;
 
 type Section = { id: string; type: string; content: Record<string, unknown> | null };
-type Measure = { name: string; selector: string; target: number | null };
+// exclude: teks di dalam elemen ini tidak dihitung (diukur sebagai entri sendiri).
+type Measure = { name: string; selector: string; target: number | null; exclude?: string };
 
 const MEASURES: Measure[] = [
-  { name: "headline", selector: "section[data-header-over] h1", target: TARGET },
+  { name: "headline", selector: "section[data-header-over] h1", target: TARGET, exclude: ".text-accent-on-dark" },
+  // Kata berganti (amber, --accent-on-dark) diukur terpisah dari teks headline lainnya.
+  { name: "kata berganti", selector: "section[data-header-over] h1 .text-accent-on-dark", target: TARGET },
   { name: "subjudul", selector: "section[data-header-over] h1 ~ p", target: TARGET },
   { name: "eyebrow", selector: "section[data-header-over] p:has(+ h1)", target: null },
+  // Indikator slide di dasar hero: penghitung "01 / 03" dan caption slide aktif (caption baru tampil
+  // mulai 640 px, jadi di 360 px tidak terukur).
+  { name: "counter", selector: "section[data-header-over] p.tabular-nums", target: TARGET },
+  { name: "caption", selector: "section[data-header-over] p.truncate", target: TARGET },
   // Teks header di atas foto (link menu, tombol submenu/indeks, Cari, merek, tombol menu mobile);
   // tombol CTA header punya latar sendiri.
   {
@@ -87,7 +94,7 @@ async function measure(page: Page, hiddenShot: string) {
     };
     const clip = (rect: DOMRect) => ({ x: Math.max(0, rect.left), y: Math.max(0, rect.top), right: Math.min(innerWidth, rect.right), bottom: Math.min(innerHeight, rect.bottom) });
     const usable = (rect: DOMRect) => rect.width > 2 && rect.height > 2 && rect.bottom > 0 && rect.top < innerHeight;
-    return measures.flatMap(({ name, selector }) =>
+    return measures.flatMap(({ name, selector, exclude }) =>
       Array.from(document.querySelectorAll<HTMLElement>(selector))
         .filter((element) => {
           const box = element.getBoundingClientRect();
@@ -98,6 +105,7 @@ async function measure(page: Page, hiddenShot: string) {
           const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
           for (let node = walker.nextNode(); node; node = walker.nextNode()) {
             if (!node.textContent?.trim() || !node.parentElement) continue;
+            if (exclude && node.parentElement.closest(exclude)) continue;
             const color = parse(getComputedStyle(node.parentElement).color);
             const range = document.createRange();
             range.selectNodeContents(node);
@@ -121,6 +129,8 @@ async function measure(page: Page, hiddenShot: string) {
       "[data-measure-hide] svg, [data-measure-hide] [aria-hidden], [data-active-indicator] { visibility: hidden !important; }",
       // Sudut & crosshair Viewfinder di atas foto: tanda dekoratif, bukan latar teks.
       ".hero-stage div[aria-hidden][data-surface] { visibility: hidden !important; }",
+      // Indikator dev Next.js (pojok kiri bawah) menutupi penghitung slide; bukan bagian halaman.
+      "nextjs-portal { display: none !important; }",
     ].join(" "),
   });
   await page.waitForTimeout(100);
