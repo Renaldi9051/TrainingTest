@@ -14,7 +14,7 @@ export const CARD_IMAGE_SIZES = "(min-width: 1024px) 400px, (min-width: 640px) 5
 // --primary-ink -> judul h3 -> meta, teks berjarak 18 px dari tepi. Gambar memakai grading film
 // (--photo-filter) yang lepas saat hover/fokus (transisi filter 300 ms, pengecualian DESIGN 9.3 v0.4;
 // menggantikan gambar hitam putih keputusan 28 Okt 2026).
-// Hover: border --line-hover (biru laut) + kartu naik 3 px, gambar zoom 1.03, sudut Viewfinder 12 px masuk, judul bergaris bawah,
+// Border --line-hover (biru laut); hover: border --primary + kartu naik 3 px, gambar zoom 1.03, sudut Viewfinder 12 px masuk, judul bergaris bawah,
 // label "Lihat →" mengikuti kursor (PointerEffects, hanya desktop). Di grid: gambar wipe dari bawah
 // + zoom 1,15 -> 1 bersama kartunya.
 // Gambar: sampul pelatihan, atau gambar kategori kalau sampul kosong (coverSource dari BE).
@@ -45,10 +45,11 @@ export function TrainingCard({
       data-cursor-label=""
       data-cover-source={training.coverSource ?? "none"}
       className={cn(
-        "group relative flex h-full flex-col rounded-card border border-border bg-bg pb-[18px]",
+        // Palet E (pratinjau atasan): border biru laut sejak awal, hover/fokus biru tua + naik 3 px.
+        "group relative flex h-full flex-col rounded-card border border-line-hover bg-bg pb-[18px]",
         // Border 150 ms (DESIGN 9.3, pengecualian v0.3), naik 3 px 300 ms.
         "transition-[border-color,translate] ease-standard [transition-duration:150ms,300ms]",
-        "hover:border-line-hover focus-within:border-line-hover motion-safe:hover:-translate-y-[3px]",
+        "hover:border-primary focus-within:border-primary motion-safe:hover:-translate-y-[3px]",
       )}
     >
       <RevealImage className="relative aspect-[4/3] overflow-hidden rounded-t-[calc(var(--card-radius,var(--radius))-1px)] bg-bg-muted">

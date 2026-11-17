@@ -24,9 +24,10 @@ export function ArticleCard({
     <article
       data-cursor-label=""
       className={cn(
-        "group relative flex h-full flex-col rounded-card border border-border bg-bg pb-[18px]",
+        // Palet E (pratinjau atasan): border biru laut sejak awal, hover/fokus biru tua + naik 3 px.
+        "group relative flex h-full flex-col rounded-card border border-line-hover bg-bg pb-[18px]",
         "transition-[border-color,translate] ease-standard [transition-duration:150ms,300ms]",
-        "hover:border-line-hover focus-within:border-line-hover motion-safe:hover:-translate-y-[3px]",
+        "hover:border-primary focus-within:border-primary motion-safe:hover:-translate-y-[3px]",
       )}
     >
       <RevealImage className="relative aspect-[4/3] overflow-hidden rounded-t-[calc(var(--card-radius,var(--radius))-1px)] bg-bg-muted">
