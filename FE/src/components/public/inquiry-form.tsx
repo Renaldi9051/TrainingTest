@@ -102,7 +102,7 @@ export function InquiryForm({
 
   if (sent) {
     return (
-      <div className="rounded-card border border-primary bg-bg p-6 md:p-10">
+      <div className="rounded-card border border-primary bg-surface p-6 md:p-10">
         <div role="status" className="space-y-3">
           <p className="font-mono text-label font-medium uppercase tracking-[0.08em] text-primary-ink">Terkirim</p>
           <p className="flex items-center gap-2 text-h3 text-fg-strong">

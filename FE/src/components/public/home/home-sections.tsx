@@ -19,6 +19,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import type { Cta, PreviewHomeSection, PublicHomeSection } from "@/lib/api/types";
+import type { LightTone } from "@/lib/section-tones";
 import { cn } from "@/lib/utils";
 
 // Judul h2 tersembunyi untuk section tanpa judul (label UI, bukan konten).
@@ -209,13 +210,15 @@ function CtaSection({ section }: { section: Extract<PublicHomeSection, { type: "
   );
 }
 
-export function HomeSectionView({ section }: { section: PublicHomeSection }): ReactNode {
+// tone: latar section terang dari homeSectionTones (selang-seling --bg/--bg-subtle, Visi & Misi hangat).
+export function HomeSectionView({ section, tone }: { section: PublicHomeSection; tone?: LightTone | null }): ReactNode {
+  const light = tone ?? undefined;
   switch (section.type) {
     case "HERO":
       return <HeroSection section={section} />;
     case "LATEST_TRAININGS":
       return (
-        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.LATEST_TRAININGS} intro={section.intro}>
+        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.LATEST_TRAININGS} intro={section.intro} tone={light}>
           {/* Tanda + di sudut grid (DESIGN.md 13). */}
           <div className="relative">
             <CornerMarkers decor={section.decor} inset="-top-5" />
@@ -227,22 +230,22 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
       );
     case "UPCOMING_SCHEDULES":
       return (
-        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.UPCOMING_SCHEDULES} intro={section.intro}>
+        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.UPCOMING_SCHEDULES} intro={section.intro} tone={light}>
           <ScheduleTable rows={section.items} caption={section.heading || FALLBACK_HEADINGS.UPCOMING_SCHEDULES} showTraining bigDate={section.decor} />
           <SectionCta cta={section.cta} />
         </PublicSection>
       );
     case "CLIENTS":
       return (
-        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.CLIENTS} intro={section.intro}>
+        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.CLIENTS} intro={section.intro} tone={light}>
           <ClientLogos clients={section.items} />
         </PublicSection>
       );
     case "VISION_MISSION":
       return (
         // Kolase gambar (DESIGN.md 13) butuh gambar milik section ini; belum ada, jadi tanda + saja (aturan
-        // konten 6: tanpa placeholder).
-        <PublicSection eyebrow={section.eyebrow} heading="" fallbackHeading={FALLBACK_HEADINGS.VISION_MISSION} className="bg-bg-subtle">
+        // konten 6: tanpa placeholder). Band hangat Malam Hujan v2 (tone "warm" dari homeSectionTones).
+        <PublicSection eyebrow={section.eyebrow} heading="" fallbackHeading={FALLBACK_HEADINGS.VISION_MISSION} tone={light}>
           <div className="relative">
             <CornerMarkers decor={section.decor} />
             <VisionMission vision={section.vision} mission={section.mission} motto={section.motto} />
@@ -253,7 +256,7 @@ export function HomeSectionView({ section }: { section: PublicHomeSection }): Re
       return <CtaSection section={section} />;
     case "LATEST_ARTICLES":
       return (
-        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.LATEST_ARTICLES} intro={section.intro}>
+        <PublicSection eyebrow={section.eyebrow} heading={section.heading} fallbackHeading={FALLBACK_HEADINGS.LATEST_ARTICLES} intro={section.intro} tone={light}>
           {/* Pola sama dengan pelatihan terbaru: tanda + di sudut grid. */}
           <div className="relative">
             <CornerMarkers decor={section.decor} inset="-top-5" />

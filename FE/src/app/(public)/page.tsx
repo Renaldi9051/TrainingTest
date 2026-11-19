@@ -9,6 +9,7 @@ import { Container } from "@/components/ui/container";
 import { getHome, getSettings } from "@/lib/api/public";
 import { getHomePreview } from "@/lib/api/preview";
 import type { PreviewHomeSection, PublicHomeSection } from "@/lib/api/types";
+import { homeSectionTones } from "@/lib/section-tones";
 
 // Data beranda dari cache bertag `home` (BE me-revalidate saat section ATAU datanya berubah).
 // Draft mode (pratinjau admin): semua section, termasuk yang tersembunyi & kosong, tanpa cache.
@@ -37,6 +38,8 @@ const isPreviewSection = (section: PublicHomeSection | PreviewHomeSection): sect
 export default async function HomePage() {
   const [{ sections, preview }, settings] = await Promise.all([loadHome(), getSettings()]);
   const hasHero = sections.some((section) => section.type === "HERO");
+  // Latar section terang: selang-seling --bg/--bg-subtle, Visi & Misi band hangat (Malam Hujan v2).
+  const tones = homeSectionTones(sections.map((section) => section.type));
 
   return (
     <>
@@ -61,13 +64,13 @@ export default async function HomePage() {
         </Container>
       ) : (
         <div className="divide-y divide-border">
-          {sections.map((section) =>
+          {sections.map((section, index) =>
             preview && isPreviewSection(section) ? (
               <PreviewSectionFrame key={section.id} section={section}>
-                <HomeSectionView section={section} />
+                <HomeSectionView section={section} tone={tones[index]} />
               </PreviewSectionFrame>
             ) : (
-              <HomeSectionView key={section.id} section={section} />
+              <HomeSectionView key={section.id} section={section} tone={tones[index]} />
             ),
           )}
         </div>

@@ -43,7 +43,9 @@ export function ScheduleTable({
   bigDate?: boolean;
 }) {
   return (
-    <table className="w-full border-collapse text-left">
+    // Di section berlatar --bg-subtle (data-tone="subtle") tabel memakai --surface, supaya hover baris
+    // (--bg-subtle) tetap terlihat (Malam Hujan v2).
+    <table className="w-full border-collapse text-left in-data-[tone=subtle]:bg-surface">
       <caption className="sr-only">{caption}</caption>
       <thead className="hidden md:table-header-group">
         <tr className="border-b border-border-strong">
