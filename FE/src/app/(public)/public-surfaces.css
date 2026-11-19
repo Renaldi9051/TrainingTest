@@ -1,0 +1,49 @@
+/* Aturan permukaan halaman publik yang sama untuk semua palet (palette-malam-hujan.css, palette-e.css).
+   Di-scope ke [data-site="public"] (main layout publik), jadi admin tidak terpengaruh. Hanya memakai token
+   palet; nilainya datang dari blok [data-palette] yang aktif. */
+
+/* Hero fullbleed (hero navy). Latar slide navy; foto dari admin tetap berwarna dan jelas di sisi foto,
+   memudar ke navy di sisi teks (mask), lalu scrim di atasnya. Hanya CSS; layout split tidak terpengaruh.
+   Revisi pemilik 17 Nov: versi foto pudar menyeluruh "terlalu biru, gambar ketutupan". */
+:root:has([data-site="public"]) .hero-stage[data-header-over] .hero-slide {
+  background: var(--cta-bg);
+}
+:root:has([data-site="public"]) .hero-stage[data-header-over] .hero-slide img {
+  mask-image: var(--hero-photo-mask-mobile);
+}
+@media (width >= 48rem) {
+  :root:has([data-site="public"]) .hero-stage[data-header-over] .hero-slide img {
+    mask-image: var(--hero-photo-mask);
+  }
+}
+
+/* Permukaan navy: CTA penutup (beranda, /pelatihan, kategori, layanan) dan hero fullbleed. Komponen tetap
+   memakai kelas section terbalik (bg-inverse-bg, text-inverse-*, ring-focus-dark, ring-offset-inverse-bg);
+   tokennya dipetakan ulang ke --cta-* di sini, jadi footer hitam kopi (--inverse-*) dan permukaan navy
+   bisa beda rasa. Hero hanya memetakan teks: letterbox-nya tetap --inverse-bg. */
+:root:has([data-site="public"]) [data-surface="cta"] {
+  --inverse-bg: var(--cta-bg);
+  --inverse-fg: var(--cta-fg);
+  --inverse-muted: var(--cta-muted);
+  --inverse-line: var(--cta-line);
+}
+:root:has([data-site="public"]) .hero-stage[data-header-over] {
+  --inverse-fg: var(--cta-fg);
+  --inverse-muted: var(--cta-muted);
+}
+
+/* Header publik: hover tombol Cari bergaris --primary; di atas foto hero teks memakai warna hero (--cta-fg)
+   dan garis terang lebih tegas. */
+:root:has([data-site="public"]) .site-header {
+  --header-line-hover: var(--primary);
+}
+:root:has([data-site="public"]):has([data-header-over]):not(:has([data-preview-banner])) .site-header {
+  --header-line-hover: color-mix(in srgb, var(--inverse-fg) 70%, transparent);
+}
+:root:has([data-site="public"]):has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header {
+  --inverse-fg: var(--cta-fg);
+}
+/* Garis menu aktif di atas foto hero: biru tua tidak terbaca di foto gelap, pakai amber. */
+:root:has([data-site="public"]):has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header [data-active-indicator="line"] {
+  background: var(--accent-on-dark);
+}

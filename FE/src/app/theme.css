@@ -125,6 +125,11 @@
   --color-focus-dark: var(--focus-dark, var(--inverse-fg));
   --color-overlay-bottom: var(--overlay-bottom, var(--overlay));
   --color-dot: var(--dot, var(--border-strong));
+  /* Malam Hujan v2 (19 Nov 2026): --surface (kartu, tabel, panel di atas --bg-subtle) dan band hangat
+     --bg-warm/--border-warm (maks 1 section per halaman). Admin: sama dengan --bg/--bg-subtle/--border. */
+  --color-surface: var(--surface, var(--bg));
+  --color-bg-warm: var(--bg-warm, var(--bg-subtle));
+  --color-border-warm: var(--border-warm, var(--border));
 
   --color-status-error: var(--status-error);
   --color-status-success: var(--status-success);
