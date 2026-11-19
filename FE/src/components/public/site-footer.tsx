@@ -15,12 +15,13 @@ const SOCIAL_LABELS: Record<SocialPlatform, string> = {
   other: "Tautan",
 };
 
-// Tautan footer: garis bawah memanjang dari kiri saat hover/fokus (DESIGN.md 9.2 Link).
+// Tautan footer: garis bawah memanjang dari kiri saat hover/fokus (DESIGN.md 9.2 Link). Hover & eyebrow
+// amber (--accent-on-dark, 9,0:1 di hitam kopi; Malam Hujan v2), ring fokus tetap cyan.
 const footerLink =
-  "relative self-start rounded-sm text-small text-inverse-fg/80 outline-none transition-colors duration-150 hover:text-highlight-on-dark focus-visible:text-highlight-on-dark focus-visible:ring-2 focus-visible:ring-focus-dark focus-visible:ring-offset-2 focus-visible:ring-offset-inverse-bg after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100";
+  "relative self-start rounded-sm text-small text-inverse-fg/80 outline-none transition-colors duration-150 hover:text-accent-on-dark focus-visible:text-accent-on-dark focus-visible:ring-2 focus-visible:ring-focus-dark focus-visible:ring-offset-2 focus-visible:ring-offset-inverse-bg after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 after:ease-standard hover:after:scale-x-100";
 
 function FooterHeading({ children }: { children: string }) {
-  return <h2 className="mb-1.5 font-mono text-label font-medium uppercase tracking-[0.08em] text-highlight-on-dark">{children}</h2>;
+  return <h2 className="mb-1.5 font-mono text-label font-medium uppercase tracking-[0.08em] text-accent-on-dark">{children}</h2>;
 }
 
 function NavColumn({ label, items }: { label: string; items: PublicNavItem[] }) {
@@ -57,7 +58,8 @@ export async function SiteFooter() {
   const hasOffice = Boolean(contact.address || contact.phone || emails.length > 0 || contact.whatsappUrl || contact.mapEmbedUrl);
 
   return (
-    <footer data-surface="dark" className="mt-auto border-t border-inverse-line bg-inverse-bg text-inverse-fg">
+    // Garis amber 2 px di atas: pemisah dari CTA penutup navy (Malam Hujan v2).
+    <footer data-surface="dark" className="mt-auto border-t-2 border-t-accent bg-inverse-bg text-inverse-fg">
       <Container className="grid gap-12 pt-20 pb-14 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
         <div className="space-y-4 lg:col-span-4">
           <p className="flex items-center gap-2.5 text-[18px] font-semibold tracking-[-0.02em]">
