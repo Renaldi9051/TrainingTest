@@ -1,11 +1,13 @@
-/* Palet E "Malam Hujan" (dipilih atasan 17 Nov 2026, menggantikan palet D), hanya untuk halaman publik:
-   foto jalan basah malam hari. Latar putih kebiruan, teks navy, aksi biru tua, sorotan amber seperti
+/* Palet E "Malam Hujan" (dipilih atasan 17 Nov 2026, menggantikan palet D), id "palet-e". Sejak 19 Nov 2026
+   bukan palet aktif lagi (diganti Malam Hujan v2, palette-malam-hujan.css), disimpan sebagai palet kedua
+   untuk fitur ganti palet: berlaku kalau <main> layout publik ber-data-palette="palet-e".
+   Foto jalan basah malam hari. Latar putih kebiruan, teks navy, aksi biru tua, sorotan amber seperti
    lampu jalan dan cyan di section gelap. Acuan: PROMPT-KIRO-PALET-E.md (lokal), DESIGN.md bagian 2.
-   Di-import oleh (public)/layout.tsx, dan setiap aturan di-scope ke halaman yang punya penanda
-   [data-site="public"] (main layout publik). Admin tidak pernah punya penanda itu, jadi tokennya tetap
-   netral walau stylesheet ini masih termuat setelah navigasi klien publik -> admin. Token dideklarasikan
-   di :root supaya portal, ::backdrop, dan popover publik ikut. Plain CSS (tanpa Tailwind): utilitas
-   memakai token ini lewat @theme di theme.css (dengan fallback ke token netral untuk admin).
+   Di-import oleh (public)/layout.tsx; token di-scope ke halaman yang punya [data-palette="palet-e"].
+   Admin tidak pernah punya penanda itu, jadi tokennya tetap netral walau stylesheet ini masih termuat
+   setelah navigasi klien publik -> admin. Token dideklarasikan di :root supaya portal, ::backdrop, dan
+   popover publik ikut. Aturan permukaan bersama semua palet ada di public-surfaces.css. Plain CSS (tanpa
+   Tailwind): utilitas memakai token ini lewat @theme di theme.css (dengan fallback ke token netral untuk admin).
    Tujuh warna acuan:
    #05B4D9 cyan       --highlight: sorotan & ring fokus di section gelap, segmen progres hero yang lewat
    #058DBD biru laut  --secondary: UI non-teks (border hover kartu, ikon dekoratif), bukan teks
@@ -16,12 +18,16 @@
    #EBA224 amber      --accent: CTA di hero & section gelap, tanda dekoratif, badge, progres
    Kontras (WCAG 2.1) tercatat di samping tiap token. Amber & cyan bukan warna teks di latar terang;
    teks putih tidak di atas amber/cyan; biru tua tidak di latar navy; amber tidak di atas biru tua. */
-:root:has([data-site="public"]) {
+:root:has([data-palette="palet-e"]) {
   --bg: #f5f9fc;
   --bg-subtle: #e9f2f8;
   --bg-muted: #dce9f2;
   --border: #d3e2ec;
   --border-strong: #a9c3d6;
+  /* Token v2 (19 Nov 2026) dengan nilai setara palet E: kartu tetap --bg, tanpa band hangat. */
+  --surface: #f5f9fc;
+  --bg-warm: #e9f2f8;
+  --border-warm: #d3e2ec;
   /* Placeholder saja, bukan teks baca (2,7:1). */
   --fg-subtle: #8a9aad;
   /* Teks sekunder: 6,1:1 di --bg, 5,7:1 di --bg-subtle, 5,2:1 di --bg-muted. */
@@ -40,7 +46,8 @@
      --overlay-top): atas, untuk header transparan. --overlay-bottom: dasar area teks & indikator. */
   --overlay-side: linear-gradient(90deg, rgb(18 11 6 / 0.94) 0%, rgb(25 42 66 / 0.9) 60%, rgb(25 42 66 / 0.45) 85%, rgb(25 42 66 / 0) 100%);
   --overlay-mobile: linear-gradient(180deg, rgb(25 42 66 / 0.65) 0%, rgb(25 42 66 / 0.95) 24%, rgb(18 11 6 / 0.95) 100%);
-  --overlay-head: linear-gradient(180deg, rgb(18 11 6 / 0.45) 0%, transparent 18%);
+  --overlay-top: rgb(18 11 6 / 0.45);
+  --overlay-head: linear-gradient(180deg, var(--overlay-top) 0%, transparent 18%);
   --overlay-bottom: rgb(25 42 66 / 0.68);
 
   /* Biru tua: aksi di latar terang. Putih di atasnya 5,9:1 (hover 7,5:1). Teks biru kecil (angka
@@ -56,6 +63,7 @@
      hanya di latar gelap: 6,7:1 di navy, 9,0:1 di footer. */
   --accent: #eba224;
   --on-accent: #120b06;
+  --accent-hover: #f0b54a;
   --accent-on-dark: #eba224;
   /* Cokelat: teks aksen kecil (eyebrow, IndexNumber), 11,2:1 di --bg, 10,5:1 di --bg-subtle. */
   --accent-ink: #552d11;
@@ -64,8 +72,12 @@
   --highlight: #05b4d9;
   --on-highlight: #120b06;
   --highlight-on-dark: #05b4d9;
-  /* Latar CTA penutup (permukaan data-surface="cta" di bawah) dan latar hero fullbleed. */
+  /* Latar CTA penutup (data-surface="cta", public-surfaces.css) dan latar hero fullbleed. */
   --cta-bg: #192a42;
+  /* Teks & garis di permukaan navy (CTA penutup, hero fullbleed): 13,1:1, sekunder 6,5:1. */
+  --cta-fg: #eef4f9;
+  --cta-muted: #9fb0c3;
+  --cta-line: #2b3e5c;
   /* Foto hero fullbleed: berwarna penuh di sisi foto, memudar ke latar navy di sisi teks (mask, aturan
      .hero-stage di bawah). md+: kiri (teks) -> kanan (foto); mobile: atas (foto) -> bawah (teks). */
   --hero-photo-mask: linear-gradient(90deg, rgb(0 0 0 / 0.35) 0%, rgb(0 0 0 / 0.45) 50%, #000 90%);
@@ -79,7 +91,7 @@
   /* Alias peran dari palet D: komponen memakai nama ini, nilainya menunjuk ke token palet E di atas. */
   /* Alias: tombol CTA di hero & section gelap = amber dengan teks hitam kopi; hover amber terang (10:1). */
   --cta: var(--accent);
-  --cta-hover: #f0b54a;
+  --cta-hover: var(--accent-hover);
   --on-cta: var(--on-accent);
   /* Alias: hover tombol sekunder = garis biru laut (non-teks), teks --primary-ink. */
   --line-hover: var(--secondary);
@@ -107,39 +119,4 @@
   --card-radius: 12px;
 
   accent-color: var(--primary);
-}
-
-/* Hero fullbleed (pratinjau atasan: hero navy). Latar slide navy; foto dari admin tetap berwarna dan jelas
-   di sisi foto, memudar ke navy di sisi teks (mask), lalu scrim di atasnya. Hanya CSS; layout split tidak
-   terpengaruh. Revisi pemilik 17 Nov: versi foto pudar menyeluruh "terlalu biru, gambar ketutupan". */
-:root:has([data-site="public"]) .hero-stage[data-header-over] .hero-slide {
-  background: var(--cta-bg);
-}
-:root:has([data-site="public"]) .hero-stage[data-header-over] .hero-slide img {
-  mask-image: var(--hero-photo-mask-mobile);
-}
-@media (width >= 48rem) {
-  :root:has([data-site="public"]) .hero-stage[data-header-over] .hero-slide img {
-    mask-image: var(--hero-photo-mask);
-  }
-}
-
-/* Permukaan CTA penutup (beranda, /pelatihan, kategori, layanan): latar navy. Komponen tetap memakai
-   kelas section terbalik (bg-inverse-bg, text-inverse-*, ring-focus-dark, ring-offset-inverse-bg),
-   tokennya dipetakan ulang di sini. Teks 13,1:1, sekunder 6,5:1, amber 6,7:1, cyan 5,9:1. */
-:root:has([data-site="public"]) [data-surface="cta"] {
-  --inverse-bg: var(--cta-bg);
-  --inverse-line: var(--outline-stroke-dark);
-}
-
-/* Header publik: hover tombol Cari bergaris --primary; di atas foto hero garis terang lebih tegas. */
-:root:has([data-site="public"]) .site-header {
-  --header-line-hover: var(--primary);
-}
-:root:has([data-site="public"]):has([data-header-over]):not(:has([data-preview-banner])) .site-header {
-  --header-line-hover: color-mix(in srgb, var(--inverse-fg) 70%, transparent);
-}
-/* Garis menu aktif di atas foto hero: biru tua tidak terbaca di foto gelap, pakai amber. */
-:root:has([data-site="public"]):has([data-header-over]):not([data-hero-hidden], :has([data-preview-banner])) .site-header [data-active-indicator="line"] {
-  background: var(--accent-on-dark);
 }

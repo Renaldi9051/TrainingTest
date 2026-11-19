@@ -1,0 +1,127 @@
+/* Palet "Malam Hujan v2" (id: malam-hujan, 19 Nov 2026), palet aktif halaman publik (DEFAULT_PALETTE di
+   lib/palette.ts). Penyempurnaan palet E dari color palette 7 warna atasan (foto jalan basah malam hari):
+   palet E hanya memakai sisi biru foto, v2 membawa juga sisi hangatnya (band hangat --bg-warm, footer
+   hitam kopi berteks hangat). Acuan: PROMPT-KIRO-PALET-MALAM-HUJAN.md (lokal), DESIGN.md bagian 2.
+
+   Fitur ganti palet: setiap palet adalah satu blok :root:has([data-palette="<id>"]) dengan nama token
+   yang sama (palet kedua: palette-e.css, id "palet-e"). Atribut data-palette dipasang di <main> layout
+   publik. Token dideklarasikan di :root (bukan di <main>) supaya header, footer, portal, ::backdrop, dan
+   popover publik ikut. Admin tidak punya atribut itu, jadi tokennya tetap netral (theme.css). Aturan
+   permukaan yang sama untuk semua palet ada di public-surfaces.css.
+
+   Tujuh warna acuan:
+   #05B4D9 cyan       --highlight: sorotan & ring fokus di latar navy, segmen progres hero yang lewat
+   #058DBD biru laut  --secondary: UI non-teks (border hover kartu, ikon dekoratif), bukan teks
+   #0A6A9D biru tua   --primary: tombol, chip/tab/menu aktif, link, ring fokus di latar terang
+   #192A42 navy       --fg teks utama, --cta-bg latar CTA penutup & hero fullbleed
+   #120B06 hitam kopi --fg-strong judul, --inverse-bg footer, teks di atas amber/cyan
+   #552D11 cokelat    --accent-ink: eyebrow, IndexNumber, nomor daftar judul
+   #EBA224 amber      --accent: CTA di hero & section gelap, tanda dekoratif, badge, garis atas footer
+   Kontras (WCAG 2.1) tercatat di samping tiap token. Amber & cyan bukan warna teks di latar terang;
+   teks putih tidak di atas amber/cyan; biru tua tidak di latar navy; amber tidak di atas biru tua. */
+:root:has([data-palette="malam-hujan"]) {
+  /* Latar terang: kabut biru dingin dari foto. --surface untuk kartu, tabel, dan panel di atas
+     --bg-subtle (sedikit terangkat). */
+  --bg: #f4f7f9;
+  --bg-subtle: #e8eff4;
+  --bg-muted: #dae5ec;
+  --surface: #fcfdfe;
+  --grid-line: #e2eaf0;
+  --border: #cfdce5;
+  /* Border input & chip: 3,5:1 di --bg, 3,3:1 di --bg-subtle (komponen UI ≥ 3:1). */
+  --border-strong: #6e8699;
+  /* Band hangat (cahaya lampu jalan, turunan amber): maksimal 1 section per halaman (beranda: Visi & Misi). */
+  --bg-warm: #f8edd8;
+  --border-warm: #ebd6b0;
+
+  /* Placeholder saja, bukan teks baca. */
+  --fg-subtle: #8a9aad;
+  /* Teks sekunder: 6,5:1 di --bg, 6,0:1 di --bg-subtle, 5,4:1 di --bg-muted, 6,0:1 di --bg-warm. */
+  --fg-muted: #4a5b6e;
+  /* Teks utama navy 13,4:1 (12,5:1 di --bg-warm); judul hitam kopi. */
+  --fg: #192a42;
+  --fg-strong: #120b06;
+
+  /* Biru tua: aksi di latar terang. --on-primary 5,8:1 (hover 8,0:1). --primary-ink teks biru kecil
+     (angka statistik, harga, tag kategori, panah): 5,5:1 di --bg, 5,1:1 di --bg-subtle & --bg-warm. */
+  --primary: #0a6a9d;
+  --primary-hover: #08547d;
+  --on-primary: #fcfdfe;
+  --primary-ink: #0a6a9d;
+  /* Biru laut: hanya UI non-teks (3,5:1 di --bg). Bentrok nama dengan token shadcn admin (--secondary =
+     latar abu), jadi components/ui tidak boleh memakai utilitas secondary polos (palette-guard.test.ts). */
+  --secondary: #058dbd;
+  /* Amber: latar tombol/badge, atau teks di latar gelap (6,7:1 di navy, 9,0:1 di hitam kopi). Teks di
+     atasnya hitam kopi 9,0:1 (hover 10,6:1). */
+  --accent: #eba224;
+  --accent-hover: #f3b445;
+  --on-accent: #120b06;
+  --accent-on-dark: #eba224;
+  /* Cokelat: teks aksen kecil (eyebrow, IndexNumber), 11,0:1 di --bg, 10,2:1 di --bg-warm. */
+  --accent-ink: #552d11;
+  /* Cyan: sorotan di latar navy. Teks di atasnya hitam kopi; teks cyan 5,9:1 di navy. */
+  --highlight: #05b4d9;
+  --on-highlight: #120b06;
+  --highlight-on-dark: #05b4d9;
+
+  /* Section gelap 1, navy: CTA penutup (data-surface="cta") dan hero fullbleed. Teks 13,1:1, sekunder 7,2:1. */
+  --cta-bg: #192a42;
+  --cta-fg: #eef4f9;
+  --cta-muted: #a8b9cc;
+  --cta-line: #2b3e5c;
+  /* Section gelap 2, hitam kopi: footer. Teks hangat 16,9:1, sekunder 9,0:1. */
+  --inverse-bg: #120b06;
+  --inverse-fg: #f4eee6;
+  --inverse-muted: #bcae9c;
+  --inverse-line: #2e2219;
+
+  /* Ring fokus: biru tua di latar terang, cyan di hero, CTA, footer, lightbox. */
+  --focus-ring: #0a6a9d;
+  --focus-ring-dark: #05b4d9;
+  /* Titik status DIBUKA (4,7:1). */
+  --ok: #2e7d4f;
+
+  /* Elemen dekoratif (DESIGN.md 6). */
+  --outline-stroke: #d3e0e9;
+  --outline-stroke-dark: #2b3e5c;
+  --dot: #bcd0de;
+
+  /* Foto hero fullbleed. --overlay-top: gelap tipis di atas untuk header transparan (dipakai lewat
+     --overlay-head); --overlay-bottom: dasar area teks & indikator. --overlay-side (md+, dari kiri) dan
+     --overlay-mobile (vertikal < 768 px): scrim navy -> hitam kopi di belakang blok teks, per slide
+     dikali --overlay-strength (default 0,8). Foto berwarna penuh di sisi foto, memudar ke navy di sisi
+     teks (--hero-photo-mask, public-surfaces.css). */
+  --overlay-top: rgb(18 11 6 / 0.15);
+  --overlay-head: linear-gradient(180deg, var(--overlay-top) 0%, transparent 18%);
+  --overlay-bottom: rgb(25 42 66 / 0.78);
+  --overlay-side: linear-gradient(90deg, rgb(18 11 6 / 0.94) 0%, rgb(25 42 66 / 0.9) 60%, rgb(25 42 66 / 0.45) 85%, rgb(25 42 66 / 0) 100%);
+  --overlay-mobile: linear-gradient(180deg, rgb(25 42 66 / 0.65) 0%, rgb(25 42 66 / 0.95) 24%, rgb(18 11 6 / 0.95) 100%);
+  --hero-photo-mask: linear-gradient(90deg, rgb(0 0 0 / 0.35) 0%, rgb(0 0 0 / 0.45) 50%, #000 90%);
+  --hero-photo-mask-mobile: linear-gradient(180deg, #000 0%, rgb(0 0 0 / 0.38) 18%, rgb(0 0 0 / 0.38) 60%);
+  /* Grading foto publik (PublicImage film), tanpa sepia; lapisan biru tipis di atas foto hero. */
+  --photo-tint: rgb(5 141 189 / 0.1);
+  --photo-filter: saturate(1.08) contrast(1.06);
+
+  /* Alias peran (nama dari palet D/E, dipakai komponen); nilainya menunjuk ke token di atas. */
+  /* Alias: tombol CTA di hero & section gelap = amber dengan teks hitam kopi. */
+  --cta: var(--accent);
+  --cta-hover: var(--accent-hover);
+  --on-cta: var(--on-accent);
+  /* Alias: hover tombol sekunder & kartu = garis biru laut (non-teks), teks --primary-ink. */
+  --line-hover: var(--secondary);
+  --ink-hover: var(--primary-ink);
+  /* Alias: link teks (rich text, garis tombol ghost) = biru tua. */
+  --link: var(--primary);
+  /* Alias: ring fokus. */
+  --focus: var(--focus-ring);
+  --focus-dark: var(--focus-ring-dark);
+  /* Alias: sudut Viewfinder, PlusMarker, titik BrandMark = amber di semua latar (keputusan pemilik
+     17 Nov 2026). Amber tidak pernah diletakkan di atas latar --primary. */
+  --decor-mark: var(--accent);
+
+  /* Radius DESIGN.md 5: tombol & input 8 px, kartu & kotak statistik 12 px. */
+  --radius: 8px;
+  --card-radius: 12px;
+
+  accent-color: var(--primary);
+}

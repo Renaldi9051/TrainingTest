@@ -83,7 +83,7 @@ export function useActiveIndicator(
 }
 
 // Palet E: pill (chip/filter aktif) dan garis (menu, tab, urutan) --primary biru tua; di header di atas
-// foto hero garisnya amber (palette-e.css).
+// foto hero garisnya amber (public-surfaces.css).
 const INDICATOR_CLASS = {
   pill: "rounded-full bg-primary",
   line: "bg-primary",
