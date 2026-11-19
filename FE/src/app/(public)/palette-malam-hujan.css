@@ -91,7 +91,9 @@
      --overlay-mobile (vertikal < 768 px): scrim navy -> hitam kopi di belakang blok teks, per slide
      dikali --overlay-strength (default 0,8). Foto berwarna penuh di sisi foto, memudar ke navy di sisi
      teks (--hero-photo-mask, public-surfaces.css). */
-  --overlay-top: rgb(18 11 6 / 0.15);
+  /* 0,45, bukan 0,15 seperti di PROMPT-KIRO-PALET-MALAM-HUJAN.md: dengan 0,15 menu header di atas foto
+     terang turun ke 2,5:1 di 1280 px (e2e/hero-contrast.spec.ts); 0,45 = nilai palet E (3,96-5,23:1). */
+  --overlay-top: rgb(18 11 6 / 0.45);
   --overlay-head: linear-gradient(180deg, var(--overlay-top) 0%, transparent 18%);
   --overlay-bottom: rgb(25 42 66 / 0.78);
   --overlay-side: linear-gradient(90deg, rgb(18 11 6 / 0.94) 0%, rgb(25 42 66 / 0.9) 60%, rgb(25 42 66 / 0.45) 85%, rgb(25 42 66 / 0) 100%);
