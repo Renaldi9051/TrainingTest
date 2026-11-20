@@ -38,7 +38,7 @@ const isPreviewSection = (section: PublicHomeSection | PreviewHomeSection): sect
 export default async function HomePage() {
   const [{ sections, preview }, settings] = await Promise.all([loadHome(), getSettings()]);
   const hasHero = sections.some((section) => section.type === "HERO");
-  // Latar section terang: selang-seling --bg/--bg-subtle, Visi & Misi band hangat (Malam Hujan v2).
+  // Latar section terang: semua --bg (kabut biru), Visi & Misi band hangat (Malam Hujan v2).
   const tones = homeSectionTones(sections.map((section) => section.type));
 
   return (

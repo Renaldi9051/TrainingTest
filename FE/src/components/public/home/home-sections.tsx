@@ -210,7 +210,7 @@ function CtaSection({ section }: { section: Extract<PublicHomeSection, { type: "
   );
 }
 
-// tone: latar section terang dari homeSectionTones (selang-seling --bg/--bg-subtle, Visi & Misi hangat).
+// tone: latar section terang dari homeSectionTones (semua --bg, Visi & Misi hangat).
 export function HomeSectionView({ section, tone }: { section: PublicHomeSection; tone?: LightTone | null }): ReactNode {
   const light = tone ?? undefined;
   switch (section.type) {

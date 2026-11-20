@@ -22,7 +22,7 @@ type PublicSectionProps = {
   // ke --cta-* di public-surfaces.css). Maksimal dua section terbalik per halaman: CTA penutup + footer
   // (DESIGN 2).
   inverse?: boolean;
-  // Latar section terang (Malam Hujan v2): "default" --bg, "subtle" --bg-subtle (selang-seling), "warm"
+  // Latar section terang (Malam Hujan v2): "default" --bg, "subtle" --bg-subtle, "warm"
   // band hangat --bg-warm + garis --border-warm atas-bawah (maks 1 per halaman). Ditandai data-tone,
   // jadi isi (tabel, panel) bisa menyesuaikan latar lewat varian in-data-[tone=subtle].
   tone?: LightTone;

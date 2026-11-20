@@ -20,15 +20,16 @@
    Kontras (WCAG 2.1) tercatat di samping tiap token. Amber & cyan bukan warna teks di latar terang;
    teks putih tidak di atas amber/cyan; biru tua tidak di latar navy; amber tidak di atas biru tua. */
 :root:has([data-palette="malam-hujan"]) {
-  /* Latar terang: kabut biru dingin dari foto. --surface untuk kartu, tabel, dan panel di atas
-     --bg-subtle (sedikit terangkat). */
-  --bg: #f4f7f9;
-  --bg-subtle: #e8eff4;
+  /* Latar terang: kabut biru dingin dari foto, seragam di semua section terang (keputusan pemilik
+     20 Nov 2026: tanpa band putih #F4F7F9). --bg-subtle sedikit lebih dalam untuk kepala halaman dan
+     hover baris. --surface untuk kartu dan panel (sedikit terangkat). */
+  --bg: #e8eff4;
+  --bg-subtle: #e0e9ef;
   --bg-muted: #dae5ec;
   --surface: #fcfdfe;
-  --grid-line: #e2eaf0;
+  --grid-line: #d8e2ea;
   --border: #cfdce5;
-  /* Border input & chip: 3,5:1 di --bg, 3,3:1 di --bg-subtle (komponen UI ≥ 3:1). */
+  /* Border input & chip: 3,3:1 di --bg, 3,1:1 di --bg-subtle (komponen UI ≥ 3:1). */
   --border-strong: #6e8699;
   /* Band hangat (cahaya lampu jalan, turunan amber): maksimal 1 section per halaman (beranda: Visi & Misi). */
   --bg-warm: #f8edd8;
@@ -36,19 +37,19 @@
 
   /* Placeholder saja, bukan teks baca. */
   --fg-subtle: #8a9aad;
-  /* Teks sekunder: 6,5:1 di --bg, 6,0:1 di --bg-subtle, 5,4:1 di --bg-muted, 6,0:1 di --bg-warm. */
+  /* Teks sekunder: 6,0:1 di --bg, 5,7:1 di --bg-subtle, 5,4:1 di --bg-muted, 6,0:1 di --bg-warm. */
   --fg-muted: #4a5b6e;
-  /* Teks utama navy 13,4:1 (12,5:1 di --bg-warm); judul hitam kopi. */
+  /* Teks utama navy 12,5:1 (12,5:1 di --bg-warm); judul hitam kopi. */
   --fg: #192a42;
   --fg-strong: #120b06;
 
   /* Biru tua: aksi di latar terang. --on-primary 5,8:1 (hover 8,0:1). --primary-ink teks biru kecil
-     (angka statistik, harga, tag kategori, panah): 5,5:1 di --bg, 5,1:1 di --bg-subtle & --bg-warm. */
+     (angka statistik, harga, tag kategori, panah): 5,1:1 di --bg & --bg-warm, 4,8:1 di --bg-subtle. */
   --primary: #0a6a9d;
   --primary-hover: #08547d;
   --on-primary: #fcfdfe;
   --primary-ink: #0a6a9d;
-  /* Biru laut: hanya UI non-teks (3,5:1 di --bg). Bentrok nama dengan token shadcn admin (--secondary =
+  /* Biru laut: hanya UI non-teks (3,3:1 di --bg). Bentrok nama dengan token shadcn admin (--secondary =
      latar abu), jadi components/ui tidak boleh memakai utilitas secondary polos (palette-guard.test.ts). */
   --secondary: #058dbd;
   /* Amber: latar tombol/badge, atau teks di latar gelap (6,7:1 di navy, 9,0:1 di hitam kopi). Teks di
@@ -57,7 +58,7 @@
   --accent-hover: #f3b445;
   --on-accent: #120b06;
   --accent-on-dark: #eba224;
-  /* Cokelat: teks aksen kecil (eyebrow, IndexNumber), 11,0:1 di --bg, 10,2:1 di --bg-warm. */
+  /* Cokelat: teks aksen kecil (eyebrow, IndexNumber), 10,2:1 di --bg, 10,2:1 di --bg-warm. */
   --accent-ink: #552d11;
   /* Cyan: sorotan di latar navy. Teks di atasnya hitam kopi; teks cyan 5,9:1 di navy. */
   --highlight: #05b4d9;
@@ -78,7 +79,7 @@
   /* Ring fokus: biru tua di latar terang, cyan di hero, CTA, footer, lightbox. */
   --focus-ring: #0a6a9d;
   --focus-ring-dark: #05b4d9;
-  /* Titik status DIBUKA (4,7:1). */
+  /* Titik status DIBUKA (4,3:1 di --bg; non-teks, minimal 3:1). */
   --ok: #2e7d4f;
 
   /* Elemen dekoratif (DESIGN.md 6). */

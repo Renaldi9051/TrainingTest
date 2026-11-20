@@ -25,6 +25,10 @@ const STATUS_DOT: Record<ScheduleStatus, string> = { OPEN: "bg-ok", FULL: "bg-fg
 
 const PRICE_HIDDEN = "Hubungi marketing";
 
+const TH = "py-4 font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted";
+// Jarak antar kolom (md+).
+const CELL_GAP = "md:pr-6";
+
 // Tabel jadwal DESIGN 7: tanpa garis vertikal, header mono, baris hover --bg-subtle + geser 8 px.
 // Di layar kecil tiap baris jadi blok bertumpuk (tanpa scroll horizontal). Masuk: baris dari kiri,
 // per baris saat barisnya masuk viewport (RevealRows).
@@ -43,30 +47,30 @@ export function ScheduleTable({
   bigDate?: boolean;
 }) {
   return (
-    // Di section berlatar --bg-subtle (data-tone="subtle") tabel memakai --surface, supaya hover baris
-    // (--bg-subtle) tetap terlihat (Malam Hujan v2).
-    <table className="w-full border-collapse text-left in-data-[tone=subtle]:bg-surface">
+    // Tabel menyatu dengan latar section (keputusan pemilik 20 Nov 2026, tanpa panel --surface). Di section
+    // --bg-subtle (data-tone="subtle") hover baris memakai --bg-muted supaya tetap terlihat.
+    <table className="w-full border-collapse text-left">
       <caption className="sr-only">{caption}</caption>
       <thead className="hidden md:table-header-group">
         <tr className="border-b border-border-strong">
-          <th scope="col" className="py-3 pr-4 font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted">
+          <th scope="col" className={cn(TH, CELL_GAP)}>
             Tanggal
           </th>
           {showTraining ? (
-            <th scope="col" className="py-3 pr-4 font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted">
+            <th scope="col" className={cn(TH, CELL_GAP)}>
               Pelatihan
             </th>
           ) : null}
-          <th scope="col" className="py-3 pr-4 font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted">
+          <th scope="col" className={cn(TH, CELL_GAP)}>
             Lokasi
           </th>
-          <th scope="col" className="py-3 pr-4 font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted">
+          <th scope="col" className={cn(TH, CELL_GAP)}>
             Metode
           </th>
-          <th scope="col" className="py-3 pr-4 font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted">
+          <th scope="col" className={cn(TH, CELL_GAP)}>
             Investasi
           </th>
-          <th scope="col" className="py-3 font-mono text-label font-medium uppercase tracking-[0.08em] text-fg-muted">
+          <th scope="col" className={TH}>
             Status
           </th>
         </tr>
@@ -75,13 +79,13 @@ export function ScheduleTable({
         {rows.map((row) => (
           <tr
             key={row.id}
-            className="grid grid-cols-2 gap-x-4 gap-y-1 border-b border-border py-4 transition-[background-color,transform] duration-150 ease-standard hover:bg-bg-subtle motion-safe:hover:translate-x-2 motion-safe:focus-within:translate-x-2 md:table-row md:py-0"
+            className="grid grid-cols-2 gap-x-4 gap-y-1 border-b border-border py-5 transition-[background-color,transform] duration-150 ease-standard hover:bg-bg-subtle in-data-[tone=subtle]:hover:bg-bg-muted motion-safe:hover:translate-x-2 motion-safe:focus-within:translate-x-2 md:table-row md:py-0"
           >
-            <td className="col-span-2 font-medium text-fg-strong md:py-4 md:pr-4 md:whitespace-nowrap">
+            <td className={cn("col-span-2 font-medium text-fg-strong md:py-5 md:whitespace-nowrap", CELL_GAP)}>
               {bigDate ? <BigDate start={row.startDate} end={row.endDate} /> : formatDateRange(row.startDate, row.endDate)}
             </td>
             {showTraining && row.training ? (
-              <td className="col-span-2 md:py-4 md:pr-4">
+              <td className={cn("col-span-2 md:py-5", CELL_GAP)}>
                 <Link
                   href={`/pelatihan/${row.training.slug}`}
                   className="underline-offset-4 outline-none hover:underline focus-visible:underline"
@@ -90,14 +94,14 @@ export function ScheduleTable({
                 </Link>
               </td>
             ) : null}
-            <td className="col-span-2 text-small text-fg md:py-4 md:pr-4">
+            <td className={cn("col-span-2 text-small text-fg md:py-5", CELL_GAP)}>
               {[row.city, row.venue].filter(Boolean).join(" · ") || "-"}
             </td>
-            <td className="text-small text-fg-muted md:py-4 md:pr-4">{METHOD_LABELS[row.method]}</td>
-            <td className="text-small md:py-4 md:pr-4 md:whitespace-nowrap">
+            <td className={cn("text-small text-fg-muted md:py-5", CELL_GAP)}>{METHOD_LABELS[row.method]}</td>
+            <td className={cn("text-small md:py-5 md:whitespace-nowrap", CELL_GAP)}>
               {row.price === null ? <span className="text-fg-muted">{PRICE_HIDDEN}</span> : formatRupiah(row.price)}
             </td>
-            <td className="col-span-2 font-mono text-label uppercase tracking-[0.08em] text-fg-strong md:py-4">
+            <td className={cn("col-span-2 font-mono text-label uppercase tracking-[0.08em] text-fg-strong md:py-5 md:whitespace-nowrap")}>
               <span className="inline-flex items-center gap-2">
                 <span aria-hidden className={cn("size-2 shrink-0 rounded-full", STATUS_DOT[row.status])} />
                 <span>
